@@ -24,7 +24,7 @@ One hyphen fusing a law, its mechanism, two consequences, an exception, and an e
     ```
     ````
 
-- Reason: The law is the entry's one decision; the boundary consequence governs every arm so it rises to the section lead, the decode steps are mechanism a fence owns, and the companion route is a contract qualifier on the law. The rejected-reader roster is a deleted-form litany that collapses to the one positive ownership claim.
+- Reason: Law is the entry's one decision; the boundary consequence governs every arm so it rises to the section lead, the decode steps are mechanism a fence owns, and the companion route is a contract qualifier on the law. A rejected-reader roster is a deleted-form litany collapsing to the one positive ownership claim.
 - Reframe: Keep the law in one to two sentences; demote mechanism to the owning fence, the sibling-governing consequence to the section lead, and a genuine exception to a contract qualifier.
 
 ## [02]-[FRAGMENT_PROMOTION]
@@ -43,9 +43,9 @@ An entry whose fragments are all load-bearing at this altitude is not a bullet: 
     - Shape: folds the `Work` graph into admission units; a node is its `key`, a dependency a `key` edge.
     - Fields: `key`, `work`, `parents`, `cost`, `admission`.
     - Admission: `keyed` cache-eligible default, `bare` forced-live, `retried` transient offload with its class.
-    - Schedule: the critical path, computed once over the graph.
+    - Schedule: critical path, computed once over the graph.
     ```
-- Reason: The fragments are peer facts about one owner, each earning a field line the cell budget of a bullet forbids; a GroupedRecord keeps every payload greppable under one key where a shredded sibling split strips the owner relation.
+- Reason: These fragments are peer facts about one owner, each earning a field line the cell budget of a bullet forbids; a GroupedRecord keeps every payload greppable under one key where a shredded sibling split strips the owner relation.
 - Reframe: Promote the entry to a `[KEY]:` card with `- Field: value` lines when every fragment is load-bearing at this altitude.
 
 ## [03]-[SHREDDED_SPLIT]
@@ -72,7 +72,7 @@ Splitting a mega bullet's sentence run into sibling bullets without classifying 
     ```
     ````
 
-- Reason: The shredded form re-parses the same fusion at lower volume — each sibling still answers what, how, and what-not in one line. Classification routes mechanism to a fence and the sibling-governing consequence to the lead, so every container holds one class.
+- Reason: A shredded form re-parses the same fusion at lower volume — each sibling still answers what, how, and what-not in one line. Classification routes mechanism to a fence and the sibling-governing consequence to the lead, so every container holds one class.
 - Reframe: Classify each fragment before splitting; the bullet keeps one law, mechanism moves to a fence, and a shared consequence moves to the section lead.
 
 ## [04]-[MIXED_CONCERN_LIST]
@@ -142,7 +142,7 @@ A closed enumeration whose payload is the roster itself is a registry entry, leg
     ```markdown accepted
     - Banned: `should` `could` `would` `might` `maybe` `perhaps` `likely` `probably` `propose` `consider` `recommended` `ideally` `is expected to` `aims to` `in the future` `eventually` `as needed`.
     ```
-- Reason: The roster's members are the payload and each is an atomic token, so the entry is a registry enumeration the budget exempts by its code-span density; spelled as prose with a conjunction between members it hides no roster and the exemption lapses.
+- Reason: Roster members are the payload and each is an atomic token, so the entry is a registry enumeration the budget exempts by its code-span density; spelled as prose with a conjunction between members it hides no roster and the exemption lapses.
 - Reframe: Carry a closed roster as a `Banned:`/`[REGISTRY]:` entry of code-span tokens; the budget exempts an entry whose body is the enumeration, never prose narrating it.
 
 ## [07]-[LEADER_SENTENCE]
@@ -169,7 +169,7 @@ A section that opens straight into its first list entry forces that entry to car
     |  [02]   | `scene`  | `import` |     yes     |
     ```
 
-- Reason: The lead states the axis law once so each row drops to an atomic lookup; without it the first entry absorbs the owner declaration, the field roster, and the dispatch rule and collapses under the load.
+- Reason: A lead states the axis law once so each row drops to an atomic lookup; without it the first entry absorbs the owner declaration, the field roster, and the dispatch rule and collapses under the load.
 - Reframe: Open the section with one charter sentence naming the container, then let the entries or table rows carry atomic members.
 
 ## [08]-[NESTED_LIST]
@@ -196,7 +196,7 @@ Child entries nested under a parent that is not their governing rule are peers m
     |  [03]   | `step`  | `managed`        | split-leg   |
     ```
 
-- Reason: The children are codec and protocol records owning a concern the boundary rule does not govern, so they belong in a registry table; nested under the boundary bullet they read as subordinate details and the parent overstuffs to hold them.
+- Reason: These children are codec and protocol records owning a concern the boundary rule does not govern, so they belong in a registry table; nested under the boundary bullet they read as subordinate details and the parent overstuffs to hold them.
 - Reframe: Keep the boundary law as one line and lift the mis-nested children to the registry table or record set that owns them.
 
 ## [09]-[SAME_DECISION_SIBLINGS]
@@ -221,9 +221,9 @@ Sibling entries each re-carrying one decision in different words are sediment we
 
 ## [10]-[ARTICLE_HOOK]
 
-An entry opening on `the` buries its owner one word deep and reads as a caption, not a law; an index-line hook is the commonest hiding spot, the article trailing a `[NN]-[TOKEN]:` leader that scans as structure.
+An entry opening on `the` buries its owner; marker leaders only disguise the same voice defect.
 
-- Detection: The body after the marker colon opens on `The`/`the`. Lowercasing or deleting the article clears nothing — the subject is still not leading; the cure is a voice recast, not a surface edit.
+- Detection: Marker bodies opening on `The`/`the`.
 - Rejected:
     ```markdown rejected
     - [02]-[SOLVE_VOCABULARY]: the solve, eigen, norm, and gauge route algebra every receipt discriminates on.
@@ -232,5 +232,5 @@ An entry opening on `the` buries its owner one word deep and reads as a caption,
     ```markdown accepted
     - [02]-[SOLVE_VOCABULARY]: `Solve`, `eigen`, `norm`, and `gauge` route the algebra every receipt discriminates on.
     ```
-- Reason: The rejected hook fronts the article and buries its four owners behind it; the recast promotes the route families to the subject under the owning verb `route`, so the reader meets the owner first and the hook states law in the same span.
-- Reframe: Recast the entry so its owning subject leads — a code-spanned owner, name, quantifier, possessive, demonstrative, or bare noun — under an owning verb; deleting or lowercasing the article and leaving the subject buried is the non-cure.
+- Reason: Route families become the subject under the owning verb `route`.
+- Reframe: Recast owner-first; repair holds only when the subject moved, never when the determiner changed.

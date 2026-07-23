@@ -43,7 +43,7 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 - Build a table only when all three hold: rows share one comparison question, every column answers it with an atomic value, and more than one row exists. Fail any one and the carrier is a record, card, or prose.
 - One trailing prose column survives inside the cell budget; a second prose column disqualifies the table.
 - Use comparison, lookup, decision, matrix, support, or dependency forms only; never tables for sequences, heterogeneous records, narrative, or field lists.
-- Eligibility is structural, never an enumeration license: a table whose rows mirror an owner whose system of record is elsewhere is a stale mirror however atomic its cells; the doc tables only its own registry or a tool-verified representation.
+- Eligibility is structural, never an enumeration license: a table whose rows mirror an owner whose system of record is elsewhere is a stale mirror whatever its cell atomicity; the doc tables only its own registry or a tool-verified representation.
 
 [CELL_BUDGET]:
 - Each cell is one atomic unit: a value, marker, token, code span, proper noun, path, or a phrase of at most six words carrying no internal comma, semicolon, or clause-joining conjunction.

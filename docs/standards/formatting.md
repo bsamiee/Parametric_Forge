@@ -54,7 +54,7 @@ Render an inline status, result, change, or state as a bracketed token so an age
 |  [06]   | `[NULL]`    | literal null fact          | absent value         |
 
 [TOKEN_RULES]:
-- Prefer the most specific family; never use two tokens meaning the same thing in one column.
+- Use the most specific family; never two tokens meaning one thing in a column.
 - Compact glyphs render only where density matters — checked lists, delta summaries, table cells — with the global meanings above.
 - Reserve these tokens for status, result, change, and state; never scatter them through prose or duplicate a record field or checkbox state.
 - A checkbox asserts completion; `[X]` is a compact fail marker, never a replacement for `- [x]`.
@@ -112,7 +112,7 @@ A standard file carries one H1, a dense law lead, a container chooser or use-whe
 ```markdown template
 # [TITLE]
 
-<Lead: the operating law in one short paragraph.>
+<Lead: the operating law in one or two single-line paragraphs, at most 500 characters total.>
 
 ## [01]-[USE_WHEN]
 

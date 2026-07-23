@@ -3,7 +3,7 @@
 # requires-python = ">=3.14"
 # dependencies = ["cyclopts", "msgspec"]
 # ///
-# ruff: noqa: T201, D100, D101, D103
+# ruff:file-ignore[print, undocumented-public-module, undocumented-public-class, undocumented-public-function]
 
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
@@ -170,16 +170,13 @@ CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
 ARTICLE_ANNOTATION = re.compile(
     r"^\s*(?:(?:[-+*]|\d+[.)])\s+)?(?:\[[^\]]*\][-\u2013\u2014]?\s*)*(?:`[^`]+`|\[[^\]]+\]\([^)\s]+\))\s*(?:[\u2013\u2014:]|-)\s+[Tt]he\s"
 )
-# A list-entry body never opens on the definite article in either case, behind a marker label or bare; an entry leads with its owner's name or verb.
-# The label token class spans the whole marker grammar — a numeric index (`[02]`), an UPPERCASE_SNAKE token, an alternation (`[OPEN|BLOCKED]`) — so an index-line hook `- [02]-[TOKEN]: the …` never slips the check on its numeric leader.
+# List entries lead with their owner or owning verb, bare or behind the full marker grammar.
 ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z0-9][A-Z0-9_|]*\](?:-\[[A-Z0-9][A-Z0-9_|]*\])*:\s+)?[Tt]he\s")
-# A sentence never opens on the definite article, which buries the owning subject one word deep. Boundary strength picks
-# its case: a line start and a true sentence end admit neither `The` nor the lowercase dodge that clears the check while
-# leaving the subject buried, and a colon, semicolon, or leader dash keeps ordinary lowercase continuation legal. Spans
-# arrive code-stripped, so a code-span lead never matches.
+# Sentence boundaries reject article-led voice; colons, semicolons, and leader dashes retain lowercase continuation.
 SENTENCE_ARTICLE = re.compile(r"^\s*[Tt]he\b|[.!?]\s+[Tt]he\b|[:;\u2013\u2014]\s+The\b")
-# A comment is prose under the same law — fence body and source file alike — so its first word is never the article in
-# either case; lowercasing `The` to `the` clears the finding and leaves the dead form standing.
+# One cure, every article site: the article marks a clause whose subject is not the acting owner; the repair is structural, never a determiner edit.
+ARTICLE_CURE = "; find the actor, seat it as subject under a present-active owning verb; deleting the article or swapping it for A/One/This re-heads the same broken clause"
+# Comments obey the same owner-first voice.
 COMMENT_ARTICLE = re.compile(r"^[Tt]he\s")
 # A fence tag names the marker its full-line comments carry, so a fence body answers the comment law its language spells.
 FENCE_MARKERS: dict[str, str] = (
@@ -203,6 +200,9 @@ EXAMPLE_LINE = re.compile(
     r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)"
     r"(?:\s*\([^)]*\))?:"
 )
+# Quote-labeled fields carry defective prose by design and skip every check; guidance-voice fields (Detection/Reason/Reframe/Accepted)
+# skip the register rosters they must name yet still answer the article-opener check — their voice is the skill's own.
+QUOTE_LINE = re.compile(r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Reject(?:ed)?|Near miss|Banned|Survivors)(?:\s*\([^)]*\))?:")
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
 FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
 # Mermaid payload-only law: a durable-doc fence carries structure — declaration, nodes, edges, labels, subgraphs, accTitle/accDescr, and
@@ -219,9 +219,8 @@ MERMAID_ANIMATE = re.compile(r"^\s*[\w-]+@\{[^}]*\banimat(?:e|ion)\b[^}]*\}\s*$"
 # Body statements carrying css-property styling (todayMarker strings, venn style rows); `rect rgb(...)` stays — its grammar embeds the color.
 MERMAID_BODY_CSS = re.compile(r"(?:stroke|fill|color|opacity)\s*:\s*\S")
 MERMAID_BOX_COLOR = re.compile(r"^(\s*box\s+)rgba?\([^)]*\)")
-# Required-payload law inverts the styling law: a flowchart fence opens on the standing ELK block, and every family whose renderer emits
-# the accessibility directives carries both directly under its declaration. Mute families reject or swallow the directives, so their
-# relation sentence sits beside the fence instead.
+# Required-payload law inverts styling law: a flowchart fence opens on the standing ELK block, and renderer-capable families carry both
+# accessibility directives under their declaration. Mute families reject or swallow them, so their relation sentence sits beside the fence.
 ACCESSIBILITY = ("accTitle", "accDescr")
 MERMAID_ELK_KEYS = ("layout: elk", "curve: linear", "padding: 25")
 MERMAID_ELK_BLOCK = ("---", "config:", "  layout: elk", "  flowchart:", "    curve: linear", "    padding: 25", "---")
@@ -231,9 +230,8 @@ MERMAID_MUTE = frozenset({"block", "eventmodeling", "ishikawa", "kanban", "mindm
 # Block 2600-27BF covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B50\u2139\uFE0F]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
+# A bare group label `[X]:` hugs its list; a table keeps its blank.
 GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
-# A bracketed label lead — `[X]:`, `[X]: value`, `[X]-[Y]: ...`, or `[X] — sentence ...:` — hugs its list; a table keeps its blank.
-LABEL_LEAD = re.compile(r"^\[[A-Z][A-Z0-9_-]*\](?:-\[[A-Z][A-Z0-9_-]*\])*(?::(?:\s|$)|.*—.*:\s*$)")
 # A floating bracketed label — no colon, alone on its line — that introduces a list or table lacks the colon a list label carries.
 FLOATING_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_-]*\]\s*$")
 GLYPHS = ("│", "├", "└", "⇄")
@@ -293,7 +291,7 @@ SELF_COUNT = re.compile(
     r"|rows|columns|tokens|markers|vocabularies)\b"
 )
 # Its lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
-VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
+VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|(?<![A-Za-z-])\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # A bare major band anchored to a capitalized product token: the `<Product> NN+` compatibility floor.
 # Its lookahead spares `N+M` notation (a digit after `+`) — CNC axis notation like `3+2`, never a version band.
 VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?![+\d])")
@@ -323,10 +321,9 @@ NO_OP_WORD = re.compile(
 # Sentence-initial `So` is filler glue delaying the subject; its cure is a recast, never a comma swap. The causal `, so …`
 # join states real consequence law and is the corpus's canonical connector, so only the lead-in form answers here.
 SENTENCE_SO = re.compile(r"(?:^|[.!?]\s+)So\b")
-# AI-register lexemes fail: puffery, significance theater, transition filler, summary tails, and the abstract-noun register
-# carry zero domain load; each hit is delete-or-reframe, never synonym-swap. `leverage` names the estate's stacking hunt axis
-# and `overall` legally grades shape and structure; `therefore`, `thus`, and `likewise` state real logical order; `backbone`
-# names a real spine — all stay off the roster.
+# AI-register lexemes fail: puffery, significance theater, transition filler, summary tails, and abstract nouns carry zero
+# domain load; each hit is delete-or-reframe. Estate terms `leverage`, `overall`, `therefore`, `thus`, `likewise`, and
+# `backbone` retain concrete stacking, grading, ordering, or spine semantics, so the roster excludes them.
 AI_LEXICON = re.compile(
     r"\b(?:delv(?:e|es|ed|ing)|tapestry|testament|pivotal|meticulous(?:ly)?|showcas(?:e|es|ed|ing)|multifaceted"
     r"|myriad|plethora|holistic|intricate|nuanced|vibrant|additionally|moreover|furthermore"
@@ -393,7 +390,7 @@ PATTERNS: tuple[tuple[Check, re.Pattern[str], Status, str], ...] = (
     (Check.WEAK_VERB, WEAK_VERB, "warn", "; name the owner and its act — mints, owns, folds, routes, binds"),
     (Check.HEDGE, SOFT_HEDGE, "warn", ""),
     (Check.EM_DASH, EM_DASH_ASCII, "fail", "; spell the em dash character"),
-    (Check.ARTICLE_OPENER, SENTENCE_ARTICLE, "fail", "; lead with the owner's name or an owning verb"),
+    (Check.ARTICLE_OPENER, SENTENCE_ARTICLE, "fail", ARTICLE_CURE),
     (Check.NO_OP_WORD, NO_OP_WORD, "fail", "; delete the grade — the fact carries its own weight"),
     (Check.NO_OP_WORD, SENTENCE_SO, "fail", "; sentence-initial `So` is filler — recast the clause owner-first, never swap it for a comma join"),
     (Check.AI_LEXICON, AI_LEXICON, "fail", "; delete or reframe, never synonym-swap"),
@@ -444,8 +441,7 @@ class Change(msgspec.Struct, frozen=True):
 
 
 class Diagram(msgspec.Struct, frozen=True):
-    # Fence-body census carried line by line: frontmatter phase, the indent of a flagged styling block, the declaration
-    # the body opens on, the accessibility directives it names, and the canonical config keys its frontmatter carries.
+    # Fence-body census carries frontmatter phase, flagged-style indent, opening declaration, accessibility directives, and canonical keys.
     mermaid: bool = False
     front: Front = Front.CLOSED
     styling: int | None = None
@@ -743,7 +739,7 @@ def fenced(
         rows.extend(payload_rows)
     mark = FENCE_MARKERS.get(info.split()[0] if info else "", "")
     if mark and trimmed.startswith(mark) and COMMENT_ARTICLE.match(trimmed.removeprefix(mark).lstrip()):
-        rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "fence comment opens on 'the'; lead with the constraint's owner or verb"))
+        rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"fence comment opens on 'the'{ARTICLE_CURE}"))
     return False, state, tuple(rows)
 
 
@@ -831,7 +827,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 rows.append(row(path, number, Check.HEADING_SPACING, "fail", "heading lacks its following blank line; insert one"))
         elif GROUP_LABEL.match(line.strip()) and line.strip() == f"[{last_rubric}]:":
             rows.append(row(path, number, Check.GROUP_LABEL, "warn", f"[{last_rubric}]: echoes its section heading; the label is phantom structure"))
-        elif (floating := bool(FLOATING_LABEL.match(line))) or LABEL_LEAD.match(line):
+        elif (floating := bool(FLOATING_LABEL.match(line))) or GROUP_LABEL.match(line.strip()):
             gap, intro_list, intro_table = label_context(raw[n + 1] if n + 1 < len(raw) else "", raw[n + 2] if n + 2 < len(raw) else "")
             if floating and (intro_list or intro_table):
                 rows.append(row(path, number, Check.LABEL_GAP, "fail", "floating label lacks its colon; a list or record label carries [LABEL]:"))
@@ -860,12 +856,12 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         if not template and not EXAMPLE_LINE.match(line):
             if ARTICLE_ANNOTATION.match(line):
                 rows.append(
-                    row(
-                        path, number, Check.ARTICLE_OPENER, "fail", "annotation opens on 'the'; the leader is the subject — open with its owning verb"
-                    )
+                    row(path, number, Check.ARTICLE_OPENER, "fail", f"annotation opens on 'the'{ARTICLE_CURE}")
                 )
             elif ARTICLE_FRAGMENT.match(line):
-                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "entry opens on 'the'; lead with the owner's name or an owning verb"))
+                rows.append(
+                    row(path, number, Check.ARTICLE_OPENER, "fail", f"entry opens on 'the'{ARTICLE_CURE}")
+                )
         if item := LIST_ITEM.match(line):
             if item.group("mark") in "*+":
                 rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
@@ -986,7 +982,7 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
                     rows.append(
                         row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"index cell {actual or '<empty>'} != {expected}; renumber")
                     )
-        # row count is never capped: a row that belongs in the table stays a row, and an oversized table relieves cells or decomposes on the column axis, never sheds rows to prose
+        # Row count stays uncapped; every tabular row remains, while oversized grids relieve cells or decompose on the column axis.
         if len(table.headers) > TABLE_COLUMN_CEILING:
             rows.append(
                 row(
@@ -1123,6 +1119,17 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
     rows: list[Row] = []
     for span in doc.prose:
         if EXAMPLE_LINE.match(span.text):
+            if not QUOTE_LINE.match(span.text):
+                rows.extend(
+                    row(
+                        doc.path,
+                        span.line,
+                        Check.ARTICLE_OPENER,
+                        "fail",
+                        f"{hit.group(0).lstrip('.!?:; ')}{ARTICLE_CURE}",
+                    )
+                    for hit in SENTENCE_ARTICLE.finditer(QUOTED_SPAN.sub(" ", span.text))
+                )
             continue
         if not doc.template:
             rows.extend(
@@ -1599,7 +1606,7 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
             for hit in MARKER_WORDS.finditer(tail)
         )
         if COMMENT_ARTICLE.match(tail):
-            rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "comment opens on 'the'; lead with the constraint's owner or verb"))
+            rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"comment opens on 'the'{ARTICLE_CURE}"))
         run.append((number, width))
     close()
     return tuple(rows)
@@ -1841,7 +1848,7 @@ def hugged_labels(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
             continue
         # A bracketed label hugs its list: a floating label first earns the colon a list label carries; a table keeps the blank the grid demands.
         floating = bool(FLOATING_LABEL.match(line))
-        if floating or LABEL_LEAD.match(line):
+        if floating or GROUP_LABEL.match(line.strip()):
             gap, intro_list, intro_table = label_context(lines[index + 1] if index + 1 < total else "", lines[index + 2] if index + 2 < total else "")
             if floating and (intro_list or intro_table):
                 labeled = line.rstrip() + ":"

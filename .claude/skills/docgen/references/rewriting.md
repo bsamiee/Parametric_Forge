@@ -7,7 +7,7 @@ Rebuilding an existing document is harder than writing a fresh one: the source's
 - [READING_IS_ANCHORING]: A source's section set, emphasis, enumerations, and justifications become the rewrite's defaults unless each is re-derived; what the source treats as law reads as law, including its defects.
 - [LOCAL_CONTEXT_LIES]: A page drifted from corpus law is internally consistent and looks finished judged against itself; the rewrite aligns to corpus law and the sibling exemplar, never to the page's own precedent.
 - [POSTURE_TRANSFERS]: A source's deference rides along with its facts — maturity labels, ecosystem defaults, risk framing, endorsed paths; payload extraction keeps the fact and flips the authority to the corpus ruling, or the rewrite re-ships the upstream's register as law.
-- [SOFTENING_IS_INHERITANCE]: Trimming a litany to three corpses, shortening a frozen chant, keeping a growth register in reserve — each preserves the frame at lower volume. A defect class is removed by reframing the passage, never by dieting it.
+- [SOFTENING_IS_INHERITANCE]: Trimming a litany to three corpses, shortening a frozen chant, keeping a growth register in reserve — each preserves the source's frame at lower volume; dieting is inheritance wearing a diff.
 
 ## [02]-[PROCEDURE]
 

@@ -1,6 +1,6 @@
 # [DEFECTS]
 
-Findings cite class and line, and every fix is a total reframe of the surrounding passage — kept-but-softened poison is the same defect wearing fewer words.
+Findings cite class and line. Fix by reframing the passage whole: a repair that edits the defect's token while its structure stands — a determiner swapped, a hedge softened, a litany trimmed, a lexeme synonym-swapped — is a null repair, the same defect wearing fewer words. A repair holds only when the structure moved.
 
 ## [01]-[ENUMERATION_ANCHOR]
 
@@ -9,26 +9,26 @@ Prose enumerates the present cases, fields, operations, or files of an owner so 
 - Detection: A prose sentence naming more than two sibling members of one owner, or a scalar count of enumerable content whose members live outside the counting clause. A quantity survives only as a rule threshold, a domain value, or a same-clause count. Boundary reads at the owner: a registry table at its own declaration — minting its members, or the sole repo carrier of an externally-owned key set — is the accepted form, and derivation is owed only where an elsewhere owner exists.
 - Rejected: `Kind` carries `ScaleFit`, `Tile`, `Crop`, `Merge`, `Matte`, `Rotate`, and `Overlay`, the seven composition operations.
 - Accepted: A new composition operation is one `Kind` row on the compose spine; the fence carries the row set.
-- Reason: The accepted form states the extension rule; the fence, table, or catalog owns the roster. Prose names a member only where it forces a design decision, and a domain value is data, not enumeration.
+- Reason: Extension law replaces the roster, and the fence, table, or catalog keeps the roster true. Prose names a member only where it forces a design decision, and a domain value is data, not enumeration.
 - Reframe: State how a row extends; move the roster to the surface that keeps it true.
 
 ## [02]-[STALE_MIRROR]
 
 Prose transcribes a shape another owner controls — a foreign union's case list, a sibling's member roster, a cross-boundary wire family — as durable fact on this page, falsified the instant the owner edits with no drift signal here.
 
-- Detection: The shape's owner edits elsewhere without touching this page; the block is either a declared, tool-verified representation or a mirror.
+- Detection: Every edit to the shape lands elsewhere without touching this page; the block is either a declared, tool-verified representation or a mirror.
 - Rejected: The intent union carries exactly six cases (`TensorOp | ModelInfer | RemoteCall | UnitProject | Pipeline | Generate`).
 - Accepted: `Intent` is owned by the orchestration spec; this page dispatches on its discriminant.
-- Reason: The consumer names the owner and the one consumed symbol, never the owner's shape; a wire roster lives once in its owning registry.
+- Reason: Consumers name the owner and the one consumed symbol, never the owner's shape; a wire roster lives once in its owning registry.
 - Reframe: Point at the owner and delete the transcription.
 
 ## [03]-[MECHANISM_LEAK]
 
 Index-tier or architecture-tier prose carries implementation-tier mechanism: exact members, versions, fault codes, buffer properties, algorithm steps, provider quirks.
 
-- Detection: The sentence states how where its tier owns only what and why, and breaks when the implementation changes without the contract changing.
+- Detection: A sentence states how where its tier owns only what and why, and breaks when the implementation changes without the contract changing.
 - Rejected: Streaming output as 64 KiB checksum-framed rows keyed by the seed-zero content hash.
-- Accepted: The serve owner frames and never tessellates.
+- Accepted: `serve` frames and never tessellates.
 - Reason: Frame size, checksum, and seed live on the owning spec; the index states the boundary invariant.
 - Reframe: Demote the mechanism to its owner — never delete it — then collapse the higher copy to the invariant.
 
@@ -46,9 +46,9 @@ Prose describes the artifact's own job, its siblings, the doc-set contract, or a
 
 One fact carried at more than one altitude or in more than one wording — a seam restated across tiers, a sibling's mechanics re-taught at the consumer, a legal prohibition recited as liturgy on every page of a folder. Each copy is independently mutable; the truth forks on first edit.
 
-- Detection: The fact's key term has more than one prose owner corpus-wide, regardless of current agreement; a doctrine appearing on every page of a folder is this class, not diligence.
+- Detection: A fact's key term holds more than one prose owner corpus-wide, regardless of current agreement; a doctrine appearing on every page of a folder is this class, not diligence.
 - Rejected: The same "a second store is the named defect" clause closing forty pages.
-- Accepted: The prohibition stated once at the folder charter; pages compose it silently.
+- Accepted: One charter statement carries the prohibition; pages compose it silently.
 - Reason: One owner per fact; every other site adheres without restating.
 - Reframe: Pick the owner — the executable copy when one exists — state the fact there once, and convert every twin to silence or a pointer.
 
@@ -64,22 +64,22 @@ A page that reads as a report of its own production: research origin, verificati
 
 ## [07]-[COUPLING]
 
-Links, citations, numbered references, or meta-references to files, sources, or the project outside the artifact's own concern, anywhere but a declared routing surface. Every coupling is a drift channel: the referenced surface moves, the reference rots, and differently-phrased references infest a corpus faster than any other litter.
+Links, citations, numbered references, or meta-references to files, sources, or the project outside the artifact's own concern, anywhere but a declared routing surface. Every coupling is a drift channel: the referenced surface moves and the reference rots.
 
 - Detection: A link, path, source name, footnote, or paraphrased sibling reference in prose whose section is not a router, route map, or instruction-file routing row. A sibling earns at most one boundary pointer line naming the owner and the one consumed symbol; a section-anchored reference (`page#SECTION`) couples to the sibling's interior, and a page never names itself.
 - Rejected: Per the platform decision and the vendor's guide, the codec follows the recommended framing (see reference 4).
-- Accepted: The codec frames append-only positional rows.
-- Reason: The external fact is verified before authoring and stated as owned law; cross-reference and boundaries sections institutionalize the defect and are banned.
+- Accepted: This codec frames append-only positional rows.
+- Reason: Verification precedes authoring and the fact stands as owned law; cross-reference and boundaries sections institutionalize the defect and are banned.
 - Reframe: State the law without its pedigree; a route belongs in the routing surface, and a fact owned elsewhere is composed silently or names the owning symbol alone.
 
 ## [08]-[HEDGE]
 
 Non-committal qualifiers, deferred-decision markers, and defensive residue around settled decisions: apology, reassurance tails answering unasked doubts, risk-hedge warnings, litigation against a claim nobody made, ceremonial surfaces minted only to embody a prohibition. Gate constants own the word roster; this class is the framing the roster cannot catch.
 
-- Detection: The clause answers an objection no reader raised, or softens a decision already made; a contract qualifier that scopes behavior — `optional`, `if present`, `only when`, `unless` — scopes, never defers, and stays legal.
+- Detection: A clause answers an objection no reader raised, or softens a decision already made; a contract qualifier that scopes behavior — `optional`, `if present`, `only when`, `unless` — scopes, never defers, and stays legal.
 - Rejected: Delivery is exactly-once effective — at-least-once transport plus consumer dedupe by content key (never magic).
 - Accepted: Consumer dedupe by content key makes delivery exactly-once effective.
-- Reason: The guarantee is stated as the mechanism that produces it; the reassurance tail dies, and a hypothetical wrong implementation is never narrated — the correct signature makes it unrepresentable.
+- Reason: Mechanism states the guarantee it produces; the reassurance tail dies, and a hypothetical wrong implementation is never narrated — the correct signature makes it unrepresentable.
 - Reframe: Bare fact, at most one load-bearing reason, zero anticipated objections. A prohibition's consequence states in the present tense — `delegating it silently swaps moduli`, never `would swap`; the subjunctive is the hedge wearing a rationale.
 
 ## [09]-[CAPABILITY_GATE]
@@ -88,8 +88,8 @@ Capability adjudicated against consumer presence, in either polarity: deferral g
 
 - Detection: A consumer count, demand signal, or arrival schedule decides whether capability exists.
 - Rejected: The graphite row is not admitted until the provider exposes the recorder surface; the growth register re-opens it when a consumer names it.
-- Accepted: The graphite row binds the recorder surface at composition.
-- Reason: The arm, contract, and policy row are designed in full now; only the binding fact varies at composition. A capability that cannot yet be modeled gets silence, and open work is a tracked card.
+- Accepted: One graphite row binds the recorder surface at composition.
+- Reason: Arm, contract, and policy row land fully designed now; only the binding fact varies at composition. A capability that cannot yet be modeled gets silence, and open work is a tracked card.
 - Reframe: Present-tense owned fact with the selection condition as data; growth-register, cadence, and deferral vocabulary dies, and a genuine scope boundary belongs to the owning domain, named as such.
 
 ## [10]-[LEGACY_COMPAT]
@@ -108,19 +108,19 @@ Wording freezes the current shape against ground-up rebuild: sealed, frozen, fin
 
 - Detection: Freeze vocabulary, a count legislated rather than derivable, or a prohibition on re-opening.
 - Rejected: The frozen twenty-column receipt: field names, types, and order are byte-identical wire law.
-- Accepted: The receipt's key sequence is the persisted decode contract; growth is trailing-append.
+- Accepted: A receipt's key sequence is the persisted decode contract; growth is trailing-append.
 - Reason: A real wire contract is stated once at its owning declaration; a design-shape freeze is deleted outright — the current shape is the current best collapse, stated as what it is.
 - Reframe: State the partition principle; the cardinality is a consequence the reader counts, and a count is reported, never legislated.
 
-## [12]-[WEAK_VERBS]
+## [12]-[OWNERLESS_VOICE]
 
-Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — where an owning verb states law. Gate constants own the verb roster; this class is the smuggled form the roster cannot catch, and a surviving instance marks a seam where ownership was never decided. Its zero-verb limit is the article-led annotation, whose mechanical form the gate's `article-opener` check owns.
+Permission verbs — `supports`, `allows`, `enables`, `provides`, `offers` — and definite-article openers both hide the actor that owns the law.
 
-- Detection: A law sentence whose operative verb grants permission instead of exercising ownership, including a permission verb smuggled into the object of an owning main verb — owns the option to enable, holds the ability to support — where the owner takes a permission rather than the concern; the zero-verb form is an annotation opening on `the` after a named surface with no operative verb following.
+- Detection: A clause grants capability instead of assigning ownership, or opens on `The`/`the` before reaching its owner; named-surface annotations and marker bodies carry the same defect after their leader.
 - Rejected: The package offers an optional self-hosted graph lane.
-- Accepted: The graph lane binds only under the self-hosted profile row.
-- Reason: The package is material the owner consumes, never a benefactor that supplies; the deployment condition is a policy row, not a hedge in the verb.
-- Reframe: Recast the clause so its owning subject leads — a code-spanned owner, its name, a quantifier, a possessive, a demonstrative, or a bare noun — under an owning verb: mints, owns, folds, routes, drives, binds, derives, admits, rejects. A voice rewrite is the only cure, never a surface edit of the article, since lowercasing `The` to `the` or dropping it leaves the subject buried one word deep or the entry headless. A marker hook `- [NN]-[TOKEN]: the …` hides the same opener behind its label and recasts owner-first the same way.
+- Accepted: Only the self-hosted profile row binds the graph lane.
+- Reason: Material never grants capability; an owner acts. Article deletion leaves that owner buried or the clause headless.
+- Reframe: Find the actor — it hides in object position, a possessive, or the clause tail — seat it as the grammatical subject, and give it a present-active owning verb: mints, owns, folds, routes, drives, binds, derives, admits, rejects. Repair holds only when the subject moved; a determiner swap re-heads the same broken clause. Stative `is`/`are` survives an identity or definition claim alone; capability and behavior take action verbs.
 
 ## [13]-[PROCESS_LEDGER]
 
@@ -128,8 +128,8 @@ Campaign or session bookkeeping fossilized into durable law, in three surface fo
 
 - Detection: A marker meaningless to a fresh agent reading the page as timeless law, or a reference to the page's own history or a process timeline.
 - Rejected: DECISION [V10]: the trust gate binds every identifier crossing into engine SQL — LANDED, verify and extend.
-- Accepted: The trust gate binds every identifier crossing into engine SQL.
-- Reason: The rule is the authority; tags, stamps, and history die, and anything resolved reads as if it had always been so.
+- Accepted: Every identifier crossing into engine SQL passes the trust gate.
+- Reason: Rules alone carry authority; tags, stamps, and history die, and anything resolved reads as if it had always been so.
 - Reframe: One timeless voice; genuinely open work moves to the card owner, and the reader cannot tell which parts were built when.
 
 ## [14]-[ASSERTED_IMPOSSIBILITY]
@@ -139,26 +139,26 @@ An impossibility claim — unspellable, structurally impossible, can never — w
 - Detection: An impossibility claim with no enforcing structure named in its clause.
 - Rejected: Cross-tenant batching is unspellable.
 - Accepted: Batch keys carry the tenant brand, so a batch is tenant-scoped by construction.
-- Reason: The enforcing structure is the subject and the impossibility its stated consequence, in one clause.
+- Reason: Enforcing structure takes the subject slot, the impossibility its stated consequence, in one clause.
 - Reframe: Name the structure or delete the claim — an impossibility with no nameable enforcer is not a fact.
 
 ## [15]-[NEGATION_ONLY]
 
-Law stated as prohibition with the positive rule absent or buried: a lone `never X` leaving the correct form unwritten, or an inventory of forbidden alternatives with the ruling stranded after the corpses. A bare negation defines a hole, not a target — the reader knows one rejected point in an unbounded space and guesses the rest, and every enumerated strawman anchors the next rebuild to the anti-shape.
+Law stated as prohibition with the positive rule absent or buried: a lone `never X` leaving the correct form unwritten, or an inventory of forbidden alternatives with the ruling stranded after the corpses. Every enumerated strawman anchors the next rebuild to the anti-shape.
 
 - Detection: A sentence whose subject is a forbidden alternative, a negation roster longer than one clause, or a single prohibition with no positive form naming what to do instead.
 - Rejected: Never open a second engine, add a per-extension package, hold an open-per-query connection, or inline credentials.
-- Accepted: The broker fold owns permission, cost, and consent for every operation.
-- Reason: The total positive claim forecloses every prohibited form by construction; a bare `never` leaves the correct shape unspecified and the reader guesses it.
+- Accepted: One broker fold owns permission, cost, and consent for every operation.
+- Reason: A total positive claim forecloses every prohibited form by construction; a bare `never` leaves the correct shape unspecified and the reader guesses it.
 - Reframe: State the positive form that forecloses the prohibited one; keep a negation only where it guards a rule violated under pressure and carries its enforcing mechanism in-clause.
 
 ## [16]-[IMPORTED_POSTURE]
 
-A corpus adopting a foreign authority's posture toward its own ruled standard: an upstream maturity label (`experimental`, `beta`) on a ruled capability, the ecosystem's default presented as the default here, a fallback or safe alternative named beside the ruling, probationary ceremony on the ruled path, setup caveats the environment already resolves, defect facts arranged as an indictment of the ruling. Authority inversion drives it: the source's register survives into law, and the document serves the upstream's risk posture instead of the ruling it exists to state.
+A corpus adopting a foreign authority's posture toward its own ruled standard: an upstream maturity label (`experimental`, `beta`) on a ruled capability, the ecosystem's default presented as the default here, a fallback or safe alternative named beside the ruling, probationary ceremony on the ruled path, setup caveats the environment already resolves, defect facts arranged as an indictment of the ruling.
 
 - Detection: A register the ruling never produced — a maturity label, a named alternative, selective ceremony, or a foreign-environment caveat attached to a ruled standard; the generalized tell is any sentence whose deference points outside the corpus.
 - Rejected: The engine stays experimental — a diagram ships only after its render is inspected, and the shared renderer is the fallback when a defect bites.
-- Accepted: The engine lays out every graph family; a family that cannot take it routes to its own engine truth, and each engine trap carries its authoring rule beside it.
+- Accepted: This engine lays out every graph family; a family that cannot take it routes to its own engine truth, and each engine trap carries its authoring rule beside it.
 - Reason: A maturity label, default, or risk posture is a fact about the upstream, never law here; the ruling outranks the source it was mined from.
 - Reframe: Flip the authority — state the ruling as owned law, demote every alternative to a boundary fact where the standard structurally cannot apply, attach each trap's in-standard answer in place, and audit every other ruled standard on the page for the same deference.
 
@@ -168,7 +168,7 @@ Durable prose anchored to a release point in time: a version number or pin, a ve
 
 - Detection: A version literal, release band, date, or freshness deictic in prose; the manifest, lockfile, or codec owner is the only surface a version legally inhabits. A standards-document clause or table citation (`Table 2.3.2`, `§ 6.3`) is a domain value, a capability floor a doctrine page legislates is admission law stated once at its owning page, registry data inside a compatibility matrix is the document's own record, and an ordering selector (`latest` session, `newest` commit) states a cursor, never freshness.
 - Rejected: The neo look lands at 2.14.0+; the curve default moved at 2.13.0 — restore the spline with the prior key.
-- Accepted: The look key accepts `neo`; the curve default is `rounded`, and `basis` restores the spline.
+- Accepted: `look` accepts `neo`; the curve default is `rounded`, and `basis` restores the spline.
 - Reason: Behavior is stated as the behavior — the newest stable's truth with no band; a genuine wire or persistence version boundary is a positive property stated once at its codec owner.
 - Reframe: State the current truth plain; delete the band, the date, and the freshness word, and route any real pin to the owning manifest.
 
@@ -188,8 +188,8 @@ Prose restating a rule a deterministic tool already enforces — a gate check, l
 
 - Detection: A rule sentence whose enforcement lives in a named tool's check vocabulary, config, or fixer; a coverage claim enumerating a tool's checks is the same class read from the claim side.
 - Rejected: Table cell-count equality, pipe escaping, and the rendered width cap are mechanically checked.
-- Accepted: The gate's `Check` vocabulary owns the mechanical census; a class it does not carry is review work.
-- Reason: The tool's vocabulary is the system of record; prose names the authority and states only the judgment no tool carries.
+- Accepted: `Check` vocabulary owns the mechanical census; a class the gate does not carry is review work.
+- Reason: A tool's vocabulary is the system of record; prose names the authority and states only the judgment no tool carries.
 - Reframe: Defer to the owning tool by name; delete the enumerated coverage and the restated rule.
 
 ## [20]-[SAME_DECISION_SPREAD]
@@ -258,8 +258,8 @@ A page that legally owns a delegated discipline re-spells the sub-anatomy a temp
 
 - Detection: A discipline an upstream instruction file routes to this page, stated with its obligation AND the row, marker, or touch-point anatomy a template or roster spells verbatim. Read the delegation: the obligation is owned, the anatomy is the template's. CHAIN_RESTATEMENT deletes a chain law this page never owned; this class keeps the delegated obligation and demotes only its re-spelled anatomy, so a naive whole-deletion over-deletes the obligation while re-spelling forks the anatomy.
 - Rejected: Admission and row anatomy follow the docgen rulings template — a row dies only when its fact AND its why both live at one durable surface, and a guard-grade row names the wrong move it forecloses, its correct route, and its reopen predicate.
-- Accepted: The campaign maintains a `RULINGS.md` registry every pass; its admission bar, tier placement, and row anatomy follow the docgen rulings template.
-- Reason: The obligation is owned here; the template owns the anatomy, and one pointer naming the deferred concerns carries it without forking the spelling. Owning a discipline never licenses owning its sub-rosters.
+- Accepted: Every pass maintains the `RULINGS.md` registry; its admission bar, tier placement, and row anatomy follow the docgen rulings template.
+- Reason: This page owns the obligation, the template owns the anatomy, and one pointer naming the deferred concerns carries it without forking the spelling.
 - Reframe: Keep the obligation clause; replace every re-spelled sub-anatomy with one pointer naming the template and the concerns it owns, then audit the same entry for a sibling anatomy left inline.
 
 ## [27]-[ROSTER_PREAMBLE]
@@ -269,7 +269,7 @@ A header entry enumerates the members of a set, and the following entries each e
 - Detection: A lead or bullet listing the techniques, stages, or moves of a set, immediately followed by entries each owning one, where deleting the header loses no member the detail entries do not already name. SAME_DECISION_SPREAD owns one decision restated in new words, ENUMERATION_ANCHOR owns a roster frozen as the contract with no detail entries beneath it, and this class owns the header-to-detail duplication of a member set whose members each already get an expanding entry.
 - Rejected: `RED-TEAM: counterfactual, diff-of-the-next-feature, long-tail attack, and cold re-review` — followed by a dedicated entry re-teaching the counterfactual and another the diff-of-the-next-feature.
 - Accepted: `RED-TEAM — the terminal pre-mortem that rebuilds rather than annotates`, the detailed moves owned by their own entries and only an undetailed move named in the charter.
-- Reason: The detail entries own each expanded member; the header re-lists what they already carry, and a member with no detail entry is the only one the charter still names.
+- Reason: Detail entries own each expanded member; the header re-lists what they already carry, and a member with no detail entry is the only one the charter still names.
 - Reframe: Cut the header roster to a bare charter; keep in it only the members no detail entry expands.
 
 ## [28]-[REGISTER_FILLER]

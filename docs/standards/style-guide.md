@@ -19,17 +19,18 @@ When owners conflict, choose the repo-local term only when a current route or co
 
 ## [03]-[SENTENCES]
 
-Use a front-and-close paragraph shape: sentence one leads with the owning subject and states the rule, claim, scope, outcome, or transition, and the last closes on the consequence, boundary, confirmation, or route the reader retains.
+Use a front-and-close paragraph shape: the opening sentence states the rule, claim, or scope, and the closing sentence lands the consequence, boundary, or route the reader retains.
 
 [KEEP_OR_CONVERT]:
 - Keep a standalone sentence when it leads, transitions, captions, closes, states a consequence, names a route boundary, or marks a gap.
 - Convert a sentence to `Label: value` only when the value is scanned, quoted, or updated independently.
 - Convert local detail to a note, alert, or row-owned record only when its scope is local to one row, claim, risk, or artifact.
 - Delete or fold a sentence that only repeats emphasis.
-- State law in the positive form; the fix for a forked or restated line is deletion, never a substitute `never X` whose correct form is left unwritten. A prohibition earns words only where it guards a rule violated under pressure and carries its enforcing mechanism in the same clause.
+- State law in the positive form; a prohibition earns words only where it guards a rule violated under pressure and carries its enforcing mechanism in the same clause.
 
 [MECHANICS]:
-- Build each law sentence on an owning subject in the front slot and an owning verb that exercises ownership, one decision to a sentence; split a clause that fuses a charter statement with separable mechanism so each keeps its own subject.
+- Give each law sentence one decision; split a clause fusing a charter statement with separable mechanism so each keeps its own subject.
+- Treat a definite-article opener as a voice defect: seat the acting owner as subject under a present-active verb; repair holds only when the subject moved, never when the determiner changed or dropped.
 - Coordinating conjunctions join equal-rank ideas: `for`, `and`, `nor`, `but`, `or`, `yet`, and `so`.
 - Use a comma before a coordinating conjunction joining two independent clauses.
 - Omit the comma for imperative clauses sharing an implied subject unless contrast, length, or ambiguity requires it.
@@ -67,7 +68,7 @@ Use one term for one concept inside a bounded context. Product names, package na
 - Use spaced em dashes, spelled as the `—` character, only for prose interruptions.
 - En dashes carry inclusive ranges and name-based compounds outside copyable text.
 - Hyphenate compound modifiers before nouns when needed for clarity; omit hyphens after `-ly` adverbs; use a suspended hyphen for shared compounds such as `short- and long-term`.
-- Prefer sentence splits or vertical lists over semicolon-ended bullets.
+- Use sentence splits or vertical lists over semicolon-ended bullets.
 
 [QUOTES_NUMBERS]:
 - Use numerals for versions, measurements, commands, flags, identifiers, dates, editions, counts, thresholds, and compared values.
@@ -102,4 +103,4 @@ Examples prove shape or prevent misuse. Place them beside the rule they clarify.
 - Carry meaning through text, not through color, position, shape, pointer movement, screenshots, or sound alone.
 - Provide text equivalents for visual, audio, or screenshot-only information — diagrams carry `accTitle`/`accDescr`, glyph-heavy structures carry adjacent prose stating the relation they encode. A syntax-teaching fence inside a diagram skill's own reference corpus is exempt where the directives corrupt or pollute the taught grammar and adjacent prose already states the relation.
 - Use input-neutral UI verbs when keyboard, pointer, touch, voice, or automation can perform the action; preserve exact UI labels when the label is the action target.
-- Prefer conventional grammar and punctuation for machine translation.
+- Use conventional grammar and punctuation so machine translation holds.

@@ -7,7 +7,7 @@
 ## [01]-[INDEX]
 
 - [01]-[<cluster-token>]: <route-hook-mechanism-owner>
-- [02]-[SHAPE_FOLD]: the shape-op fold, its case vocabulary, and the content-keyed receipt
+- [02]-[SHAPE_FOLD]: `ShapeFold` op dispatch, its case vocabulary, and the content-keyed receipt
 
 ## [02]-[<cluster-token>]
 

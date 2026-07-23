@@ -15,10 +15,10 @@ A work-file entry buries its state in a prose sentence instead of a greppable `[
     ```markdown accepted
     - [0042]-[BLOCKED]: persistence seam codec
         - Capability: Content-addressed decode across the wire
-        - Anchors: The codec owner and the artifact index
-        - Tension: The decode contract is unresolved
+        - Anchors: Codec owner and artifact index
+        - Tension: Decode contract unresolved
     ```
-- Reason: The leader carries identity and state as one greppable token; an agent filters the ledger on `[BLOCKED]` without parsing bodies.
+- Reason: A leader carries identity and state as one greppable token; an agent filters the ledger on `[BLOCKED]` without parsing bodies.
 - Reframe: Compose the leader as `[<ID>]-[<STATUS>]:` and advance by editing the token alone — `[0042]-[BLOCKED]:` becomes `[0042]-[ACTIVE]:` — with no prose move narration.
 
 ## [02]-[STATUS_VOCABULARY]
