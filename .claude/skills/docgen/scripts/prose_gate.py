@@ -78,6 +78,7 @@ class Check(StrEnum):
     SELF_COUNT = "self-count"
     SETEXT_HEADING = "setext-heading"
     SIBLING_POINTER = "sibling-pointer"
+    STRATA_ROW = "strata-row"
     SKILL_BUNDLE_ORPHAN = "skill-bundle-orphan"
     SKILL_BUNDLE_ROUTER = "skill-bundle-router"
     SKILL_DESCRIPTION = "skill-description"
@@ -300,6 +301,7 @@ CITATION_LEAD = re.compile(r"(?:Table|Clause|Section|Annex|Figure|Chapter|Note|P
 # Spaced double or triple hyphens ride prose as an em dash; the spelled character is the only legal interrupter.
 EM_DASH_ASCII = re.compile(r"(?<=\s)-{2,3}(?=\s)")
 # Section-anchored pointers couple prose to a sibling's interior; a bare owner mention stays the legal one-line pointer form.
+STRATA_ROW_KEY = re.compile(r"^- S\d+(?:\u2013S?\d+)?\s")
 POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#[A-Z][A-Z0-9_]+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
 FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
@@ -819,6 +821,26 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                     f"router card {len(line)} cols > cap {cap}; one owner, one charter phrase — demote the tail",
                 )
             )
+        if (
+            path.name == "ARCHITECTURE.md"
+            and last_rubric == "STRATA"
+            and not template
+            and not (path.parent.name == ".planning" and path.parent.parent.name == "libs")
+        ):
+            if line.startswith(("    -", "\t-")):
+                rows.append(row(path, number, Check.STRATA_ROW, "fail", "nested seating row; seatings are flat `S<N>`-keyed bullets"))
+            elif STRATA_ROW_KEY.match(line) and len(line) > cap:
+                rows.append(row(path, number, Check.STRATA_ROW, "fail", f"seating row {len(line)} cols > cap {cap}; one decision per keyed row"))
+            elif line.startswith("- ") and not STRATA_ROW_KEY.match(line) and not line.startswith("- `"):
+                rows.append(
+                    row(
+                        path,
+                        number,
+                        Check.STRATA_ROW,
+                        "warn",
+                        "seating row lacks its `S<N>` key; a code-span-led strata-external citizen is the one legal keyless row",
+                    )
+                )
         if heading := HEADING.match(line):
             headings.append(Heading(number, len(heading.group("level")), heading.group("title")))
             rubrics = re.findall(r"\[([A-Z][A-Z0-9_]*)\]", heading.group("title"))
@@ -855,13 +877,9 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
         if not template and not EXAMPLE_LINE.match(line):
             if ARTICLE_ANNOTATION.match(line):
-                rows.append(
-                    row(path, number, Check.ARTICLE_OPENER, "fail", f"annotation opens on 'the'{ARTICLE_CURE}")
-                )
+                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"annotation opens on 'the'{ARTICLE_CURE}"))
             elif ARTICLE_FRAGMENT.match(line):
-                rows.append(
-                    row(path, number, Check.ARTICLE_OPENER, "fail", f"entry opens on 'the'{ARTICLE_CURE}")
-                )
+                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"entry opens on 'the'{ARTICLE_CURE}"))
         if item := LIST_ITEM.match(line):
             if item.group("mark") in "*+":
                 rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
@@ -887,13 +905,13 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 )
         if not line.lstrip().startswith("|"):
             prose.extend(prose_spans(line, number))
-            if pointered and line.strip() and not EXAMPLE_LINE.match(line):
+            if line.strip() and not EXAMPLE_LINE.match(line) and not template and not teaching(path):
                 delinked = LINK.sub(" ", line)
                 rows.extend(
                     row(path, number, Check.SIBLING_POINTER, "warn", f"{hit.group(0)} anchors a sibling's interior; compose its law silently")
                     for hit in POINTER.finditer(delinked)
                 )
-                if not HEADING.match(line) and re.search(rf"(?<![\w/.-]){re.escape(path.name)}\b", delinked):
+                if pointered and not HEADING.match(line) and re.search(rf"(?<![\w/.-]){re.escape(path.name)}\b", delinked):
                     rows.append(row(path, number, Check.SIBLING_POINTER, "warn", f"{path.name} names itself; a page never self-references"))
         stripped = line.strip()
         plain = (
@@ -1121,13 +1139,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
         if EXAMPLE_LINE.match(span.text):
             if not QUOTE_LINE.match(span.text):
                 rows.extend(
-                    row(
-                        doc.path,
-                        span.line,
-                        Check.ARTICLE_OPENER,
-                        "fail",
-                        f"{hit.group(0).lstrip('.!?:; ')}{ARTICLE_CURE}",
-                    )
+                    row(doc.path, span.line, Check.ARTICLE_OPENER, "fail", f"{hit.group(0).lstrip('.!?:; ')}{ARTICLE_CURE}")
                     for hit in SENTENCE_ARTICLE.finditer(QUOTED_SPAN.sub(" ", span.text))
                 )
             continue

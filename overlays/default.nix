@@ -36,7 +36,7 @@ final: prev: let
     # Attr absence is nixpkgs drift (rename/removal) or a typo, never a platform fact — nixpkgs attrs exist on every platform; fail loud.
     assert lib.assertMsg (prev ? ${row.attr}) "${name}: attr '${row.attr}' absent from the package set (nixpkgs drift or typo)"; row;
 
-  # Lane admission contract: a row missing a required field fails the ledger build; `extensionSecurityFields`-class vocabularies are executable here.
+  # Lane admission contract: a row missing a required field fails the ledger build; each lane's `requiredFields` vocabulary is executable here.
   checkExtensionLane = lane: def:
     def
     // {

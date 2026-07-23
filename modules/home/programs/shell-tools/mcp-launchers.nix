@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the MCP observability surface — `forge-mcp` emitting
 # schema=forge-mcp/v1 receipts across outdated/doctor/drift/reconcile/generate/roots/snoop, the shared supervised-stdio lane binding each server
-# subtree to client liveness, the Maghz postgres DSN launcher, and the Rhino router gate. Launcher code never touches providers or credentials.
+# subtree to client liveness, and the Rhino router gate. Launcher code never touches providers or credentials.
 {
   config,
   lib,

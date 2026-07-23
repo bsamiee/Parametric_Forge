@@ -2,15 +2,15 @@
 
 <architecture-lead-2-3-sentences: the unit's charter in owning voice — what it owns, the one invariant band it lowers onto, and its boundary to the peers it aligns with by contract, never by reference.>
 
-<!-- source-only: scope — this template governs the branch `libs/<lang>/.planning/ARCHITECTURE.md` and folder `<package>/ARCHITECTURE.md` altitudes; Tier-0 `libs/.planning/ARCHITECTURE.md` keeps its prose-law form and takes no seam diagram and no [ROUTING]. Unused sections omit and survivors renumber, so canonical numbering here is the full-set numbering. Branch grain earns [04]-[INTERNAL] (one flowchart per subsystem spine) and [05]-[ROUTING] (the merged extension table); [03]-[SEAMS] stays the cross-runtime registry. Folder grain carries every section, and [05]-[ROUTING] is earned only where the folder owns 3+ extension classes, else its growth law stays on design pages. -->
+<!-- source-only: scope — this template governs the branch `libs/<lang>/.planning/ARCHITECTURE.md` and folder `<package>/ARCHITECTURE.md` altitudes; Tier-0 `libs/.planning/ARCHITECTURE.md` keeps its prose-law form and takes no seam diagram and no [ROUTING]. Unused sections omit and survivors renumber, so canonical numbering here is the full-set numbering. Branch grain earns [04]-[INTERNAL] (one flowchart per subsystem spine) and [05]-[ROUTING] (the merged extension table); [03]-[SEAMS] stays the cross-runtime registry. Folder grain carries every section, and [05]-[ROUTING] is earned only where the folder owns 3+ extension classes, else its growth law stays on design pages. Branch grain also earns [06]-[ADMISSION_POLICY] — the admission-route law — where no registry owns it; a folder-grain extension section ([NAMESPACES], [FAULT_REGISTRY]) is earned only by real ownership no canonical section carries. -->
 
 <!-- source-only: diagram convention — every committed fence carries exactly one frontmatter `config:` block setting `layout: elk` and `flowchart: {curve: linear, padding: 25}`, nothing more. -->
 
-<!-- source-only: NO themeVariables, themeCSS, theme, classDef, style, linkStyle, or %%{init}%% — theming is a render-time concern the mermaid-diagramming skill owns; accTitle and accDescr are required on every fence. -->
+<!-- source-only: NO themeVariables, themeCSS, theme, classDef, style, linkStyle, or %%{init}%% — theming is a render-time concern the mermaid-diagramming skill owns; accTitle and accDescr are required on every fence, and accDescr is one sentence under 150 columns naming the diagram's question, never its edge or node roster. -->
 
 <!-- source-only: STRATA archetype uses `flowchart TB`, one subgraph per stratum, every edge downward labeled `[IMPORT]: SourcedType` (one sourced type per edge), one `forbidden:` edge naming the rejected upward direction. -->
 
-<!-- source-only: SEAM archetype uses `flowchart LR`, home owners in one subgraph, one node per counterpart, edges `[KIND]: shape-name` spelled verbatim from the owning endpoint, node shape carrying direction — `{{x}}` bidirectional peer, `([x])` one-way source or sink, `[(x)]` store. -->
+<!-- source-only: SEAM archetype uses `flowchart LR`, home owners in one subgraph, one node per counterpart, edges `[KIND]: shape-name` spelled verbatim from the owning endpoint, node shape carrying direction — `{{x}}` bidirectional peer, `([x])` one-way source or sink, `[(x)]` store. A seam edge collapses every contract between its endpoints at that kind; an instance states per-edge exceptions only, never the convention. -->
 
 <!-- source-only: INTERNAL archetype uses `flowchart TB|LR`, stage or owner nodes in flow order, edge labels naming the carried fact or verb, a subsystem spine reading entry -> transform -> egress. -->
 
@@ -29,11 +29,11 @@ core/
 
 ## [02]-[STRATA]
 
-Strata rank the unit interior: one subgraph per stratum, every consumption edge pointing down and naming one sourced type, one forbidden upward edge. Prose names the member-resolved seatings where a folder's owners split across ranks. Every altitude carries this section, and the diagram follows the STRATA archetype.
+Strata rank the unit interior: keys run `S0` upward and strata is the only rank vocabulary — wave, band, and tier never name a rank. One subgraph per stratum, every consumption edge pointing down and naming one sourced type, one forbidden upward edge. Member-seating is a flat bullet list — every row keyed `S<N>` (a banded rank keys `S<N>–S<M>`), one seating decision per row under 150 columns, a stratum carrying more decisions taking sibling keyed rows; rows carry only law the fence cannot show — merged-node resolutions, absent-edge law, cycle prevention, cross-stratum seatings. An edge the diagram labels never restates in a row, and nesting or a prose block never carries a seating. Every altitude carries this section, and the diagram follows the STRATA archetype.
 
 <strata-graph diagram: one subgraph per stratum, downward `[IMPORT]: SourcedType` edges, one `forbidden:` upward edge>
 
-<member-seating prose: the ranks and their sourced primitives, naming where one folder's owners seat across separate strata>
+<member-seating rows: flat `S<N>`-keyed bullets, one decision each, under 150 columns>
 
 ## [03]-[SEAMS]
 

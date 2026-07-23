@@ -8,8 +8,8 @@
 {...}: {
   imports = [
     ./karabiner
+    ./linearmouse
     ./nvim
-    ./vscode
     ./wezterm
     ./yazi
     ./zellij

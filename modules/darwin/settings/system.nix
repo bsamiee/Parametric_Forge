@@ -92,13 +92,22 @@ in {
     };
     ".GlobalPreferences" = {
       "com.apple.sound.beep.sound" = mkDefault "/System/Library/Sounds/Tink.aiff";
-      "com.apple.mouse.scaling" = mkDefault 0.0;
+      "com.apple.mouse.scaling" = mkDefault 3.0; # 0.0 floors tracking speed; 3.0 is the GUI slider max
     };
     iCal."first day of week" = mkDefault "System Setting";
     # --- [APPLICATION_SPECIFIC_SYSTEM_SETTINGS]
     CustomUserPreferences = {
+      NSGlobalDomain = {
+        "com.apple.mouse.linear" = mkDefault true; # flat curve; driverless mice inherit the acceleration hump otherwise
+        "com.apple.scrollwheel.scaling" = mkDefault 1.0;
+      };
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;
+      };
+      "com.lujjjh.LinearMouse" = {
+        showInDock = mkDefault false; # menu-bar-only posture; the launchd agent owns startup
+        menuBarBatteryDisplayMode = mkDefault "\"below20\""; # MX battery surfaces at 20% — Codable string, embedded quotes required
+        betaChannelOn = mkDefault true; # 0.11.4 betas carry the Bluetooth hardwareDPI fix and Bolt high-resolution wheel
       };
     };
   };

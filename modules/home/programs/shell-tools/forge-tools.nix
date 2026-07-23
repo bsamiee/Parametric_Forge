@@ -613,7 +613,6 @@
       ledger-nuget-xdg = [".local/share/NuGet" 8 "dotnet" "dotnet nuget locals http-cache --clear"];
       ledger-gemini = [".gemini" 5 "antigravity" "operator: clear browser_recordings trees"];
       ledger-antigravity = [".antigravity" 3 "antigravity" "operator: dedupe extension versions"];
-      ledger-python-envs = [".local/state/forge-python-envs" 5 "languages/scientific-tools.nix" "forge-scientific-sync"];
       ledger-pnpm-store = [".local/share/pnpm" 4 "environments/languages.nix" "pnpm store prune"];
       ledger-pnpm-cache = [".cache/pnpm" 2 "environments/languages.nix" "pnpm store prune"];
       ledger-claude-root = [".claude" 4 "agent-root retention rows" "forge-cleanup apply (age rows)"];
@@ -638,7 +637,7 @@
       homebrew-root-dot-trust = [".homebrew" "open" "split trust state; collapse rides homebrew ownership re-adjudication"];
       jgit-probe-state = [".config/jgit" "retention-ignore" "host-probe cache; regrows on JGit use"];
       claude-desktop-config = ["Library/Application Support/Claude/claude_desktop_config.json" "registry-candidate" "joins the MCP registration drift lanes when the generator lands"];
-      vscode-extensions-root = [".vscode" "keep" "live VS Code extension estate; manifest extension lane owns admission"];
+      vscode-extensions-root = [".vscode" "keep" "live VS Code extension estate; operator-managed"];
       cloudstorage-variant-roots = ["Library/CloudStorage" "operator-disposal" "stale GoogleDrive account-variant roots; FileProvider-managed, never bulk-trashed"];
       sqlean-unmanaged-dylibs = [".local/share/sqlean" "operator-disposal" "unmanaged copies; live owner the sqlean/sqlite-forge rows in overlays/manifest.nix"];
       secret-custody-gcloud = [".config/gcloud" "custody-row" "credential DBs under config; key-name-only receipts"];

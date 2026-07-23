@@ -74,6 +74,7 @@
     gdk-pixbuf
     ghostscript
     harfbuzz
+    icu # PyICU sdist: pkg-config icu-i18n/icu-uc, dev+out outputs ride the search-path projection
     lcms2
     leptonica
     libheif # HEIF/HEIC input
@@ -137,8 +138,30 @@
 
   energyRuntimePrelude = toolchainEnv.shellExports toolchainEnv.energyEnv;
 
+  # gfortran rejects clang's --ld-path linker selector, so the wrapper strips it: the global LDFLAGS shim
+  # below stays clang-scoped while Fortran links fall through to the toolchain ld.
   gfortranTool = pkgs.writeShellScriptBin "gfortran" ''
-    exec ${pkgs.gfortran}/bin/gfortran "$@"
+    args=()
+    for arg in "$@"; do
+      case "$arg" in
+        --ld-path=*) ;;
+        *) args+=("$arg") ;;
+      esac
+    done
+    exec ${pkgs.gfortran}/bin/gfortran "''${args[@]}"
+  '';
+
+  # Apple ld64 rejects the -Wl,--start-group/--end-group pairs CMake emits for compiler-ID ^Clang (rhino3dm's
+  # vendored draco); the shim drops the two flags and execs the toolchain ld.
+  ldGroupFilter = pkgs.writeShellScriptBin "forge-ld-group-filter" ''
+    args=()
+    for arg in "$@"; do
+      case "$arg" in
+        --start-group | --end-group) ;;
+        *) args+=("$arg") ;;
+      esac
+    done
+    exec "$("${pkgs.clang}/bin/clang" -print-prog-name=ld)" "''${args[@]}"
   '';
 
   # One search-path projection per lib set; dev outputs precede out per key.
@@ -153,49 +176,6 @@
     library = lib.makeLibraryPath libs;
   };
   scientificPaths = mkSearchPaths scientificNativeLibs;
-  forgePythonStateHome = config.xdg.stateHome;
-  forgePythonEnvPrelude = python: profile: ''
-    forge_python_root() {
-      if [ -n "''${FORGE_PROVISION_ROOT:-}" ]; then
-        [ -d "$FORGE_PROVISION_ROOT" ] || {
-          printf '%s: FORGE_PROVISION_ROOT is not a directory: %s\n' "${profile}" "$FORGE_PROVISION_ROOT" >&2
-          exit 1
-        }
-        (cd "$FORGE_PROVISION_ROOT" && pwd -P)
-        return
-      fi
-      dir="$PWD"
-      while [ "$dir" != "/" ]; do
-        if [ -f "$dir/pyproject.toml" ] || [ -f "$dir/uv.lock" ] || [ -x "$dir/.venv/bin/python" ]; then
-          (cd "$dir" && pwd -P)
-          return
-        fi
-        dir="''${dir%/*}"
-        [ -n "$dir" ] || dir="/"
-      done
-
-      pwd -P
-    }
-
-    forge_python_root_key() {
-      hash="$(printf '%s' "$(forge_python_root)" | sha256sum)"
-      printf '%.12s\n' "$hash"
-    }
-
-    forge_python_env_default() {
-      abi="$(${python}/bin/python3 -c 'import sys; print(sys.implementation.cache_tag)')"
-      root_key="$(forge_python_root_key)"
-      state_home=${lib.escapeShellArg forgePythonStateHome}
-      printf '%s/forge-python-envs/%s/%s/${profile}\n' "$state_home" "$abi" "$root_key"
-    }
-
-    if [ -n "''${FORGE_PYTHON_ENVIRONMENT:-}" ]; then
-      UV_PROJECT_ENVIRONMENT="$FORGE_PYTHON_ENVIRONMENT"
-    else
-      UV_PROJECT_ENVIRONMENT="$(forge_python_env_default)"
-    fi
-    export UV_PROJECT_ENVIRONMENT
-  '';
   forgeScientificEnv = pkgs.writeShellApplication {
     name = "forge-scientific-env";
     # python315 comes ahead of ambient project shims so `forge-scientific-env python3` is deterministic.
@@ -205,13 +185,25 @@
       export UV_PYTHON_DOWNLOADS="never"
       export PYO3_USE_ABI3_FORWARD_COMPATIBILITY="1"
       export MACOSX_DEPLOYMENT_TARGET="${darwinMinVersion}"
+
+      # Build-parallelism governor: uv fans package builds while each build fans compiler jobs, so an upgrade
+      # sweep on a wheel-less interpreter multiplies into a compile storm. Caps hold the product near the core
+      # count; a caller's explicit value wins. Meson/ninja builds ignore the job caps and stay bounded only by
+      # the outer uv fan.
+      cores="$(getconf _NPROCESSORS_ONLN)"
+      builds=$((cores / 5)); [ "$builds" -ge 2 ] || builds=2
+      jobs=$((cores / 3)); [ "$jobs" -ge 2 ] || jobs=2
+      export UV_CONCURRENT_BUILDS="''${UV_CONCURRENT_BUILDS:-$builds}"
+      export CARGO_BUILD_JOBS="''${CARGO_BUILD_JOBS:-$jobs}"
+      export CMAKE_BUILD_PARALLEL_LEVEL="''${CMAKE_BUILD_PARALLEL_LEVEL:-$jobs}"
+      export MAKEFLAGS="''${MAKEFLAGS:--j$jobs}"
       ${energyRuntimePrelude}
 
       export CC="${pkgs.clang}/bin/clang"
       export CXX="${pkgs.clang}/bin/clang++"
       export AR="${llvmTools}/bin/llvm-ar"
       export RANLIB="${llvmTools}/bin/llvm-ranlib"
-      export FC="${pkgs.gfortran}/bin/gfortran"
+      export FC="${gfortranTool}/bin/gfortran"
       export F77="$FC"
       export F90="$FC"
 
@@ -247,31 +239,17 @@
       export CXXFLAGS="-D_DARWIN_C_SOURCE''${CXXFLAGS:+ $CXXFLAGS}"
       export CPPFLAGS="-I${openmpDev}/include''${CPPFLAGS:+ $CPPFLAGS}"
       export LDFLAGS="-L${openmpLib}/lib''${LDFLAGS:+ $LDFLAGS}"
+      ${lib.optionalString isDarwin ''
+        # rhino3dm: route links through the ld group-filter shim; grpcio: vendored c-ares needs arpa/nameser.h,
+        # absent from every nixpkgs apple-sdk — -idirafter appends the system SDK headers last, after Nix includes.
+        export LDFLAGS="$LDFLAGS --ld-path=${ldGroupFilter}/bin/forge-ld-group-filter"
+        if sdk_path="$(/usr/bin/xcrun --show-sdk-path 2>/dev/null)"; then
+          export CPPFLAGS="$CPPFLAGS -idirafter $sdk_path/usr/include"
+        fi
+      ''}
       export CMAKE_ARGS="-DCMAKE_C_FLAGS=-D_DARWIN_C_SOURCE -DCMAKE_CXX_FLAGS=-D_DARWIN_C_SOURCE -DOpenMP_C_FLAGS=-fopenmp -DOpenMP_CXX_FLAGS=-fopenmp -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=${openmpLib}/lib/libomp${sharedLibExt}''${CMAKE_ARGS:+ $CMAKE_ARGS}"
 
       exec "$@"
-    '';
-  };
-  forgeScientificSync = pkgs.writeShellApplication {
-    name = "forge-scientific-sync";
-    runtimeInputs = [forgeScientificEnv pkgs.coreutils pkgs.python315 pkgs.uv];
-    text = ''
-      ${forgePythonEnvPrelude pkgs.python315 "scientific"}
-      project_root="$(forge_python_root)"
-      cd "$project_root"
-      forge-scientific-env uv sync --locked --no-default-groups --python "${pkgs.python315}/bin/python3" "$@"
-
-      if [ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ]; then
-        crc32c_version="$("$UV_PROJECT_ENVIRONMENT/bin/python" -c 'from importlib.metadata import version; print(version("google-crc32c"))' 2>/dev/null || true)"
-        if [ -n "$crc32c_version" ]; then
-          forge-scientific-env uv pip install \
-            --python "$UV_PROJECT_ENVIRONMENT/bin/python" \
-            --no-cache \
-            --no-binary google-crc32c \
-            --reinstall \
-            "google-crc32c==$crc32c_version"
-        fi
-      fi
     '';
   };
 in {
@@ -283,6 +261,5 @@ in {
     ++ scientificRuntimeTools
     ++ [
       forgeScientificEnv
-      forgeScientificSync
     ];
 }

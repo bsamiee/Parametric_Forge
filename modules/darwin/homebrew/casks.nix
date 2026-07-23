@@ -20,6 +20,7 @@ _: {
     "alt-tab" # Window switching
     "bettertouchtool" # Touch/gesture management
     "jordanbaird-ice" # Menu bar manager
+    "linearmouse" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
     "raycast" # Launcher/productivity
 
     # --- [BROWSERS_INTERNET]

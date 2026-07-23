@@ -406,55 +406,6 @@
     })
     nvimRows;
 
-  # --- [VSCODE_EDITOR_ROWS]
-  # One nav vocabulary drives terminal AND editor: weztermRows nav rows are the source and each editor twin derives per row — a new direction is one
-  # wezterm row whose VS Code twin lands with it or breaks loudly on a missing dispatch arm. `!terminalFocus` keeps the terminal raw so zellij under
-  # it navigates as under wezterm; `shadows` names the displaced mac editor default. Layer chords sit on 4-modifier combos VS Code ships none for; the
-  # sentinel tail keeps hand rows alive (HM's keybindings writes a read-only symlink); a non-nav bind is one extra-lane tuple, `args` its payload.
-  vscodeNavCommand = {
-    nav-left = "workbench.action.navigateLeft";
-    nav-down = "workbench.action.navigateDown";
-    nav-up = "workbench.action.navigateUp";
-    nav-right = "workbench.action.navigateRight";
-  };
-  vscodeNavShadows = {
-    nav-down = "editor.action.joinLines";
-    nav-up = "deleteAllRight";
-    nav-right = "notebook.centerActiveCell";
-  };
-  vscodeRows =
-    map (r:
-      {
-        key = "ctrl+${r.key}";
-        command = vscodeNavCommand.${r.action};
-        when = "!terminalFocus";
-        label = "focus ${lib.removePrefix "nav-" r.action} (workbench plane)";
-        mirror = "wezterm:${r.id}";
-      }
-      // lib.optionalAttrs (vscodeNavShadows ? ${r.action}) {shadows = vscodeNavShadows.${r.action};})
-    (builtins.filter (r: r.class == "nav") weztermRows)
-    ++ map (row ["key" "command" "when" "label" "mirror" "shadows" "args"]) [];
-  # Projection-ready keybinding objects: exactly the fields VS Code reads.
-  vscodeBindOf = r:
-    {inherit (r) key command;}
-    // lib.optionalAttrs (r ? when) {inherit (r) when;}
-    // lib.optionalAttrs (r ? args) {inherit (r) args;};
-  vscodeRegRows = map (r:
-    {
-      chord_id = "vscode:${r.key}";
-      consumer = "vscode";
-      physical_layer = "none";
-      mods = "";
-      inherit (r) key label;
-      action = r.command;
-      scope = "editor:${r.when or "global"}";
-      projection_path = "Library/Application Support/Code/User/keybindings.json";
-      rendered = builtins.toJSON (vscodeBindOf r);
-    }
-    // lib.optionalAttrs (r ? mirror) {inherit (r) mirror;}
-    // lib.optionalAttrs (r ? shadows) {inherit (r) shadows;})
-  vscodeRows;
-
   # --- [PROJECTIONS]
   # Every table string emitted inside a KDL quoted string passes through this.
   kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
@@ -697,11 +648,10 @@
       rendered = weztermDisplay r;
     })
     weztermRows
-    ++ nvimRegRows
-    ++ vscodeRegRows;
+    ++ nvimRegRows;
 
   # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must be unique; shift-glyph expansion rides the same bindKeys the KDL uses,
-  # the WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by design, and a vscode claim is key+when (disjoint when-contexts are legal).
+  # and the WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by design.
   dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
   claims = lib.concatMap (r:
     map (c: "${r.consumer}|${c}")
@@ -710,8 +660,6 @@
       then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
       else if r.consumer == "wezterm"
       then ["${r.mods} ${r.key}"]
-      else if r.consumer == "vscode"
-      then ["${r.key}|${r.scope}"]
       else [r.key]
     ))
   register;
@@ -727,7 +675,6 @@ in {
       inherit layers modes register;
       nvim.rows = nvimRows;
       wezterm.rows = weztermRows;
-      vscode.binds = map vscodeBindOf vscodeRows;
       karabiner.rules =
         [capsRule]
         ++ map (l:

@@ -1,0 +1,1595 @@
+{
+    "$ref": "#/definitions/Configuration",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "Auxiliary": {
+            "const": 2,
+            "description": "Auxiliary button, usually the wheel button or the middle button.",
+            "type": "number"
+        },
+        "Back": {
+            "const": 3,
+            "description": "Forth button, typically the back button.",
+            "type": "number"
+        },
+        "Configuration": {
+            "additionalProperties": false,
+            "properties": {
+                "$schema": {
+                    "type": "string"
+                },
+                "schemes": {
+                    "description": "A scheme is a collection of settings that are activated in specified circumstances.",
+                    "examples": [
+                        {
+                            "if": {
+                                "device": {
+                                    "category": "mouse"
+                                }
+                            },
+                            "scrolling": {
+                                "reverse": "vertical"
+                            }
+                        }
+                    ],
+                    "items": {
+                        "$ref": "#/definitions/Scheme"
+                    },
+                    "title": "Schemes",
+                    "type": "array"
+                }
+            },
+            "type": "object"
+        },
+        "Forward": {
+            "const": 4,
+            "description": "Fifth button, typically the forward button.",
+            "type": "number"
+        },
+        "HexString": {
+            "pattern": "^0x[0-9a-fA-F]+$",
+            "type": "string"
+        },
+        "Int": {
+            "type": "number"
+        },
+        "IntString": {
+            "pattern": "^\\d+$",
+            "type": "string"
+        },
+        "PhysicalButton": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Primary"
+                },
+                {
+                    "$ref": "#/definitions/Secondary"
+                },
+                {
+                    "$ref": "#/definitions/Auxiliary"
+                },
+                {
+                    "$ref": "#/definitions/Back"
+                },
+                {
+                    "$ref": "#/definitions/Forward"
+                },
+                {
+                    "type": "number"
+                }
+            ]
+        },
+        "Primary": {
+            "const": 0,
+            "description": "Primary button, usually the left button.",
+            "type": "number"
+        },
+        "Scheme": {
+            "additionalProperties": false,
+            "properties": {
+                "buttons": {
+                    "$ref": "#/definitions/Scheme.Buttons",
+                    "description": "Customize the buttons behavior.",
+                    "title": "Buttons settings"
+                },
+                "if": {
+                    "$ref": "#/definitions/SingleValueOrArray%3CScheme.If%3E",
+                    "description": "This value can be a single condition or an array. A scheme is activated if at least one of the conditions is met.",
+                    "title": "Scheme activation conditions"
+                },
+                "logitech": {
+                    "$ref": "#/definitions/Scheme.Logitech",
+                    "description": "Customize supported Logitech HID++ device behavior.",
+                    "title": "Logitech settings"
+                },
+                "pointer": {
+                    "$ref": "#/definitions/Scheme.Pointer",
+                    "description": "Customize the pointer acceleration and speed.",
+                    "title": "Pointer settings"
+                },
+                "scrolling": {
+                    "$ref": "#/definitions/Scheme.Scrolling",
+                    "description": "Customize the scrolling behavior.",
+                    "title": "Scrolling settings"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons": {
+            "additionalProperties": false,
+            "properties": {
+                "autoScroll": {
+                    "$ref": "#/definitions/Scheme.Buttons.AutoScroll",
+                    "description": "Click or hold a mouse button, then move the pointer to continuously scroll like the Windows middle-button autoscroll behavior.",
+                    "title": "Auto scroll"
+                },
+                "clickDebouncing": {
+                    "$ref": "#/definitions/Scheme.Buttons.ClickDebouncing",
+                    "description": "Ignore rapid clicks with a certain time period.",
+                    "title": "Debounce button clicks"
+                },
+                "gesture": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture",
+                    "description": "Press and hold a button while dragging to trigger gestures like switching desktop spaces or opening Mission Control.",
+                    "title": "Gesture button"
+                },
+                "mappings": {
+                    "description": "Assign actions to buttons.",
+                    "items": {
+                        "$ref": "#/definitions/Scheme.Buttons.Mapping"
+                    },
+                    "title": "Button mappings",
+                    "type": "array"
+                },
+                "switchPrimaryButtonAndSecondaryButtons": {
+                    "default": false,
+                    "description": "If the value is true, the primary button will be the right button and the secondary button will be the left button.",
+                    "title": "Switch primary and secondary buttons",
+                    "type": "boolean"
+                },
+                "universalBackForward": {
+                    "$ref": "#/definitions/Scheme.Buttons.UniversalBackForward",
+                    "default": false,
+                    "description": "If the value is true, the back and forward side buttons will be enabled in Safari and some other apps that do not handle these side buttons correctly. If the value is \"backOnly\" or \"forwardOnly\", only universal back or universal forward will be enabled.",
+                    "title": "Universal back and forward"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons.AutoScroll": {
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "default": false,
+                    "description": "Indicates if auto scroll is enabled.",
+                    "type": "boolean"
+                },
+                "mode": {
+                    "$ref": "#/definitions/SingleValueOrArray%3CScheme.Buttons.AutoScroll.Mode%3E",
+                    "description": "Use \\\"toggle\\\" to click once and move until clicking again, \\\"hold\\\" to scroll only while the trigger stays pressed, or provide both to support both behaviors.",
+                    "title": "Activation mode"
+                },
+                "speed": {
+                    "default": 1,
+                    "description": "Adjust the auto scroll speed multiplier.",
+                    "type": "number"
+                },
+                "trigger": {
+                    "$ref": "#/definitions/Scheme.Buttons.AutoScroll.Trigger",
+                    "description": "Choose the mouse button and modifier keys used to activate auto scroll.",
+                    "title": "Trigger"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons.AutoScroll.Hold": {
+            "const": "hold",
+            "description": "Auto scroll is active only while the trigger button remains pressed.",
+            "type": "string"
+        },
+        "Scheme.Buttons.AutoScroll.Mode": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.AutoScroll.Toggle"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.AutoScroll.Hold"
+                }
+            ]
+        },
+        "Scheme.Buttons.AutoScroll.Toggle": {
+            "const": "toggle",
+            "description": "Click once to enter auto scroll and click again to exit.",
+            "type": "string"
+        },
+        "Scheme.Buttons.AutoScroll.Trigger": {
+            "additionalProperties": false,
+            "properties": {
+                "button": {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.Button",
+                    "description": "The button number. See https://developer.apple.com/documentation/coregraphics/cgmousebutton",
+                    "title": "Button number"
+                },
+                "command": {
+                    "description": "Indicates if the command modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "control": {
+                    "description": "Indicates if the control modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "option": {
+                    "description": "Indicates if the option modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "shift": {
+                    "description": "Indicates if the shift modifier key should be pressed.",
+                    "type": "boolean"
+                }
+            },
+            "required": ["button"],
+            "type": "object"
+        },
+        "Scheme.Buttons.ClickDebouncing": {
+            "additionalProperties": false,
+            "properties": {
+                "buttons": {
+                    "description": "Buttons to debounce.",
+                    "items": {
+                        "$ref": "#/definitions/PhysicalButton"
+                    },
+                    "type": "array"
+                },
+                "resetTimerOnMouseUp": {
+                    "description": "If the value is true, the timer will be reset on mouse up.",
+                    "type": "boolean"
+                },
+                "timeout": {
+                    "$ref": "#/definitions/Int",
+                    "description": "The time period in which rapid clicks are ignored."
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons.Gesture": {
+            "additionalProperties": false,
+            "properties": {
+                "actions": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.Actions",
+                    "description": "Actions to trigger for each gesture direction.",
+                    "title": "Gesture actions"
+                },
+                "button": {
+                    "$ref": "#/definitions/PhysicalButton",
+                    "deprecated": true,
+                    "description": "Deprecated. Use trigger instead.",
+                    "title": "Button"
+                },
+                "cooldownMs": {
+                    "$ref": "#/definitions/Int",
+                    "default": 500,
+                    "description": "The cooldown period in milliseconds between gestures to prevent double-triggering.",
+                    "maximum": 2000,
+                    "minimum": 0,
+                    "title": "Cooldown"
+                },
+                "deadZone": {
+                    "$ref": "#/definitions/Int",
+                    "default": 40,
+                    "description": "The tolerance in pixels for the non-dominant axis to prevent accidental gestures.",
+                    "maximum": 100,
+                    "minimum": 0,
+                    "title": "Dead zone"
+                },
+                "enabled": {
+                    "default": false,
+                    "description": "If the value is true, the gesture button feature is enabled.",
+                    "title": "Enable gesture button",
+                    "type": "boolean"
+                },
+                "threshold": {
+                    "$ref": "#/definitions/Int",
+                    "default": 50,
+                    "description": "The distance in pixels that must be dragged before triggering a gesture.",
+                    "maximum": 200,
+                    "minimum": 20,
+                    "title": "Threshold"
+                },
+                "trigger": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.Trigger",
+                    "description": "Choose the mouse button and modifier keys used to activate gestures.",
+                    "title": "Trigger"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons.Gesture.Actions": {
+            "additionalProperties": false,
+            "properties": {
+                "down": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.GestureAction",
+                    "default": "appExpose",
+                    "description": "Action to trigger when dragging down.",
+                    "title": "Swipe down action"
+                },
+                "left": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.GestureAction",
+                    "default": "missionControl.spaceLeft",
+                    "description": "Action to trigger when dragging left.",
+                    "title": "Swipe left action"
+                },
+                "right": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.GestureAction",
+                    "default": "missionControl.spaceRight",
+                    "description": "Action to trigger when dragging right.",
+                    "title": "Swipe right action"
+                },
+                "up": {
+                    "$ref": "#/definitions/Scheme.Buttons.Gesture.GestureAction",
+                    "default": "missionControl",
+                    "description": "Action to trigger when dragging up.",
+                    "title": "Swipe up action"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Buttons.Gesture.GestureAction": {
+            "enum": ["none", "missionControl.spaceLeft", "missionControl.spaceRight", "missionControl", "appExpose", "showDesktop", "launchpad"],
+            "type": "string"
+        },
+        "Scheme.Buttons.Gesture.Trigger": {
+            "additionalProperties": false,
+            "properties": {
+                "button": {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.Button",
+                    "description": "The button number. See https://developer.apple.com/documentation/coregraphics/cgmousebutton",
+                    "title": "Button number"
+                },
+                "command": {
+                    "description": "Indicates if the command modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "control": {
+                    "description": "Indicates if the control modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "option": {
+                    "description": "Indicates if the option modifier key should be pressed.",
+                    "type": "boolean"
+                },
+                "shift": {
+                    "description": "Indicates if the shift modifier key should be pressed.",
+                    "type": "boolean"
+                }
+            },
+            "required": ["button"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping": {
+            "anyOf": [
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "action": {
+                            "$ref": "#/definitions/Scheme.Buttons.Mapping.Action",
+                            "title": "Action"
+                        },
+                        "button": {
+                            "$ref": "#/definitions/Scheme.Buttons.Mapping.Button",
+                            "description": "The button number. See https://developer.apple.com/documentation/coregraphics/cgmousebutton",
+                            "title": "Button number"
+                        },
+                        "command": {
+                            "description": "Indicates if the command modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "control": {
+                            "description": "Indicates if the control modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "hold": {
+                            "description": "Indicates if keyboard shortcut actions should stay pressed while the button is held. When enabled, LinearMouse sends key down on button press and key up on button release instead of repeating the shortcut.",
+                            "type": "boolean"
+                        },
+                        "option": {
+                            "description": "Indicates if the option modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "repeat": {
+                            "description": "Indicates if key repeat is enabled. If the value is true, the action will be repeatedly executed when the button is hold according to the key repeat settings in System Settings.",
+                            "type": "boolean"
+                        },
+                        "shift": {
+                            "description": "Indicates if the shift modifier key should be pressed.",
+                            "type": "boolean"
+                        }
+                    },
+                    "required": ["button"],
+                    "type": "object"
+                },
+                {
+                    "additionalProperties": false,
+                    "properties": {
+                        "action": {
+                            "$ref": "#/definitions/Scheme.Buttons.Mapping.Action",
+                            "title": "Action"
+                        },
+                        "command": {
+                            "description": "Indicates if the command modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "control": {
+                            "description": "Indicates if the control modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "option": {
+                            "description": "Indicates if the option modifier key should be pressed.",
+                            "type": "boolean"
+                        },
+                        "scroll": {
+                            "$ref": "#/definitions/Scheme.Buttons.Mapping.ScrollDirection",
+                            "description": "Map scroll events to specific actions.",
+                            "title": "Scroll direction"
+                        },
+                        "shift": {
+                            "description": "Indicates if the shift modifier key should be pressed.",
+                            "type": "boolean"
+                        }
+                    },
+                    "required": ["scroll"],
+                    "type": "object"
+                }
+            ]
+        },
+        "Scheme.Buttons.Mapping.Action": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.SimpleAction"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.Run"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollUpWithDistance"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollDownWithDistance"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollLeftWithDistance"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollRightWithDistance"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.KeyPress"
+                }
+            ]
+        },
+        "Scheme.Buttons.Mapping.AppExpose": {
+            "const": "appExpose",
+            "description": "Application windows.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.Auto": {
+            "const": "auto",
+            "description": "Do not modify the button behavior.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.Button": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/PhysicalButton"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.LogitechControlButton"
+                }
+            ]
+        },
+        "Scheme.Buttons.Mapping.DisplayBrightnessDown": {
+            "const": "display.brightnessDown",
+            "description": "Display: Brightness down.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.DisplayBrightnessUp": {
+            "const": "display.brightnessUp",
+            "description": "Display: Brightness up.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.Key": {
+            "enum": [
+                "enter",
+                "tab",
+                "space",
+                "delete",
+                "escape",
+                "command",
+                "shift",
+                "capsLock",
+                "option",
+                "control",
+                "commandRight",
+                "shiftRight",
+                "optionRight",
+                "controlRight",
+                "arrowLeft",
+                "arrowRight",
+                "arrowDown",
+                "arrowUp",
+                "home",
+                "pageUp",
+                "backspace",
+                "end",
+                "pageDown",
+                "f1",
+                "f2",
+                "f3",
+                "f4",
+                "f5",
+                "f6",
+                "f7",
+                "f8",
+                "f9",
+                "f10",
+                "f11",
+                "f12",
+                "f13",
+                "f14",
+                "f15",
+                "f16",
+                "f17",
+                "f18",
+                "f19",
+                "f20",
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "j",
+                "k",
+                "l",
+                "m",
+                "n",
+                "o",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "u",
+                "v",
+                "w",
+                "x",
+                "y",
+                "z",
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "=",
+                "-",
+                ";",
+                "'",
+                ",",
+                ".",
+                "/",
+                "\\",
+                "`",
+                "[",
+                "]",
+                "numpadPlus",
+                "numpadMinus",
+                "numpadMultiply",
+                "numpadDivide",
+                "numpadEnter",
+                "numpadEquals",
+                "numpadDecimal",
+                "numpadClear",
+                "numpad0",
+                "numpad1",
+                "numpad2",
+                "numpad3",
+                "numpad4",
+                "numpad5",
+                "numpad6",
+                "numpad7",
+                "numpad8",
+                "numpad9"
+            ],
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.KeyPress": {
+            "additionalProperties": false,
+            "properties": {
+                "keyPress": {
+                    "description": "Keyboard: Keyboard shortcut.",
+                    "items": {
+                        "$ref": "#/definitions/Scheme.Buttons.Mapping.Key"
+                    },
+                    "type": "array"
+                }
+            },
+            "required": ["keyPress"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.KeyboardBrightnessDown": {
+            "const": "keyboard.brightnessDown",
+            "description": "Keyboard: Brightness down.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.KeyboardBrightnessUp": {
+            "const": "keyboard.brightnessUp",
+            "description": "Keyboard: Brightness up.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.Launchpad": {
+            "const": "launchpad",
+            "description": "Launchpad.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.LogitechControlButton": {
+            "additionalProperties": false,
+            "properties": {
+                "controlID": {
+                    "$ref": "#/definitions/Int",
+                    "description": "Logitech control ID (CID)."
+                },
+                "kind": {
+                    "const": "logitechControl",
+                    "description": "Logitech control button identifier.",
+                    "type": "string"
+                },
+                "productID": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/HexString"
+                        },
+                        {
+                            "$ref": "#/definitions/Int"
+                        }
+                    ],
+                    "description": "Match a specific Logitech device product ID when needed."
+                },
+                "serialNumber": {
+                    "description": "Match a specific Logitech device serial number when needed.",
+                    "type": "string"
+                }
+            },
+            "required": ["kind", "controlID"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.LookUpAndDataDetectors": {
+            "const": "lookUpAndDataDetectors",
+            "description": "Look up & data detectors.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaFastForward": {
+            "const": "media.fastForward",
+            "description": "Media: Fast forward.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaMute": {
+            "const": "media.mute",
+            "description": "Media: Toggle mute.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaNext": {
+            "const": "media.next",
+            "description": "Media: Next.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaPlayPause": {
+            "const": "media.playPause",
+            "description": "Media: Play / pause.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaPrevious": {
+            "const": "media.previous",
+            "description": "Media: Previous.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaRewind": {
+            "const": "media.rewind",
+            "description": "Media: Rewind.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaVolumeDown": {
+            "const": "media.volumeDown",
+            "description": "Media: Volume down.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MediaVolumeUp": {
+            "const": "media.volumeUp",
+            "description": "Media: Volume up.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MissionControl": {
+            "const": "missionControl",
+            "description": "Mission Control.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MissionControlSpaceLeft": {
+            "const": "missionControl.spaceLeft",
+            "description": "Mission Control: Move left a space.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MissionControlSpaceRight": {
+            "const": "missionControl.spaceRight",
+            "description": "Mission Control: Move right a space.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseButtonBack": {
+            "const": "mouse.button.back",
+            "description": "Mouse: Button: Act as back button.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseButtonForward": {
+            "const": "mouse.button.forward",
+            "description": "Mouse: Button: Act as forward button.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseButtonLeft": {
+            "const": "mouse.button.left",
+            "description": "Mouse: Button: Act as left button.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseButtonMiddle": {
+            "const": "mouse.button.middle",
+            "description": "Mouse: Button: Act as middle button.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseButtonRight": {
+            "const": "mouse.button.right",
+            "description": "Mouse: Button: Act as right button.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollDown": {
+            "const": "mouse.wheel.scrollDown",
+            "description": "Mouse: Wheel: Scroll down.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollDownWithDistance": {
+            "additionalProperties": false,
+            "properties": {
+                "mouse.wheel.scrollDown": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance",
+                    "description": "Mouse: Wheel: Scroll down a certain distance."
+                }
+            },
+            "required": ["mouse.wheel.scrollDown"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollLeft": {
+            "const": "mouse.wheel.scrollLeft",
+            "description": "Mouse: Wheel: Scroll left.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollLeftWithDistance": {
+            "additionalProperties": false,
+            "properties": {
+                "mouse.wheel.scrollLeft": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance",
+                    "description": "Mouse: Wheel: Scroll left a certain distance."
+                }
+            },
+            "required": ["mouse.wheel.scrollLeft"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollRight": {
+            "const": "mouse.wheel.scrollRight",
+            "description": "Mouse: Wheel: Scroll right.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollRightWithDistance": {
+            "additionalProperties": false,
+            "properties": {
+                "mouse.wheel.scrollRight": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance",
+                    "description": "Mouse: Wheel: Scroll right a certain distance."
+                }
+            },
+            "required": ["mouse.wheel.scrollRight"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollUp": {
+            "const": "mouse.wheel.scrollUp",
+            "description": "Mouse: Wheel: Scroll up.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.MouseWheelScrollUpWithDistance": {
+            "additionalProperties": false,
+            "properties": {
+                "mouse.wheel.scrollUp": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance",
+                    "description": "Mouse: Wheel: Scroll up a certain distance."
+                }
+            },
+            "required": ["mouse.wheel.scrollUp"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.None": {
+            "const": "none",
+            "description": "Prevent the button events.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.Run": {
+            "additionalProperties": false,
+            "properties": {
+                "run": {
+                    "description": "Run a specific command. For example, `\"open -a 'Mission Control'\"`.",
+                    "type": "string"
+                }
+            },
+            "required": ["run"],
+            "type": "object"
+        },
+        "Scheme.Buttons.Mapping.ScrollDirection": {
+            "description": "Scroll direction.",
+            "enum": ["up", "down", "left", "right"],
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.ShowDesktop": {
+            "const": "showDesktop",
+            "description": "Show desktop.",
+            "type": "string"
+        },
+        "Scheme.Buttons.Mapping.SimpleAction": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.Auto"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.None"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MissionControlSpaceLeft"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MissionControlSpaceRight"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MissionControl"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.AppExpose"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.Launchpad"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.ShowDesktop"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.LookUpAndDataDetectors"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.SmartZoom"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.DisplayBrightnessUp"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.DisplayBrightnessDown"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaVolumeUp"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaVolumeDown"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaMute"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaPlayPause"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaNext"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaPrevious"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaFastForward"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MediaRewind"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.KeyboardBrightnessUp"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.KeyboardBrightnessDown"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollUp"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollDown"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollLeft"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseWheelScrollRight"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseButtonLeft"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseButtonMiddle"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseButtonRight"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseButtonBack"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.Mapping.MouseButtonForward"
+                }
+            ]
+        },
+        "Scheme.Buttons.Mapping.SmartZoom": {
+            "const": "smartZoom",
+            "description": "Smart zoom.",
+            "type": "string"
+        },
+        "Scheme.Buttons.UniversalBackForward": {
+            "anyOf": [
+                {
+                    "type": "boolean"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.UniversalBackForward.BackOnly"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.UniversalBackForward.ForwardOnly"
+                }
+            ]
+        },
+        "Scheme.Buttons.UniversalBackForward.BackOnly": {
+            "const": "backOnly",
+            "description": "Enable universal back only.",
+            "type": "string"
+        },
+        "Scheme.Buttons.UniversalBackForward.ForwardOnly": {
+            "const": "forwardOnly",
+            "description": "Enable universal forward only.",
+            "type": "string"
+        },
+        "Scheme.If": {
+            "additionalProperties": false,
+            "properties": {
+                "app": {
+                    "description": "Match apps by providing the bundle ID. For example, `com.apple.Safari`.",
+                    "title": "App",
+                    "type": "string"
+                },
+                "device": {
+                    "$ref": "#/definitions/Scheme.If.Device",
+                    "description": "Match one or more devices. If not provided, the scheme is activated on all devices.",
+                    "title": "Device"
+                },
+                "display": {
+                    "description": "Match displays by providing the display name. For example, `DELL P2415Q`.",
+                    "title": "Display name",
+                    "type": "string"
+                },
+                "groupApp": {
+                    "description": "Match apps by providing the bundle ID of the process group. For example, `org.polymc.PolyMC`.",
+                    "title": "Group app",
+                    "type": "string"
+                },
+                "parentApp": {
+                    "description": "Match apps by providing the bundle ID of the parent process. For example, `org.polymc.PolyMC`.",
+                    "title": "Parent app",
+                    "type": "string"
+                },
+                "processName": {
+                    "description": "Match by the executable file name of the frontmost process (from NSRunningApplication.executableURL.lastPathComponent). Case-sensitive.",
+                    "title": "Process name",
+                    "type": "string"
+                },
+                "processPath": {
+                    "description": "Match by the absolute executable path of the frontmost process (from NSRunningApplication.executableURL.path). Case-sensitive.",
+                    "title": "Process path",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.If.Category": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.If.Mouse"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.If.Trackpad"
+                }
+            ]
+        },
+        "Scheme.If.Device": {
+            "additionalProperties": false,
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/SingleValueOrArray%3CScheme.If.Category%3E",
+                    "description": "The category of the devices.",
+                    "title": "Category"
+                },
+                "productID": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/HexString"
+                        },
+                        {
+                            "$ref": "#/definitions/Int"
+                        }
+                    ],
+                    "description": "The product ID of the devices.",
+                    "examples": ["0xA123"],
+                    "title": "Product ID"
+                },
+                "productName": {
+                    "description": "The product name of the devices.",
+                    "title": "Product name",
+                    "type": "string"
+                },
+                "serialNumber": {
+                    "description": "The serial number of the devices.",
+                    "title": "Serial number",
+                    "type": "string"
+                },
+                "vendorID": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/HexString"
+                        },
+                        {
+                            "$ref": "#/definitions/Int"
+                        }
+                    ],
+                    "description": "The vendor ID of the devices.",
+                    "examples": ["0xA123"],
+                    "title": "Vendor ID"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.If.Mouse": {
+            "const": "mouse",
+            "description": "Match mouse devices.",
+            "title": "Mouse",
+            "type": "string"
+        },
+        "Scheme.If.Trackpad": {
+            "const": "trackpad",
+            "description": "Match trackpad devices.",
+            "title": "Trackpad",
+            "type": "string"
+        },
+        "Scheme.Logitech": {
+            "additionalProperties": false,
+            "properties": {
+                "highResolutionWheel": {
+                    "description": "Enable finer vertical wheel steps on supported Logitech HID++ mice.",
+                    "title": "High resolution wheel",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Pointer": {
+            "additionalProperties": false,
+            "properties": {
+                "acceleration": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "$ref": "#/definitions/Unset"
+                        }
+                    ],
+                    "description": "A number to set acceleration, or \"unset\" to restore system default. If omitted, the previous/merged value applies.",
+                    "maximum": 40,
+                    "minimum": 0,
+                    "title": "Pointer acceleration"
+                },
+                "disableAcceleration": {
+                    "default": false,
+                    "description": "If the value is true, the pointer acceleration will be disabled and acceleration and speed will not take effect.",
+                    "title": "Disable pointer acceleration",
+                    "type": "boolean"
+                },
+                "hardwareDPI": {
+                    "description": "A device-specific hardware DPI value for supported devices. If omitted, no hardware DPI will be applied.",
+                    "minimum": 100,
+                    "title": "Hardware DPI",
+                    "type": "number"
+                },
+                "redirectsToScroll": {
+                    "default": false,
+                    "description": "If the value is true, pointer movements will be redirected to scroll events.",
+                    "title": "Redirects to scroll",
+                    "type": "boolean"
+                },
+                "speed": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "$ref": "#/definitions/Unset"
+                        }
+                    ],
+                    "description": "A number to set speed, or \"unset\" to restore device default. If omitted, the previous/merged value applies.",
+                    "maximum": 1,
+                    "title": "Pointer speed"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Scrolling": {
+            "additionalProperties": false,
+            "properties": {
+                "acceleration": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "type": "number"
+                                },
+                                "vertical": {
+                                    "type": "number"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "default": 1,
+                    "description": "The scrolling acceleration."
+                },
+                "distance": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/Scheme.Scrolling.Distance"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Distance"
+                                },
+                                "vertical": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Distance"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "description": "The distance after rolling the wheel.",
+                    "title": "Scroll distance"
+                },
+                "modifiers": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/Scheme.Scrolling.Modifiers"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers"
+                                },
+                                "vertical": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "title": "Modifier keys settings"
+                },
+                "reverse": {
+                    "anyOf": [
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "type": "boolean"
+                                },
+                                "vertical": {
+                                    "type": "boolean"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "title": "Reverse scrolling"
+                },
+                "smoothed": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/Scheme.Scrolling.Smoothed"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Smoothed"
+                                },
+                                "vertical": {
+                                    "$ref": "#/definitions/Scheme.Scrolling.Smoothed"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "description": "Use a preset curve or fine-tune response, speed, acceleration, and inertia.",
+                    "title": "Smoothed scrolling"
+                },
+                "speed": {
+                    "anyOf": [
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "additionalProperties": false,
+                            "properties": {
+                                "horizontal": {
+                                    "type": "number"
+                                },
+                                "vertical": {
+                                    "type": "number"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ],
+                    "default": 0,
+                    "description": "The scrolling speed."
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Scrolling.Auto": {
+            "const": "auto",
+            "description": "The scrolling distance will not be modified.",
+            "type": "string"
+        },
+        "Scheme.Scrolling.Distance": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Auto"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance.Line"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Distance.Pixel"
+                }
+            ]
+        },
+        "Scheme.Scrolling.Distance.Line": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Int"
+                },
+                {
+                    "$ref": "#/definitions/IntString"
+                }
+            ],
+            "description": "The scrolling distance in lines."
+        },
+        "Scheme.Scrolling.Distance.Pixel": {
+            "description": "The scrolling distance in pixels.",
+            "pattern": "^\\d[1-9]*(\\.\\d+)?px",
+            "type": "string"
+        },
+        "Scheme.Scrolling.Modifiers": {
+            "additionalProperties": false,
+            "properties": {
+                "command": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Action",
+                    "description": "The action when command key is pressed."
+                },
+                "control": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Action",
+                    "description": "The action when control key is pressed."
+                },
+                "option": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Action",
+                    "description": "The action when option key is pressed."
+                },
+                "shift": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Action",
+                    "description": "The action when shift key is pressed."
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.Action": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.None"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Auto"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Ignore"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.PreventDefault"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.AlterOrientation"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.ChangeSpeed"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.Zoom"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.ZoomReversed"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.PinchZoom"
+                },
+                {
+                    "$ref": "#/definitions/Scheme.Scrolling.Modifiers.PinchZoomReversed"
+                }
+            ]
+        },
+        "Scheme.Scrolling.Modifiers.AlterOrientation": {
+            "additionalProperties": false,
+            "description": "Alter the scrolling orientation from vertical to horizontal or vice versa.",
+            "properties": {
+                "type": {
+                    "const": "alterOrientation",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.Auto": {
+            "additionalProperties": false,
+            "description": "Default action.",
+            "properties": {
+                "type": {
+                    "const": "auto",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.ChangeSpeed": {
+            "additionalProperties": false,
+            "description": "Scale the scrolling speed.",
+            "properties": {
+                "scale": {
+                    "description": "The factor to scale the scrolling speed.",
+                    "type": "number"
+                },
+                "type": {
+                    "const": "changeSpeed",
+                    "type": "string"
+                }
+            },
+            "required": ["type", "scale"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.Ignore": {
+            "additionalProperties": false,
+            "description": "Ignore modifier.",
+            "properties": {
+                "type": {
+                    "const": "ignore",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.None": {
+            "additionalProperties": false,
+            "deprecated": true,
+            "description": "Default action.",
+            "properties": {
+                "type": {
+                    "const": "none",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.PinchZoom": {
+            "additionalProperties": false,
+            "description": "Zoom in and out using pinch gestures.",
+            "properties": {
+                "type": {
+                    "const": "pinchZoom",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.PinchZoomReversed": {
+            "additionalProperties": false,
+            "description": "Zoom in and out using reversed pinch gestures.",
+            "properties": {
+                "type": {
+                    "const": "pinchZoomReversed",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.PreventDefault": {
+            "additionalProperties": false,
+            "description": "No action.",
+            "properties": {
+                "type": {
+                    "const": "preventDefault",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.Zoom": {
+            "additionalProperties": false,
+            "description": "Zoom in and out using ⌘+ and ⌘-.",
+            "properties": {
+                "type": {
+                    "const": "zoom",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Modifiers.ZoomReversed": {
+            "additionalProperties": false,
+            "description": "Zoom in and out using reversed ⌘+ and ⌘-.",
+            "properties": {
+                "type": {
+                    "const": "zoomReversed",
+                    "type": "string"
+                }
+            },
+            "required": ["type"],
+            "type": "object"
+        },
+        "Scheme.Scrolling.Smoothed": {
+            "additionalProperties": false,
+            "properties": {
+                "acceleration": {
+                    "description": "The scrolling acceleration.",
+                    "type": "number"
+                },
+                "bouncing": {
+                    "default": true,
+                    "description": "Set to `false` to avoid rubber-band overscroll when smoothed scrolling emits synthetic continuous scroll events.",
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "default": true,
+                    "description": "Set to `false` to explicitly disable inherited smoothed scrolling for this direction.",
+                    "type": "boolean"
+                },
+                "inertia": {
+                    "description": "The scrolling inertia.",
+                    "type": "number"
+                },
+                "preset": {
+                    "$ref": "#/definitions/Scheme.Scrolling.Smoothed.Preset",
+                    "default": "easeInOut",
+                    "description": "The preset curve to use."
+                },
+                "response": {
+                    "description": "How quickly the scrolling responds to input.",
+                    "type": "number"
+                },
+                "speed": {
+                    "description": "The scrolling speed.",
+                    "type": "number"
+                }
+            },
+            "type": "object"
+        },
+        "Scheme.Scrolling.Smoothed.Preset": {
+            "enum": [
+                "custom",
+                "linear",
+                "easeIn",
+                "easeOut",
+                "easeInOut",
+                "quadratic",
+                "cubic",
+                "quartic",
+                "easeOutCubic",
+                "easeInOutCubic",
+                "easeOutQuartic",
+                "easeInOutQuartic",
+                "smooth"
+            ],
+            "type": "string"
+        },
+        "Secondary": {
+            "const": 1,
+            "description": "Secondary button, usually the right button.",
+            "type": "number"
+        },
+        "SingleValueOrArray<Scheme.Buttons.AutoScroll.Mode>": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.Buttons.AutoScroll.Mode"
+                },
+                {
+                    "items": {
+                        "$ref": "#/definitions/Scheme.Buttons.AutoScroll.Mode"
+                    },
+                    "type": "array"
+                }
+            ]
+        },
+        "SingleValueOrArray<Scheme.If.Category>": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.If.Category"
+                },
+                {
+                    "items": {
+                        "$ref": "#/definitions/Scheme.If.Category"
+                    },
+                    "type": "array"
+                }
+            ]
+        },
+        "SingleValueOrArray<Scheme.If>": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/Scheme.If"
+                },
+                {
+                    "items": {
+                        "$ref": "#/definitions/Scheme.If"
+                    },
+                    "type": "array"
+                }
+            ]
+        },
+        "Unset": {
+            "const": "unset",
+            "description": "A special value that explicitly restores a setting to the system or device default. Currently supported in pointer settings; may be supported more broadly in the future.",
+            "title": "Unset",
+            "type": "string"
+        }
+    }
+}

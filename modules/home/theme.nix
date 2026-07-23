@@ -127,42 +127,6 @@
     ["Invalid" "invalid" palette.foreground null [] palette.red]
   ];
 
-  # Semantic-token projection: language-server styling VS Code textMate rules miss. Same pivot hues folded per family; modifiers express sub-distinction,
-  # never new hues. Server-specific rows below the generic fold are keyed to what nixd, ty, Roslyn, and the builtin TS provider emit; a rule nothing emits
-  # is dead weight, and nixd's overloaded standard legend actively mis-colors Nix under unscoped generic rules.
-  it = c: {
-    foreground = c.hex;
-    fontStyle = "italic";
-  };
-  semanticRules =
-    lib.genAttrs ["namespace" "class" "enum" "interface" "struct" "type" "typeParameter" "recordClass:csharp" "recordStruct:csharp"] (_: palette.cyan.hex)
-    // lib.genAttrs ["function" "method" "macro" "extensionMethod:csharp" "keyword.static:nix"] (_: palette.green.hex)
-    // lib.genAttrs ["variable" "property" "method:nix" "type:nix" "field:csharp"] (_: palette.blue.hex)
-    // lib.genAttrs ["enumMember" "variable.readonly" "number" "macro:nix" "builtinConstant:python" "constant:csharp"] (_: palette.purple.hex)
-    // lib.genAttrs ["keyword" "controlKeyword:csharp" "macro:csharp"] (_: palette.pink.hex)
-    // {
-      parameter = it palette.blue;
-      string = palette.yellow.hex;
-      comment = it palette.comment;
-      decorator = palette.magenta.hex;
-      operator = palette.subtle.hex;
-      # nixd overloads a standard legend: booleans ride `macro`, attr names `method`, with-scoped vars `interface`, lambda formals and null
-      # `regexp`, select paths `type`, builtins `keyword.static`, unresolved names `variable.abstract` — every correction is language-scoped
-      # so the generic rows above keep their real meaning elsewhere.
-      "interface:nix" = it palette.blue;
-      "regexp:nix" = it palette.blue;
-      "variable.abstract:nix" = palette.red.hex;
-      # ty (Python): pyright-lineage custom token types.
-      "selfParameter:python" = it palette.pink;
-      "clsParameter:python" = it palette.pink;
-      # Roslyn (C#): custom token family; ReassignedVariable is its mutable-variable signal (boolean form adds the flag without
-      # replacing weight or slant from other rules).
-      "stringVerbatim:csharp" = palette.yellow.hex;
-      "stringEscapeCharacter:csharp" = palette.orange.hex;
-      "*.ReassignedVariable".underline = true;
-      "*.deprecated".strikethrough = true;
-    };
-
   # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs; tab titles, prompts, and dashboards
   # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty glyph:
   # the harness edit path can silently strip BMP private-use glyphs, and an empty glyph is a dead icon row every consumer renders as nothing.
@@ -229,7 +193,6 @@
       ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
       ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons git badges" "bound"]
       ["nvim" "${apps}/nvim/default.nix" "lua" "roles palette scopes git" "bound"]
-      ["vscode" "${apps}/vscode/default.nix" "jsonc-sentinel" "roles palette git ansi16 scopes semantic fonts" "bound"]
       ["bat" "${st}/bat.nix" "tmTheme" "scopes" "bound"]
       ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "diff blameRamp git" "bound"]
       ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette git" "bound"]
@@ -607,17 +570,6 @@
       roles.surface.overlay
       roles.surface.selected
     ];
-    # textMate rules for VS Code editor.tokenColorCustomizations.
-    vscodeTokenRules =
-      map (row: {
-        inherit (row) name scope;
-        settings =
-          {foreground = row.color.hex;}
-          // lib.optionalAttrs (row ? style) {fontStyle = row.style;};
-      })
-      syntaxScopes;
-    # Semantic-token rules for editor.semanticTokenColorCustomizations.
-    vscodeSemanticRules = semanticRules;
   };
 in {
   options.forge.theme = lib.mkOption {

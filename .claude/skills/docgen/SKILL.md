@@ -4,7 +4,7 @@ description: >-
     Owns all prose, markdown files and the comments inside source files and fences
     through a register law, an anti-anchoring rule against rosters, counts, and freezes,
     a named defect catalog, file-kind templates, and a deterministic gate and fixer.
-    Use when authoring, editing, reviewing, or markdown files of any kind, and comments in
+    Use when authoring, editing, or reviewing markdown of any kind and comments in
     source files; when designing a document schema or marker vocabulary; when pruning code
     comments; or on "clean up this doc", "tighten the prose", "this doc is stale".
 ---
@@ -13,32 +13,30 @@ description: >-
 
 Write durable prose as law for an agent that loads it cold: every line changes that agent's next action or poisons it. Give every fact one owner, every line one decision — delete everything else, never soften it — inside skill bundles exactly as on any durable surface.
 
-Hold two registers apart: an instruction surface — skill, standard, template comment, prompt — commands the writer in imperative demands; durable content states timeless owner-voice law. Command the act or state the law; describe nothing.
+Every sentence commands the writer or legislates the surface — imperative demand or owner-voice present-active law; description, narration, and explanation are the defect, not a register. Route by owner name and one charter phrase; inventorying what a routed surface owns mirrors it and rots on its next edit.
 
 ## [01]-[ROUTING]
 
 Load all files in `references/` before creating or editing prose; load the matching examples when repairing that container.
 
 [REFERENCES]:
-- [01]-[STRUCTURE](references/structure.md): altitude tiers, routing law, example craft, lead law, file-kind schemas, marker design
-- [02]-[DEFECTS](references/defects.md): defect classes — definitions, detection tests, pairs, reframe rules
+- [01]-[STRUCTURE](references/structure.md): where a fact lands and the shape every recurring container keeps
+- [02]-[DEFECTS](references/defects.md): defect classes — detection test and reframe per class
 - [03]-[REWRITING](references/rewriting.md): rebuilding an existing document without inheriting its frame
 
-[STANDARDS]: compose container and surface mechanics from `docs/standards/` as given, never restated — `formatting.md` owns headings, tokens, glyphs, fences, and machine surfaces; `information-structure.md` owns containers, tables, records, lists, and section shapes; `style-guide.md` owns wording, sentences, terminology, and punctuation.
-
-[TEMPLATES]: start a new instance of a known file kind from its template; leave zero residual slot tokens.
-- [01]-[IDEAS](templates/ideas.template.md): copy verbatim; fill only the H1 token and lead slot
-- [02]-[TASKLOG](templates/tasklog.template.md): copy verbatim; fill only the H1 token and lead slot
+[TEMPLATES]: start a new instance of a known file kind from its template — copy the structure exactly, fill the declared slots, leave zero residual slot tokens.
+- [01]-[IDEAS](templates/ideas.template.md): idea-pool card grammar and the promotion law
+- [02]-[TASKLOG](templates/tasklog.template.md): task-card grammar and status leaders
 - [03]-[README](templates/readme.template.md): exact structure, slots only; a multi-folder unit groups cards under one `[FOLDER_TOKEN]:` per folder
 - [04]-[ARCHITECTURE](templates/architecture.template.md): exact structure, replace only the slots
 - [05]-[SPEC](templates/spec.template.md): exact section spine; slots carry their budgets, cluster count follows the domain
 - [06]-[API_CATALOG](templates/api-catalog.template.md): exact structure, replace only the slots
-- [07]-[RULINGS](templates/rulings.template.md): copy the section spine; a row guards a re-litigation no other surface already homes
+- [07]-[RULINGS](templates/rulings.template.md): permanent decision registry; guard-whys migrate off ephemeral spec pages as a move, never a copy
 
 [EXAMPLES]: symptom-indexed worked pairs; consult the matching set before building or repairing the container.
 - [01]-[TABLES](examples/tables.md): table crimes and their structural repairs
-- [02]-[LISTS](examples/lists.md): mega bullets, shredded splits, same-decision siblings, the classified repair
-- [03]-[MARKERS](examples/markers.md): entry leaders, status vocabularies, glyphs
+- [02]-[LISTS](examples/lists.md): list crimes and their classified repairs
+- [03]-[MARKERS](examples/markers.md): marker crimes and the declared-vocabulary repair
 - [04]-[INTROS](examples/intros.md): leads that legislate and the rejected frames
 
 [SCRIPTS]:
@@ -54,7 +52,7 @@ uv run scripts/prose_gate.py [--json] <paths...>
 uv run scripts/prose_gate.py fix [--write] <paths...>
 ```
 
-Run the gate on every touched durable doc before returning; run `fix` for the deterministic repairs its `Repair` vocabulary owns — dry-run prints the plan, `--write` mutates — and resolve every judgment-tier `SKIP` row by hand. Gate and fixer share one table model, so a grid whose canonical render exceeds the width cap fails at any padding. Its `Check` vocabulary owns the mechanical census; treat every class it does not carry as review work against the catalog.
+Run the gate on every touched durable doc before returning; run `fix` for the deterministic repairs its `Repair` vocabulary owns — dry-run prints the plan, `--write` mutates — and resolve every judgment-tier `SKIP` row by hand. The fixer is the sole markdown formatter: every table expands, aligns, and pads to its canonical render through `fix --write`, never by hand. Gate and fixer share one table model, so a grid whose canonical render exceeds the width cap fails at any padding. Its `Check` vocabulary owns the mechanical census; treat every class it does not carry as review work against the catalog.
 
 Card files and design-page `[RESEARCH]` sections census against the marker grammar their own source-only template comment declares, so an authoring agent self-checks its document class without the corpus rail.
 
@@ -148,7 +146,7 @@ Layout blocks carry `mergeEdges: true` and `nodePlacementStrategy: NETWORK_SIMPL
 
 [ADHERENCE_TEST] — On an always-loaded instruction surface, delete every line the agent already obeys regardless of its truth; retained rules dilute one another's pull. Keep only the line whose removal causes a mistake the agent otherwise avoids.
 
-[ONE_OWNER] — Give every fact exactly one prose owner; a second copy at any altitude is a fork waiting to drift. Interrogate every law sentence — who else binds this fact: the always-loaded chain, a sibling doc or registry, a deterministic tool? — holding the page against the other loaded surfaces, because a sentence load-bearing in isolation is the prime suspect. Point with the owner and its one consumed symbol, never internals; compose doctrine silently downstream — never recite, re-teach, rename, or re-define it.
+[ONE_OWNER] — Give every fact one prose owner; a second copy at any altitude forks on first edit. Pick the owner by lifespan — the home outlives the fact: a spec page converts to code and its prose dies, so a guard-why that must survive conversion homes at the permanent registry; relocation is a move, the losing surface stripped in the same pass. Interrogate every law sentence — who else binds it: the always-loaded chain, a sibling doc or registry, a deterministic tool? — a sentence load-bearing in isolation is the prime suspect. Point with the owner and its one consumed symbol; compose doctrine silently downstream, never re-taught.
 
 [ANCHOR] — Never name a shape prose walls a rebuild inside: a member roster walls it to today's census, a forbidden-alternative litany to the anti-shape, a frozen count or seal to the ceiling. State the extension rule — how one new row, case, or member lands — where the anchor stood, and leave the roster on the surface tooling keeps true.
 

@@ -50,7 +50,7 @@ One fact carried at more than one altitude or in more than one wording — a sea
 - Rejected: The same "a second store is the named defect" clause closing forty pages.
 - Accepted: One charter statement carries the prohibition; pages compose it silently.
 - Reason: One owner per fact; every other site adheres without restating.
-- Reframe: Pick the owner — the executable copy when one exists — state the fact there once, and convert every twin to silence or a pointer.
+- Reframe: Pick the owner — the executable copy when one exists, else the surface whose lifespan outlives the fact — state it there once, and convert every twin to silence or a pointer.
 
 ## [06]-[REPORT_FRAME]
 
@@ -200,7 +200,7 @@ One decision spread across a passage as near-similar restatements: N sentences i
 - Rejected: Slices stay small so depth beats breadth. A small slice frees capacity for depth. Freed capacity never funds early finish — it deepens the fix. Depth, not breadth, is what a small slice buys.
 - Accepted: Slices stay small so freed capacity deepens the fix, never finishing early.
 - Reason: Four spellings carry two decisions — small slices buy depth, freed capacity never funds early finish; the merge keeps each as its own clause and the two pure restatements die.
-- Reframe: Restructure, never brute-delete: collapse the run into fewer, higher-resolution rulings where every distinct decision survives as its own clause or entry and only restatements merge — a nuance lost in the collapse is the same defect as the accumulation. A merged form is never a concatenated mega-entry and never unstructured prose where a structured container serves; resolution and coherence rise while lines fall.
+- Reframe: Restructure, never brute-delete: collapse the run into fewer, higher-resolution rulings where every distinct decision survives as its own clause or entry and only restatements merge — a nuance lost in the collapse is the same defect as the accumulation. A merge re-verifies each retained qualifier against its own decision — a reopen, exception, or scope clause attached to the wrong sibling is a fluent falsehood. A merged form is never a concatenated mega-entry and never unstructured prose where a structured container serves; resolution and coherence rise while lines fall.
 
 ## [21]-[CHAIN_RESTATEMENT]
 

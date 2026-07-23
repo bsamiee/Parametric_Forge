@@ -106,7 +106,7 @@
   };
   receiptSources =
     map (r: {grain = "kv";} // r)
-    (map kvSource ["redeploy" "maintenance|nix-maintenance" "drift|nix-drift" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "vscode" "fonts||forge-project-fonts" "theme-proof"]
+    (map kvSource ["redeploy" "maintenance|nix-maintenance" "drift|nix-drift" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {

@@ -57,10 +57,7 @@
   cssSansStack = lib.concatStringsSep ", " ([roles.sans] ++ chains.mono ++ ["monospace"]);
 
   # Literal-safe shaping: contextual alternates on, every ligature class off.
-  features = {
-    harfbuzz = ["calt=1" "liga=0" "clig=0" "dlig=0"];
-    vscode = "'calt' on, 'liga' off, 'clig' off, 'dlig' off";
-  };
+  features.harfbuzz = ["calt=1" "liga=0" "clig=0" "dlig=0"];
 
   overridePath = "${config.xdg.configHome}/forge/fonts/override.json";
   receiptsFold = import ./programs/shell-tools/receipts.nix;
@@ -281,8 +278,7 @@ in {
           harfbuzz_features = features.harfbuzz;
           override_path = overridePath;
         };
-        # Quoted mono chain for editor-class consumers; the CSS stacks carry a generic fallback, and the sans stack falls through to the mono chain.
-        vscodeFamily = lib.concatMapStringsSep ", " (f: "'${f}'") chains.mono;
+        # CSS stacks carry a generic fallback; the sans stack falls through to the mono chain.
         cssMono = lib.concatStringsSep ", " (chains.mono ++ ["monospace"]);
         fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.label.size)}pt";
         # Screenshot (carbon) and proof (theme HTML) CSS: one font shorthand plus the two scalar CSS forms the consumers previously hardcoded.

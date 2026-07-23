@@ -93,6 +93,7 @@ in {
       pkgs.duf # Disk free overview
       pkgs.dust # Directory size tree; config owned by dust.nix
       pkgs.fq # jq for binary formats; structured decode of media, executables, captures
+      pkgs.gawk # GNU awk on the interactive PATH; macOS ships BSD awk only, scripts carry gawk via runtimeInputs
       pkgs.gping # Graphing ping
       pkgs.grex # Regex generator from test cases
       (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p*|--plain|-[!-]*p*") # Hex viewer; color rides TTY detection
