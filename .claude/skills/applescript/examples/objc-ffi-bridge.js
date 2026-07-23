@@ -13,15 +13,15 @@ ObjC.import('Carbon');
 // never a cast at a call site. 'pointer' borrows an AEDesc*, 'void *' takes caller-owned bytes,
 // and 'void **' takes an out slot the bridge cannot type.
 const C_ABI = {
-    AEDeterminePermissionToAutomateTarget: ['int', ['pointer', 'unsigned int', 'unsigned int', 'bool']],
     AEGetDescDataSize: ['long', ['pointer']],
     AEGetDescData: ['short', ['pointer', 'void *', 'long']],
     OSACopyScriptingDefinitionFromURL: ['int', ['id', 'int', 'void **']],
 };
-Object.keys(C_ABI).forEach((name) => ObjC.bindFunction(name, C_ABI[name]));
+Object.keys(C_ABI).forEach((name) => {
+    ObjC.bindFunction(name, C_ABI[name]);
+});
 
 const CODE_WIDTH = 4;
-const WILDCARD = '****';
 
 // A four-char code folds big-endian into the unsigned int the ABI declares, and every byte counts:
 // 'psn ' and 'cut ' carry a trailing space, so no trim or pad runs on either edge of the fold.
@@ -52,14 +52,6 @@ function borrowAEDesc(descriptor, use) {
 // or not, so target absence arrives as a status from the call, never as a nil descriptor to guard.
 function bundleTarget(bundleID) {
     return $.NSAppleEventDescriptor.descriptorWithBundleIdentifier(bundleID);
-}
-
-// One worked call site for the pointer-typed row. The raw OSStatus crosses back untranslated, because
-// the consent verdict belongs to the caller's permission lane, and askUserIfNeeded stays false.
-function consentStatus(bundleID, eventClass = WILDCARD, eventID = WILDCARD) {
-    return borrowAEDesc(bundleTarget(bundleID), (aeDesc) =>
-        $.AEDeterminePermissionToAutomateTarget(aeDesc, fourCharCode(eventClass), fourCharCode(eventID), false),
-    );
 }
 
 // Two calls over one borrow: the size call bounds the allocation and the data call fills it. NSMutableData
@@ -105,7 +97,6 @@ function run(argv) {
         bundleID,
         descriptorType: codeReceipt(target.descriptorType),
         payload: descriptorPayload(target),
-        consent: consentStatus(bundleID),
         dictionary: bundlePath ? scriptingDefinition(bundlePath) : null,
     });
 }

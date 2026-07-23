@@ -74,9 +74,9 @@ Some concepts carry no inspectable relation, and a fence forced onto them decora
 - A discrete cross-product matrix — role by resource, feature by tier — is a table, or `block-beta` when placement itself is the meaning; the decision logic it feeds is a separate dispatch shape.
 - An unordered roster is a list; drawing edges between peers invents relations the material never claimed.
 - A single relation across fewer than three parts is a clause; the root's mark threshold owns this floor.
-- A quantity distribution, trend, or correlation is a chart, owned by the dataviz skill — the quantitative mermaid rows hold only while the artifact must stay a fence.
+- A quantity distribution, trend, or correlation is a chart, not a diagram — the quantitative mermaid rows hold only while the artifact must stay a fence.
 - A narrative whose value is its wording — a decision record, a contract clause — stays prose; a diagram of it launders emphasis as structure.
 
 ## [04]-[COMPOSITE_SUBJECTS]
 
-A real subject usually carries several shapes at once: a job queue is a mode machine (one job's lifecycle), a conversation (the worker protocol), and a queue snapshot (the backlog now); a member-resolved dependency lattice co-fires strata and seam-graph, the rungs dominant and the member seams a second view. Partition rule: one diagram per shape, the dominant shape drawn first — dominance belongs to the relation the material most describes, or where a downstream task exists, the relation that task consumes — and every diagram in the set sharing the exact element names so views resolve against each other. Multi-view composition law, the shared-vocabulary rule, and the scenario cross-check are the methodology reference's property.
+A real subject carries several shapes: a job queue is a mode machine (one job's lifecycle), a conversation (the worker protocol), and a queue snapshot (the backlog now); a member-resolved dependency lattice co-fires strata (dominant) and seam-graph (second view). Partition rule: one diagram per shape, dominant first — dominance belongs to the relation the material most describes, or the relation a downstream task consumes — every diagram sharing exact element names so views resolve against each other. Multi-view composition and the scenario cross-check are the methodology reference's property.

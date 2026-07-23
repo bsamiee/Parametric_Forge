@@ -14,7 +14,7 @@ Production automation treats the descriptor boundary as the real API surface, ke
 `osascript` selects exactly one source shape per invocation: concatenated `-e` lines, one program file, or stdin bound only when `-` names the program explicitly; every shape hands the same argv array to `on run argv` in AppleScript and `function run(argv)` in JXA, and the handler owns decoding, type validation, and envelope framing before any return value crosses back to the caller. `osascript -i` opens a line-at-a-time REPL that loads any `-e` or file program without running it before the prompt opens. A script error yields a non-zero exit whose numeric mapping carries no published contract.
 
 ```bash copy-safe
-osascript -l JavaScript -s s -e 'function run(argv) { return JSON.stringify(argv) }' a b
+osascript -l JavaScript -e 'function run(argv) { return JSON.stringify(argv) }' a b
 printf 'function run(argv) { return argv.join(":") }\n' | osascript -l JavaScript - foo bar
 osascript ./worker.scpt alpha beta
 osascript -i
@@ -28,13 +28,15 @@ end run
 
 ## [02]-[OUTPUT_AND_ENVELOPE]
 
-`-s h` prints display strings that collapse distinct list and record shapes into identical text; `-s s` prints recompilable source-like values, so pipelines, tests, and wrappers bind to `-s s`. `-s e` keeps script errors on stderr; `-s o` routes them to stdout, so a golden test asserts the serialized OSA error text as the primary value and never a specific exit code. Shell quoting stays inside the wrapper and never enters the script body — untrusted data crosses through argv. A JXA `run` handler's return value is the sole stdout payload; every diagnostic routes to stderr through `console.log`, so a caller parses one `JSON.stringify` envelope without logging interleaved into the parse target.
+Serialization mode follows the payload's shape. An OSA structure — an AppleScript list, record, or nested value — binds `-s s`, which prints recompilable source-like values; the default `-s h` display form collapses distinct list and record shapes into identical text. A JXA `JSON.stringify` envelope is already text, so its transport rides the default serialization, passing the returned string to stdout verbatim — `-s s` on that path re-quotes the envelope into a source literal and breaks the caller's parse.
+
+`-s e` keeps script errors on stderr; `-s o` routes them to stdout, so a golden test asserts the serialized OSA error text as the primary value, never a specific exit code. Shell quoting stays inside the wrapper and never enters the script body — untrusted data crosses through argv. A JXA `run` handler's return value is the sole stdout payload; every diagnostic routes to stderr through `console.log`, so a caller parses one envelope without interleaved logging.
 
 ```bash copy-safe
 osascript -s s -e 'return {{"foo", "bar"}, {"foo", {"bar"}}}'
 osascript -s h -e 'return {{"foo", "bar"}, {"foo", {"bar"}}}'
 actual=$(osascript -s so ./fixture.scpt 2>/tmp/transport.stderr || true)
-osascript -l JavaScript -s s ./automation.scpt "$bundle_id" "$payload_json"
+osascript -l JavaScript ./automation.scpt "$bundle_id" "$payload_json"
 ```
 
 ```javascript copy-safe
@@ -66,7 +68,9 @@ osalang -L
 
 ## [05]-[SPECIFIER_AND_WHOSE]
 
-A JXA property addressing an application object model returns an object specifier until evaluation forces it: parentheses call `get` for a scalar or array value, and assignment sends a `set` Apple event. Specifier chains stay lazy across element traversal, so a pipeline sends one event at the terminal property call. `whose` compiles a specifier into an Apple event test descriptor over the comparison-and-logic key vocabulary — `_beginsWith`, `_and`, and their peers — that the target evaluates server-side, and a target omitting logical-descriptor support rejects a compound test outright rather than degrading to a partial match, so a production filter reduces the single field on the target and falls back to JavaScript filtering for the rest.
+A JXA property addressing an application object model returns an object specifier until evaluation forces it: parentheses call `get`, assignment sends a `set` Apple event. Specifier chains stay lazy across element traversal — a pipeline sends one event at the terminal property call.
+
+`whose` compiles a specifier into an Apple event test descriptor over the comparison-and-logic keys — `_beginsWith`, `_and`, and peers — evaluated server-side; a target omitting logical-descriptor support rejects a compound test outright rather than degrading to a partial match, so a production filter reduces one field on the target and JavaScript-filters the rest.
 
 ```javascript copy-safe
 const Finder = Application('Finder');
@@ -134,23 +138,37 @@ function run() {
 
 ## [09]-[PROCESS_KERNEL]
 
-JXA shells out through `NSTask`/`NSPipe` when a caller needs exact argv, separated stdout and stderr streams, and a termination contract; `do shell script` remains an AppleScript Standard Addition with shell-string semantics rather than an argv contract. `terminationStatus` alone conflates two distinct outcomes — a normal exit carrying a nonzero code, or death by an uncaught signal — so a caller reads `terminationReason` (`.exit` vs `.uncaughtSignal`) beside the status to know which meaning the numeric value carries.
+JXA shells out through `NSTask` when a caller needs exact argv, separated stdout and stderr, and a termination contract; `do shell script` remains a Standard Addition with shell-string semantics, not an argv contract. File-backed standard handles carry no pipe backpressure, so a single-threaded host reads both streams after `waitUntilExit` and stays deadlock-free by construction — an `NSPipe` read ordered after the wait wedges the host once a chatty child fills the pipe buffer.
+
+`terminationStatus` conflates a normal nonzero exit with death by an uncaught signal, so a caller reads `terminationReason` (`.exit` vs `.uncaughtSignal`) beside the status.
 
 ```javascript copy-safe
 ObjC.import('Foundation');
+function capture(path) {
+    $.NSFileManager.defaultManager.createFileAtPathContentsAttributes(path, $.NSData.data, $());
+    return $.NSFileHandle.fileHandleForWritingAtPath(path);
+}
+function drain(handle, path) {
+    handle.closeFile;
+    const text = $.NSString.stringWithContentsOfFileEncodingError(path, $.NSUTF8StringEncoding, $());
+    $.NSFileManager.defaultManager.removeItemAtPathError(path, $());
+    return text.js;
+}
 function runTask(launchPath, args) {
+    const base = `${$.NSTemporaryDirectory().js}${$.NSProcessInfo.processInfo.globallyUniqueString.js}`;
     const task = $.NSTask.alloc.init;
-    const out = $.NSPipe.pipe;
+    const out = capture(`${base}.out`), err = capture(`${base}.err`);
     task.launchPath = launchPath;
     task.arguments = args;
     task.standardOutput = out;
+    task.standardError = err;
     task.launch;
     task.waitUntilExit;
-    const data = out.fileHandleForReading.readDataToEndOfFile;
     return {
         status: task.terminationStatus,
         reason: task.terminationReason,
-        stdout: $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js,
+        stdout: drain(out, `${base}.out`),
+        stderr: drain(err, `${base}.err`),
     };
 }
 ```
@@ -176,7 +194,7 @@ end script
 do shell script "/usr/bin/stat " & Shell's argv({"-f", "%N:%z", POSIX path of (choose file)})
 ```
 
-Elevated shell execution runs outside application `tell` blocks or inside `tell me`, since the target application never becomes the parent process for a privileged scripting addition; multi-command elevation sends one quoted script to `/bin/sh -c`, preserving one authentication prompt, one root shell, and one injection boundary. Long data enters a temporary file, never the command string, and a background command detaches with explicit redirection and a captured PID so AppleScript receives a process handle, never a live pipe.
+Elevated shell execution runs outside application `tell` blocks or inside `tell me`, since the target application never becomes the parent process for a privileged scripting addition; multi-command elevation sends one quoted script to `/bin/sh -c`, preserving one authentication prompt, one root shell, and one injection boundary. Long data enters a temporary file the rail deletes on every exit, never the command string, and a background command detaches with explicit redirection and a captured PID so AppleScript receives a process handle, never a live pipe.
 
 ```applescript conceptual
 tell application "Finder" to set selectedPaths to (POSIX path of (selection as alias list))
@@ -195,6 +213,7 @@ do shell script "/bin/sh -c " & quoted form of payload with administrator privil
 
 ```applescript conceptual
 set tempPath to do shell script "/usr/bin/mktemp /tmp/example.XXXXXX"
+set caught to missing value
 try
     set fd to open for access POSIX file tempPath with write permission
     write largeText to fd as «class utf8»
@@ -204,8 +223,10 @@ on error e number n
     try
         close access POSIX file tempPath
     end try
-    error e number n
+    set caught to {message:e, code:n}
 end try
+do shell script "/bin/rm -f " & quoted form of tempPath
+if caught is not missing value then error (message of caught) number (code of caught)
 ```
 
 ```applescript conceptual

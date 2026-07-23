@@ -6,7 +6,7 @@ Claude Code's `Workflow` tool runs one author-written JavaScript file that deter
 
 A workflow is a JavaScript program that orchestrates subagents. Its author writes one file; the `Workflow` tool runs it in a sandbox.
 
-One word matters: deterministic. In a normal session, Claude decides the next step — reads a result, thinks, picks a tool — and that control flow varies run to run. A workflow inverts it: the loops, the conditionals, the fan-out, the retries are plain JavaScript. A model does only the leaf work inside each `agent()` call. Orchestration spends zero tokens and behaves identically every run.
+One word matters: deterministic. In a normal session, the model decides the next step — reads a result, thinks, picks a tool — and that control flow varies run to run. A workflow inverts it: the loops, the conditionals, the fan-out, the retries are plain JavaScript. A model does only the leaf work inside each `agent()` call. Orchestration spends zero tokens and behaves identically every run.
 
 One-sentence model: a script runs in a sandbox → every `agent()` call spawns a fresh subagent with its own clean context window → the script collects results with ordinary JavaScript → the return value comes back as the tool result.
 
@@ -32,11 +32,11 @@ Placement and precedence:
 - In a monorepo, project workflows load from every `.claude/workflows/` between the working directory and the repo root; the closest definition of a name wins, and a save lands in the closest existing `.claude/workflows/` directory.
 - `name` inside `meta` — not the filename — is the workflow's name.
 
-User-side entry points: a saved or bundled command (`/deep-research …`); the `ultracode` keyword in a prompt (a plain-words "use a workflow" works identically); or `/effort ultracode`, which makes Claude plan a workflow for every substantive task in the session. Saving a good run is `s` in `/workflows`.
+User-side entry points: a saved or bundled command (`/deep-research …`); the `ultracode` keyword in a prompt (a plain-words "use a workflow" works identically); or `/effort ultracode`, which plans a workflow for every substantive task in the session. Saving a good run is `s` in `/workflows`.
 
 Runtime posture knobs, all advisory or off-switches — none change script semantics:
 
-- Workflow-size setting (`/config` → Dynamic workflow size) sends Claude an agent-count aim per script it writes: `unrestricted` (default), `small` under 5, `medium` under 15, `large` under 50. Guidance only; the runtime caps still govern.
+- Workflow-size setting (`/config` → Dynamic workflow size) sends an agent-count aim per script written: `unrestricted` (default), `small` under 5, `medium` under 15, `large` under 50. Guidance only; the runtime caps still govern.
 - A run that schedules more than 25 agents or projects past 1.5 million tokens raises an advisory large-workflow warning in the task panel; a set size guideline replaces the 25-agent threshold, and ultracode sessions suppress the warning.
 - Off switches: the `/config` toggle, `"disableWorkflows": true` in settings, or `CLAUDE_CODE_DISABLE_WORKFLOWS=1` at startup. Disabling removes bundled commands, the keyword trigger, and the ultracode effort tier.
 - Launch prompt shows the planned phases with run / remember-approval / view-raw-script / cancel; in auto permission mode consent is recorded on first launch. Bypass-permissions and headless runs start without prompting.
@@ -88,11 +88,11 @@ const PROMPT =
 
 ### [03.4]-[FILE_ORGANIZATION]
 
-A workflow reads top-to-bottom as the `meta` manifest, then the body in this fixed section order (omit any a file does not need). Mark each with a divider `// --- [LABEL]` plus dash-fill:
+A workflow reads top-to-bottom as the `meta` manifest, then the body in this fixed section order (omit any a file does not need). Mark each with a divider `// --- [LABEL]` and dash-fill:
 
 ```js conceptual
 // --- [CONSTANTS] ---------------------------------------------------------------------
-// dependency-free knobs: CAP, BATCH, STALL, static tier/config tables (group the concurrency knobs)
+// dependency-free knobs: CAP, BATCH, static tier/config tables
 
 // --- [INPUTS] ------------------------------------------------------------------------
 // args read + derived scope/target/root (depends on the args global)
@@ -104,20 +104,20 @@ A workflow reads top-to-bottom as the `meta` manifest, then the body in this fix
 // shared prompt-law TEXT consts woven into prompts; a composed DOCTRINE const comes LAST
 
 // --- [OPERATIONS] --------------------------------------------------------------------
-// pure helpers: pool/sleep harness, clustering, prompt builders, dispatch tables (a STAGES table over the builders lives here, after them)
+// pure helpers: pool, clustering, prompt builders, dispatch tables
 
 // --- [COMPOSITION] -------------------------------------------------------------------
-// the run: phase()/agent()/pipeline()/parallel()/log() + reshaping + the final return
+// Run composition: phase()/agent()/pipeline()/parallel()/log() + reshaping + final return
 
 // --- [SUB_SECTION_STYLE]
 ```
 
 Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider whose label is the `phase()` title in UPPER_SNAKE (`// --- [RECONCILE]`, no fill). Rules that bite:
 
-- Knobs (`CAP`/`BATCH`/`STALL`) live in `[CONSTANTS]` at the top, never buried in the pool block.
+- Knobs (`CAP`/`BATCH`) live in `[CONSTANTS]` at the top, never buried in the pool block.
 - args-derived values are `[INPUTS]`, never `[CONSTANTS]` — they depend on the runtime `args`. An input derived through a helper co-locates that helper in `[INPUTS]`.
 - A const that references a function or a later value is not a `[CONSTANTS]`: a dispatch table over the prompt builders is `[OPERATIONS]` after them; a composed `DOCTRINE` const follows the blocks it joins.
-- Banned drift labels: `[HARNESS]` `[SCHEMAS]` `[LAW]` `[CONFIG]` `[PROMPTS]` `[HELPERS]` `[FOLDER]` `[SCOPE]` and singular `[INPUT]`.
+- Banned drift labels: `[HARNESS]` `[SCHEMAS]` `[SCHEMA]` `[LAW]` `[CONFIG]` `[PROMPTS]` `[HELPERS]` `[UTILS]` `[COMMON]` `[MISC]` `[FUNCTIONS]` `[LAYERS]` `[IMPORTS]` `[INTERFACES]` `[ENUMS]` `[DTO]` `[QUERIES]` `[FOLDER]` `[SCOPE]` and singular `[INPUT]`.
 
 ## [04]-[GLOBALS]
 
@@ -129,16 +129,13 @@ Inside a long `[COMPOSITION]`, mark each phase with a bare subsection divider wh
 |  [04]   | `phase`                       | `phase(title) → void`                            | Start a progress group; later agents join it   |
 |  [05]   | `log`                         | `log(message) → void`                            | Emit a narrator line above the progress tree   |
 |  [06]   | `console`                     | `console.log(…)`, `.error(…)`, …                 | Output routed into the workflow log            |
-|  [07]   | `setTimeout` / `clearTimeout` | the standard timer pair                          | Injected, abort-aware                          |
-|  [08]   | `budget`                      | `{ total, spent(), remaining() }`                | The turn's token target                        |
-|  [09]   | `args`                        | any                                              | `args` as structured data; `undefined` if none |
-|  [10]   | `workflow`                    | `workflow(nameOrRef, args?) → Promise<any>`      | Run another workflow inline; one nesting level |
-
-- `setTimeout` / `clearTimeout`: the one legal clock — no `sleep` exists.
+|  [07]   | `budget`                      | `{ total, spent(), remaining() }`                | The turn's token target                        |
+|  [08]   | `args`                        | any                                              | `args` as structured data; `undefined` if none |
+|  [09]   | `workflow`                    | `workflow(nameOrRef, args?) → Promise<any>`      | Run another workflow inline                    |
 
 ### [04.1]-[READING_ARGS]
 
-`args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. A script needs only a default for the omitted case plus a shape check when one workflow accepts both a config object and a free-text task:
+`args` arrives as structured data, exactly as the caller supplied it — no serialization to undo. `Workflow({ args: { minUsers: 5 } })` yields the object; an array stays an array; a string stays a string; nothing passed yields `undefined`. A script needs only a default for the omitted case and a shape check when one workflow accepts both a config object and a free-text task:
 
 ```js conceptual
 const threshold = args?.minUsers ?? 20; // object input
@@ -146,7 +143,9 @@ const scope = Array.isArray(args) ? args : []; // array input
 const task = typeof args === 'string' ? args : 'the change described in TASK.md';
 ```
 
-Never `JSON.parse(args)` — it is already a live value, and parsing an object throws. Default the no-args run to a safe no-op, never a silent full-corpus sweep. ONE narrow carve-out exists for saved-command invocations that hand a JSON-looking string — a single guarded normalizer at `[INPUTS]` only: `(typeof args === 'string' && /^\s*[\[{]/.test(args)) ? JSON.parse(args) : args`. A bare `JSON.parse(args)` anywhere else stays forbidden. A saved workflow receives `args` via `Workflow({ scriptPath, args })`; if a harness build ever drops it for a `scriptPath` launch, relaunch with an inline `script` or encode the scope in the file.
+Never `JSON.parse(args)` unconditionally: objects arrive live and parsing them throws. Default omitted args to a no-op. Text boundaries can supply JSON strings, so object-reading workflows normalize once at `[INPUTS]`: `(typeof args === 'string' && /^\s*[\[{]/.test(args)) ? JSON.parse(args) : args`.
+
+Saved workflows receive args through `Workflow({ scriptPath, args })`. A launch that drops them relaunches with inline `script` content or encodes scope in the workflow file.
 
 ## [05]-[AGENT]
 
@@ -164,11 +163,12 @@ Without `schema`, `agent()` returns the subagent's final text verbatim. With `sc
 |  [03]   | `schema`    | object       | JSON Schema forcing structured output; `agent()` returns the validated object                      |
 |  [04]   | `model`     | string       | Per-agent model: `'sonnet'`/`'opus'`/`'fable'`/`'inherit'` or a full ID; `'sonnet'` is the floor   |
 |  [05]   | `effort`    | string       | Reasoning tier `'low'`…`'max'`, independent of `model`; not in the cache key                       |
-|  [06]   | `isolation` | `'worktree'` | Fresh git worktree per agent; expensive — only when parallel agents mutate the same files          |
+|  [06]   | `isolation` | `'worktree'` | Fresh git worktree per agent; its cost and the case that earns it, throughput reference            |
 |  [07]   | `agentType` | string       | Run as a registered subagent type; validated against the live registry                             |
-|  [08]   | `stallMs`   | number       | Per-agent stall override (default 180000 ms); raise for a slow agent; not in the cache key         |
 
-`schema`, `model`, `isolation`, and `agentType` are the four options baked into the resume cache key, and the prompt text is hashed into it too — change any and that call re-runs. `label`, `phase`, `effort`, and `stallMs` never invalidate a cached result.
+`schema`, `model`, `isolation`, and `agentType` enter the resume cache key with the prompt text. `label`, `phase`, and `effort` never invalidate a cached result.
+
+Editing workflow text separates wires from prose. Wires include dispatch options and maps, labels that key reports or journals, register values controlling branches, interpolated role lines, and argument specifications passed to delegates. Prose includes metadata narration, comments, and prompt framing. Classify the sentence by its consumer before editing it.
 
 ### [05.1]-[MODEL_SETTING]
 
@@ -181,7 +181,7 @@ Without `schema`, `agent()` returns the subagent's final text verbatim. With `sc
 |  [05]   | a full model ID | passed through unchanged                         |
 |  [06]   | omitted         | the session's main-loop model                    |
 
-There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgment-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work to `'sonnet'`, or route a self-contained lane to codex (terra default, sol for the hardest legs) through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
+There is no validation: a typo like `'sonet'` passes through verbatim and the agent fails later at the API call. Spell the alias exactly. Omit `model` for judgment-heavy work so it inherits the capable session model; drop cheap, high-volume, mechanical leaf work a tier, or route a self-contained lane to codex through the codex-lanes reference. `effort` is the orthogonal axis — a cheap model still reasons hard at `'high'`; match `'max'`/`'xhigh'` to synthesis and adversarial judgment, `'low'` to mechanical leaf work.
 
 Not how the model gets set: `meta.phases[].model` (display-only), and the `CLAUDE_CODE_SUBAGENT_MODEL` env var — when set it silently overrides every per-call `model` for the whole session (a user/CI knob the validation section exploits).
 
@@ -195,7 +195,7 @@ Rules for computing data properly: use `schema` for anything a later line reads 
 
 ### [05.3]-[CUSTOM_AGENT_TYPES]
 
-`agentType` runs the call as a registered subagent type — the built-ins `'workflow-subagent'` and `'workflow-remote-agent'`, plus anything from `.claude/agents/` or a plugin (e.g. `'Explore'`). An unknown `agentType` throws with the list of available agents. It composes with `schema`. A workflow subagent is told its final text IS the return value — prompt for the data wanted, not a human-facing message.
+`agentType` runs the call as a registered subagent type — the built-ins `'workflow-subagent'` and `'workflow-remote-agent'`, or any registered type from `.claude/agents/` or a plugin (e.g. `'Explore'`). An unknown `agentType` throws with the list of available agents. It composes with `schema`. A workflow subagent is told its final text IS the return value — prompt for the data wanted, not a human-facing message.
 
 ## [06]-[FLOW]
 
@@ -215,7 +215,7 @@ One rule: default to `pipeline()`. Reach for `parallel()` only when a stage genu
 |  [02]   | `budget.spent()`     | Output tokens spent this turn — main loop and all workflows share one pool |
 |  [03]   | `budget.remaining()` | `max(0, total − spent())`, or `Infinity` with no target                    |
 
-That target is a hard ceiling: once `spent()` reaches `total`, further `agent()` calls throw; in-flight agents finish and their results are kept. Guard budget loops on `budget.total` — with no target, `remaining()` is `Infinity` and the loop runs to the agent cap. Codex tokens are invisible to `budget.spent()`; budget-gated loops meter only their Claude lanes.
+That target is a hard ceiling: once `spent()` reaches `total`, further `agent()` calls throw; in-flight agents finish and their results are kept. Guard budget loops on `budget.total` — with no target, `remaining()` is `Infinity` and the loop runs to the agent cap. Codex tokens never register in `spent()`, so a budget-gated loop meters only its native lanes and a codex-heavy run drains far past what the target reflects.
 
 ## [08]-[NESTING]
 
@@ -223,17 +223,15 @@ That target is a hard ceiling: once `spent()` reaches `total`, further `agent()`
 
 ## [09]-[LIMITS]
 
-| [INDEX] | [LIMIT]                  | [VALUE]                           | [BEHAVIOR_AT_LIMIT]                                                |
-| :-----: | :----------------------- | :-------------------------------- | :----------------------------------------------------------------- |
-|  [01]   | Lifetime `agent()` calls | 1000 per run                      | Throws `WorkflowAgentCapError`; runaway-loop backstop              |
-|  [02]   | Concurrent agents        | up to 16, fewer on small machines | Not an error — excess calls queue and run as slots free            |
-|  [03]   | Script size              | 524288 bytes                      | Rejected before parsing                                            |
-|  [04]   | Token budget             | user-set                          | Throws `WorkflowBudgetExceededError`; in-flight finish, none start |
-|  [05]   | Per-agent stall          | 180000 ms, `stallMs` overrides    | No-progress agent aborted, retried up to 5×, then abandoned        |
-|  [06]   | VM synchronous timeout   | 30000 ms                          | Bounds sync execution only; catches an infinite sync loop          |
+| [INDEX] | [LIMIT]                  | [BEHAVIOR_AT_LIMIT]                                                |
+| :-----: | :----------------------- | :----------------------------------------------------------------- |
+|  [01]   | Lifetime `agent()` calls | Throws `WorkflowAgentCapError`; runaway-loop backstop              |
+|  [02]   | Concurrent agents        | Excess calls queue and run as slots free                           |
+|  [03]   | Script size              | Rejected before parsing                                            |
+|  [04]   | Token budget             | Throws `WorkflowBudgetExceededError`; in-flight finish, none start |
+|  [05]   | VM synchronous timeout   | Bounds sync execution only; catches an infinite sync loop          |
 
 - Lifetime `agent()` calls: every loop carries its own guard.
-- Per-agent stall: the aborted call resolves rather than rejecting.
 - VM synchronous timeout: never a wall-clock cap.
 
 ## [10]-[SANDBOX]
@@ -248,7 +246,7 @@ Non-reproducible calls throw — they break resume:
 
 No host access: the orchestrator has no filesystem and no Node.js APIs — no `require`, `fs`, `process`, network. File and shell work belongs inside an `agent()`; the subagent has the normal tools, the orchestrator does not. This is not a restriction to fight — it is the contract that makes resume work.
 
-Subagents run in `acceptEdits` mode and inherit the session tool allowlist regardless of the session's own permission mode. File edits are auto-approved, but a shell, web, or MCP call outside the allowlist still raises a mid-run permission prompt — which stalls a long parallel run until answered. Grant those permissions before launching.
+Subagents run in `acceptEdits` mode and inherit the session tool allowlist regardless of the session's permission mode. File edits are auto-approved, but an unadmitted tool call raises a mid-run permission prompt. Admit required tools before launch.
 
 ## [11]-[VALIDATION]
 
@@ -272,10 +270,12 @@ It re-hosts the unmodified file inside the same `new Function`-wrapped, injected
 
 - `parseOk` / `ran` — the body parses and completes without a runtime throw; construction with `new Function` catches the unbalanced paren the rule-scanning linter cannot.
 - `deterministic` — both runs produced an identical trace; `false` is a hidden non-deterministic escape, which breaks resume.
-- `perPhase` + `totalAgents` — a phase spawning far beyond the mental model is a fan-out bug; a phase MISSING from the sequence means a truthiness guard (`if (!x)`) dropped the minimal fixture — supply real shapes with `--fixtures` keyed by agent label.
-- `maxConcurrentObserved` against 16 (queuing, a warning) and the 1000-agent lifetime cap (a throw, a real bug).
-- Agent counts against the pre-edit baseline: a body-level try/catch (per-unit failure isolation) swallows a runtime `ReferenceError` inside its stage helpers, so `ran=true deterministic=true` still prints while every unit dies to `null` — the ONLY visible symptom is an agent count silently dropping against the last known-good run. After any dispatch-helper edit, diff `perPhase` against the committed baseline; a drop to zero in a phase that should fan is a swallowed throw, not a guard.
+- `perPhase` + `totalAgents` — unexpected fan-out or a missing phase exposes routing and truthiness-guard defects; supply real shapes with `--fixtures` keyed by agent label.
+- `maxConcurrentObserved` — compare observed concurrency with the workflow's declared cap.
+- Trace against the committed baseline — a swallowed stage error can leave `ran=true deterministic=true` while its work disappears; a phase contraction after dispatch-helper edits is a defect.
 
-Fixtures are MINIMAL by design (non-empty strings, one-element arrays), so counts are REPRESENTATIVE, not exact production. Exercise every loop down BOTH a converging and a permanently-stuck input, so the hard stop and the fixpoint break both fire.
+Fixtures are minimal by design, so traces represent control flow rather than production volume. Exercise loops with converging and permanently stuck inputs so the fixpoint and hard stop both fire.
 
-A green simulation validates the machine, not the meaning — it is blind to prompt quality, to whether a schema's `required` set matches what the model produces, and to effort-tier fit. Close that gap with a narrow real run: execute the UNMODIFIED file on one tiny scope, `Workflow({ scriptPath, args: '<one small unit>' })`, scoped by `args` and never by rewriting calls — `dry-run.mjs --mode real --scope <path>` prints that exact invocation plus the projected count and spawns nothing; the operator authorizes the spend. A narrow real run is the only check that surfaces structured-output conformance, a permission-prompt stall, host-singleton serialization, and stall-timeout adequacy, and it legitimately seeds the resume cache for the full run. For a cheaper real run, set `CLAUDE_CODE_SUBAGENT_MODEL` in the environment — it overrides every per-call `model` with no source edit; forcing a cheap model from inside the script is a dead end, because `model` is a cache-key field and a rewritten run seeds nothing.
+A green simulation validates the machine, not the meaning — blind to prompt quality, schema `required` fit, and effort-tier fit. Close the gap with a narrow real run on the UNMODIFIED file at one tiny scope, scoped by `args`, never by rewriting calls; `dry-run.mjs --mode real --scope <path>` prints that exact invocation without spawning. Only a narrow real run surfaces structured-output conformance, permission boundaries, and host-singleton serialization, and it seeds the resume cache for the full run.
+
+For a cheaper real run, set `CLAUDE_CODE_SUBAGENT_MODEL` in the environment — it overrides every per-call `model` with no source edit; forcing a cheap model from inside the script is a dead end, because `model` is a cache-key field and a rewritten run seeds nothing.

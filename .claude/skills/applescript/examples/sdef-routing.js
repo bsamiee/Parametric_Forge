@@ -3,7 +3,7 @@
 //           a declared command routes terminology, an undeclared name whose event class the dictionary
 //           still declares routes a raw descriptor, an absent class refuses. JXA proxies every property
 //           name, so `typeof app.anythingAtAll` is always "function" and only the sdef gates capability.
-// Run     : osascript -l JavaScript sdef-routing.js <app-bundle-path> [verb ...]
+// Run     : osascript -l JavaScript sdef-routing.js <app-bundle-path> [verb[=operand] ...]
 'use strict';
 ObjC.import('Foundation');
 ObjC.import('OSAKit');
@@ -71,8 +71,7 @@ function catalogOf(document) {
 }
 
 // A declared command missing a required parameter label is refused, never sent with the label dropped —
-// the receiver resolves a different operation under the same verb. `*` is the universal access group;
-// anything narrower is the exact string a sandboxed sender names in its scripting-targets entitlement.
+// the receiver resolves a different operation under the same verb. `*` is the universal access group.
 function routeOf(row, catalog) {
     const declared = catalog.commands.get(row.verb);
     if (declared !== undefined) {
@@ -113,13 +112,20 @@ function dispatch(appPath, verdict, operand) {
 
 function run(argv) {
     const [appPath, ...selected] = argv;
-    if (!appPath) return JSON.stringify({ ok: false, error: 'usage: <app-bundle-path> [verb ...]' });
+    if (!appPath) return JSON.stringify({ ok: false, error: 'usage: <app-bundle-path> [verb[=operand] ...]' });
     const dictionary = copyDictionary(appPath);
     if (!dictionary.ok) return JSON.stringify(dictionary);
     const catalog = catalogOf(dictionary.document);
+    // A selection carries its operand inline as verb=value; a bare verb sends with no direct parameter.
+    const operands = new Map(
+        selected.map((entry) => {
+            const split = entry.indexOf('=');
+            return split < 0 ? [entry, undefined] : [entry.slice(0, split), entry.slice(split + 1)];
+        }),
+    );
     const verdicts = REQUIRED.map((row) => routeOf(row, catalog));
     const sends = verdicts
-        .filter((verdict) => selected.includes(verdict.verb) && verdict.route !== 'refused')
-        .map((verdict) => ({ verb: verdict.verb, ...dispatch(appPath, verdict) }));
+        .filter((verdict) => operands.has(verdict.verb) && verdict.route !== 'refused')
+        .map((verdict) => ({ verb: verdict.verb, ...dispatch(appPath, verdict, operands.get(verdict.verb)) }));
     return JSON.stringify({ ok: true, target: appPath, commands: catalog.commands.size, verdicts, sends });
 }

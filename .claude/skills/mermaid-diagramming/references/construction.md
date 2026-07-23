@@ -13,13 +13,13 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     1. Fix the relation semantic first.
     2. Place the dominant rail from start to outcome.
     3. Attach branches off discriminators only.
-    4. Class nodes by semantic role.
+    4. Shape nodes by step kind.
     5. Label every non-obvious edge with the relation verb.
 - Master patterns:
     - Declare the dominant rail contiguously first, branches after, so the rail reads as one unbroken line.
     - Converge every fault onto one rail instead of per-stage dead ends; the convergence point states the recovery law once.
     - Fan a discriminator with exhaustive labeled out-edges that re-merge at a single fold — an arm that never rejoins is a leaked exit.
-    - Keep annotation traffic on dashed Comment traces so the solid control rail stays the loudest ink on the canvas.
+    - Keep annotation traffic on dashed traces so the solid control rail stays the loudest line on the canvas.
     - Broadcast with `A --> B & C` only for genuinely symmetric fan-out; asymmetric hops get their own labeled edges.
 - Failure modes:
     - god-flowchart absorbing lifecycle, sequence, or schema payloads.
@@ -37,14 +37,14 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Message: one protocol step its sender can actually initiate.
 - Signal: causality and ownership — every request visibly paired with its return, and the activation bars showing exactly who holds the work at every instant.
 - Method:
-    1. Pick one scenario, happy path plus at most one fault split.
+    1. Pick one scenario: happy path and at most one fault split.
     2. Order participants left-to-right by first touch.
     3. Write messages as verb phrases carrying the payload name.
     4. Add activation only where lifetime matters.
     5. Close on the terminal response or fault.
 - Master patterns:
     - Name the frame shape ON the wire in a `Note over` both sides — the contract becomes a visible shared fact, not two private assumptions.
-    - Tint the region one participant owns with `rect` — sequence's one styling lever — so ownership reads as surface, never inference.
+    - Mark the region one participant owns with `rect`, so ownership reads as containment, never inference.
     - Spend the five region kinds by intent — `alt` mutually exclusive outcomes, `opt` a single conditional step, `par` concurrent arms, `critical`/`option` a mandatory step with its optional fault, `loop` repetition — and `break` as the abort escape that ends the exchange rather than branching it.
     - Bound every retry, polling, or drain loop on its frame label — `loop retry [attempt < max]` — so the exchange provably terminates; an unbounded retry loop is the sequence counterpart of an unbounded recovery state.
     - Run `autonumber` on any exchange another document cites, so a step reference survives edits.
@@ -63,7 +63,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 [STATE]:
 - Question: which modes an entity occupies and which events move it.
 - State: a mode the system rests in, observable between events.
-- Transition: an event plus optional guard; guards leaving one state stay disjoint.
+- Transition: an event with an optional guard; guards leaving one state stay disjoint.
 - Signal: the guard vocabulary — which event moves which mode and what makes every exit deterministic; the states are the given, the guards are the knowledge.
 - Method:
     1. Enumerate resting modes first, rejecting any activity.
@@ -75,7 +75,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - Bound every recovery loop — a fault state exits on `recover [attempts < max]` and `abort [attempts == max]`, so the machine provably terminates.
     - Fan a multi-way guard through a `<<choice>>` pseudostate instead of stacking guards on one source, keeping each edge's condition atomic.
     - Split genuinely independent sub-modes into `--` concurrency regions rather than multiplying the state count combinatorially.
-    - Class resting states by criticality — dormant `recessed`, fault `error`, terminal `boundary` — while nominal running states ride the primary default, so lifecycle risk reads at a glance.
     - Give a composite its own `direction` when its interior flow runs against the outer axis.
 - Failure modes:
     - an activity drawn as a state, a step mistaken for a mode.
@@ -130,7 +129,6 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
     - Resolve every many-to-many through a visible junction entity whose composite PK is both FKs — the crow's foot cannot state it directly.
     - Hold FK-edge reciprocity as one atomic edit: an FK attribute lands with its relationship edge, and either alone is a lie.
     - Spend the identifying `--` versus non-identifying `..` stroke as a real dependency claim, not typography.
-    - Class the hierarchy — aggregate root `primary`, junction `recessed`, externally-owned registry `external` — so ownership renders, not just relates.
     - Trim attributes to identifying and discriminating columns; the full column roster is the DDL's property.
 - Failure modes:
     - value objects promoted to entities.
@@ -173,7 +171,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Question: what the system landscape holds at one audience's zoom level.
 - Element: a context, container, or component fixed at one level per view.
 - Signal: the boundary walls — what sits inside the system under discussion and what talks to it from outside.
-- Method: one boundary per ownership domain, externals homed in their own boundary, persons above, every relation labeled with its verb and colored by its kind; a view whose relations cross a loose shape re-homes that shape.
+- Method: one boundary per ownership domain, externals homed in their own boundary, persons above, every relation labeled with its verb; a view whose relations cross a loose shape re-homes that shape.
 - Failure modes: levels mixed inside one view.
 - Logic checks: every element resolves into the next zoom level.
 
@@ -286,7 +284,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 - Question: which owner performs which step in one laned process.
 - Lane: one owner, a node asserting that owner performs the step.
 - Signal: the handoffs — every cross-lane edge is a coordination cost made visible.
-- Method: three to five lanes of real actors in flow order, the critical-path lane emphasized, fault returns riding color; a lane with one node merges into its caller.
+- Method: three to five lanes of real actors in flow order, the critical-path lane named, fault returns labeled; a lane with one node merges into its caller.
 - Failure modes: lanes for systems that never act, a data store being no owner, or cross-lane edges so dense the partition carries nothing.
 - Logic checks: every node sits in the lane of the owner that performs it.
 
@@ -332,7 +330,7 @@ Each diagram type answers one question with a bounded mark vocabulary. Per type:
 
 [QUANTITATIVE]:
 - Question: pie — part-to-whole share in one fence; sankey — conserved flow splitting across stages; xychart — a measure against ordered categories.
-- Boundary: a standing, interactive, or precision-critical chart is the dataviz skill's; these hold only as a one-off structural illustration that must stay a mermaid fence.
+- Boundary: these hold only as a one-off structural illustration that must stay a mermaid fence; a standing, interactive, or precision-critical chart is not a mermaid deliverable.
 - Signal: pie — the dominant wedge; sankey — where volume concentrates and splits; xychart — the trend line or the outlier bar.
 - Failure modes: a pie past six slices or whose shares miss the whole, a sankey flow exceeding its source, or an xychart axis hiding the zero baseline.
 - Logic checks: pie shares sum to the whole; a conservation sankey balances every interior node's inflow against its outflow, and a budget or leakage sankey names its loss as an explicit sink; xychart categories share one measure and unit.

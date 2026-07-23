@@ -8,7 +8,9 @@
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
 from collections.abc import Callable, Iterable
+import copy
 from enum import StrEnum
+from itertools import pairwise
 from pathlib import Path
 import re
 import subprocess
@@ -26,8 +28,13 @@ type Align = Literal["center", "left", "right", "none"]
 
 
 class Check(StrEnum):
+    AI_LEXICON = "ai-lexicon"
     ARTICLE_OPENER = "article-opener"
     BOLD_EMPHASIS = "bold-emphasis"
+    CARD_FIELD = "card-field"
+    CARD_LEADER = "card-leader"
+    CARD_SECTION = "card-section"
+    CARD_STATUS = "card-status"
     COLLECT = "collect"
     COMMENT_RUNT = "comment-runt"
     COMMENT_SHRED = "comment-shred"
@@ -36,10 +43,13 @@ class Check(StrEnum):
     COUPLED_LINK = "coupled-link"
     DEAD_RELATIVE_LINK = "dead-relative-link"
     EM_DASH = "em-dash"
+    FENCE_CONFIG = "fence-config"
     FENCE_GEOMETRY = "fence-geometry"
     FENCE_INTENT = "fence-intent"
     FENCE_LANGUAGE = "fence-language"
+    FENCE_STYLE = "fence-style"
     FENCE_UNCLOSED = "fence-unclosed"
+    FILLER_WORD = "filler-word"
     GLYPH_BAN = "glyph-ban"
     GROUP_LABEL = "group-label"
     HEADING_ANCHOR = "heading-anchor"
@@ -52,10 +62,17 @@ class Check(StrEnum):
     LIST_LEADER = "list-leader"
     LIST_MARKER = "list-marker"
     LIST_WRAP = "list-wrap"
+    MACHINE_PATH = "machine-path"
     META_PHRASE = "meta-phrase"
     NO_OP_WORD = "no-op-word"
+    PROSE_BLOAT = "prose-bloat"
     PROSE_WRAP = "prose-wrap"
     READ = "read"
+    RESEARCH_ROW = "research-row"
+    RESEARCH_SECTION = "research-section"
+    ROUTER_WIDTH = "router-width"
+    RULINGS_SECTION = "rulings-section"
+    SAME_DECISION = "same-decision-spread"
     SECTION_DIVIDER = "section-divider"
     SECTION_WIDTH = "section-width"
     SELF_COUNT = "self-count"
@@ -97,6 +114,8 @@ COMMENT_STACK_CAP = 4
 COMMENT_WIDTH_CAP = 165
 LIST_CHAR_CAP = 500
 LIST_SENTENCE_CAP = 3
+PROSE_CHAR_CAP = 600
+PROSE_SENTENCE_CAP = 6
 ROSTER_SPAN_SHARE = 0.6
 SKILL_DESCRIPTION_CAP = 1024
 SKILL_DESCRIPTION_CEILING = 1536
@@ -118,8 +137,9 @@ FENCE_INTENTS = frozenset({
     "signature",
     "test-only",
 })
-TABLE_COLUMN_CEILING = 15
-TABLE_ROW_CEILING = 20
+TABLE_COLUMN_CEILING = (
+    15  # row count is never capped; the 150-column rendered-width cap (TABLE_WIDTH_CAP) is the sole size law, columns govern only the horizontal axis
+)
 MARKERS: dict[str, str] = (
     dict.fromkeys((".py", ".sh", ".bash", ".zsh", ".nix", ".toml", ".jq"), "#")
     | dict.fromkeys((".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".cs", ".jsonc"), "//")
@@ -151,7 +171,8 @@ ARTICLE_ANNOTATION = re.compile(
     r"^\s*(?:(?:[-+*]|\d+[.)])\s+)?(?:\[[^\]]*\][-\u2013\u2014]?\s*)*(?:`[^`]+`|\[[^\]]+\]\([^)\s]+\))\s*(?:[\u2013\u2014:]|-)\s+[Tt]he\s"
 )
 # A list-entry body never opens on the definite article in either case, behind a marker label or bare; an entry leads with its owner's name or verb.
-ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*:\s+)?[Tt]he\s")
+# The label token class spans the whole marker grammar — a numeric index (`[02]`), an UPPERCASE_SNAKE token, an alternation (`[OPEN|BLOCKED]`) — so an index-line hook `- [02]-[TOKEN]: the …` never slips the check on its numeric leader.
+ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z0-9][A-Z0-9_|]*\](?:-\[[A-Z0-9][A-Z0-9_|]*\])*:\s+)?[Tt]he\s")
 # A sentence never opens on the definite article, which buries the owning subject one word deep. Boundary strength picks
 # its case: a line start and a true sentence end admit neither `The` nor the lowercase dodge that clears the check while
 # leaving the subject buried, and a colon, semicolon, or leader dash keeps ordinary lowercase continuation legal. Spans
@@ -184,6 +205,29 @@ EXAMPLE_LINE = re.compile(
 )
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
 FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
+# Mermaid payload-only law: a durable-doc fence carries structure — declaration, nodes, edges, labels, subgraphs, accTitle/accDescr, and
+# functional layout keys (`layout`, `elk`, curve, geometry knobs) — never appearance. A styling key strips with its nested block; a color
+# value marks its key as appearance whatever its spelling.
+MERMAID_STYLE_KEY = re.compile(
+    r"^(\s*)([\w-]*(?:color|colours|fill|stroke|font|opacity|bkg|background|theme|look|gradient|shadow|darkmode|labelstyle)[\w-]*)\s*:", re.IGNORECASE
+)
+MERMAID_HEX_VALUE = re.compile(r":\s*[\"']?#[0-9A-Fa-f]{3,8}\b")
+MERMAID_STYLE_LINE = re.compile(r"^\s*(classDef\s|linkStyle\s|style\s+\S+\s|%%\{\s*init|Update(?:Rel|Element)Style\b)")
+MERMAID_CLASS_ASSIGN = re.compile(r"^\s*class\s+[\w,.$@-]+\s+[\w,-]+\s*;?\s*$")
+MERMAID_CLASS_TAIL = re.compile(r":::[\w,-]+")
+MERMAID_ANIMATE = re.compile(r"^\s*[\w-]+@\{[^}]*\banimat(?:e|ion)\b[^}]*\}\s*$")
+# Body statements carrying css-property styling (todayMarker strings, venn style rows); `rect rgb(...)` stays — its grammar embeds the color.
+MERMAID_BODY_CSS = re.compile(r"(?:stroke|fill|color|opacity)\s*:\s*\S")
+MERMAID_BOX_COLOR = re.compile(r"^(\s*box\s+)rgba?\([^)]*\)")
+# Required-payload law inverts the styling law: a flowchart fence opens on the standing ELK block, and every family whose renderer emits
+# the accessibility directives carries both directly under its declaration. Mute families reject or swallow the directives, so their
+# relation sentence sits beside the fence instead.
+ACCESSIBILITY = ("accTitle", "accDescr")
+MERMAID_ELK_KEYS = ("layout: elk", "curve: linear", "padding: 25")
+MERMAID_ELK_BLOCK = ("---", "config:", "  layout: elk", "  flowchart:", "    curve: linear", "    padding: 25", "---")
+MERMAID_FAMILY = re.compile(r"^[A-Za-z0-9]+")
+MERMAID_LAYOUT = frozenset({"flowchart"})
+MERMAID_MUTE = frozenset({"block", "eventmodeling", "ishikawa", "kanban", "mindmap", "sankey", "timeline", "venn"})
 # Block 2600-27BF covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B50\u2139\uFE0F]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
@@ -251,7 +295,8 @@ SELF_COUNT = re.compile(
 # Its lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
 VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
 # A bare major band anchored to a capitalized product token: the `<Product> NN+` compatibility floor.
-VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?!\+)")
+# Its lookahead spares `N+M` notation (a digit after `+`) — CNC axis notation like `3+2`, never a version band.
+VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?![+\d])")
 # A standards-clause citation is a domain value, not a release pin: Table 2.3.2 and its kin pass the anchor scan.
 CITATION_LEAD = re.compile(r"(?:Table|Clause|Section|Annex|Figure|Chapter|Note|Part|§)\s*$")
 # Spaced double or triple hyphens ride prose as an em dash; the spelled character is the only legal interrupter.
@@ -263,31 +308,107 @@ FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|t
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
 # Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the estate, so review adjudicates each.
 SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|etc)\b", re.IGNORECASE)
-# Grade and intensity words warn: each grades a fact the fact already carries, and deleting one costs no law. Roster
-# admits only the unambiguous — a domain term the corpus owns (`robust` predicates) and a contrastive `merely` stay legal.
+# Grade and intensity words fail: each grades a fact the fact already carries, and deleting one costs no law. Roster admits
+# only the unambiguous — a domain term the corpus owns (`robust` predicates, `optimal` collapse, `ideal` in the algebraic
+# sense, `perfect` forwarding/hashing), estate vocabulary (`first-class`, `rich`, `advanced`), and a contrastive `merely`
+# all stay legal, as does `rather` whose corpus mass is the contrastive `rather than`.
 NO_OP_WORD = re.compile(
     r"\b(?:simply|very|really|quite|basically|essentially|seamless(?:ly)?|effortless(?:ly)?|cutting-edge"
-    r"|state-of-the-art|best-in-class|world-class|powerful|utiliz(?:e|es|ed|ing)|comprehensive)\b",
+    r"|state-of-the-art|best-in-class|world-class|powerful|utiliz(?:e|es|ed|ing)|comprehensive"
+    r"|actually|literally|truly|completely|thoroughly|obviously|clearly|certainly|definitely|undoubtedly|arguably"
+    r"|extremely|highly|incredibly|significantly|substantially|notably|particularly|especially"
+    r"|blazing|lightning-fast|battle-tested|production-ready|enterprise-grade|next-generation|revolutionary|innovative)\b",
     re.IGNORECASE,
 )
-PATTERNS: tuple[tuple[Check, re.Pattern[str], Status], ...] = (
-    (Check.HEDGE, HEDGE_WORDS, "fail"),
-    (Check.HEDGE, MARKER_WORDS, "fail"),
-    (Check.HEDGE, HEDGE_PHRASE, "fail"),
-    (Check.META_PHRASE, META_PHRASE, "fail"),
-    (Check.SELF_COUNT, SELF_COUNT, "fail"),
-    (Check.VERSION_ANCHOR, VERSION_ANCHOR, "fail"),
-    (Check.VERSION_ANCHOR, VERSION_BAND, "fail"),
-    (Check.VERSION_ANCHOR, FRESHNESS_DEICTIC, "warn"),
-    (Check.WEAK_VERB, WEAK_VERB, "warn"),
-    (Check.HEDGE, SOFT_HEDGE, "warn"),
-    (Check.EM_DASH, EM_DASH_ASCII, "fail"),
-    (Check.ARTICLE_OPENER, SENTENCE_ARTICLE, "fail"),
-    (Check.NO_OP_WORD, NO_OP_WORD, "warn"),
+# Sentence-initial `So` is filler glue delaying the subject; its cure is a recast, never a comma swap. The causal `, so …`
+# join states real consequence law and is the corpus's canonical connector, so only the lead-in form answers here.
+SENTENCE_SO = re.compile(r"(?:^|[.!?]\s+)So\b")
+# AI-register lexemes fail: puffery, significance theater, transition filler, summary tails, and the abstract-noun register
+# carry zero domain load; each hit is delete-or-reframe, never synonym-swap. `leverage` names the estate's stacking hunt axis
+# and `overall` legally grades shape and structure; `therefore`, `thus`, and `likewise` state real logical order; `backbone`
+# names a real spine — all stay off the roster.
+AI_LEXICON = re.compile(
+    r"\b(?:delv(?:e|es|ed|ing)|tapestry|testament|pivotal|meticulous(?:ly)?|showcas(?:e|es|ed|ing)|multifaceted"
+    r"|myriad|plethora|holistic|intricate|nuanced|vibrant|additionally|moreover|furthermore"
+    r"|in conclusion|in summary|to summarize|as such|in essence|at its core|it'?s worth noting"
+    r"|it is worth noting|it is important to note|note that|keep in mind|bear in mind|that said"
+    r"|in other words|when it comes to|a wide range of|a variety of|needless to say|first and foremost"
+    r"|landscape|realm|journey|deep dive|game-changer|treasure trove|powerhouse|cornerstone)\b",
+    re.IGNORECASE,
+)
+# Copula avoidance warns: an identity claim states is/are/has; a serves-as apposition re-labels the surface without owning its concern.
+COPULA_AVOIDANCE = re.compile(r"\b(?:serves|stands|functions|operates)\s+as\b|\bboasts\b", re.IGNORECASE)
+# Additive filler fails: `plus` pads a clause it never joins. Cure runs shortest-first — delete the word with its comma, folding the tail
+# into the clause or a serial list; then `with`, which carries accompaniment; then FANBOYS `and` where a compound subject needs the
+# conjunction; then a precise shorter word where the coinage admits one. Every longer connector costs more characters than the defect.
+# Emphasis casing and quantity sense survive the swap. Hyphen lookarounds spare compound tokens (`delete-plus-create`), read as names.
+FILLER_WORD = re.compile(r"(?<![\w-])plus(?![\w-])", re.IGNORECASE)
+# A label-led paragraph — `[LABEL] — prose` or `[LABEL]: prose` — is measured prose mass, never structure.
+LABELED_PARAGRAPH = re.compile(r"^\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*(?: [\u2013\u2014] |: )\S")
+
+# --- [CARD_GRAMMAR]
+# IDEAS/TASKLOG card files, design-page [RESEARCH] sections, and RULINGS.md registries census against the
+# ratified marker grammar: `[SLUG]-[STATUS]:` leaders, closed status vocabularies, the field roster each file's
+# own source-only template comment declares (ratified set as fallback), the terminal research-section contract,
+# and the rulings section vocabulary under omit-and-renumber.
+CARD_FILES = frozenset({"IDEAS.md", "TASKLOG.md"})
+CORE_FIELDS: tuple[str, ...] = ("Capability", "Shape", "Unlocks", "Anchors")
+RATIFIED_FIELDS = frozenset({*CORE_FIELDS, "Arms", "Atomic", "Ripple", "Route", "Tension"})
+OPEN_STATUSES = frozenset({"ACTIVE", "QUEUED", "BLOCKED"})
+CLOSED_STATUSES = frozenset({"COMPLETE", "DROPPED"})
+RESEARCH_STATUSES = frozenset({"OPEN", "BLOCKED"})
+# Rulings sections are a closed vocabulary in canonical order; a file's own source-only comment extends it
+# through code-spanned labels under the union law, and unused sections omit with survivors renumbered.
+RULING_SECTIONS: tuple[str, ...] = ("PACKAGES", "SHAPE", "COLLAPSE", "STRUCTURE", "PROCESS")
+STATUS_LAW = "legal open statuses ACTIVE|QUEUED|BLOCKED, closed COMPLETE|DROPPED"
+CARD_HEAD = re.compile(r"^\[(?P<slug>[^\]]+)\]-\[(?P<status>[^\]]+)\]:\s+\S")
+CARD_BULLET = re.compile(r"^- (?P<label>[A-Z][A-Za-z]*):\s+\S")
+CARD_BAND = re.compile(r"^## \[\d{2}\]-\[(?P<band>OPEN|CLOSED)\]\s*$")
+RESEARCH_HEAD = re.compile(r"^\[\d{2}\]-\[RESEARCH\]$")
+RESEARCH_ENTRY = re.compile(r"^- \[(?P<token>[^\]]+)\]-\[(?P<status>[^\]]+)\]:\s*(?P<body>.*)$")
+RULINGS_H1 = re.compile(r"^\[[A-Z][A-Z0-9_]*_RULINGS\]$")
+SPANNED_LABEL = re.compile(r"`\[([A-Z][A-Z0-9_]*)\]`")
+SLUG_SHAPE = re.compile(r"^[A-Z][A-Z0-9_]*$")
+NUMERIC_ID = re.compile(r"^\d+$")
+ABSOLUTE_PATH = re.compile(r"/(?:Users|home)/[\w.-]+")
+SOURCE_ONLY = "source-only"
+COMMENT_OPEN, COMMENT_CLOSE = "<!--", "-->"
+# Same-decision spread: adjacent prose units sharing most content words restate one ruling; the floor bounds the
+# token sets so short structural lines never pair, and the share is Jaccard overlap on 4+-letter words.
+SPREAD_FLOOR = 6
+SPREAD_SHARE = 0.5
+SPREAD_WORD = re.compile(r"[a-z]{4,}")
+SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+# A cure clause rides each pattern row: the matched span names the defect, the appended clause names the move that
+# clears it at the grain an agent acts on; an empty cure marks a review-adjudicated warn.
+PATTERNS: tuple[tuple[Check, re.Pattern[str], Status, str], ...] = (
+    (Check.HEDGE, HEDGE_WORDS, "fail", "; state the settled fact or delete the sentence"),
+    (Check.HEDGE, MARKER_WORDS, "fail", "; open work is a tracked card, never prose"),
+    (Check.HEDGE, HEDGE_PHRASE, "fail", "; state the settled fact or delete the sentence"),
+    (Check.META_PHRASE, META_PHRASE, "fail", "; delete the frame, keep the law"),
+    (Check.SELF_COUNT, SELF_COUNT, "fail", "; a count is derived by the reader — delete the numeral claim"),
+    (Check.VERSION_ANCHOR, VERSION_ANCHOR, "fail", "; version pins live in the owning manifest"),
+    (Check.VERSION_ANCHOR, VERSION_BAND, "fail", "; version pins live in the owning manifest"),
+    (Check.VERSION_ANCHOR, FRESHNESS_DEICTIC, "warn", ""),
+    (Check.WEAK_VERB, WEAK_VERB, "warn", "; name the owner and its act — mints, owns, folds, routes, binds"),
+    (Check.HEDGE, SOFT_HEDGE, "warn", ""),
+    (Check.EM_DASH, EM_DASH_ASCII, "fail", "; spell the em dash character"),
+    (Check.ARTICLE_OPENER, SENTENCE_ARTICLE, "fail", "; lead with the owner's name or an owning verb"),
+    (Check.NO_OP_WORD, NO_OP_WORD, "fail", "; delete the grade — the fact carries its own weight"),
+    (Check.NO_OP_WORD, SENTENCE_SO, "fail", "; sentence-initial `So` is filler — recast the clause owner-first, never swap it for a comma join"),
+    (Check.AI_LEXICON, AI_LEXICON, "fail", "; delete or reframe, never synonym-swap"),
+    (Check.WEAK_VERB, COPULA_AVOIDANCE, "warn", "; state is/are/owns directly"),
+    (Check.FILLER_WORD, FILLER_WORD, "fail", "; delete, folding the tail into the clause; else `with`; else FANBOYS `and`; else a shorter word"),
 )
 
 
 # --- [MODELS] ---------------------------------------------------------------------------
+
+
+class Front(StrEnum):
+    PENDING = "pending"
+    OPEN = "open"
+    CLOSED = "closed"
 
 
 class Repair(StrEnum):
@@ -301,6 +422,8 @@ class Repair(StrEnum):
     LEADER = "list-leader"
     DIVIDER = "section-divider"
     SPACING = "table-spacing"
+    CONFIG = "fence-config"
+    STYLE = "fence-style"
     WHITESPACE = "trailing-whitespace"
     SKIP = "unfixable"
 
@@ -318,6 +441,21 @@ class Change(msgspec.Struct, frozen=True):
     kind: Repair
     before: str
     after: str
+
+
+class Diagram(msgspec.Struct, frozen=True):
+    # Fence-body census carried line by line: frontmatter phase, the indent of a flagged styling block, the declaration
+    # the body opens on, the accessibility directives it names, and the canonical config keys its frontmatter carries.
+    mermaid: bool = False
+    front: Front = Front.CLOSED
+    styling: int | None = None
+    header: str = ""
+    directives: frozenset[str] = frozenset()
+    keys: frozenset[str] = frozenset()
+
+
+PLAIN_FENCE = Diagram()
+MERMAID_FENCE = Diagram(mermaid=True, front=Front.PENDING)
 
 
 class Span(msgspec.Struct, frozen=True):
@@ -509,6 +647,106 @@ def teaching(path: Path) -> bool:
     return bool(TEACHING & parts) and bool({".claude", "skills", "docs"} & parts)
 
 
+def fence_closes(matched: re.Match[str] | None, glyph: str, width: int, margin: int) -> bool:
+    # One owner decides fence closure everywhere: same glyph, at least the opening run, bare info, bounded indent.
+    return (
+        matched is not None
+        and matched.group("marker")[0] == glyph
+        and len(matched.group("marker")) >= width
+        and not matched.group("info").strip()
+        and len(matched.group("indent")) <= margin + 3
+    )
+
+
+def label_context(after: str, beyond: str) -> tuple[bool, bool, bool]:
+    # (gap, intro_list, intro_table) under a bracketed label: the first nonblank follower decides which body it charters.
+    gap = not after.strip()
+    follow = beyond if gap else after
+    return gap, bool(LIST_ITEM.match(follow)) and not follow.lstrip().startswith("|"), follow.lstrip().startswith("|")
+
+
+def family(header: str) -> str:
+    # Declaration family from a fence header: the leading word alone, so `stateDiagram-v2`, `radar-beta`, and `flowchart LR` all key.
+    matched = MERMAID_FAMILY.match(header)
+    return matched.group().lower() if matched else ""
+
+
+def diagrammed(path: Path, line: str, number: int, state: Diagram, scope: bool) -> tuple[Diagram, tuple[Row, ...]]:
+    # One pass advances the mermaid body state and censuses payload; styling rows fire only inside a durable-doc scope.
+    trimmed = line.strip()
+    if state.front is Front.PENDING:
+        opens = trimmed == "---"
+        return copy.replace(state, front=Front.OPEN if opens else Front.CLOSED, header="" if opens else trimmed), ()
+    if state.front is Front.OPEN:
+        if trimmed == "---":
+            return copy.replace(state, front=Front.CLOSED, styling=None), ()
+        depth = len(line) - len(line.lstrip())
+        if state.styling is not None and depth > state.styling:
+            return state, ()  # nested payload of a flagged styling block; one row per block
+        if scope and (MERMAID_STYLE_KEY.match(line) or MERMAID_HEX_VALUE.search(line)):
+            detail = f"styling key in a durable-doc mermaid fence: {trimmed[:60]}"
+            return copy.replace(state, styling=depth), (row(path, number, Check.FENCE_STYLE, "fail", detail),)
+        carried = state.keys | {trimmed} if trimmed in MERMAID_ELK_KEYS else state.keys
+        return copy.replace(state, styling=None, keys=carried), ()
+    named = state.directives | {name for name in ACCESSIBILITY if trimmed.startswith(name)}
+    settled = copy.replace(state, header=state.header or trimmed, directives=named)
+    if not scope:
+        return settled, ()
+    if MERMAID_STYLE_LINE.match(line) or MERMAID_CLASS_ASSIGN.match(line) or MERMAID_ANIMATE.match(line):
+        detail = f"styling statement in a durable-doc mermaid fence: {trimmed[:60]}"
+    elif MERMAID_CLASS_TAIL.search(line):
+        detail = "':::' class tail in a durable-doc mermaid fence"
+    elif MERMAID_BOX_COLOR.match(line) or (MERMAID_BODY_CSS.search(line) and not trimmed.startswith("rect")):
+        detail = f"css styling on a durable-doc mermaid line: {trimmed[:60]}"
+    else:
+        return settled, ()
+    return settled, (row(path, number, Check.FENCE_STYLE, "fail", detail),)
+
+
+def sealed(path: Path, start: int, state: Diagram, scope: bool) -> tuple[Row, ...]:
+    # Close-time required-payload verdict: the declaration opens the body, both directives follow it, a flowchart carries the ELK block.
+    if not (state.mermaid and scope):
+        return ()
+    lead = state.header.split(":", 1)[0]
+    if lead in ACCESSIBILITY:
+        detail = f"`{lead}` opens the fence body; the declaration leads and the directives follow it"
+        return (row(path, start, Check.FENCE_CONFIG, "fail", detail),)
+    kind = family(state.header)
+    rows: list[Row] = []
+    absent = tuple(name for name in ACCESSIBILITY if name not in state.directives)
+    if absent and kind not in MERMAID_MUTE:
+        rows.append(row(path, start, Check.FENCE_INTENT, "fail", f"mermaid fence lacks {' and '.join(absent)} under its declaration"))
+    if kind in MERMAID_LAYOUT and (keys := tuple(key for key in MERMAID_ELK_KEYS if key not in state.keys)):
+        rows.append(row(path, start, Check.FENCE_CONFIG, "fail", f"{kind} fence frontmatter lacks `{'`, `'.join(keys)}`"))
+    return tuple(rows)
+
+
+def fenced(
+    path: Path, line: str, number: int, fence: tuple[str, int, int, str, int], state: Diagram, scope: bool, cap: int
+) -> tuple[bool, Diagram, tuple[Row, ...]]:
+    # Fence-interior census: geometry, intent misuse, mermaid payload, and comment openers; returns (closed, fence state, rows).
+    rows: list[Row] = []
+    glyph, width, start, info, margin = fence
+    if fence_closes(FENCE.match(line), glyph, width, margin):
+        return True, state, sealed(path, start, state, scope)
+    trimmed = line.strip()
+    if ("codemap" in info or "seams" in info or any(mark in line for mark in GLYPHS)) and len(line) > cap:
+        rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"line {len(line)} > cap {cap}"))
+    elif "copy-safe" in info and PROMPT_LINE.match(line):
+        rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence line carries a shell prompt"))
+    elif "copy-safe" in info and PLACEHOLDER.search(line):
+        rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence carries a placeholder slot; the body is a template"))
+    elif "output-only" in info and PROMPT_LINE.match(line):
+        rows.append(row(path, number, Check.FENCE_INTENT, "fail", "prompt-led command rides an output-only fence; the body is a run instruction"))
+    if state.mermaid:
+        state, payload_rows = diagrammed(path, line, number, state, scope)
+        rows.extend(payload_rows)
+    mark = FENCE_MARKERS.get(info.split()[0] if info else "", "")
+    if mark and trimmed.startswith(mark) and COMMENT_ARTICLE.match(trimmed.removeprefix(mark).lstrip()):
+        rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "fence comment opens on 'the'; lead with the constraint's owner or verb"))
+    return False, state, tuple(rows)
+
+
 def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     raw = tuple(text.splitlines())
     skip_until = frontmatter_end(raw)
@@ -519,7 +757,8 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     lists: list[ListEntry] = []
     rows: list[Row] = []
     fence: tuple[str, int, int, str, int] | None = None
-    mermaid_access = True
+    diagram = PLAIN_FENCE
+    payload_scope = "templates" not in path.parts and not teaching(path)
     plain_run = False
     last_rubric = ""
     template = "templates" in path.parts
@@ -528,7 +767,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     while n < len(raw):
         number, line = n + 1, raw[n]
         if line.endswith((" ", "\t")):
-            rows.append(row(path, number, Check.TRAILING_WHITESPACE, "fail", "line ends with space or tab"))
+            rows.append(row(path, number, Check.TRAILING_WHITESPACE, "fail", "line ends with space or tab; strip the trailing run"))
         if number <= skip_until:
             plain_run = False
             n += 1
@@ -539,66 +778,61 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             marker, info = matched.group("marker"), matched.group("info").strip()
             tokens = info.lower().split()
             if not info:
-                rows.append(row(path, number, Check.FENCE_LANGUAGE, "fail", "opening fence has no language tag"))
+                rows.append(
+                    row(
+                        path, number, Check.FENCE_LANGUAGE, "fail", "opening fence has no language tag; tag the language, or `text` for plain payload"
+                    )
+                )
             elif template:
                 pass
             elif len(tokens) == 1 and tokens[0] not in ("text", "mermaid"):
-                rows.append(row(path, number, Check.FENCE_INTENT, "warn", f"fence carries no intent label from the closed set: {info}"))
+                rows.append(
+                    row(path, number, Check.FENCE_INTENT, "fail", f"fence `{info}` carries no intent label; append one from the closed intent set")
+                )
             elif len(tokens) > 1 and tokens[1] not in FENCE_INTENTS:
-                rows.append(row(path, number, Check.FENCE_INTENT, "fail", f"unknown fence intent: {tokens[1]}"))
+                rows.append(
+                    row(
+                        path,
+                        number,
+                        Check.FENCE_INTENT,
+                        "fail",
+                        f"fence intent {tokens[1]} outside the closed set {', '.join(sorted(FENCE_INTENTS))}",
+                    )
+                )
             fence = (marker[0], len(marker), number, info.lower(), len(matched.group("indent")))
-            mermaid_access = "mermaid" not in tokens[:1] if tokens else True
+            diagram = MERMAID_FENCE if tokens[:1] == ["mermaid"] else PLAIN_FENCE
             n += 1
             continue
         if fence is not None:
             plain_run = False
-            glyph, width, start, info, margin = fence
-            if (
-                matched
-                and matched.group("marker")[0] == glyph
-                and len(matched.group("marker")) >= width
-                and not matched.group("info").strip()
-                and len(matched.group("indent")) <= margin + 3
-            ):
-                if not mermaid_access and text.count("```mermaid") <= 2 and not ({"templates", "examples"} & set(path.parts)):
-                    rows.append(row(path, start, Check.FENCE_INTENT, "warn", "mermaid fence lacks accTitle/accDescr accessibility directives"))
+            closed, diagram, fenced_rows = fenced(path, line, number, fence, diagram, payload_scope, cap)
+            rows.extend(fenced_rows)
+            if closed:
                 fence = None
-            elif ("codemap" in info or "seams" in info or any(glyph in line for glyph in GLYPHS)) and len(line) > cap:
-                rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"line {len(line)} > cap {cap}"))
-            elif info.startswith("mermaid") and ("accTitle" in line or "accDescr" in line):
-                mermaid_access = True
-            elif "copy-safe" in info and PROMPT_LINE.match(line):
-                rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence line carries a shell prompt"))
-            elif "copy-safe" in info and PLACEHOLDER.search(line):
-                rows.append(row(path, number, Check.FENCE_INTENT, "fail", "copy-safe fence carries a placeholder slot; the body is a template"))
-            elif "output-only" in info and PROMPT_LINE.match(line):
-                rows.append(
-                    row(path, number, Check.FENCE_INTENT, "fail", "prompt-led command rides an output-only fence; the body is a run instruction")
-                )
-            if fence is not None and (mark := FENCE_MARKERS.get(info.split()[0] if info else "", "")):
-                commented = line.strip()
-                if commented.startswith(mark) and COMMENT_ARTICLE.match(commented.removeprefix(mark).lstrip()):
-                    rows.append(
-                        row(path, number, Check.ARTICLE_OPENER, "fail", "fence comment opens on 'the'; lead with the constraint's owner or verb")
-                    )
             n += 1
             continue
         if path.name == "README.md" and CARD_ROW.match(line) and len(line) > cap:
-            rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"card row {len(line)} > cap {cap}"))
+            rows.append(row(path, number, Check.FENCE_GEOMETRY, "fail", f"card row {len(line)} > cap {cap}; demote the tail to the owning page"))
+        if not template and ROUTER_CARD.match(line) and len(line) > cap:
+            rows.append(
+                row(
+                    path,
+                    number,
+                    Check.ROUTER_WIDTH,
+                    "fail",
+                    f"router card {len(line)} cols > cap {cap}; one owner, one charter phrase — demote the tail",
+                )
+            )
         if heading := HEADING.match(line):
             headings.append(Heading(number, len(heading.group("level")), heading.group("title")))
             rubrics = re.findall(r"\[([A-Z][A-Z0-9_]*)\]", heading.group("title"))
             last_rubric = rubrics[-1] if rubrics else last_rubric
             if n + 1 < len(raw) and raw[n + 1].strip():
-                rows.append(row(path, number, Check.HEADING_SPACING, "fail", "heading is not followed by a blank line"))
+                rows.append(row(path, number, Check.HEADING_SPACING, "fail", "heading lacks its following blank line; insert one"))
         elif GROUP_LABEL.match(line.strip()) and line.strip() == f"[{last_rubric}]:":
             rows.append(row(path, number, Check.GROUP_LABEL, "warn", f"[{last_rubric}]: echoes its section heading; the label is phantom structure"))
         elif (floating := bool(FLOATING_LABEL.match(line))) or LABEL_LEAD.match(line):
-            after = raw[n + 1] if n + 1 < len(raw) else ""
-            gap = not after.strip()
-            follow = (raw[n + 2] if n + 2 < len(raw) else "") if gap else after
-            intro_list = bool(LIST_ITEM.match(follow)) and not follow.lstrip().startswith("|")
-            intro_table = follow.lstrip().startswith("|")
+            gap, intro_list, intro_table = label_context(raw[n + 1] if n + 1 < len(raw) else "", raw[n + 2] if n + 2 < len(raw) else "")
             if floating and (intro_list or intro_table):
                 rows.append(row(path, number, Check.LABEL_GAP, "fail", "floating label lacks its colon; a list or record label carries [LABEL]:"))
             elif not floating and gap and intro_list:
@@ -606,7 +840,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             elif not floating and not gap and intro_table:
                 rows.append(row(path, number, Check.LABEL_GAP, "fail", "label sits directly on a table; keep one blank line before the grid"))
         if SETEXT.match(line) and n > 0 and raw[n - 1].strip() and not TABLE_SEP.match(line):
-            rows.append(row(path, number, Check.SETEXT_HEADING, "fail", "setext heading marker"))
+            rows.append(row(path, number, Check.SETEXT_HEADING, "fail", "setext heading marker; spell the heading as ATX `#` on one line"))
         if line.lstrip().startswith("|") and n + 1 < len(raw) and TABLE_SEP.match(raw[n + 1]):
             indent = line[: len(line) - len(line.lstrip())]
             headers = split_cells(line)
@@ -621,7 +855,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             n = cursor
             continue
         if line.lstrip().startswith("|"):
-            rows.append(row(path, number, Check.TABLE_SEVERED, "fail", "table row stranded outside a grid"))
+            rows.append(row(path, number, Check.TABLE_SEVERED, "fail", "table row stranded outside a grid; rejoin it to its table or delete it"))
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
         if not template and not EXAMPLE_LINE.match(line):
             if ARTICLE_ANNOTATION.match(line):
@@ -670,11 +904,24 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             bool(stripped) and not line.startswith((" ", "\t")) and not stripped.startswith(PLAIN_EXCLUDED) and NUMBERED_LEAD.match(stripped) is None
         )
         if plain and plain_run:
-            rows.append(row(path, number, Check.PROSE_WRAP, "warn", "hard-wrapped paragraph; write the paragraph as one logical line"))
+            rows.append(row(path, number, Check.PROSE_WRAP, "fail", "hard-wrapped paragraph; write the paragraph as one logical line"))
+        if not template and (plain or LABELED_PARAGRAPH.match(stripped)):
+            sentence_count = len(SENTENCE_END.findall(" ".join(span.text for span in prose_spans(stripped, number))))
+            if len(stripped) > PROSE_CHAR_CAP or sentence_count > PROSE_SENTENCE_CAP:
+                rows.append(
+                    row(
+                        path,
+                        number,
+                        Check.PROSE_BLOAT,
+                        "warn",
+                        f"paragraph {len(stripped)} chars / {sentence_count} sentences past caps {PROSE_CHAR_CAP}/{PROSE_SENTENCE_CAP};"
+                        " cut 20-30% — kill sediment, tighten phrasing, split only where two concerns separate",
+                    )
+                )
         plain_run = plain
         n += 1
     if fence is not None:
-        rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence has no closing fence"))
+        rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence never closes; close it with a matching marker run"))
     doc = Document(str(path), "templates" in path.parts, tuple(prose), tuple(tables), tuple(headings), tuple(links), tuple(lists))
     return doc, tuple(rows)
 
@@ -694,42 +941,60 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
     for table in doc.tables:
         sep_line = table.line + 1
         indexed = bool(table.headers) and table.headers[0] == "[INDEX]"
-        rows.extend(row(doc.path, table.line, Check.TABLE_HEADER, "fail", cell or "<empty>") for cell in table.headers if not HEADER_CELL.match(cell))
+        rows.extend(
+            row(doc.path, table.line, Check.TABLE_HEADER, "fail", f"header cell {cell or '<empty>'} is not a bracketed [UPPER_SNAKE] rubric")
+            for cell in table.headers
+            if not HEADER_CELL.match(cell)
+        )
         if len(table.aligns) != len(table.headers):
             rows.append(
-                row(doc.path, sep_line, Check.TABLE_ALIGN, "fail", f"separator cells {len(table.aligns)} != header cells {len(table.headers)}")
+                row(
+                    doc.path,
+                    sep_line,
+                    Check.TABLE_ALIGN,
+                    "fail",
+                    f"separator cells {len(table.aligns)} != header cells {len(table.headers)}; re-pad the separator to one cell per column",
+                )
             )
         rows.extend(
-            row(doc.path, sep_line, Check.TABLE_ALIGN, "fail", f"column {position} carries no explicit alignment colon")
+            row(doc.path, sep_line, Check.TABLE_ALIGN, "fail", f"column {position} carries no alignment colon; state `:---`, `:---:`, or `---:`")
             for position, align in enumerate(table.aligns, 1)
             if align == "none"
         )
         for index, body in enumerate(table.rows, 1):
             if len(body) != len(table.headers):
                 rows.append(
-                    row(doc.path, table.line + index + 1, Check.TABLE_SHAPE, "fail", f"row cells {len(body)} != header cells {len(table.headers)}")
+                    row(
+                        doc.path,
+                        table.line + index + 1,
+                        Check.TABLE_SHAPE,
+                        "fail",
+                        f"row cells {len(body)} != header cells {len(table.headers)}; re-pad the row to the header width",
+                    )
                 )
         if len(table.rows) >= 2 and not indexed:
-            rows.append(row(doc.path, table.line, Check.TABLE_INDEX, "fail", "enumerable table lacks leading [INDEX]"))
+            rows.append(row(doc.path, table.line, Check.TABLE_INDEX, "fail", "enumerable table lacks its leading centered [INDEX] column; insert it"))
         if indexed:
             if table.aligns and table.aligns[0] != "center":
-                rows.append(row(doc.path, sep_line, Check.TABLE_INDEX, "fail", f"[INDEX] column is {table.aligns[0]}-aligned, not centered"))
+                rows.append(
+                    row(doc.path, sep_line, Check.TABLE_INDEX, "fail", f"[INDEX] column is {table.aligns[0]}-aligned; center it with `:---:`")
+                )
             for index, body in enumerate(table.rows, 1):
                 expected = f"[{index:02}]"
                 actual = body[0] if body else "<empty>"
                 if actual.strip() != expected:
-                    rows.append(row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"{actual or '<empty>'} != {expected}"))
-        fat = len(table.headers) > 4 or any(len(cell) > 100 for body in table.rows for cell in body)
-        # A registry table — a closed roster of atomic rows in four columns or fewer — is legal past the row ceiling.
-        registry = len(table.headers) <= 4
-        if len(table.headers) > TABLE_COLUMN_CEILING or (len(table.rows) > TABLE_ROW_CEILING and fat and not registry):
+                    rows.append(
+                        row(doc.path, table.line + index + 1, Check.TABLE_INDEX, "fail", f"index cell {actual or '<empty>'} != {expected}; renumber")
+                    )
+        # row count is never capped: a row that belongs in the table stays a row, and an oversized table relieves cells or decomposes on the column axis, never sheds rows to prose
+        if len(table.headers) > TABLE_COLUMN_CEILING:
             rows.append(
                 row(
                     doc.path,
                     table.line,
                     Check.TABLE_BOUNDS,
-                    "warn",
-                    f"{len(table.headers)} columns x {len(table.rows)} rows exceeds the 15x20 ceiling; decompose on the dominant axis, never to prose",
+                    "fail",
+                    f"{len(table.headers)} columns exceeds the {TABLE_COLUMN_CEILING}-column ceiling; decompose on the column axis, never to prose",
                 )
             )
         linked = any(LINK.search(QUOTED_SPAN.sub("", cell)) for body in table.rows for cell in body)
@@ -768,7 +1033,9 @@ def table_rows(doc: Document) -> tuple[Row, ...]:
             for hit in pattern.finditer(QUOTED_SPAN.sub(" ", cell))
         )
         rows.extend(
-            row(doc.path, table.line + index + 1, Check.BOLD_EMPHASIS, "fail", hit.group(0)[:60])
+            row(
+                doc.path, table.line + index + 1, Check.BOLD_EMPHASIS, "fail", f"{hit.group(0)[:60]} — bold is banned; structure carries the emphasis"
+            )
             for index, body in enumerate(table.rows, 1)
             for cell in body
             for hit in BOLD.finditer(QUOTED_SPAN.sub(" ", cell))
@@ -781,7 +1048,7 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
         return ()
     rows: list[Row] = []
     h1 = tuple(heading for heading in doc.headings if heading.level == 1)
-    rows.extend(row(doc.path, heading.line, Check.HEADING_H1, "fail", "duplicate H1") for heading in h1[1:])
+    rows.extend(row(doc.path, heading.line, Check.HEADING_H1, "fail", "duplicate H1; a page carries one H1 rubric") for heading in h1[1:])
     rows.extend(
         row(doc.path, heading.line, Check.HEADING_H1, "fail", f"H1 is one bracketed rubric, never theater: {heading.title[:50]}")
         for heading in h1
@@ -807,17 +1074,21 @@ def heading_rows(doc: Document) -> tuple[Row, ...]:
         subsection = 0
         matched = NUMBERED_SECTION.match(heading.title)
         if not matched:
-            rows.append(row(doc.path, heading.line, Check.HEADING_ORDER, "fail", heading.title))
+            rows.append(row(doc.path, heading.line, Check.HEADING_ORDER, "fail", f"H2 is not [NN]-[TOKEN] numbered: {heading.title[:50]}"))
             continue
         actual = int(matched.group("n"))
         if actual != expected:
-            rows.append(row(doc.path, heading.line, Check.HEADING_ORDER, "fail", f"{actual:02} != {expected:02}"))
+            rows.append(
+                row(doc.path, heading.line, Check.HEADING_ORDER, "fail", f"H2 numbered [{actual:02}] where [{expected:02}] is next; renumber")
+            )
         expected = actual + 1
     slugs: dict[str, int] = {}
     for heading in doc.headings:
         slug = re.sub(r"[^a-z0-9 -]", "", heading.title.lower())
         if slug in slugs:
-            rows.append(row(doc.path, heading.line, Check.HEADING_ANCHOR, "fail", f"anchor slug collides with line {slugs[slug]}"))
+            rows.append(
+                row(doc.path, heading.line, Check.HEADING_ANCHOR, "fail", f"anchor slug collides with line {slugs[slug]}; retitle one heading")
+            )
         else:
             slugs[slug] = heading.line
     return tuple(rows)
@@ -844,7 +1115,7 @@ def link_rows(doc: Document) -> tuple[Row, ...]:
                 )
             )
         if not (path.parent / target).resolve(strict=False).exists():
-            rows.append(row(doc.path, link.line, Check.DEAD_RELATIVE_LINK, "fail", link.target))
+            rows.append(row(doc.path, link.line, Check.DEAD_RELATIVE_LINK, "fail", f"{link.target} resolves to no file from this page"))
     return tuple(rows)
 
 
@@ -854,13 +1125,22 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
         if EXAMPLE_LINE.match(span.text):
             continue
         if not doc.template:
-            rows.extend(row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", hit.group(0)) for hit in PLACEHOLDER.finditer(span.text))
-        rows.extend(row(doc.path, span.line, Check.BOLD_EMPHASIS, "fail", hit.group(0)) for hit in BOLD.finditer(span.text))
-        rows.extend(row(doc.path, span.line, Check.GLYPH_BAN, "fail", f"banned glyph {hit.group(0)!r}") for hit in EMOJI.finditer(span.text))
+            rows.extend(
+                row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", f"{hit.group(0)} is an unfilled template slot; fill it or delete the line")
+                for hit in PLACEHOLDER.finditer(span.text)
+            )
+        rows.extend(
+            row(doc.path, span.line, Check.BOLD_EMPHASIS, "fail", f"{hit.group(0)[:60]} — bold is banned; structure carries the emphasis")
+            for hit in BOLD.finditer(span.text)
+        )
+        rows.extend(
+            row(doc.path, span.line, Check.GLYPH_BAN, "fail", f"banned glyph {hit.group(0)!r}; delete it — bracketed [X] markers carry status")
+            for hit in EMOJI.finditer(span.text)
+        )
         voiced = QUOTED_SPAN.sub(" ", span.text)
         rows.extend(
-            row(doc.path, span.line, check, status, hit.group(0).lstrip(".!?:; "))
-            for check, pattern, status in PATTERNS
+            row(doc.path, span.line, check, status, f"{hit.group(0).lstrip('.!?:; ')}{cure}")
+            for check, pattern, status, cure in PATTERNS
             for hit in pattern.finditer(voiced)
             if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
         )
@@ -883,13 +1163,316 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
             and not LIST_LEADER.match(f"- {entry.text}")
             and not (instruction and INVOCATION_LEADER.match(f"- {entry.text}"))
         ):
-            rows.append(row(doc.path, entry.line, Check.LIST_LEADER, "fail", entry.text.split(":", 1)[0]))
+            rows.append(
+                row(
+                    doc.path,
+                    entry.line,
+                    Check.LIST_LEADER,
+                    "fail",
+                    f"{entry.text.split(':', 1)[0]} is not a legal leader — [NN]-[TOKEN]:, [TOKEN]:, or [NN]: with UPPERCASE_SNAKE tokens",
+                )
+            )
         if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`") and FIELD_LINE.match(entry.text) is None:
             sentences = len(SENTENCE_END.findall(entry.prose))
             if sentences > LIST_SENTENCE_CAP:
-                rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", f"{sentences} sentences > cap {LIST_SENTENCE_CAP}"))
+                detail = f"{sentences} sentences > cap {LIST_SENTENCE_CAP}; split distinct decisions into sibling entries, delete restatements"
+                rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", detail))
             elif len(entry.text) > LIST_CHAR_CAP:
-                rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", f"entry {len(entry.text)} chars > cap {LIST_CHAR_CAP}"))
+                detail = f"entry {len(entry.text)} chars > cap {LIST_CHAR_CAP}; tighten phrasing or demote the tail to its owning surface"
+                rows.append(row(doc.path, entry.line, Check.LIST_BLOAT, "warn", detail))
+    return tuple(rows)
+
+
+def spread_tokens(text: str) -> frozenset[str]:
+    return frozenset(SPREAD_WORD.findall(text.lower()))
+
+
+def restated(first: frozenset[str], second: frozenset[str]) -> bool:
+    bounded = len(first) >= SPREAD_FLOOR and len(second) >= SPREAD_FLOOR
+    return bounded and len(first & second) / len(first | second) >= SPREAD_SHARE
+
+
+def spread_rows(doc: Document) -> tuple[Row, ...]:
+    # SAME_DECISION_SPREAD census: adjacent sentences in one paragraph and adjacent sibling entries that carry
+    # near-identical content words restate one ruling; the collapse keeps every distinct decision as its own clause.
+    if doc.template:
+        return ()
+    rows: list[Row] = []
+    for span in doc.prose:
+        sentences = tuple(sentence for sentence in SENTENCE_SPLIT.split(span.text) if sentence.strip())
+        rows.extend(
+            row(
+                doc.path,
+                span.line,
+                Check.SAME_DECISION,
+                "warn",
+                "adjacent sentences restate one decision; collapse to the strongest ruling — only restatements merge",
+            )
+            for first, second in pairwise(sentences)
+            if restated(spread_tokens(first), spread_tokens(second))
+        )
+    rows.extend(
+        row(
+            doc.path,
+            second.line,
+            Check.SAME_DECISION,
+            "warn",
+            f"entry restates line {first.line}; merge to one entry smaller than both — a distinct decision survives as its own entry",
+        )
+        for first, second in pairwise(doc.lists)
+        if second.line - first.line <= 2 and restated(spread_tokens(first.prose), spread_tokens(second.prose))
+    )
+    return tuple(rows)
+
+
+def card_vocabulary(lines: tuple[str, ...]) -> tuple[frozenset[str], dict[str, int], frozenset[str]]:
+    # First pass over a card file: the field roster its template comments declare, section-marker lines, templated bands.
+    fields: set[str] = set()
+    sections: dict[str, int] = {}
+    templated: set[str] = set()
+    band = ""
+    commented = False
+    for number, line in enumerate(lines, 1):
+        if (section := CARD_BAND.match(line)) is not None:
+            band = section["band"]
+            sections[band] = number
+            continue
+        stripped = line.strip()
+        opened = not commented and stripped.startswith(COMMENT_OPEN)
+        if opened and SOURCE_ONLY in stripped and band:
+            templated.add(band)
+        if commented or opened:
+            if (field := CARD_BULLET.match(stripped)) is not None:
+                fields.add(field["label"])
+            commented = COMMENT_CLOSE not in stripped
+    return frozenset(fields) or RATIFIED_FIELDS, sections, frozenset(templated)
+
+
+def card_rows(path: Path, text: str) -> tuple[Row, ...]:
+    # IDEAS/TASKLOG marker census: leader grammar, closed statuses, section agreement, the template-comment field
+    # vocabulary with drift detection, four core bullets per open card, and repo-relative paths.
+    if path.name not in CARD_FILES or "templates" in path.parts or teaching(path):
+        return ()
+    lines = tuple(text.splitlines())
+    vocabulary, sections, templated = card_vocabulary(lines)
+    rows: list[Row] = []
+    band = ""
+    commented = False
+    card: tuple[int, str, str] | None = None
+    seen: set[str] = set()
+
+    def sealed() -> None:
+        if card and band == "OPEN" and card[2] in OPEN_STATUSES and (missing := [field for field in CORE_FIELDS if field not in seen]):
+            detail = f"open card [{card[1]}] lacks {', '.join(missing)} — Capability, Shape, Unlocks, Anchors ride every open card"
+            rows.append(row(path, card[0], Check.CARD_FIELD, "fail", detail))
+
+    for number, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if commented or stripped.startswith(COMMENT_OPEN):
+            commented = COMMENT_CLOSE not in stripped
+            continue
+        if (section := CARD_BAND.match(line)) is not None or HEADING.match(line):
+            sealed()
+            card, band = None, section["band"] if section else ""
+            continue
+        if (hit := ABSOLUTE_PATH.search(line)) is not None:
+            rows.append(row(path, number, Check.MACHINE_PATH, "fail", f"{hit.group(0)} is an absolute machine path; card paths stay repo-relative"))
+        if (leader := CARD_HEAD.match(line)) is not None:
+            sealed()
+            slug, status = leader["slug"], leader["status"]
+            card, seen = (number, slug, status), set()
+            if NUMERIC_ID.match(slug):
+                rows.append(
+                    row(
+                        path,
+                        number,
+                        Check.CARD_LEADER,
+                        "fail",
+                        f"id [{slug}] is pure-numeric; ids are semantic UPPERCASE_SNAKE slugs carrying meaning",
+                    )
+                )
+            elif not SLUG_SHAPE.match(slug):
+                rows.append(row(path, number, Check.CARD_LEADER, "fail", f"slug [{slug}] breaks UPPERCASE_SNAKE — a hyphenated slug is a defect"))
+            if status not in OPEN_STATUSES | CLOSED_STATUSES:
+                rows.append(row(path, number, Check.CARD_STATUS, "fail", f"status {status} outside the closed vocabulary — {STATUS_LAW}"))
+            elif band == "OPEN" and status in CLOSED_STATUSES:
+                rows.append(row(path, number, Check.CARD_STATUS, "fail", f"closed status {status} under [OPEN]; move the card to [02]-[CLOSED]"))
+            elif band == "CLOSED" and status in OPEN_STATUSES:
+                rows.append(row(path, number, Check.CARD_STATUS, "fail", f"open status {status} under [CLOSED]; reopen the card under [01]-[OPEN]"))
+            elif not band:
+                rows.append(row(path, number, Check.CARD_SECTION, "fail", f"card [{slug}] sits outside the [OPEN]/[CLOSED] sections"))
+            continue
+        if card and stripped.startswith("- "):
+            if (field := CARD_BULLET.match(stripped)) is None:
+                rows.append(row(path, number, Check.CARD_FIELD, "fail", "card bullet is not a `- Field:` line from the template vocabulary"))
+            elif field["label"] not in vocabulary:
+                detail = f"field {field['label']} drifts from the template-comment vocabulary {'|'.join(sorted(vocabulary))}"
+                rows.append(row(path, number, Check.CARD_FIELD, "fail", detail))
+            else:
+                seen.add(field["label"])
+            continue
+        if not stripped:
+            sealed()
+            card = None
+    sealed()
+    for wanted in ("OPEN", "CLOSED"):
+        if wanted not in sections:
+            rows.append(row(path, 0, Check.CARD_SECTION, "fail", f"card file lacks its ## [NN]-[{wanted}] section marker"))
+        elif wanted not in templated:
+            detail = f"[{wanted}] section carries no source-only template comment; the comment declares the card grammar"
+            rows.append(row(path, sections[wanted], Check.CARD_SECTION, "fail", detail))
+    return tuple(sorted(rows, key=lambda finding: finding.line))
+
+
+def rulings_vocabulary(lines: tuple[str, ...]) -> tuple[str, ...]:
+    # Union law: code-spanned labels the file's own template comments declare extend the ratified closed set;
+    # ratified order leads, declared extensions follow in declaration order and rank after every ratified label.
+    declared: list[str] = []
+    commented = False
+    for line in lines:
+        stripped = line.strip()
+        if commented or stripped.startswith(COMMENT_OPEN):
+            declared.extend(label for label in SPANNED_LABEL.findall(stripped) if label not in declared)
+            commented = COMMENT_CLOSE not in stripped
+    return RULING_SECTIONS + tuple(label for label in declared if label not in RULING_SECTIONS)
+
+
+def rulings_rows(path: Path, text: str) -> tuple[Row, ...]:
+    # RULINGS.md census: one [TOKEN_RULINGS] H1 and ## [NN]-[LABEL] sections inside the closed vocabulary,
+    # present sections in canonical order, numbering contiguous from [01] under omit-and-renumber; the
+    # per-row admission bar stays review judgment, never a pattern.
+    if path.name != "RULINGS.md" or "templates" in path.parts or teaching(path):
+        return ()
+    lines = tuple(text.splitlines())
+    order = rulings_vocabulary(lines)
+    rank = {label: position for position, label in enumerate(order)}
+    law = "|".join(order)
+    rows: list[Row] = []
+    fence: tuple[str, int, int] | None = None
+    commented = False
+    seen: dict[str, int] = {}
+    anchored = False
+    previous = ""
+    expected = 1
+    for number, line in enumerate(lines, 1):
+        stripped = line.strip()
+        if commented or stripped.startswith(COMMENT_OPEN):
+            commented = COMMENT_CLOSE not in stripped
+            continue
+        matched = FENCE.match(line)
+        if fence is None and matched:
+            fence = (matched.group("marker")[0], len(matched.group("marker")), len(matched.group("indent")))
+            continue
+        if fence is not None:
+            if fence_closes(matched, *fence):
+                fence = None
+            continue
+        if (heading := HEADING.match(line)) is None:
+            continue
+        if len(heading.group("level")) == 1:
+            anchored = True
+            if not RULINGS_H1.match(heading.group("title")):
+                detail = f"H1 {heading.group('title')[:50]} is not the owner rubric; a rulings page opens on one bracketed [TOKEN_RULINGS] H1"
+                rows.append(row(path, number, Check.RULINGS_SECTION, "fail", detail))
+            continue
+        if len(heading.group("level")) != 2 or (numbered := H2_NUMBERED.match(heading.group("title"))) is None:
+            continue
+        actual, label = int(numbered.group(1)), numbered.group(2)[1:-1]
+        if actual != expected:
+            detail = f"section numbered [{actual:02}] where [{expected:02}] is next; an omitted section renumbers survivors — close the gap"
+            rows.append(row(path, number, Check.RULINGS_SECTION, "fail", detail))
+        expected = actual + 1
+        if label not in rank:
+            detail = f"[{label}] outside the closed section vocabulary {law}; re-home its rulings under a declared section"
+            rows.append(row(path, number, Check.RULINGS_SECTION, "fail", detail))
+        elif label in seen:
+            detail = f"[{label}] duplicates the section at line {seen[label]}; one section owns a label — merge the rulings there"
+            rows.append(row(path, number, Check.RULINGS_SECTION, "fail", detail))
+        else:
+            seen[label] = number
+            if previous and rank[label] < rank[previous]:
+                detail = f"[{label}] rides after [{previous}] against canonical order {law}; reorder the sections and renumber from [01]"
+                rows.append(row(path, number, Check.RULINGS_SECTION, "fail", detail))
+            previous = label
+    if not anchored:
+        rows.append(row(path, 0, Check.RULINGS_SECTION, "fail", "page lacks its # [TOKEN_RULINGS] H1; one owner rubric opens the registry"))
+    return tuple(rows)
+
+
+def research_rows(path: Path, text: str) -> tuple[Row, ...]:
+    # Design-page research census: one terminal ## [NN]-[RESEARCH] section owning every well-formed
+    # `- [TOKEN]-[OPEN|BLOCKED]: <question>; <route>` row, `(none)` marking the legal-empty section;
+    # a spec page under .planning/<sub>/ carries the section always, and absence is an error.
+    if path.name in CARD_FILES or "templates" in path.parts or teaching(path):
+        return ()
+    parts = path.parts
+    spec_page = (
+        ".planning" in parts and parts.index(".planning") < len(parts) - 2 and path.name not in ROUTING_FILES and path.name != "ARCHITECTURE.md"
+    )
+    lines = tuple(text.splitlines())
+    rows: list[Row] = []
+    fence: tuple[str, int, int] | None = None
+    research: int | None = None
+    inside = False
+    populated = False
+    for number, line in enumerate(lines, 1):
+        matched = FENCE.match(line)
+        if fence is None and matched:
+            fence = (matched.group("marker")[0], len(matched.group("marker")), len(matched.group("indent")))
+            continue
+        if fence is not None:
+            if fence_closes(matched, *fence):
+                fence = None
+            continue
+        if (heading := HEADING.match(line)) is not None and len(heading.group("level")) == 2:
+            if RESEARCH_HEAD.match(heading.group("title")):
+                if research is not None:
+                    rows.append(row(path, number, Check.RESEARCH_SECTION, "fail", "duplicate [RESEARCH] marker; one terminal section owns every row"))
+                    continue
+                research, inside = number, True
+            elif inside:
+                rows.append(row(path, research or number, Check.RESEARCH_SECTION, "fail", "[RESEARCH] is displaced — the section ends the page"))
+                inside = False
+            continue
+        if not inside:
+            if (stray := RESEARCH_ENTRY.match(line)) is not None and stray["status"] in RESEARCH_STATUSES | {"RESOLVED"}:
+                detail = f"research row [{stray['token']}] outside the terminal [RESEARCH] section; the section owns every research row"
+                rows.append(row(path, number, Check.RESEARCH_SECTION, "fail", detail))
+            continue
+        if line.strip() == "(none)":
+            populated = True
+            continue
+        if not line.startswith("- "):
+            continue
+        populated = True
+        if (entry := RESEARCH_ENTRY.match(line)) is None:
+            rows.append(row(path, number, Check.RESEARCH_ROW, "fail", "row is not `- [TOKEN]-[OPEN|BLOCKED]: <question>; <route>`"))
+            continue
+        token, status, body = entry["token"], entry["status"], entry["body"]
+        if NUMERIC_ID.match(token):
+            rows.append(
+                row(
+                    path,
+                    number,
+                    Check.RESEARCH_ROW,
+                    "fail",
+                    f"token [{token}] is pure-numeric; tokens are semantic UPPERCASE_SNAKE slugs carrying meaning",
+                )
+            )
+        elif not SLUG_SHAPE.match(token):
+            rows.append(row(path, number, Check.RESEARCH_ROW, "fail", f"token [{token}] breaks UPPERCASE_SNAKE — a hyphenated token is a defect"))
+        if status == "RESOLVED":
+            rows.append(row(path, number, Check.RESEARCH_ROW, "fail", "RESOLVED is not a research status — a resolved row is deleted outright"))
+        elif status not in RESEARCH_STATUSES:
+            rows.append(row(path, number, Check.RESEARCH_ROW, "fail", f"status {status} outside the research vocabulary OPEN|BLOCKED"))
+        question, _, route = body.partition(";")
+        if not (question.strip() and route.strip()):
+            rows.append(row(path, number, Check.RESEARCH_ROW, "fail", "row lacks its `<question>; <route>` split — exact question, then route"))
+    if research is not None and not populated:
+        rows.append(row(path, research, Check.RESEARCH_SECTION, "fail", "(none) marks the empty [RESEARCH] section; the marker survives realization"))
+    if research is None and spec_page:
+        detail = "design page lacks its terminal ## [NN]-[RESEARCH] section; append it, `(none)` marking legal-empty"
+        rows.append(row(path, 0, Check.RESEARCH_SECTION, "fail", detail))
     return tuple(rows)
 
 
@@ -900,7 +1483,7 @@ def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
     rows: list[Row] = []
     end = frontmatter_end(lines)
     if end == 0:
-        return (row(path, 1, Check.SKILL_FRONTMATTER, "fail", "missing or keyless frontmatter"),)
+        return (row(path, 1, Check.SKILL_FRONTMATTER, "fail", "missing or keyless frontmatter; open with `---` carrying name and description"),)
     body = lines[1 : end - 1]
     fields: dict[str, tuple[int, str]] = {}
     current: str | None = None
@@ -922,13 +1505,16 @@ def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
         if not SKILL_NAME_SHAPE.match(name) or len(name) > SKILL_NAME_CAP:
             rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} breaks lowercase-hyphen shape or cap {SKILL_NAME_CAP}"))
         if SKILL_NAME_RESERVED.search(name):
-            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} carries a reserved word"))
+            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} carries a reserved word; drop claude/anthropic from the name"))
         if name != path.parent.name:
-            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} != directory {path.parent.name}"))
+            rows.append(row(path, name_anchor, Check.SKILL_NAME, "fail", f"{name} != directory {path.parent.name}; rename one to match the other"))
     anchor, description = fields.get("description", (1, ""))
     if description:
         voiced = QUOTED_SPAN.sub(" ", description)
-        rows.extend(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", hit.group(0)) for hit in SKILL_VOICE.finditer(voiced))
+        rows.extend(
+            row(path, anchor, Check.SKILL_DESCRIPTION, "fail", f"{hit.group(0)} voices a persona; a description states triggers in third person")
+            for hit in SKILL_VOICE.finditer(voiced)
+        )
         if len(description) < SKILL_DESCRIPTION_FLOOR:
             rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "fail", f"{len(description)} chars carries no discriminating triggers"))
         elif len(description) > SKILL_DESCRIPTION_CEILING:
@@ -936,7 +1522,9 @@ def skill_rows(path: Path, text: str) -> tuple[Row, ...]:
         elif len(description) > SKILL_DESCRIPTION_CAP:
             rows.append(row(path, anchor, Check.SKILL_DESCRIPTION, "warn", f"{len(description)} chars > portability budget {SKILL_DESCRIPTION_CAP}"))
     if len(lines) > SKILL_ROOT_CAP:
-        rows.append(row(path, len(lines), Check.SKILL_ROOT_BUDGET, "fail", f"root {len(lines)} lines > cap {SKILL_ROOT_CAP}"))
+        rows.append(
+            row(path, len(lines), Check.SKILL_ROOT_BUDGET, "fail", f"root {len(lines)} lines > cap {SKILL_ROOT_CAP}; move body into references/")
+        )
     return tuple(rows)
 
 
@@ -968,11 +1556,11 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
             detail = f"{len(run)} stacked comment lines > cap {COMMENT_STACK_CAP}; merge toward the {CAP}-column width"
             rows.append(row(path, run[0][0], Check.COMMENT_STACK, "fail", detail))
         elif len(run) >= 2 and all(width < COMMENT_SHRED_FLOOR for _, width in run):
-            detail = f"{len(run)} stacked comment lines all under {COMMENT_SHRED_FLOOR} columns; merge toward the {CAP}-column width"
-            rows.append(row(path, run[0][0], Check.COMMENT_SHRED, "warn", detail))
+            detail = f"{len(run)} stacked comment lines all under {COMMENT_SHRED_FLOOR} columns; merge toward the {CAP}-column width, or delete a no-load comment whole"
+            rows.append(row(path, run[0][0], Check.COMMENT_SHRED, "fail", detail))
         elif len(run) >= 2 and run[-1][1] < COMMENT_RUNT_FLOOR:
-            detail = f"trailing runt line {run[-1][1]} < floor {COMMENT_RUNT_FLOOR}; re-flow the block into fewer or balanced lines"
-            rows.append(row(path, run[-1][0], Check.COMMENT_RUNT, "warn", detail))
+            detail = f"trailing runt line {run[-1][1]} < floor {COMMENT_RUNT_FLOOR}; re-flow into fewer balanced lines, refold the orphan into its neighbour, or delete the comment if it carries no load"
+            rows.append(row(path, run[-1][0], Check.COMMENT_RUNT, "fail", detail))
         run.clear()
 
     for number, line in enumerate(text.splitlines(), 1):
@@ -986,7 +1574,9 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
         # Width is absolute geometry: it binds in every zone, structural lines included.
         width = len(line.rstrip())
         if width > COMMENT_WIDTH_CAP:
-            rows.append(row(path, number, Check.COMMENT_WIDTH, "fail", f"comment line {width} > cap {COMMENT_WIDTH_CAP}"))
+            rows.append(
+                row(path, number, Check.COMMENT_WIDTH, "fail", f"comment line {width} > cap {COMMENT_WIDTH_CAP}; re-wrap with the lead packed")
+            )
         glyphed = body.removeprefix(marker)
         tail = glyphed.removeprefix(" ")
         dash_fill = re.fullmatch(r"-{4,}", tail.strip()) is not None
@@ -1004,7 +1594,10 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
         ):
             close()
             continue
-        rows.extend(row(path, number, Check.HEDGE, "warn", hit.group(0)) for hit in MARKER_WORDS.finditer(tail))
+        rows.extend(
+            row(path, number, Check.HEDGE, "warn", f"{hit.group(0)}; open work is a tracked card, never a comment")
+            for hit in MARKER_WORDS.finditer(tail)
+        )
         if COMMENT_ARTICLE.match(tail):
             rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", "comment opens on 'the'; lead with the constraint's owner or verb"))
         run.append((number, width))
@@ -1026,18 +1619,21 @@ def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
             continue
         body = DIVIDER_BODY.match(matched["body"])
         if not body:
-            rows.append(row(path, number, Check.SECTION_DIVIDER, "warn", f"divider label is not bracketed UPPER_SNAKE: {matched['body'][:60]}"))
+            rows.append(
+                row(path, number, Check.SECTION_DIVIDER, "fail", f"divider label is not bracketed UPPER_SNAKE — `[LABEL]`: {matched['body'][:60]}")
+            )
         elif body["tail"] and not DASH_TAIL.match(body["tail"]):
-            rows.append(row(path, number, Check.SECTION_DIVIDER, "fail", "divider carries content beyond the label and dash fill"))
+            rows.append(row(path, number, Check.SECTION_DIVIDER, "fail", "divider carries content beyond the label and dash fill; move it below"))
         elif body["tail"] and len(line) != DIVIDER_WIDTH:
-            rows.append(row(path, number, Check.SECTION_WIDTH, "fail", f"full divider width {len(line)} != {DIVIDER_WIDTH}"))
+            rows.append(row(path, number, Check.SECTION_WIDTH, "fail", f"full divider width {len(line)} != {DIVIDER_WIDTH}; re-pad the dash fill"))
         # Full dividers charter sections: duplicate labels, empty sections, and orphan sub-dividers are phantom
-        # structure; every repair reads the enclosing section first, so the tier stays warn with no fixer arm.
+        # structure; every repair reads the enclosing section first, so the tier fails with no fixer arm — a divider
+        # is corrected in style, structure, or label by hand, never deleted and never scripted.
         if body and body["tail"]:
             if body["label"] in seen:
                 rows.append(
                     row(
-                        path, number, Check.SECTION_DIVIDER, "warn", f"[{body['label']}] duplicates the section divider at line {seen[body['label']]}"
+                        path, number, Check.SECTION_DIVIDER, "fail", f"[{body['label']}] duplicates the section divider at line {seen[body['label']]}"
                     )
                 )
             seen[body["label"]] = number
@@ -1047,20 +1643,20 @@ def divider_rows(path: Path, text: str) -> tuple[Row, ...]:
                         path,
                         open_section[0],
                         Check.SECTION_DIVIDER,
-                        "warn",
+                        "fail",
                         f"[{open_section[1]}] charters an empty section; phantom label or misplaced divider",
                     )
                 )
             open_section, payload = (number, body["label"]), 0
         elif body and open_section is None:
-            rows.append(row(path, number, Check.SECTION_DIVIDER, "warn", "sub-section divider precedes any chartering section"))
+            rows.append(row(path, number, Check.SECTION_DIVIDER, "fail", "sub-section divider precedes any chartering section"))
     if open_section and payload == 0:
         rows.append(
             row(
                 path,
                 open_section[0],
                 Check.SECTION_DIVIDER,
-                "warn",
+                "fail",
                 f"[{open_section[1]}] charters an empty section; phantom label or misplaced divider",
             )
         )
@@ -1074,8 +1670,8 @@ def scan(path: Path, cap: int) -> tuple[Row, ...]:
     if path.suffix != ".md":
         return () if teaching(path) else divider_rows(path, text) + comment_rows(path, text)
     doc, lexer_rows = lex(path, text, cap)
-    checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc)
-    return checks + skill_rows(path, text) + bundle_rows(path, text)
+    checks = lexer_rows + table_rows(doc) + heading_rows(doc) + link_rows(doc) + prose_rows(doc) + list_rows(doc) + spread_rows(doc)
+    return checks + card_rows(path, text) + rulings_rows(path, text) + research_rows(path, text) + skill_rows(path, text) + bundle_rows(path, text)
 
 
 # --- [EMIT] -----------------------------------------------------------------------------
@@ -1177,13 +1773,7 @@ def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[
             out.append(line)
             continue
         if fence is not None:
-            if (
-                matched
-                and matched.group("marker")[0] == fence[0]
-                and len(matched.group("marker")) >= fence[1]
-                and not matched.group("info").strip()
-                and len(matched.group("indent")) <= fence[2] + 3
-            ):
+            if fence_closes(matched, *fence):
                 fence = None
             out.append(line)
             continue
@@ -1224,7 +1814,7 @@ def repaired_lines(lines: list[str], skip_until: int) -> tuple[list[str], tuple[
                 changes.append(Change(number, Repair.LEADER, line.strip(), wanted.strip()))
                 line = wanted
         out.append(line)
-        if HEADING.match(line) and number <= len(lines) and number < len(lines) and lines[number].strip():
+        if HEADING.match(line) and number < len(lines) and lines[number].strip():
             out.append("")
             changes.append(Change(number, Repair.SPACING, "<none>", "blank line after heading"))
     return out, tuple(changes)
@@ -1244,13 +1834,7 @@ def hugged_labels(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
             index += 1
             continue
         if fence is not None:
-            if (
-                matched
-                and matched.group("marker")[0] == fence[0]
-                and len(matched.group("marker")) >= fence[1]
-                and not matched.group("info").strip()
-                and len(matched.group("indent")) <= fence[2] + 3
-            ):
+            if fence_closes(matched, *fence):
                 fence = None
             out.append(line)
             index += 1
@@ -1258,11 +1842,7 @@ def hugged_labels(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
         # A bracketed label hugs its list: a floating label first earns the colon a list label carries; a table keeps the blank the grid demands.
         floating = bool(FLOATING_LABEL.match(line))
         if floating or LABEL_LEAD.match(line):
-            after = lines[index + 1] if index + 1 < total else ""
-            gap = not after.strip()
-            follow = (lines[index + 2] if index + 2 < total else "") if gap else after
-            intro_list = bool(LIST_ITEM.match(follow)) and not follow.lstrip().startswith("|")
-            intro_table = follow.lstrip().startswith("|")
+            gap, intro_list, intro_table = label_context(lines[index + 1] if index + 1 < total else "", lines[index + 2] if index + 2 < total else "")
             if floating and (intro_list or intro_table):
                 labeled = line.rstrip() + ":"
                 changes.append(Change(index + 1, Repair.COLON, line.strip(), labeled.strip()))
@@ -1280,6 +1860,104 @@ def hugged_labels(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
                 continue
         out.append(line)
         index += 1
+    return out, tuple(changes)
+
+
+def _strip_fm_styling(block: list[str]) -> tuple[list[str], int]:
+    # One pass drops flagged keys with their nested blocks; repeated passes drop parents emptied by the cut.
+    dropped = 0
+    while True:
+        out: list[str] = []
+        index = 0
+        cut = 0
+        while index < len(block):
+            line = block[index]
+            depth = len(line) - len(line.lstrip())
+            flagged = bool(MERMAID_STYLE_KEY.match(line) or MERMAID_HEX_VALUE.search(line))
+            childless = line.rstrip().endswith(":") and not (
+                index + 1 < len(block) and (len(block[index + 1]) - len(block[index + 1].lstrip())) > depth
+            )
+            if flagged or childless:
+                cut += 1
+                index += 1
+                while index < len(block) and (not block[index].strip() or (len(block[index]) - len(block[index].lstrip())) > depth):
+                    index += 1
+                continue
+            out.append(line)
+            index += 1
+        dropped += cut
+        if cut == 0:
+            return out, dropped
+        block = out
+
+
+def _elk_frontmatter(front: list[str], header: str, indent: str, at: int) -> tuple[list[str], tuple[Change, ...]]:
+    # Layout-family completion: a bare fence takes the standing block whole, a partial one names its absent keys for hand repair.
+    carried = {entry.strip() for entry in front}
+    absent = tuple(key for key in MERMAID_ELK_KEYS if key not in carried)
+    if family(header) not in MERMAID_LAYOUT or not absent:
+        return front, ()
+    if front:
+        return front, (Change(at, Repair.SKIP, ", ".join(absent), "frontmatter carries other keys; merge the absent keys by hand"),)
+    return [f"{indent}{entry}" for entry in MERMAID_ELK_BLOCK], (Change(at, Repair.CONFIG, "<none>", "standing ELK config block"),)
+
+
+def repaired_mermaid(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
+    out: list[str] = []
+    changes: list[Change] = []
+    index, total = 0, len(lines)
+    while index < total:
+        line = lines[index]
+        opened = FENCE.match(line)
+        if not (opened and opened.group("info").strip().lower().split()[:1] == ["mermaid"]):
+            out.append(line)
+            index += 1
+            continue
+        indent = opened.group("indent")
+        glyph, width, margin = opened.group("marker")[0], len(opened.group("marker")), len(indent)
+        body: list[str] = []
+        cursor = index + 1
+        while cursor < total:
+            if fence_closes(FENCE.match(lines[cursor]), glyph, width, margin):
+                break
+            body.append(lines[cursor])
+            cursor += 1
+        fm_end = next((i for i, entry in enumerate(body[1:], 1) if entry.strip() == "---"), -1) if body and body[0].strip() == "---" else -1
+        front: list[str] = []
+        kept: list[str] = []
+        base = index + 2
+        if fm_end >= 0:
+            fm_block, dropped = _strip_fm_styling(body[1:fm_end])
+            if dropped:
+                changes.append(Change(base, Repair.STYLE, f"{dropped} styling frontmatter blocks", "<stripped>"))
+            front = [f"{indent}---", *fm_block, f"{indent}---"] if any(entry.strip() for entry in fm_block) else []
+            body, base = body[fm_end + 1 :], base + fm_end + 1
+        for offset, source in enumerate(body):
+            trimmed = source.strip()
+            at = base + offset
+            if MERMAID_STYLE_LINE.match(source) or MERMAID_CLASS_ASSIGN.match(source) or MERMAID_ANIMATE.match(source):
+                changes.append(Change(at, Repair.STYLE, trimmed[:60], "<stripped>"))
+                continue
+            if MERMAID_BODY_CSS.search(source) and not trimmed.startswith("rect") and not MERMAID_BOX_COLOR.match(source):
+                changes.append(Change(at, Repair.STYLE, trimmed[:60], "<stripped>"))
+                continue
+            entry = source
+            if boxed := MERMAID_BOX_COLOR.match(entry):
+                entry = f"{boxed.group(1)}transparent{entry[boxed.end() :]}"
+                changes.append(Change(at, Repair.STYLE, trimmed[:60], entry.strip()[:60]))
+            if MERMAID_CLASS_TAIL.search(entry):
+                changes.append(Change(at, Repair.STYLE, trimmed[:60], "<class tail stripped>"))
+                entry = MERMAID_CLASS_TAIL.sub("", entry)
+            kept.append(entry)
+        header = next((entry.strip() for entry in kept if entry.strip()), "")
+        front, elk_changes = _elk_frontmatter(front, header, indent, index + 2)
+        changes.extend(elk_changes)
+        out.append(line)
+        out.extend(front)
+        out.extend(kept)
+        if cursor < total:
+            out.append(lines[cursor])
+        index = cursor + 1
     return out, tuple(changes)
 
 
@@ -1319,6 +1997,9 @@ def repaired_text(path: Path, text: str, cap: int) -> tuple[str, tuple[Change, .
     if not template:
         lines, line_changes = repaired_lines(lines, frontmatter_end(tuple(lines)))
         changes.extend(line_changes)
+    if not template and not teaching(path):
+        lines, payload_changes = repaired_mermaid(lines)
+        changes.extend(payload_changes)
     lines, hug_changes = hugged_labels(lines)
     changes.extend(hug_changes)
     doc, _ = lex(path, "\n".join(lines), cap)

@@ -1,6 +1,6 @@
 # [TABLE_CRAFT]
 
-Table repair is symptom-indexed: each entry names one defect an agent already sees in a grid, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both table shapes as tiny fences. Repair preserves the grid — hoist, split, extract, relieve, and re-pad in place; the conversion entries fire only after every in-place relief fails.
+Table repair opens with the eligibility triple: a failed triple converts the container whole before any cell moves, a passing grid repairs in place, and a row family resisting every move converts last, structure intact.
 
 ## [01]-[HIGH_COMPLEXITY_DONE_RIGHT]
 

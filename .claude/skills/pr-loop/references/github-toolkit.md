@@ -34,7 +34,7 @@ gh api repos/{owner}/{repo}/commits/$HEAD/status \
   -q '{state:.state, contexts:[.statuses[]|{context,state}]}'
 ```
 
-`conclusion` is null until `status == completed`; Macroscope concludes `neutral` — completion keys on `status`, never on a `success` conclusion. Review-only bots (Codex, Claude, humans) appear in neither system — their signal is a review object at `$HEAD`, which is why `gh pr checks --watch` never gates the reviewer wait.
+`conclusion` is null until `status == completed`; Macroscope concludes `neutral` — completion keys on `status`, never on a `success` conclusion. Review-only bots (Codex, Claude, humans) appear in neither system — their signal is a review object at `$HEAD`.
 
 ## [04]-[S3_RETRIGGER]
 

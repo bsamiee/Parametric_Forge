@@ -4,7 +4,8 @@
 //            with every host entry point declared beside the shared policy row.
 // Contract : osascript -l JavaScript osa-tool.js <bundle-id> <payload-json>
 //            stdout carries one JSON.stringify object; console.log rides stderr.
-// Replace  : <TOOL_NAME>, <IDLE_SECONDS>, and the <DOMAIN_LOGIC> region inside run.
+// Replace  : <TOOL_NAME>, the idleSeconds policy value, and the <DOMAIN_LOGIC> region inside run;
+//            slots ride only strings and comments, so the template compiles as shipped.
 'use strict';
 
 const POLICY = { tool: '<TOOL_NAME>', idleSeconds: 300 };

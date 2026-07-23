@@ -1,15 +1,15 @@
 /**
- * codex-lane-batch — audit heavy scopes on codex (gpt-5.6-terra) through blocking MCP
- * wrapper lanes, batch the short probes into ONE wrapper, then read every report file.
+ * codex-lane-batch — audit heavy scopes on codex through supervised lane-script
+ * runs, batch the short probes into ONE wrapper, then read every report file.
  *
- * Demonstrates codex lane composition: each heavy scope gets one call-write-receipt
- * wrapper — the blocking `codex` MCP call IS the wait, no polling, no launch ceremony;
- * lane law rides developer-instructions (role split) with a task-only prompt; the short
- * probes share a single wrapper making sequential codex calls and returning one combined
- * receipt (every wrapper costs a full context spin-up, so short legs batch); a quota-dead
- * lane re-dispatches natively at the role's Claude twin; the terminal reader consumes
- * every ok report IN FULL from disk while only thin receipts cross the wire, and a
- * failed lane's scope becomes its direct-hunt queue.
+ * Demonstrates codex lane composition: each heavy scope gets one write-run-receipt
+ * wrapper — the backgrounded codex-lane.sh run IS the wait, the harness re-invokes on
+ * exit, no polling; lane law rides the --law file (role split) with a task-only --task
+ * file; the short probes share a single wrapper making sequential lane runs and returning
+ * one combined receipt (every wrapper costs a full context spin-up, so short legs batch);
+ * a quota-dead lane re-dispatches natively at the role's native twin; the terminal reader
+ * consumes every ok report IN FULL from disk while only thin receipts cross the wire, and
+ * a failed lane's scope becomes its direct-hunt queue.
  *
  * Workflow({ name: 'codex-lane-batch',
  *            args: { scopes: ['libs/python/geometry', 'libs/python/compute'],
@@ -18,12 +18,9 @@
 
 export const meta = {
     name: 'codex-lane-batch',
-    description: 'Audit each heavy scope on a codex terra lane, batch the short probes into one wrapper, consolidate from the report files',
-    whenToUse: 'Transcript-heavy audit legs that should burn codex tokens, not Claude context',
-    phases: [
-        { title: 'Audit', detail: 'one terra wrapper per heavy scope + one batched wrapper for the probes', model: 'sonnet' },
-        { title: 'Resolve' },
-    ],
+    description: 'Audit each heavy scope on a codex lane, batch the short probes into one wrapper, consolidate from the report files',
+    whenToUse: 'Transcript-heavy audit legs that should burn codex tokens, not session context',
+    phases: [{ title: 'Audit', detail: 'one wrapper per heavy scope + one batched wrapper for the probes', model: 'sonnet' }, { title: 'Resolve' }],
 };
 
 // --- [INPUTS] --------------------------------------------------------------------------
@@ -90,49 +87,86 @@ const LAW =
 const auditTask = (scope) =>
     'Audit ' + scope + ' for drifted docs, phantom members, and dead references. Read every file under it; verify each claim on disk.';
 
-// One wrapper, one blocking codex call, envelope CONTENT written unmodified, thin receipt back — never
-// re-judging the work. Effort inherits the operator default; no config clause without a real deviation.
-const lanePrompt = (label, task) =>
-    'DISPATCH ROLE: gpt-5.6-terra performs the complete TASK below through one blocking codex MCP call; never perform, edit, judge, or relay ' +
-    'the work yourself. (1) ToolSearch "select:mcp__codex__codex". (2) Call mcp__codex__codex ONCE with ' +
-    'model="gpt-5.6-terra", cwd set to the repo root, "developer-instructions" = the LANE LAW block below VERBATIM, ' +
-    'prompt = the TASK block below VERBATIM. On a tool error retry the identical call ONCE. (3) The tool result is a JSON envelope ' +
-    '{threadId, content}; Write the CONTENT text (never the envelope) unmodified to ' +
-    SCRATCH +
-    '/' +
-    label +
-    '-report.json (a repo-relative path — resolve it against the repo root for the Write tool; delete any leftover file there first). ' +
-    '(4) Return ok, report path, entries = the findings count parsed from the content, headline = per-severity tallies, failure empty — ' +
-    'or ok=false with the error text VERBATIM after a failed retry.\n\nLANE LAW:\n\n' +
-    LAW +
-    '\n\nTASK:\n\n' +
-    task;
+// One wrapper, one supervised lane run, --out materializes the product, thin receipt back — never
+// re-judging the work. Effort inherits the operator default; no effort flag without a real deviation.
+const lanePrompt = (label, task) => {
+    const report = SCRATCH + '/' + label + '-report.json'; // repo-relative — resolved against the repo root by the wrapper's tools
+    const laneDir = report + '.lane';
+    return (
+        'DISPATCH ROLE: codex performs the complete TASK below through one supervised lane run; never perform, edit, judge, or relay ' +
+        'the work yourself. (1) Write the LANE LAW block below VERBATIM to ' +
+        laneDir +
+        '/law.md and the TASK block below VERBATIM to ' +
+        laneDir +
+        '/task.md, composing neither. (2) Run ONE Bash call with run_in_background true: ' +
+        '.claude/skills/codex/scripts/codex-lane.sh --task ' +
+        laneDir +
+        '/task.md --law ' +
+        laneDir +
+        '/law.md --dir ' +
+        laneDir +
+        ' --cwd <the absolute repo root> --model gpt-5.6-terra --out ' +
+        report +
+        '; the harness re-invokes you when the lane exits — Read ' +
+        laneDir +
+        '/receipt.json then, never a polling loop. Recovery is ONCE-only: a receipt reason "crash" overwrites the task file with ' +
+        '"continue and complete the lane, then land the receipt" and re-runs the same command plus --resume <the receipt thread_id>; ' +
+        'any other failed receipt re-runs the same command untouched. (3) The lane lands the product at ' +
+        report +
+        ' via --out. (4) Verify with one Bash call: jq -e ".findings" ' +
+        report +
+        ' >/dev/null — probe the contract key, never bare parseability, which any wrong-shaped JSON passes; on a miss rewrite once from ' +
+        'the last agent_message item text in ' +
+        laneDir +
+        '/events.jsonl (jq -rs, Write that) and re-probe, then return ok=false with the probe error after a second miss. ' +
+        '(5) Return ok, report path, entries = the findings count parsed from the product, headline = per-severity tallies, failure empty — ' +
+        'or ok=false with the receipt reason and failure text VERBATIM.\n\nLANE LAW:\n\n' +
+        LAW +
+        '\n\nTASK:\n\n' +
+        task
+    );
+};
 
-// The batched wrapper makes one codex call PER probe, sequentially, and returns ONE combined receipt —
-// short legs never earn a wrapper each. The probe tier deviation (medium) is the one legal config clause.
-const batchPrompt = (label, files) =>
-    'DISPATCH ROLE: run ' +
-    files.length +
-    ' SEQUENTIAL blocking codex MCP calls, one per probe file below, each with model="gpt-5.6-terra", cwd at the repo ' +
-    'root, config={"model_reasoning_effort":"medium"}, "developer-instructions" = the LANE LAW block below VERBATIM, and prompt = ' +
-    '"Probe <file>: verify every path, version, and member it cites against disk." ' +
-    '(1) ToolSearch "select:mcp__codex__codex" once. (2) Call per probe; on a tool error retry that probe ONCE, then record it failed and ' +
-    'continue. Each tool result is a JSON envelope {threadId, content}; content holds the probe findings JSON. (3) Merge every findings ' +
-    'array from the CONTENT texts and Write the merged JSON to ' +
-    SCRATCH +
-    '/' +
-    label +
-    '-report.json (repo-relative — resolve against the repo root; delete any leftover file first). (4) Return ok = at least one ' +
-    'probe succeeded, the report path, entries = merged findings count, headline = "<n> probes | <tallies>", failure = the failed probe ' +
-    'names or empty.\n\nLANE LAW:\n\n' +
-    LAW +
-    '\n\nPROBES: ' +
-    JSON.stringify(files);
+// The batched wrapper makes one lane run PER probe, sequentially, and returns ONE combined receipt —
+// short legs never earn a wrapper each. The probe tier deviation (medium) is the one legal effort flag.
+const batchPrompt = (label, files) => {
+    const report = SCRATCH + '/' + label + '-report.json';
+    const laneDir = report + '.lane';
+    return (
+        'DISPATCH ROLE: run ' +
+        files.length +
+        ' SEQUENTIAL supervised lane runs, one per probe file below. (1) Write the LANE LAW block below VERBATIM to ' +
+        laneDir +
+        '/law.md once, and per probe <i> (1-based) a task file at ' +
+        laneDir +
+        '/probe-<i>/task.md reading "Probe <file>: verify every path, version, and member it cites against disk." ' +
+        '(2) Per probe run ONE Bash call with run_in_background true: .claude/skills/codex/scripts/codex-lane.sh --task ' +
+        laneDir +
+        '/probe-<i>/task.md --law ' +
+        laneDir +
+        '/law.md --dir ' +
+        laneDir +
+        '/probe-<i> --cwd <the absolute repo root> --model gpt-5.6-terra --effort medium --out ' +
+        laneDir +
+        '/probe-<i>/out.json; Read the receipt on re-invoke; a failed receipt re-runs that probe ONCE (reason "crash" adds ' +
+        '--resume <the receipt thread_id>), then records it failed and continues. (3) Merge every findings array from the probe ' +
+        'out.json files and Write the merged JSON to ' +
+        report +
+        ' (delete any leftover file first), then verify with one Bash call: jq -e ".findings" ' +
+        report +
+        ' >/dev/null — the contract key, never bare parseability; rewrite once on a miss. (4) Return ok = at least one ' +
+        'probe succeeded and the probe passed, the report path, entries = merged findings count, headline = "<n> probes | <tallies>", ' +
+        'failure = the failed probe names or empty.\n\nLANE LAW:\n\n' +
+        LAW +
+        '\n\nPROBES: ' +
+        JSON.stringify(files)
+    );
+};
 
 // Orchestrator-owned scope rides the receipt so a lane that dies before writing still names its territory.
-// QUOTA FALLBACK: usage exhaustion fails the call loudly; the CALLER re-dispatches the same task natively at
-// the role's Claude twin (terra->opus) — the sonnet wrapper never becomes the implicit executor. A silent
-// live MCP call is legal waiting.
+// QUOTA FALLBACK: usage exhaustion fails the lane loudly; the CALLER re-dispatches the same task natively at
+// the role's native twin — the wrapper never becomes the implicit executor. A backgrounded
+// lane run is legal waiting.
 const shape = (label, scope) => (r) => ({
     lane: label,
     scope,
@@ -142,6 +176,9 @@ const shape = (label, scope) => (r) => ({
     headline: (r && r.headline) || '',
     failure: (r && r.failure) || (r ? '' : 'lane died'),
 });
+// The native fallback writes its product to the SAME report path as the dispatched lane, so both tiers land on disk and the
+// terminal reader's roster covers every lane. A fallback returning its product inline instead reaches no disk consumer at
+// all — the reader glob skips it silently and reports over the subset, which reads as a clean partial rather than a gap.
 const lane = (prompt, label, scope, nativeTask) =>
     agent(prompt, { label: 'terra:' + label, phase: 'Audit', model: 'sonnet', effort: 'low', schema: RECEIPT })
         .then((r) =>

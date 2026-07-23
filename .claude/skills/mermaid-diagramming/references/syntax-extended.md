@@ -8,69 +8,50 @@ Pick a type by intent, then its section for the minimal fence and traps; rows ru
 
 | [INDEX] | [TYPE]               | [INTENT]                 |
 | :-----: | :------------------- | :----------------------- |
-|  [02]   | `mindmap`            | radial hierarchy         |
-|  [03]   | `block`              | manual grid layout       |
-|  [04]   | `journey`            | phase sentiment          |
-|  [05]   | `requirementDiagram` | requirement traceability |
-|  [06]   | `pie`                | part-to-whole share      |
-|  [07]   | `quadrantChart`      | two-axis position map    |
-|  [08]   | `sankey`             | weighted directed flow   |
-|  [09]   | `xychart`            | bar or line chart        |
-|  [10]   | `radar-beta`         | multivariate profile     |
-|  [11]   | `gantt`              | dated schedule           |
-|  [12]   | `treemap-beta`       | area-weighted hierarchy  |
-|  [13]   | `C4`                 | system landscape views   |
-|  [14]   | `architecture-beta`  | infrastructure groups    |
-|  [15]   | `packet`             | bit-field layout         |
-|  [16]   | `timeline`           | chronological periods    |
-|  [17]   | `gitGraph`           | branch and merge history |
-|  [18]   | `kanban`             | workflow-stage board     |
-|  [19]   | `treeView-beta`      | file-tree hierarchy      |
-|  [20]   | `cynefin-beta`       | decision-domain sort     |
-|  [21]   | `railroad-*-beta`    | grammar syntax rails     |
-|  [22]   | `swimlane-beta`      | laned process flow       |
-|  [23]   | `eventmodeling`      | command-event timeline   |
-|  [24]   | `venn-beta`          | set-overlap regions      |
-|  [25]   | `wardley-beta`       | value-chain evolution    |
-|  [26]   | `ishikawa-beta`      | cause-effect fishbone    |
+|  [01]   | `mindmap`            | radial hierarchy         |
+|  [02]   | `block`              | manual grid layout       |
+|  [03]   | `journey`            | phase sentiment          |
+|  [04]   | `requirementDiagram` | requirement traceability |
+|  [05]   | `pie`                | part-to-whole share      |
+|  [06]   | `quadrantChart`      | two-axis position map    |
+|  [07]   | `sankey`             | weighted directed flow   |
+|  [08]   | `xychart`            | bar or line chart        |
+|  [09]   | `radar-beta`         | multivariate profile     |
+|  [10]   | `gantt`              | dated schedule           |
+|  [11]   | `treemap-beta`       | area-weighted hierarchy  |
+|  [12]   | `C4`                 | system landscape views   |
+|  [13]   | `architecture-beta`  | infrastructure groups    |
+|  [14]   | `packet`             | bit-field layout         |
+|  [15]   | `timeline`           | chronological periods    |
+|  [16]   | `gitGraph`           | branch and merge history |
+|  [17]   | `kanban`             | workflow-stage board     |
+|  [18]   | `treeView-beta`      | file-tree hierarchy      |
+|  [19]   | `cynefin-beta`       | decision-domain sort     |
+|  [20]   | `railroad-*-beta`    | grammar syntax rails     |
+|  [21]   | `swimlane-beta`      | laned process flow       |
+|  [22]   | `eventmodeling`      | command-event timeline   |
+|  [23]   | `venn-beta`          | set-overlap regions      |
+|  [24]   | `wardley-beta`       | value-chain evolution    |
+|  [25]   | `ishikawa-beta`      | cause-effect fishbone    |
 
-`zenuml` renders sequence exchanges through an external plugin the CLI registers; it carries this registry mention alone. Some families outrun older hosts — `eventmodeling` parses from mermaid 11.15, `swimlane-beta`, `cynefin-beta`, and the `railroad-*-beta` dialects from 11.16, and `treeView-beta`, `venn-beta`, `wardley-beta`, and `ishikawa-beta` from the post-11.12 line — a host below its floor throws `UnknownDiagramError`.
+`zenuml` renders sequence exchanges through an external plugin the CLI registers; it carries this registry mention alone. `UnknownDiagramError` is a host-version fact, never a fence defect: the host's mermaid predates the family, and the bundled validator against the workspace-pinned renderer is the parse proof for every row above.
 
 ## [02]-[MINDMAP]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   mindmap:
     padding: 25
     maxNodeWidth: 180
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    git0: "#BD93F9"
-    gitBranchLabel0: "#F8F8F2"
-    cScale0: "#FF79C6"
-    cScale1: "#8BE9FD"
-    cScale2: "#50FA7B"
-    cScale3: "#FFB86C"
-    cScaleLabel0: "#F8F8F2"
-    cScaleLabel1: "#F8F8F2"
-    cScaleLabel2: "#F8F8F2"
-    cScaleLabel3: "#F8F8F2"
-  themeCSS: ".mindmap-node rect,.mindmap-node path,.mindmap-node circle{fill-opacity:.5;stroke-width:1.5px}.edge{stroke-width:2px!important}.mindmap-node-label,.mindmap-node text{font-size:13px}[class^='node-line']{stroke:none!important}.section-0 rect,.section-0 path,.section-0 circle{fill:#FF79C6!important;stroke:#FF79C6!important}.section-edge-0{stroke:#FF79C6!important}.section-1 rect,.section-1 path,.section-1 circle{fill:#8BE9FD!important;stroke:#8BE9FD!important}.section-edge-1{stroke:#8BE9FD!important}.section-2 rect,.section-2 path,.section-2 circle{fill:#50FA7B!important;stroke:#50FA7B!important}.section-edge-2{stroke:#50FA7B!important}.section-3 rect,.section-3 path,.section-3 circle{fill:#FFB86C!important;stroke:#FFB86C!important}.section-edge-3{stroke:#FFB86C!important}.section-root rect,.section-root path,.section-root circle{fill:#BD93F9!important;stroke:#BD93F9!important}"
 ---
 mindmap
   root((Diagram Skill))
     [Laws]
-      (Palette roles)
-      (Edge rails)
-      (Alpha tiers)
-      (Type ramp)
+      (One question)
+      (Node law)
+      (Edge law)
+      (Split move)
     [Families]
       (Core five)
         Flowchart
@@ -84,43 +65,22 @@ mindmap
     [Gates]
       (Render proof)
       (Graph logic)
-      (Prose gate)
+      (Legibility)
     [Craft]
-      (One question)
+      (Question first)
       (Staged growth)
-      (Split move)
+      (Soundness audit)
 ```
 
-Fence content asserts the skill decomposing into laws, families, gates, and craft to leaf depth; the family mis-handles `accTitle`/`accDescr`, so the relation sentence rides beside the fence. Root leads; consistent indentation sets depth, mixed tabs and spaces are rejected, and explicit edges are invalid. Shapes carry level — `root((...))` circle, `[...]` branch rects, `(...)` rounded topics, bare text leaves. First-level branches take `.section-0`–`.section-N` classes in declaration order, but the engine lightens every `cScale` hue before painting, so canon color rides explicit per-section `themeCSS` overrides on fills, strokes, and `.section-edge-N` strokes; the `.mindmap-node` fill-opacity stamp composites the translucent law, the `.edge` stamp pulls the engine's thick depth-scaled connectors to the standing 2px, and the `[class^='node-line']` kill retires the engine underline strips. Radial layout is cose-bilkent and owns its own edge geometry.
+Fence content asserts the skill decomposing into laws, families, gates, and craft to leaf depth; the family mis-handles `accTitle`/`accDescr`, so the relation sentence rides beside the fence. Root leads; consistent indentation sets depth, mixed tabs and spaces are rejected, and explicit edges are invalid. Shapes carry level — `root((...))` circle, `[...]` branch rects, `(...)` rounded topics, bare text leaves. Radial layout is cose-bilkent and owns its own edge geometry; first-level branches carry `.section-0`–`.section-N` classes in declaration order.
 
 ## [03]-[BLOCK]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#D6BCFA"
-    mainBkg: "#44475A"
-    nodeBorder: "#BD93F9"
-    nodeTextColor: "#F8F8F2"
-    lineColor: "#FF79C6"
-    arrowheadColor: "#FF79C6"
-    edgeLabelBackground: "#21222C"
-    clusterBkg: "#21222C"
-    clusterBorder: "#D6BCFA"
-  themeCSS: ".node rect,.node path,.node polygon{stroke-width:1.5px;filter:none!important}.marker path{fill:#FF79C6;stroke:#FF79C6}.marker circle{fill:#FF79C6;stroke:#FF79C6}.edgeLabel{font-size:12px;font-weight:500}.nodeLabel,.label{font-size:13px;font-weight:500}.cluster-label .nodeLabel,.cluster text{font-size:13.5px;font-weight:700;letter-spacing:.08em}rect.composite{fill:#21222C;stroke:#D6BCFA;stroke-width:1px;stroke-dasharray:5 4}"
----
 block-beta
   columns 3
   Fence["Fence"] Parse["Parse"] Logic["Logic"]
-  Theme["Theme"] Render["Render"] Proof["Proof"]
+  Layout["Layout"] Render["Render"] Proof["Proof"]
   space:3
   block:gate:3
     columns 3
@@ -128,106 +88,50 @@ block-beta
   end
   Fence --> Parse
   Parse --> Logic
-  Fence --> Theme
-  Theme --> Render
+  Fence --> Layout
+  Layout --> Render
   Parse --> Render
   Logic --> Proof
   Render -- "emit" --> gate
   Proof --> gate
-  classDef primary fill:#44475A,stroke:#FF79C6,color:#F8F8F2
-  classDef boundary fill:#282A36,stroke:#BD93F9,color:#F8F8F2
-  classDef data fill:#FFB86CBF,stroke:#FFB86C,color:#282A36
-  classDef success fill:#50FA7BBF,stroke:#50FA7B,color:#282A36
-  class Fence boundary
-  class Parse,Theme,Render,Logic,Proof primary
-  class Cache data
-  class SVG,PNG success
 ```
 
-Fence content asserts a two-row render raster feeding a nested proof group; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `block-beta` is the portable keyword; `columns N` precedes a row, a `:n` span widens a block, `space` inserts a filler, and a nested `block:id:span ... end` holds its own `columns`. A block arrow is `blockArrowId<["Label"]>(dir)` with `dir` one of `right`, `left`, `up`, `down`, `x`, `y`, or a compound like `(x, down)`. Links route straight from source center through a midpoint to target center with no obstacle awareness, so a committed raster links only adjacent cells — that placement discipline is the whole of the no-crossing law here. Family stylesheet never reaches its marker children, so the `themeCSS` `.marker path`/`.marker circle` fill-and-stroke stamp is the arrowhead-color floor, and the nested-group rect restyles through `rect.composite` — the engine's own composite paint is a faded gray that never survives review. `classDef`, `class`, and `style` bind by block id.
+Fence content asserts a two-row render raster feeding a nested proof group; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `block-beta` is the portable keyword; `columns N` precedes a row, a `:n` span widens a block, `space` inserts a filler, and a nested `block:id:span ... end` holds its own `columns`. A block arrow is `blockArrowId<["Label"]>(dir)` with `dir` one of `right`, `left`, `up`, `down`, `x`, `y`, or a compound like `(x, down)`.
+
+Links route straight from source center through a midpoint to target center with no obstacle awareness, so a committed raster links only adjacent cells — that placement discipline is the whole no-crossing law here.
 
 ## [04]-[JOURNEY]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  journey:
-    titleFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    titleColor: "#F8F8F2"
-    titleFontSize: "18px"
-    taskFontSize: 12
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#F8F8F2"
-    faceColor: "#FFD86654"
-    actor0: "#BD93F9"
-    actor1: "#8BE9FD"
-    actor2: "#50FA7B"
-    actor3: "#FFB86C"
-    actor4: "#FF79C6"
-    actor5: "#6272A4"
-    fillType0: "#FF79C680"
-    fillType1: "#8BE9FD66"
-    fillType2: "#50FA7B66"
-    fillType3: "#FFB86C66"
-    fillType4: "#BD93F980"
-    fillType5: "#FF555580"
-    fillType6: "#FFD86654"
-    fillType7: "#6272A4"
-  themeCSS: ".face{fill:#FFD86654;stroke:#FFD866;stroke-width:1px}.mouth{fill:#F8F8F2;stroke:none}circle[fill='#666']{fill:#F8F8F2;stroke:#F8F8F2}.task-line{stroke:#6272A4;stroke-dasharray:4 6}line{stroke:#6272A4}[id$='-arrowhead'] path{fill:#6272A4}circle[class^='actor-']{stroke:#282A36;r:5.25px}"
----
 journey
   accTitle: Fence authoring journey
-  accDescr: An author, agent, and reviewer scored across drafting, review, and shipping a themed fence.
+  accDescr: An author, agent, and reviewer scored across drafting, review, and shipping a fence.
   title Fence Authoring
   section Draft
     Outline question: 5: Author
-    Theme tokens: 3: Author, Agent
-    Wire classes: 3: Agent
+    Draft nodes: 3: Author, Agent
+    Wire edges: 3: Agent
   section Review
     Render proof: 4: Agent
     Inspect PNG: 3: Reviewer
-    Fix contrast: 2: Author, Agent
+    Fix crossings: 2: Author, Agent
   section Ship
     Gate green: 4: Agent
     Commit fence: 5: Author, Reviewer
 ```
 
-Scores are integers `1` through `5`; a task belongs under a `section`, an actor needs no declaration, and an out-of-range score is invalid. Task and section fills read `fillType0`–`fillType7`, which accept alpha hexes — the translucent tier composites dark enough that Foreground task ink measures, so journey rides the light-ink alpha ladder. Actor dots read the `actor0`–`actor5` theme variables, never the `journey.actorColours` config list, and take their stroke and the −25% radius through `circle[class^='actor-']`. Score faces restyle as translucent gold chips through `.face`, the eye dots re-ink through the `circle[fill='#666']` attribute hook, and the mouth is a filled crescent path — `.mouth` takes `fill`, never `stroke`. Title text reads `journey.titleFontFamily`/`journey.titleColor` config keys — the theme mono stack does not reach it — and the axis line plus its `[id$='-arrowhead']` marker take the Comment wayfinding hue.
+Scores are integers `1` through `5`; a task belongs under a `section`, an actor needs no declaration, and an out-of-range score is invalid.
 
 ## [05]-[REQUIREMENT_DIAGRAM]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   htmlLabels: false
   requirement:
-    fontSize: 13
     rect_min_width: 190
     rect_min_height: 80
     rect_padding: 12
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    requirementBackground: "#44475A"
-    requirementBorderColor: "#BD93F9"
-    requirementTextColor: "#F8F8F2"
-    relationColor: "#FF79C6"
-    relationLabelColor: "#F8F8F2"
-    relationLabelBackground: "#21222C"
-    edgeLabelBackground: "#21222C"
-  themeCSS: ".relationshipLine{stroke-width:1.5px;stroke-dasharray:4 6}[id$='requirement_arrowEnd'] path{transform:scale(.5);transform-origin:20px 10px}[id$='requirement_containsStart'] circle,[id$='requirement_containsStart'] line{transform:scale(.6);transform-origin:0px 10px}.reqTitle{font-weight:600}"
 ---
 requirementDiagram
   accTitle: Render requirement trace
@@ -255,43 +159,17 @@ requirementDiagram
   validator - satisfies -> renderProof
   validator - verifies -> gateBudget
   renderProof <- traces - themingLaw
-  classDef primary fill:#44475A,stroke:#BD93F9,color:#F8F8F2
-  classDef external fill:#282A36,stroke:#8BE9FD,color:#F8F8F2
-  class renderProof,gateBudget primary
-  class validator,themingLaw external
 ```
 
-Types are `requirement`, `functionalRequirement`, `interfaceRequirement`, `performanceRequirement`, `physicalRequirement`, `designConstraint`; `risk` takes `Low`/`Medium`/`High` and `verifyMethod` takes `Analysis`/`Inspection`/`Test`/`Demonstration`. Relations `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines`, `traces` spell both `a - satisfies -> b` and `b <- traces - a`; `contains` draws solid with a plus-circle start marker, every other relation draws dashed with the open-arrow end marker. Box fills theme through `classDef`/`class` and `htmlLabels: false` stacks the body attributes cleanly. Each relation label is a markdown chip whose backing reads `edgeLabelBackground` — the recessed `#21222C` chip masks the stroke it sits on, which is the whole label-off-line law for this family — while `relationLabelBackground` feeds only the SVG-text fallback box. Engine marker `requirement_arrowEnd` is a 20×20 open V that never received the unified scale; the `[id$='requirement_arrowEnd']` stamp anchored at its `refX 20 10` tip pulls it onto the one marker ladder, and `.relationshipLine` carries the trace weight and rhythm.
+Types are `requirement`, `functionalRequirement`, `interfaceRequirement`, `performanceRequirement`, `physicalRequirement`, `designConstraint`; `risk` takes `Low`/`Medium`/`High` and `verifyMethod` takes `Analysis`/`Inspection`/`Test`/`Demonstration`. Relations `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines`, `traces` spell both `a - satisfies -> b` and `b <- traces - a`; `contains` draws solid with a crossed-circle start marker, every other relation dashed with the open-arrow end marker. `htmlLabels: false` stacks the body attributes cleanly.
 
 ## [06]-[PIE]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   pie:
     textPosition: 0.7
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    pieOpacity: 1
-    pieOuterStrokeWidth: "0px"
-    pieStrokeWidth: "1.5px"
-    pieSectionTextSize: "13px"
-    pieSectionTextColor: "#F8F8F2"
-    pieLegendTextSize: "12px"
-    pieLegendTextColor: "#F8F8F2"
-    pieTitleTextSize: "15px"
-    pieTitleTextColor: "#F8F8F2"
-    pie1: "#FF79C6"
-    pie2: "#8BE9FD"
-    pie3: "#50FA7B"
-    pie4: "#FFB86C"
-    pie5: "#BD93F9"
-  themeCSS: ".pieCircle{opacity:1}.slice{font-weight:700}.pieCircle:nth-of-type(1){fill:#FF79C680;stroke:#FF79C6}.pieCircle:nth-of-type(2){fill:#8BE9FD66;stroke:#8BE9FD}.pieCircle:nth-of-type(3){fill:#50FA7B66;stroke:#50FA7B}.pieCircle:nth-of-type(4){fill:#FFB86C66;stroke:#FFB86C}.pieCircle:nth-of-type(5){fill:#BD93F980;stroke:#BD93F9}.pieTitleText{font-weight:600}"
 ---
 pie showData
   accTitle: Render corpus share
@@ -304,44 +182,16 @@ pie showData
   "Class" : 11
 ```
 
-Values sum above `0`, labels are quoted, and `showData` prints values in the legend; donut, legend position, and slice highlight compose on it. `pieOpacity` dims fill and border together, so the translucent-fill law rides per-slice `path.pieCircle:nth-of-type(N)` stamps — alpha in the fill, the same hue at full opacity in the stroke, `pieOpacity: 1` holding the border solid. Slices follow `pie1`–`pie12` in declaration order, so the nth-of-type index and the ordinal share one count. Slice percentages print at 13px bold Foreground through `pieSectionTextSize`/`pieSectionTextColor` and the `.slice` weight stamp — every slice hue sits in the light-ink alpha tier so one ink serves all slices — and `pieOuterStrokeWidth: "0px"` retires the redundant outer ring.
+Values sum above `0`, labels are quoted, and `showData` prints values in the legend; donut, legend position, and slice highlight compose on it, and `textPosition` places the slice percentages along the radius.
 
 ## [07]-[QUADRANT_CHART]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   quadrantChart:
     pointRadius: 4
     pointTextPadding: 8
-    pointLabelFontSize: 12
-    quadrantLabelFontSize: 13
-    xAxisLabelFontSize: 13
-    yAxisLabelFontSize: 13
-    titleFontSize: 15
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    quadrant1Fill: "#44475A"
-    quadrant2Fill: "#21222C"
-    quadrant3Fill: "#44475A"
-    quadrant4Fill: "#21222C"
-    quadrant1TextFill: "#D6BCFA"
-    quadrant2TextFill: "#D6BCFA"
-    quadrant3TextFill: "#D6BCFA"
-    quadrant4TextFill: "#D6BCFA"
-    quadrantPointFill: "#BD93F9"
-    quadrantPointTextFill: "#F8F8F2"
-    quadrantXAxisTextFill: "#F8F8F2"
-    quadrantYAxisTextFill: "#F8F8F2"
-    quadrantTitleFill: "#F8F8F2"
-    quadrantInternalBorderStrokeFill: "#6272A4"
-    quadrantExternalBorderStrokeFill: "#6272A4"
-  themeCSS: ".data-point circle{fill-opacity:.75}"
 ---
 quadrantChart
   accTitle: Capability position map
@@ -353,52 +203,28 @@ quadrantChart
   quadrant-2 Promote
   quadrant-3 Retire
   quadrant-4 Hold
-  Cache:::success: [0.22, 0.78]
-  Batching:::success: [0.34, 0.86]
-  Streaming:::external: [0.66, 0.83]
-  Sharding:::external: [0.81, 0.69]
-  Polling:::error: [0.24, 0.24]
-  Mirroring:::error: [0.38, 0.16]
-  Archive:::data: [0.68, 0.30]
-  Replay:::data: [0.84, 0.21]
-  classDef success color: #50FA7B, radius: 4, stroke-color: #50FA7B, stroke-width: 1px
-  classDef external color: #8BE9FD, radius: 4, stroke-color: #8BE9FD, stroke-width: 1px
-  classDef error color: #FF5555, radius: 4, stroke-color: #FF5555, stroke-width: 1px
-  classDef data color: #FFB86C, radius: 4, stroke-color: #FFB86C, stroke-width: 1px
+  Cache: [0.22, 0.78]
+  Batching: [0.34, 0.86]
+  Streaming: [0.66, 0.83]
+  Sharding: [0.81, 0.69]
+  Polling: [0.24, 0.24]
+  Mirroring: [0.38, 0.16]
+  Archive: [0.68, 0.30]
+  Replay: [0.84, 0.21]
 ```
 
-Coordinates bind to `0` through `1` and quadrants number `1` top-right counterclockwise; per-point styling trails the coordinates and `:::class` plus `classDef` reuses it with keys `radius`, `color`, `stroke-color`, `stroke-width` — six-digit hex only, so translucency rides the one `.data-point circle{fill-opacity:.75}` stamp while the class stroke stays full. `pointRadius` and the class radius hold the −25% dot scale, and `pointTextPadding` drops each white label clear below its dot — the dot never blocks its name. Quadrant fills alternate the two neutral surfaces so the plotted hues carry all the semantics, quadrant captions ink Lavender as this family's container titles, and axis text, point labels, and the title ink Foreground.
+Coordinates bind to `0` through `1` and quadrants number `1` top-right counterclockwise. `pointRadius` sizes every dot and `pointTextPadding` drops each label clear below its dot — the dot never blocks its name.
 
 ## [08]-[SANKEY]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   sankey:
-    labelStyle: legacy
-    linkColor: gradient
     nodeWidth: 12
     nodePadding: 24
     width: 900
     height: 480
-    nodeColors:
-      Fences: "#BD93F9"
-      Flowchart: "#FF79C6"
-      Charts: "#8BE9FD"
-      Render: "#FFB86C"
-      Logic: "#6272A4"
-      Pass: "#50FA7B"
-      Warn: "#FFD866"
-      Fail: "#FF5555"
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-  themeCSS: ".link{mix-blend-mode:normal;stroke-opacity:.35}.node-labels{font-size:12px}.node-labels text{fill:#F8F8F2}"
 ---
 sankey
 
@@ -416,38 +242,16 @@ Logic,Warn,15
 Logic,Fail,5
 ```
 
-Fence content asserts a corpus splitting through render and logic gates into pass, warn, and fail sinks; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `sankey` is the keyword; the body is strictly three-column CSV `source,target,value` with CSV quoting for embedded commas, and blank lines are permitted only without comma separators. Config carries `linkColor` (`gradient`, `source`, `target`, or a hex), `nodeAlignment`, `showValues`, `prefix`/`suffix`, the geometry knobs, and the `nodeColors` name-to-hex map — a committed sankey maps every node to a palette hex. Default blending applies `mix-blend-mode: multiply`, which erases links into a dark canvas, so the `.link` stamp restores normal blending at a `.35` stroke opacity; `labelStyle` stays `legacy` — the outlined mode strokes a surface-colored halo that mushes on dark — and `.node-labels text` inks Foreground at the label floor.
+Fence content asserts a corpus splitting through render and logic gates into pass, warn, and fail sinks; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `sankey` is the keyword; the body is strictly three-column CSV `source,target,value` — CSV quoting covers embedded commas, blank lines carry no separators. Config carries `nodeAlignment`, `showValues`, `prefix`/`suffix`, and the geometry knobs `nodeWidth`, `nodePadding`, `width`, and `height`.
 
 ## [09]-[XYCHART]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   xyChart:
     showDataLabel: true
     showDataLabelOutsideBar: true
-    titleFontSize: 15
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    xyChart:
-      backgroundColor: "#282A36"
-      titleColor: "#F8F8F2"
-      dataLabelColor: "#F8F8F2"
-      xAxisLabelColor: "#F8F8F2"
-      xAxisTitleColor: "#F8F8F2"
-      xAxisTickColor: "#6272A4"
-      xAxisLineColor: "#6272A4"
-      yAxisLabelColor: "#F8F8F2"
-      yAxisTitleColor: "#F8F8F2"
-      yAxisTickColor: "#6272A4"
-      yAxisLineColor: "#6272A4"
-      plotColorPalette: "#BD93F9, #FF79C6"
-  themeCSS: ".bar-plot-0 rect{fill-opacity:.75;stroke-width:1.5px}.plot text{font-size:11px}"
 ---
 xychart
   accTitle: Corpus growth
@@ -459,15 +263,15 @@ xychart
   line [42, 100 "100", 166 "166", 220 "220", 291 "291", 354 "354", 393 "393"]
 ```
 
-`xychart` is the keyword; `xychart horizontal` flips orientation and each `bar` or `line` array matches the x-axis category count. Bar width derives from the category count against a fixed padding percent — width tunes by adding categories, never by a knob. `showDataLabel` prints the first declared plot's values at a size computed from bar width, so the bar plot declares first, `showDataLabelOutsideBar` lifts the values above the bars, and the `.plot text` stamp caps the computed size at the label floor. Bars carry the translucent law through `.bar-plot-0 rect{fill-opacity:.75;stroke-width:1.5px}` — the engine already strokes each bar in its own hue at width zero. Inline point labels (`50 "50"`, from mermaid 11.16) render on `line` only — the syntax parses on `bar` while the labels silently drop — and ink the line's palette hue; a label omitted on a point suppresses that one chip, which clears the first-category collision when line and bar meet at the origin.
+`xychart` is the keyword; `xychart horizontal` flips orientation and each `bar` or `line` array matches the x-axis category count. Bar width derives from the category count against a fixed padding percent — width tunes by adding categories, never by a knob. `showDataLabel` prints the first declared plot's values at a size computed from bar width, so the bar plot declares first; `showDataLabelOutsideBar` lifts the values above the bars.
+
+Inline point labels (`50 "50"`) render on `line` only — the syntax parses on `bar` while the labels silently drop — and a label omitted on a point suppresses that one chip, clearing the first-category collision where line and bar meet at the origin.
 
 ## [10]-[RADAR]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   radar:
     width: 460
     height: 460
@@ -475,22 +279,6 @@ config:
     marginRight: 120
     marginTop: 60
     marginBottom: 60
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#F8F8F2"
-    cScale0: "#FF79C6"
-    cScale1: "#8BE9FD"
-    radar:
-      axisColor: "#6272A4"
-      axisStrokeWidth: 1.5
-      graticuleColor: "#44475A"
-      graticuleOpacity: 0.4
-      curveOpacity: 0.35
-      curveStrokeWidth: 2
 ---
 radar-beta
   accTitle: Renderer profile
@@ -506,48 +294,20 @@ radar-beta
   min 0
 ```
 
-`axis` names the axes, a positional curve `name["Label"]{...}` follows axis order and a keyed curve binds by axis id. Curves fill and stroke `cScale0`–`cScale11` in declaration order with `radar.curveOpacity` on the fill alone, so two curves at `.35` both read while their full-hue 2px strokes hold the border law — identical data across curves cancels into one pale polygon, so each curve carries distinct values, and hues follow the ordinal order so the legend reads as the palette does; the subject-count law is the construction reference's property. `graticule` accepts `polygon` or `circle`, config admits `axisScaleFactor` and `curveTension`, and theme variables nest under `radar:`. Axis labels anchor just outside the chart radius and clip at the viewport edge — the `radar:` config margins own that clearance, and the hardcoded legend position demands short curve labels. Axis lines read `radar.axisColor` while axis text falls through to root `textColor`.
+`axis` names the axes, a positional curve `name["Label"]{...}` follows axis order and a keyed curve binds by axis id. Identical data across curves cancels into one pale polygon, so each curve carries distinct values — the subject-count law is the construction reference's property.
+
+`graticule` accepts `polygon` or `circle`, and config admits `axisScaleFactor` and `curveTension`. Axis labels anchor just outside the chart radius and clip at the viewport edge — the `radar:` config margins own that clearance, and the hardcoded legend position demands short curve labels.
 
 ## [11]-[GANTT]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   gantt:
-    fontSize: 12
-    sectionFontSize: 13
     barHeight: 22
     barGap: 6
     topPadding: 60
     leftPadding: 90
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#F8F8F2"
-    taskTextColor: "#F8F8F2"
-    taskTextOutsideColor: "#F8F8F2"
-    taskTextDarkColor: "#F8F8F2"
-    gridColor: "#6272A4"
-    excludeBkgColor: "#21222C"
-    sectionBkgColor: "#21222C"
-    sectionBkgColor2: "#21222C"
-    altSectionBkgColor: "#282A36"
-    taskBkgColor: "#44475A"
-    taskBorderColor: "#BD93F9"
-    activeTaskBkgColor: "#6272A4"
-    activeTaskBorderColor: "#BD93F9"
-    doneTaskBkgColor: "#21222C"
-    doneTaskBorderColor: "#6272A4"
-    critBkgColor: "#FF555580"
-    critBorderColor: "#FF5555"
-    todayLineColor: "#FF79C6"
-    vertLineColor: "#8BE9FD"
-  themeCSS: ".sectionTitle{font-size:13.5px;font-weight:700;fill:#D6BCFA}.taskText,.taskTextOutsideRight,.taskTextOutsideLeft{font-size:12px}.grid .tick text{font-size:11px}"
 ---
 gantt
   accTitle: Release schedule
@@ -557,7 +317,6 @@ gantt
   tickInterval 2day
   weekday monday
   excludes weekends
-  todayMarker stroke-width:2px,stroke:#FF79C6,opacity:0.55
   section Design
   Spec :done, s1, 2026-06-29, 3d
   Tokens :done, s2, after s1, 2d
@@ -570,41 +329,18 @@ gantt
   Ship :milestone, m1, after r1, 0d
 ```
 
-Dates match `dateFormat`, `after`/`until` reference existing IDs, and modifiers are `done`, `active`, `crit`, `milestone`, `vert`; repeated `excludes` and `includes` entries stack. `excludeBkgColor` recesses the excluded bands — left unset it derives a light gray that floods a dark canvas — and `axisFormat` with `tickInterval` own tick legibility; default daily ISO ticks overlap into an unreadable strip. Section titles are this family's lane titles and take the container-title stamp with Lavender ink through `.sectionTitle`; `taskTextDarkColor` joins the Foreground ink set because done bars recess to `#21222C`; `vertLineColor` colors the full-height `vert` gate marker, an `after` list (`after a b`) converges on every named prerequisite, `weekday` anchors the tick grid, and the today rule spans the whole canvas — its `todayMarker` style string carries a translucent stroke so it never blinds what it crosses.
+Dates match `dateFormat`, `after`/`until` reference existing IDs, and modifiers are `done`, `active`, `crit`, `milestone`, `vert`; repeated `excludes` and `includes` entries stack. `axisFormat` with `tickInterval` own tick legibility; default daily ISO ticks overlap into an unreadable strip.
+
+`vert` draws a full-height gate marker, an `after` list (`after a b`) converges on every named prerequisite, `weekday` anchors the tick grid, and the today rule spans the whole canvas.
 
 ## [12]-[TREEMAP]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   treemap:
     showValues: true
     valueFormat: ','
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#F8F8F2"
-    cScale0: "#BD93F9"
-    cScale1: "#FF79C6"
-    cScale2: "#8BE9FD"
-    cScale3: "#50FA7B"
-    cScale4: "#FFB86C"
-    cScaleLabel0: "#F8F8F2"
-    cScaleLabel1: "#F8F8F2"
-    cScaleLabel2: "#F8F8F2"
-    cScaleLabel3: "#F8F8F2"
-    cScaleLabel4: "#F8F8F2"
-    cScalePeer0: "#BD93F9"
-    cScalePeer1: "#FF79C6"
-    cScalePeer2: "#8BE9FD"
-    cScalePeer3: "#50FA7B"
-    cScalePeer4: "#FFB86C"
-  themeCSS: ".treemapLeaf{fill-opacity:.45;stroke-width:1.5px}.treemapSection{fill:#21222C!important;fill-opacity:1;stroke-opacity:1;stroke-width:1px}.treemapSectionLabel{font-size:13.5px;font-weight:700}.treemapSectionValue{font-size:12px}.treemapLabel{font-size:13px!important;font-weight:500}.treemapValue{font-size:11px!important}.treemapTitle{font-size:15px;font-weight:600}"
 ---
 treemap-beta
 accTitle: Corpus render cost
@@ -629,51 +365,16 @@ accDescr: Render milliseconds per diagram family grouped by engine, chart famili
         "Venn": 500
 ```
 
-Indentation sets hierarchy and a leaf carries a numeric value; `valueFormat` formats values through d3-format grammar alongside `showValues`. Branch hues assign from `cScale0`–`cScale11` in branch declaration order with `cScalePeer` strokes, so the ordinal roster is the palette surface — `classDef` on a branch emits inline `!important` fills that lock out every stylesheet correction, so a themed treemap carries no classes. Sections recess to `#21222C` through the `.treemapSection` stamp while their full-hue peer borders carry the branch identity, leaves composite the translucent law at `.45` fill-opacity under 1.5px hue borders, and `cScaleLabel0`–`cScaleLabel11` ink Foreground so every label reads over the composited tiles. Section headers take the container-title stamp, section values lift to 12px, and the leaf label/value stamps cap the engine's fit-to-tile sizing at the ramp.
+Indentation sets hierarchy and a leaf carries a numeric value; `valueFormat` formats values through d3-format grammar alongside `showValues`, and branch identity assigns in branch declaration order.
 
 ## [13]-[C4]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   c4:
     c4ShapeInRow: 3
     c4ShapeMargin: 60
-    personFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    personFontSize: 13
-    external_personFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    external_personFontSize: 13
-    systemFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    systemFontSize: 13
-    system_dbFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    system_dbFontSize: 13
-    external_systemFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    external_systemFontSize: 13
-    boundaryFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    boundaryFontSize: 13.5
-    messageFontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    messageFontSize: 12
-    person_bg_color: "#44475A"
-    person_border_color: "#BD93F9"
-    external_person_bg_color: "#282A36"
-    external_person_border_color: "#8BE9FD"
-    system_bg_color: "#44475A"
-    system_border_color: "#BD93F9"
-    system_db_bg_color: "#44475A"
-    system_db_border_color: "#FFB86C"
-    external_system_bg_color: "#282A36"
-    external_system_border_color: "#8BE9FD"
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    personBorder: "#BD93F9"
-    personBkg: "#44475A"
-  themeCSS: "rect[stroke='#444444']{stroke:#D6BCFA;stroke-dasharray:5 4}text[fill='#444444']{fill:#D6BCFA}[id$='-arrowhead'] path{fill:#FF79C6;transform:scale(.8);transform-origin:9px 5px}[id$='-arrowend'] path{fill:#FF79C6;transform:scale(.8);transform-origin:1px 5px}image{display:none}"
 ---
 C4Context
   accTitle: Render platform landscape
@@ -694,38 +395,20 @@ C4Context
   Rel(cli, proofs, "Writes proofs")
   Rel(docs, proofs, "Reads proofs")
   Rel(reader, docs, "Reads")
-  UpdateRelStyle(author, skill, $textColor="#F8F8F2", $lineColor="#FF79C6", $offsetY="-30")
-  UpdateRelStyle(skill, cli, $textColor="#F8F8F2", $lineColor="#FF79C6", $offsetY="-14")
-  UpdateRelStyle(cli, proofs, $textColor="#F8F8F2", $lineColor="#FFB86C")
-  UpdateRelStyle(docs, proofs, $textColor="#F8F8F2", $lineColor="#FFB86C", $offsetY="-30")
-  UpdateRelStyle(reader, docs, $textColor="#F8F8F2", $lineColor="#8BE9FD", $offsetY="-14")
 ```
 
-Family coverage spans `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`; an alias exists before `Rel()` and named parameters take `$`. Element colors are config keys — `person_bg_color`, `system_border_color`, `external_system_bg_color`, and kin under `c4:` — so the palette lands without per-element calls, while `UpdateRelStyle` colors each relation and offsets its label clear of boxes with `$offsetX`/`$offsetY`. Fonts are config keys too: every shape family carries a `*FontFamily`/`*FontSize`/`*FontWeight` triplet — element, boundary, and relation text hardcodes its per-family default inline, leaving `themeVariables.fontFamily` to reach only the free diagram title, so the triplets carry the mono stack and the ramp, and the sizes feed the engine's own box measurement. Boundary strokes, boundary titles, and the diagram title hardcode `#444444`, and the `rect[stroke='#444444']`/`text[fill='#444444']` attribute hooks re-ink them Lavender at the container rhythm; the `[id$='-arrowhead']`/`[id$='-arrowend']` markers default black and take canon pink at the unified scale anchored on their ref points. Person sprites are baked raster images — `image{display:none}` retires them and the `<<person>>` stereotype carries the role. Loose shapes pack in rows above every boundary and a third loose shape lands beneath the first where relations cross it, so external systems live in their own `Boundary` and the boundaries pack side by side.
+Family coverage spans `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment`; an alias exists before `Rel()` and named parameters take `$`. `UpdateRelStyle` offsets a relation label clear of boxes with `$offsetX`/`$offsetY`, and `c4ShapeInRow`/`c4BoundaryInRow` govern packing.
+
+Loose shapes pack in rows above every boundary — a third lands beneath the first where relations cross — so external systems live in their own `Boundary` and boundaries pack side by side.
 
 ## [14]-[ARCHITECTURE]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   architecture:
     seed: 4
     iconSize: 64
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    lineColor: "#FF79C6"
-    archEdgeColor: "#FF79C6"
-    archEdgeArrowColor: "#FF79C6"
-    archEdgeWidth: "2"
-    archGroupBorderColor: "#D6BCFA"
-    archGroupBorderWidth: "1"
-  themeCSS: ".architecture-service svg rect{fill:#44475A!important}.architecture-groups svg rect{fill:#44475A!important}.architecture-groups text{fill:#D6BCFA;font-size:13.5px;font-weight:700;letter-spacing:.08em}.architecture-services text{font-size:13px;font-weight:500}.node-bkg{stroke-dasharray:5 4}"
 ---
 architecture-beta
   accTitle: Render service topology
@@ -748,24 +431,18 @@ architecture-beta
   align column cache registry
 ```
 
-`group` and `service` place nodes, a member declares `in group`, edge ports are `T|B|L|R`, a `junction` joins edges, a group-boundary edge takes `{group}`, and an Iconify icon resolves as `pack:name`. Layout is cytoscape fcose: the port pairs plus `align row|column` rows fully determine the grid, so a committed fence aligns every rank both ways and earns orthogonal edges — unaligned members scatter diagonally, and an `align` row fails where its declared order contradicts a directional-edge constraint. Arrowheads are `polygon.arrow` elements filled from `archEdgeArrowColor`, which derives gray unless set; a CSS transform on those polygons erases their placement translate, so arrow size tunes only through `iconSize` (the arrow is one sixth of it). Built-in icons hardcode a blue plate on services and groups alike — the paired `.architecture-service svg rect,.architecture-groups svg rect` stamp re-fills both to Selection — group titles are bare `text` under `.architecture-groups` and take the Lavender container-title stamp there, service labels take the node-label ramp through `.architecture-services text`, `archGroupBorderColor` with the `5 4` dash rhythm draws the Lavender containment, and `architecture.seed` is the deterministic lock. Junction endpoints shift arrow polygons off their lines, so junctions stay grammar for genuine multi-way joins rather than demo decoration.
+`group` and `service` place nodes, a member declares `in group`, edge ports are `T|B|L|R`, a `junction` joins edges, a group-boundary edge takes `{group}`, and an Iconify icon resolves as `pack:name`. Layout is cytoscape fcose: port pairs and `align row|column` rows fully determine the grid, so a committed fence aligns every rank both ways for orthogonal edges — unaligned members scatter diagonally, and an `align` row fails where its order contradicts a directional-edge constraint. Junction endpoints shift arrow polygons off their lines, so junctions stay grammar for genuine multi-way joins.
+
+Arrow size tunes only through `iconSize` — the arrow is one sixth of it — and `architecture.seed` is the deterministic lock.
 
 ## [15]-[PACKET]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   packet:
     bitWidth: 24
     rowHeight: 28
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-  themeCSS: ".packetBlock{fill:#BD93F94D;stroke:#BD93F9;stroke-width:1.5px}.packetLabel{fill:#F8F8F2;font-size:12px}.packetByte{fill:#6272A4;font-size:11px}.packetTitle{fill:#D6BCFA;font-size:13.5px;font-weight:700}"
 ---
 packet
 accTitle: TCP header bit layout
@@ -789,74 +466,32 @@ title TCP Header
 160-191: "Options and Padding"
 ```
 
-`packet` is the keyword; `start-end: "name"` ranges and `+count: "name"` auto-counted fields mix under an optional `title`, blocks stay contiguous, and `accTitle`/`accDescr` are accepted. Family styling themes through `themeCSS` classes — `.packetBlock` fill and stroke, `.packetLabel`, `.packetByte`, `.packetTitle` — which own the whole surface; the nested `themeVariables.packet` block half-applies (title keys land, block keys re-derive), so the class route is the single styling owner. Fields composite the translucent law as one hue family — a bit layout is one structure, never a rainbow — with Foreground labels, Foreground bit indices at 11px, and the Lavender title at container weight; `bitWidth` and `rowHeight` size the raster.
+`packet` is the keyword; `start-end: "name"` ranges and `+count: "name"` auto-counted fields mix under an optional `title`, blocks stay contiguous, and `accTitle`/`accDescr` are accepted. `bitWidth` and `rowHeight` size the raster.
 
 ## [16]-[TIMELINE]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    cScale0: "#FF79C6"
-    cScale1: "#8BE9FD"
-    cScale2: "#50FA7B"
-    cScale3: "#FFB86C"
-    cScaleLabel0: "#F8F8F2"
-    cScaleLabel1: "#F8F8F2"
-    cScaleLabel2: "#F8F8F2"
-    cScaleLabel3: "#F8F8F2"
-  themeCSS: ".node-bkg{fill-opacity:.5;stroke-width:1.5px}[class^='node-line']{stroke:none!important}.section--1 .node-bkg{stroke:#FF79C6}.section-0 .node-bkg{stroke:#8BE9FD}line[stroke-width='4']{stroke:#6272A4;stroke-width:2px}line[stroke-dasharray='5,5']{stroke:#6272A4;stroke-width:1.5px;stroke-dasharray:4 6}[id$='-arrowhead'] path{fill:#6272A4}"
----
 timeline
   accTitle: Skill evolution
-  accDescr: Four phases of the diagram skill from palette adoption through the visual canon, each carrying its landed changes.
+  accDescr: Two phases of the diagram skill from question-first method through the validation gates, each carrying its landed changes.
   title Skill Evolution
   section Foundation
-    Palette : Dracula tokens : Role map
+    Method : One question : Staged growth
     Contract : Frontmatter : Validator
-  section Canon
-    Styling : Rails : Floors : Glow kill
-    Visual : Marker scale : Translucent fills
+  section Gates
+    Logic : Graph checks : Split law
+    Render : Geometry : Proof rasters
 ```
 
-A multi-event row repeats `:`, sections group periods, and timeline takes `LR`/`TD` direction headers. Family parses `accTitle`/`accDescr` while emitting neither into the SVG, so the relation sentence also rides beside the fence. Ordinal fills read `cScale0`–`cScale11`, but theme resolution converts them through hsl and strips alpha, so translucency rides `.node-bkg{fill-opacity:.5}` with per-section full-hue borders — section classes index from `-1`, so the first section is `.section--1` — while `cScaleLabel0`–`cScaleLabel11` carry Foreground ink over the composited fills and the engine underline strips retire through `[class^='node-line']`. Unclassed axis (`line[stroke-width='4']`) and dashed event connectors (`line[stroke-dasharray='5,5']`) restyle by attribute into one Comment wayfinding system at ladder weights, and the single shared `[id$='-arrowhead']` marker takes the same hue — one marker serves the axis and every connector, so the wayfinding layer holds one color.
+A multi-event row repeats `:`, sections group periods, and timeline takes `LR`/`TD` direction headers. Family parses `accTitle`/`accDescr` while emitting neither into the SVG, so the relation sentence rides beside the fence; section classes index from `-1`, so the first section is `.section--1`.
 
 ## [17]-[GITGRAPH]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   gitGraph:
     rotateCommitLabel: false
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    mainBkg: "#282A36"
-    primaryColor: "#282A36"
-    git0: "#BD93F9"
-    git1: "#FF79C6"
-    git2: "#8BE9FD"
-    git3: "#50FA7B"
-    gitBranchLabel0: "#282A36"
-    gitBranchLabel1: "#282A36"
-    gitBranchLabel2: "#282A36"
-    gitBranchLabel3: "#282A36"
-    commitLabelColor: "#F8F8F2"
-    commitLabelBackground: "#21222C"
-    commitLabelFontSize: "11px"
-    tagLabelFontSize: "11px"
-  themeCSS: ".arrow{stroke-width:2px}.arrow3{stroke-dasharray:6 6}.commit-bullets circle{transform-box:fill-box;transform-origin:center;transform:scale(.75)}.tag-label-bkg{fill:#FFD86654;stroke:#FFD866}.tag-label{fill:#F8F8F2}.tag-hole{fill:#282A36}"
 ---
 gitGraph LR:
   accTitle: Release branch history
@@ -881,91 +516,48 @@ gitGraph LR:
   commit id: "canon"
 ```
 
-Directions are `LR:`, `TB:`, `BT:`; a branch exists before checkout or merge, commit IDs stay unique, and cherry-picking a merge commit adds `parent:`. Branch rails are `.arrow` paths the engine draws at 8px — the stamp pulls them to the standing 2px — and commit dots scale −25% through one transform on `.commit-bullets circle`, which preserves the merge and highlight ring ratios a radius override collapses. Merge dot cores fill `primaryColor`, so a canvas-valued `primaryColor` renders merges as hollow rings on the branch hue. `rotateCommitLabel: false` keeps commit ids horizontal on their recessed `commitLabelBackground` chips at `commitLabelFontSize`, and the tag is the yellow-law chip stamped through `.tag-label-bkg`/`.tag-label`/`.tag-hole` CSS — the class route holds the translucent gold on hosts that strip theme-variable alpha. Branch rails differentiate by line style as well as hue: `.arrowN` classes index the branch declaration order, and only a genuinely unmerged branch takes the `6 6` planned rhythm — a dashed rail on merged history states a false repository fact. Branch label pills stay opaque brand chips with `gitBranchLabel0`–`gitBranchLabel7` dark ink.
+Directions are `LR:`, `TB:`, `BT:`; a branch exists before checkout or merge, commit IDs stay unique, and cherry-picking a merge commit adds `parent:`. `rotateCommitLabel: false` keeps commit ids horizontal, and `.arrowN` classes index the branch declaration order.
 
 ## [18]-[KANBAN]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   kanban:
     sectionWidth: 210
     ticketBaseUrl: '<ticket-url>#TICKET#'
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    background: "#44475A"
-    nodeBorder: "#BD93F9"
-    cScale0: "#21222C"
-    cScale1: "#21222C"
-    cScale2: "#21222C"
-    cScale3: "#21222C"
-    cScale4: "#21222C"
-    cScale5: "#21222C"
-    cScale6: "#21222C"
-    cScale7: "#21222C"
-    cScaleLabel0: "#D6BCFA"
-    cScaleLabel1: "#D6BCFA"
-    cScaleLabel2: "#D6BCFA"
-    cScaleLabel3: "#D6BCFA"
-    cScaleLabel4: "#D6BCFA"
-    cScaleLabel5: "#D6BCFA"
-    cScaleLabel6: "#D6BCFA"
-    cScaleLabel7: "#D6BCFA"
-  themeCSS: ".nodeLabel{font-size:13px;font-weight:500}.cluster-label .nodeLabel{font-size:13.5px;font-weight:700;color:#D6BCFA}.node rect{stroke-width:1.5px;filter:none!important}line[stroke='red']{stroke:#FF5555;stroke-width:3px}line[stroke='orange']{stroke:#FFB86C;stroke-width:3px}line[stroke='blue']{stroke:#6272A4;stroke-width:3px}line[stroke='lightblue']{stroke:#44475A;stroke-width:3px}"
 ---
 kanban
   todo[Backlog]
-    t1[Marker scale audit]@{ ticket: MD-101, assigned: 'Agent', priority: 'High' }
-    t2[Container title bump]@{ ticket: MD-102, assigned: 'Author', priority: 'Low' }
+    t1[Crossing audit]@{ ticket: MD-101, assigned: 'Agent', priority: 'High' }
+    t2[Split oversized fence]@{ ticket: MD-102, assigned: 'Author', priority: 'Low' }
   wip[In Progress]
-    t3[Translucent fills]@{ ticket: MD-103, assigned: 'Agent', priority: 'Very High' }
+    t3[Guard vocabulary]@{ ticket: MD-103, assigned: 'Agent', priority: 'Very High' }
     t4[Padding to 25]@{ ticket: MD-104, assigned: 'Agent', priority: 'Low' }
   review[Review]
-    t5[Yellow ink flip]@{ ticket: MD-105, assigned: 'Reviewer', priority: 'High' }
+    t5[Acc directive sweep]@{ ticket: MD-105, assigned: 'Reviewer', priority: 'High' }
   done[Done]
-    t6[Glow kill]@{ ticket: MD-106, assigned: 'Author', priority: 'Very Low' }
+    t6[Orphan node purge]@{ ticket: MD-106, assigned: 'Author', priority: 'Very Low' }
     t7[Elbow routing]@{ ticket: MD-107, assigned: 'Agent', priority: 'Low' }
 ```
 
-Fence content asserts four queues carrying seven law cards with ticket metadata; the family mis-handles `accTitle`/`accDescr` as columns, so the relation sentence rides beside the fence. Tasks indent under columns, metadata keys are `assigned`, `ticket`, `priority`, and priorities are exactly `Very High`, `High`, `Low`, `Very Low`; `kanban.ticketBaseUrl` links each ticket by substituting the task ticket for `#TICKET#`. Column fills read `cScale0`–`cScale11` shifted one — column classes index from `section-1` — so the full ordinal range recesses the columns; cards fill the `background` variable under `nodeBorder` strokes, and column titles are `.cluster-label .nodeLabel` container titles taking the 13.5px/700 Lavender stamp. Priority bars hardcode named colors, and the `line[stroke='red'|'orange'|'blue'|'lightblue']` attribute hooks remap them onto the severity ladder at 3px.
+Fence content asserts four queues carrying seven law cards with ticket metadata; the family mis-handles `accTitle`/`accDescr` as columns, so the relation sentence rides beside the fence. Tasks indent under columns, metadata keys are `assigned`, `ticket`, `priority`, and priorities are exactly `Very High`, `High`, `Low`, `Very Low`; `kanban.ticketBaseUrl` links each ticket by substituting the task ticket for `#TICKET#`, and column classes index from `section-1`.
 
 ## [19]-[TREEVIEW]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   treeView:
     rowIndent: 14
     paddingY: 6
-    labelFontSize: "13px"
-    labelColor: "#F8F8F2"
-    lineColor: "#6272A4"
-    descriptionColor: "#8BE9FD"
-    highlightBg: "#BD93F933"
-    highlightStroke: "#BD93F9"
-    iconColor: "#6272A4"
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-  themeCSS: ".treeView-node-description{fill:#8BE9FD}.treeView-highlight-bg{fill:#FFD86626;stroke:#FFD866}.treeView-node-line{stroke:#6272A4}"
 ---
 treeView-beta
 accTitle: Skill tree
-accDescr: The diagram skill folder with its law owners annotated and the theming law highlighted.
+accDescr: The diagram skill folder with its law owners annotated.
 ├── references/
-│   ├── theming.md :::highlight ## palette and scale law
-│   ├── styling.md ## grammar and floors
+│   ├── methodology.md ## question and growth law
+│   ├── grammar.md ## link and shape grammar
 │   ├── config.md ## frontmatter law
 │   └── syntax-extended.md ## 25-type registry
 ├── templates/
@@ -976,41 +568,15 @@ accDescr: The diagram skill folder with its law owners annotated and the theming
 └── SKILL.md
 ```
 
-TreeView parses box-drawing input, a trailing `/` marking a directory; annotations trail an entry as `:::class`, `## description`, and `icon(name)`/`icon(none)`. Config carries `rowIndent`, `paddingY`, `labelFontSize`, `labelColor`, and `lineColor`, which land directly, while the highlight and description surfaces restyle through `themeCSS` — `.treeView-highlight-bg` as the yellow-law chip (translucent gold fill, full gold stroke, the white label riding over it) and `.treeView-node-description` in Cyan as typed annotation ink, the hue pair that separates attention from information. `showIcons`, `defaultIconPack`, `filenameIcons`, and `extensionIcons` govern icons; an unregistered icon renders as a question mark, and `highlight` is the one class name with built-in geometry.
+TreeView parses box-drawing input, a trailing `/` marking a directory; annotations trail an entry as `:::class`, `## description`, and `icon(name)`/`icon(none)`. Config carries `rowIndent` and `paddingY`, which land directly. `showIcons`, `defaultIconPack`, `filenameIcons`, and `extensionIcons` govern icons; an unregistered icon renders as a question mark, and `highlight` is the one class name with built-in geometry.
 
 ## [20]-[CYNEFIN]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   cynefin:
     seed: 7
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    mainBkg: "#44475A"
-    cynefin:
-      domainFontSize: 14
-      itemFontSize: 12
-      textColor: "#F8F8F2"
-      labelColor: "#D6BCFA"
-      boundaryColor: "#6272A4"
-      boundaryWidth: 1.5
-      cliffColor: "#FF5555"
-      cliffWidth: 2
-      arrowColor: "#FF79C6"
-      arrowWidth: 2
-      complexBg: "#50FA7B33"
-      complicatedBg: "#8BE9FD33"
-      clearBg: "#FFD86633"
-      chaoticBg: "#FF555533"
-      confusionBg: "#BD93F933"
-  themeCSS: ".cynefinItem{fill:#44475A;stroke:#6272A4}.cynefinItemText{fill:#F8F8F2}"
 ---
 cynefin-beta
   accTitle: Failure domain sort
@@ -1032,41 +598,18 @@ cynefin-beta
   chaotic --> clear : "Order imposed"
 ```
 
-Domains `complex`, `complicated`, `clear`, `chaotic`, and `confusion` each hold quoted items, and a transition spells `domain --> domain : "label"`; domain fills, boundary, cliff, and arrow color nest under `cynefin:`. Domain tints carry the translucent law — the engine multiplies each `*Bg` by a `.4` fill-opacity, so a ~20% alpha hex lands near an 8% composite wash that keeps items legible — while `.cynefinItem`/`.cynefinItemText` chip the items on Selection with Foreground ink and `labelColor` inks the domain captions Lavender. A cliff separates chaotic from clear as canonical geometry, taking Red at 2px; transitions curve center to center with a fixed 15% bow and the arrow tip lands beside the target caption — engine geometry, so a committed fence keeps transitions few and lets the label ride the bow's midpoint. `cynefin.seed` pins the boundary jitter.
+Domains `complex`, `complicated`, `clear`, `chaotic`, and `confusion` each hold quoted items, and a transition spells `domain --> domain : "label"`.
+
+A cliff separates chaotic from clear as canonical geometry; transitions curve center to center with a fixed 15% bow and the arrow tip lands beside the target caption — engine geometry, so a committed fence keeps transitions few and lets the label ride the bow's midpoint. `cynefin.seed` pins the boundary jitter.
 
 ## [21]-[RAILROAD]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   railroad:
-    fontSize: 13
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Consolas, monospace"
-    strokeWidth: 2
     padding: 16
-    lineColor: "#6272A4"
-    markerFill: "#FF79C6"
     markerRadius: 4
-    terminalFill: "#FFD86654"
-    terminalStroke: "#FFD866"
-    terminalTextColor: "#F8F8F2"
-    nonTerminalFill: "#44475A"
-    nonTerminalStroke: "#BD93F9"
-    nonTerminalTextColor: "#F8F8F2"
-    ruleNameColor: "#D6BCFA"
-    specialFill: "#21222C"
-    specialStroke: "#6272A4"
-    commentFill: "#21222C"
-    commentStroke: "#6272A4"
-    commentTextColor: "#F8F8F2"
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
 ---
 railroad-ebnf-beta
 accTitle: Numeric literal grammar
@@ -1079,46 +622,25 @@ integer = "0" | nonzero { digit } ;
 exponent = ( "e" | "E" ) [ sign ] digit { digit } ;
 ```
 
-Keyword choice selects the grammar parser — `railroad-ebnf-beta` for EBNF, `railroad-abnf-beta` for ABNF, `railroad-peg-beta` for PEG, and `railroad-beta` for Mermaid's intermediate constructors. `railroad:` config owns the whole visual surface — fills, strokes, text colors, `lineColor`, `markerFill`, `markerRadius`, `strokeWidth`, `fontSize`, `fontFamily` — sanitized to hex (alpha included), functional color spaces, and named colors. Terminals chip as the yellow-law surface (translucent gold, full gold stroke, Foreground ink), nonterminals ride Selection under Purple, rails run Comment at the standing 2px, rule names ink Lavender bold, and the start/end dots take pink at the −25% radius. In this EBNF dialect `? ... ?` is a special sequence, so optionality spells `[ ... ]` and repetition `{ ... }` — a postfix `?` fuses everything up to the next `?` into one special box.
+Keyword choice selects the grammar parser — `railroad-ebnf-beta` for EBNF, `railroad-abnf-beta` for ABNF, `railroad-peg-beta` for PEG, and `railroad-beta` for Mermaid's intermediate constructors. In this EBNF dialect `? ... ?` is a special sequence, so optionality spells `[ ... ]` and repetition `{ ... }` — a postfix `?` fuses everything up to the next `?` into one special box. Terminals render quoted and nonterminals bare, so the two read as different marks; `padding` and `markerRadius` size the rails.
 
 ## [22]-[SWIMLANE]
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   swimlane:
     lineHops: arc
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#D6BCFA"
-    primaryColor: "#44475A"
-    primaryTextColor: "#F8F8F2"
-    primaryBorderColor: "#BD93F9"
-    mainBkg: "#44475A"
-    nodeBorder: "#BD93F9"
-    lineColor: "#FF79C6"
-    tertiaryColor: "#21222C"
-    clusterBkg: "#21222C"
-    clusterBorder: "#D6BCFA"
-    edgeLabelBackground: "#21222C"
-    labelBackgroundColor: "#21222C"
-  themeCSS: ".nodeLabel{font-size:13px;font-weight:500}.edgeLabel{font-size:12px;font-weight:500}.cluster-label .nodeLabel,.cluster-label text{font-size:13.5px;font-weight:700;letter-spacing:.08em}.node rect,.node circle,.node polygon,.node path{stroke-width:1.5px;filter:none!important}.swimlane-title{fill:#21222C}.swimlane-body{stroke:#D6BCFA}.marker path{transform:scale(.8);transform-origin:5px 5px}.edgeLabel rect{transform-box:fill-box;transform-origin:center;transform:scale(1.1,1.2)}"
 ---
 swimlane-beta
   accTitle: Fence review lanes
-  accDescr: A fence drafted by the author, themed by the agent, gated by the validator lane on the critical path, and proven by the renderer.
+  accDescr: A fence drafted by the author, tightened by the agent, gated by the validator lane on the critical path, and proven by the renderer.
   subgraph author[AUTHOR]
     Draft([Draft fence])
     Commit([Commit])
   end
   subgraph agent[AGENT]
-    Theme[Apply canon]
+    Tighten[Tighten graph]
     Inspect[Inspect PNG]
   end
   subgraph validator[VALIDATOR]
@@ -1127,54 +649,19 @@ swimlane-beta
   subgraph renderer[RENDERER]
     Render[Render proof]
   end
-  Draft --> Theme
-  Theme --> Gate
+  Draft --> Tighten
+  Tighten --> Gate
   Gate -->|pass| Render
-  Gate --> Theme
+  Gate --> Tighten
   Render --> Inspect
   Inspect --> Commit
-  classDef primary fill:#44475A,stroke:#FF79C6,color:#F8F8F2
-  classDef boundary fill:#282A36,stroke:#BD93F9,color:#F8F8F2
-  classDef error fill:#FF555580,stroke:#FF5555,color:#F8F8F2
-  class Draft,Commit boundary
-  class Theme,Inspect,Render primary
-  class Gate error
-  linkStyle 3 stroke:#FF5555,stroke-width:3px,color:#F8F8F2
-  linkStyle 4 stroke:#50FA7B,color:#F8F8F2
-  style validator fill:#BD93F91A,stroke:#BD93F9
 ```
 
-A standalone diagram reusing the flowchart body under a layered orthogonal layout: every top-level `subgraph` is a lane, nodes inside it belong to it, and loose nodes fall into a synthetic unlabeled lane. Full flowchart styling travels — `classDef`, `class`, `linkStyle`, edge labels — so the edge-rail law binds here verbatim; `swimlane.lineHops: arc` hops edge crossings, and `style laneId fill:...,stroke:...` emphasizes the critical-path lane as a translucent purple band. Lane titles are `.cluster-label` container titles taking the 13.5px/700 Lavender stamp over a recessed `.swimlane-title` band with `.swimlane-body` Lavender walls. A label on a return edge orphans away from its stroke, so the fault return rides the Red rail alone — color carries the semantics the label cannot.
+A standalone diagram reusing the flowchart body under a layered orthogonal layout: every top-level `subgraph` is a lane, nodes inside it belong to it, and loose nodes fall into a synthetic unlabeled lane; `swimlane.lineHops: arc` hops edge crossings. A label on a return edge orphans away from its stroke — keep return-edge labels short or carry the fact on the target node.
 
 ## [23]-[EVENTMODELING]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    emUiFill: "#44475A"
-    emUiStroke: "#BD93F9"
-    emCommandFill: "#44475A"
-    emCommandStroke: "#8BE9FD"
-    emEventFill: "#44475A"
-    emEventStroke: "#FFB86C"
-    emProcessorFill: "#21222C"
-    emProcessorStroke: "#6272A4"
-    emReadModelFill: "#21222C"
-    emReadModelStroke: "#50FA7B"
-    emSwimlaneBackgroundOdd: "#282A36"
-    emSwimlaneBackgroundStroke: "#44475A"
-    emArrowhead: "#FF79C6"
-    emRelationStroke: "#FF79C6"
-  themeCSS: ".em-box span{font-family:'SF Mono',Menlo,'Cascadia Mono',Consolas,monospace;font-size:13px;color:#F8F8F2}.em-box code{color:#8BE9FD;font-size:11px}.em-swimlane text{fill:#D6BCFA;font-size:13.5px;font-family:'SF Mono',Menlo,'Cascadia Mono',Consolas,monospace}"
----
 eventmodeling
   tf 01 ui CartUI { "sku": "A1" }
   tf 02 cmd AddItem
@@ -1187,25 +674,11 @@ eventmodeling
   tf 09 evt PaymentRequested `json`{ "total": 42 }
 ```
 
-Fence content asserts a cart flow from UI through commands and events into a read model and a payment processor; `accTitle`/`accDescr` parse but emit nothing into the SVG, so the relation sentence rides beside the fence. `tf`/`timeframe` orders frames left to right and `rf`/`resetframe` restarts the clock; frame kinds are `ui`, `cmd`, `evt`, `pcr` (processor), and `rmo` (read model), an inline `{ ... }` or `` `json`{ ... } `` payload annotates a frame, and each kind reads its `em*Fill`/`em*Stroke` pair. Relations infer from the nearest prior frame in a different lane, so declaration order draws the chain. Frame text hardcodes a bold 16px sans inside `foreignObject` spans — the `.em-box span` stamp restores the mono stack at 13px with Foreground ink, `.em-box code` inks payloads Cyan at 11px, and `.em-swimlane text` carries the lane titles in Lavender mono. Namespaced frame ids (`stream.Name`) map onto extra swimlanes.
+Fence content asserts a cart flow from UI through commands and events into a read model and payment processor; `accTitle`/`accDescr` parse but emit nothing, so the relation sentence rides beside the fence. `tf`/`timeframe` orders frames left to right, `rf`/`resetframe` restarts the clock; kinds are `ui`, `cmd`, `evt`, `pcr` (processor), and `rmo` (read model), and an inline `{ ... }` or `` `json`{ ... } `` payload rides a frame. Relations infer from the nearest prior frame in a different lane, so declaration order draws the chain; namespaced frame ids (`stream.Name`) map to extra swimlanes.
 
 ## [24]-[VENN]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    vennTitleTextColor: "#F8F8F2"
-    vennSetTextColor: "#F8F8F2"
-  themeCSS: ".venn-title{font-size:15px;font-weight:600}.venn-circle text{font-size:14px;font-weight:600}.venn-intersection text{font-size:12px}.venn-text-node{font-size:12px}"
----
 venn-beta
   title Corpus Coverage
   set A["Authored"] : 80
@@ -1215,41 +688,15 @@ venn-beta
   union B,C ["Gated"] : 34
   union A,C : 26
   union A,B,C ["Canon"] : 18
-  style A fill: #BD93F9, fill-opacity: 0.3, stroke: #BD93F9, stroke-width: 1.5, color: #F8F8F2
-  style B fill: #8BE9FD, fill-opacity: 0.3, stroke: #8BE9FD, stroke-width: 1.5, color: #F8F8F2
-  style C fill: #50FA7B, fill-opacity: 0.3, stroke: #50FA7B, stroke-width: 1.5, color: #F8F8F2
 ```
 
-Fence content asserts three weighted sets overlapping into labeled proof regions; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `set id["Label"] : size` declares a weighted set, `union A,B ["Label"] : size` sizes and captions an overlap, higher-arity unions list every member, and `style targets key: value, ...` carries per-set `fill`, `fill-opacity`, `stroke`, `stroke-width`, and `color` — the translucent law lands natively as hue fills at `.3` under full-hue strokes with per-set Foreground label ink. Region captions ride the union labels at the region centroids, so overlaps read without leaders or a legend. Set and intersection label sizes scale from canvas width at engine ratios; the `.venn-title`, `.venn-circle text`, and `.venn-intersection text` stamps pull them onto the type ramp. Up to eight sets read `venn1`–`venn8` where no per-set style speaks.
+Fence content asserts three weighted sets overlapping into labeled proof regions; the family rejects `accTitle`/`accDescr` at parse, so the relation sentence rides beside the fence. `set id["Label"] : size` declares a weighted set, `union A,B ["Label"] : size` sizes and captions an overlap, and higher-arity unions list every member.
+
+Region captions ride the union labels at the region centroids, so overlaps read without leaders or a legend; set and intersection label sizes scale from canvas width at engine ratios.
 
 ## [25]-[WARDLEY]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    wardleyEvolutionColor: "#50FA7B"
-    wardley:
-      backgroundColor: "#282A36"
-      axisColor: "#6272A4"
-      axisTextColor: "#F8F8F2"
-      gridColor: "#44475A"
-      componentFill: "#44475A"
-      componentStroke: "#BD93F9"
-      componentLabelColor: "#F8F8F2"
-      linkStroke: "#FF79C6"
-      evolutionStroke: "#50FA7B"
-      annotationStroke: "#6272A4"
-      annotationTextColor: "#F8F8F2"
-      annotationFill: "#282A36"
----
 wardley-beta
   accTitle: Render capability map
   accDescr: An author need anchored on the diagram skill whose dependencies slide from custom fences toward commodity browsers and caches.
@@ -1270,27 +717,11 @@ wardley-beta
   evolve IconPack 0.75
 ```
 
-Coordinates are `[visibility, evolution]` on `0`–`1`; `component` places a capability, `->` a dependency link, `evolve` draws the evolution trend to a target maturity, and OWM grammar adds `pipeline`, `note`, decorators, and inertia. Colors nest under `wardley:` with `wardleyEvolutionColor` owning the trend arrow — Green marks sanctioned movement. Wardley emits no stylesheet, so `themeCSS`, the mono stack, and font metrics never reach it: label and axis sizes are engine-owned, and the `anchor` node inks its label engine-black, so a dark-canvas map models the user need as its top component instead. Component nodes ride `componentFill`/`componentStroke`, labels `componentLabelColor`, links `linkStroke`, and the stage boundary dashes stay engine-dark as background texture.
+Coordinates are `[visibility, evolution]` on `0`–`1`; `component` places a capability, `->` a dependency link, `evolve` draws the evolution trend to a target maturity, and OWM grammar adds `pipeline`, `note`, decorators, and inertia. Label and axis sizes are engine-owned.
 
 ## [26]-[ISHIKAWA]
 
 ```mermaid
----
-config:
-  theme: base
-  look: classic
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    primaryColor: "#44475A"
-    primaryTextColor: "#F8F8F2"
-    primaryBorderColor: "#BD93F9"
-    mainBkg: "#44475A"
-    lineColor: "#FF79C6"
----
 ishikawa-beta
   "Render Failure"
     Browser
@@ -1309,4 +740,4 @@ ishikawa-beta
       "Reserved word"
 ```
 
-Fence content asserts a render failure traced through browser, asset, and syntax cause families into nested sub-causes; the family mis-handles `accTitle`/`accDescr`/`title` as spurious head nodes, so the relation sentence rides beside the fence. A quoted head names the effect, top-level identifiers are cause categories, quoted children are causes, and depth rides indentation — meaningful growth deepens existing branches into sub-causes rather than adding head-level categories. Beta styling reads the general variables only: `lineColor` draws spine, branches, arrowheads, and box borders, `mainBkg` fills the head and cause boxes, and sub-branches thin to 1px under the 2px primary bones — the ladder expressed with the two weights the engine owns.
+Fence content asserts a render failure traced through browser, asset, and syntax cause families into nested sub-causes; the family mis-handles `accTitle`/`accDescr`/`title` as spurious head nodes, so the relation sentence rides beside the fence. A quoted head names the effect, top-level identifiers are cause categories, quoted children are causes, and depth rides indentation — growth deepens existing branches into sub-causes, never head-level categories; sub-branches thin under the primary bones in the engine's two weights.

@@ -28,7 +28,6 @@ Use the smallest carrier that preserves the reader job; a carrier earns its plac
 [CARRIER_LAW]:
 - A repeated paragraph pattern is a record set.
 - A list item with asserted completion is a checkbox.
-- A diagram that repeats a table is deleted.
 - A command that has not run is an instruction, not a result.
 
 ## [02]-[TABLE_LAW]
@@ -42,14 +41,14 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 
 [ELIGIBILITY]:
 - Build a table only when all three hold: rows share one comparison question, every column answers it with an atomic value, and more than one row exists. Fail any one and the carrier is a record, card, or prose.
-- One trailing prose column survives inside the cell budget; a second prose column disqualifies the table. A one-row table is a definition record. Rows with no shared comparison question are separate records.
+- One trailing prose column survives inside the cell budget; a second prose column disqualifies the table.
 - Use comparison, lookup, decision, matrix, support, or dependency forms only; never tables for sequences, heterogeneous records, narrative, or field lists.
 - Eligibility is structural, never an enumeration license: a table whose rows mirror an owner whose system of record is elsewhere is a stale mirror however atomic its cells; the doc tables only its own registry or a tool-verified representation.
 
 [CELL_BUDGET]:
 - Each cell is one atomic unit: a value, marker, token, code span, proper noun, path, or a phrase of at most six words carrying no internal comma, semicolon, or clause-joining conjunction.
-- A cell that wants a comma wants to be a card; a cell packing parallel values behind slashes wants one row per value. A cell that wraps to a second rendered line is over budget.
-- The stub column is a short unique key — identifier, token, command, proper noun — never a sentence.
+- A cell that wraps to a second rendered line is over budget.
+- A stub column is a short unique key — identifier, token, command, proper noun — never a sentence.
 - A binary field carries one fixed pair of one-word semantic values, the same pair in every row; a column whose cells all hold one value is tautological — extract it to a `[VALUE]:` card beside the table and delete the column.
 
 [HEADER_COMPRESSION]:
@@ -70,8 +69,8 @@ Tables enumerate, cards legislate. A table is a lookup grid, not a prose contain
 [MECHANICS]:
 - Enumerable tables open with a centered `[INDEX]` column numbered `[01]` through `[NN]`; non-enumerable matrices use a bracketed stub rubric instead. Every header is a bracketed uppercase rubric.
 - Left-align text, paths, code, enums, and identifiers; right-align numeric and date columns; center only `[INDEX]`, compact markers, and values three characters or fewer.
-- Keep tables under 15 columns and 20 rows with at most one trailing prose column that still obeys the cell budget; escape literal pipes; keep every row's cell count equal; decompose over-bound tables on the dominant axis. A registry table — a closed roster of atomic rows in four columns or fewer whose payload is the roster itself — is legal past the row ceiling.
-- The first word after a label colon in a cell capitalizes as a sentence start; an identifier, path, or code span is verbatim.
+- Tables hold as many rows as their roster has — row count is never capped, and a fact that belongs in a row stays a row. Width alone bounds a table: the 150-column rendered cap is the sole size law, so an oversized table relieves its cells or decomposes on the column axis, never sheds rows or tears into prose. Column count stays under 15 with at most one trailing prose column that still obeys the cell budget.
+- A label colon in a cell capitalizes its first following word as a sentence start; an identifier, path, or code span is verbatim.
 
 [CONVERSION]:
 
@@ -100,7 +99,7 @@ Records carry independently scanned items; lists carry peer facts or true sequen
 - `OrderedStep`: a numbered task step carrying fields such as `Action`, `Command`, `Expected signal`, `Recovery`, or `Result`.
 - `row-owned record`: a record after a table that carries one row's independent status, detail, omission, update, or retention.
 
-[INDEXED_LIST] — The indexed list is the three-field alternative to a table: `- [NN]-[LABEL]: Prose.` carries an index for stable reference, a bracketed label for scanning, and one prose clause for the payload. It is not a heading tier and never joins the `#` hierarchy.
+[INDEXED_LIST] — An indexed list is the three-field alternative to a table: `- [NN]-[LABEL]: Prose.` carries an index for stable reference, a bracketed label for scanning, and one prose clause for the payload. It is not a heading tier and never joins the `#` hierarchy.
 
 - Reach for it when the information is index, label, and prose — and the prose outgrows a cell budget; a genuine fourth field promotes the set to a table, and entries nobody references by position demote to plain bullets.
 - Entries number `[01]` onward in document order; the label is a bracketed uppercase rubric; the prose obeys the register and stays one clause to one short sentence.
@@ -137,24 +136,23 @@ A type standard narrows this vocabulary only when it declares exact casing, acti
 - Use `-` for bullets; never `*` or `+`. Bullets carry equivalent items; numbered lists carry true sequence; never mix ordered and unordered items in one logical block.
 - A bullet is one atomic entry: one fact, one rule, one member. A bullet whose content is a run of parallel values is a mis-container — either each value takes its own bullet, or the set collapses out of list form entirely.
 - An entry carries one decision in one to two sentences, three at the hard cap; past the cap the entry is hiding a card, a labeled block, or section prose. A law and its mechanism, consequences, and exceptions packed into one bullet is a compressed section wearing a hyphen.
+- Decompress by classifying fragments and routing each to its container: the ruling stays the bullet, a mechanism or signature moves to a fence, a consequence shared with sibling entries rises to the section lead, an example moves to a fence or record, and a fragment a nearer owner already holds dies. A split leaving the fragments as a longer run of sibling bullets has moved the compression, not cured it.
 - Closed enumerations whose payload is the member roster itself — banned-word lists, generated member sets, fault-code ledgers, package rows — are registry entries and legal at length, and a `- Field: value` record field answers to the earned-field law at card altitude, its defect class fragment fusion rather than length; every other entry obeys the budget.
 - A closed token set that is referenced rather than defined rides inline after its group label — ``[SET_LABEL]: `TOKEN_A` `TOKEN_B` `TOKEN_C` `` — one line, no list; the list form is earned only when members carry per-member content.
 - Split lists past seven items into named sets; keep nesting to two levels with four-space child indentation.
 - A complete lead sentence ending in a colon introduces a list with no blank gap; a section may open directly with its primary rule list after the heading blank line.
 
 [GROUP_LABELS]:
-- A standalone bracketed set label `[X_Y_Z]:` introduces a category, set, or key list; keep one blank line before it and place its list on the next line with no blank gap, the label hugging its first bullet.
-- A label that introduces a list, record, or table carries the colon: a floating bracketed label with no colon above a list or grid is the same `label-gap` defect, the colon added before the hug.
-- A label that introduces a table keeps the blank line the grid demands on each side per the whitespace law; a label resting directly on a table row is a defect the gate fails as `label-gap`, as is the blank gap between a label and its list.
+- A standalone bracketed set label `[X_Y_Z]:` introduces a category, set, or key list and always carries the colon; a floating label missing the colon is the same defect as a misplaced one.
+- A label hugs its list with no blank gap and flanks a table, fence, or diagram with the blank line the container demands; the gate owns `label-gap` for either violation.
 - A group label never echoes the heading above it: a section whose only label restates its own rubric carries phantom structure — delete the label and let the heading charter the container.
 - Never stack two set labels; if a second appears before the first label's list, remove the outer label or promote it to prose or a heading.
 - A `[RECORD_KEY]:` or `[CONTRAST_KEY]:` label is followed by a bullet list, never bare indented `Field: value` lines.
 
 [WHITESPACE]:
 - Put one blank line after every H1, H2, and H3 heading, and one blank line on each side of a table, fenced block, or diagram; a lead sentence introduces the structure but the blank line still separates prose from the opening fence.
-- Raw prose is one logical line per paragraph: write the whole paragraph on a single physical line and let the editor soft-wrap it. A manual newline inside a paragraph is an artificial break the `prose-wrap` gate fails, because a fresh agent cannot tell an intentional break from a wrap artifact.
-- Manual line breaks are structural only — a list item, a table row, a record field line, and a fence body each own their physical line; ordinary paragraph prose never does.
-- A paragraph that runs long splits into two logical paragraphs separated by one blank line, each again a single physical line; it is never chopped mid-thought into fixed-width lines.
+- Raw prose is one logical line per paragraph on a single physical line the editor soft-wraps; manual line breaks are structural only — a list item, table row, record field line, and fence body each own their physical line, ordinary prose never does. A manual newline inside a paragraph fails the `prose-wrap` gate, which a fresh agent cannot tell from a wrap artifact.
+- A long paragraph splits into two logical paragraphs on one blank line, each again a single physical line, never chopped into fixed-width lines.
 
 ## [04]-[SECTION_SHAPES]
 
@@ -162,14 +160,16 @@ A section exists only where it owns a decision cluster; the section set is engin
 
 - Section count follows concern count: a document with more sections than owned concerns is over-sectioned, and two sections answering one reader question merge. Splitting a section is earned by a reader who arrives needing only one half.
 - A short section is one lead and one container; a medium section is a lead, one primary container, and its relief prose; a long section is a lead, a labeled block per sub-concern, and one container per block. Depth grows by labeled blocks inside the section before it grows by new sections.
-- Mixed paradigms inside one section are legal when each carrier owns a distinct reader job — a lead that legislates, a table that enumerates, a record that details one row — and illegal when two carriers repeat one fact in two shapes.
-- The first container after the lead carries the section's primary payload; supporting carriers follow it, never precede it.
-- An intro section earns its slot by changing the reader's next action: charter and boundary consequence, nothing else. Scene-setting, tour narration, and importance claims are deleted on sight.
+- Mixed paradigms inside one section are legal when each carrier owns a distinct reader job — a lead that legislates, a table that enumerates, a record that details one row — and illegal when two carriers repeat one fact in two shapes: the denser, more-actionable carrier owns the fact and the weaker demotes to silence, keeping only the law no other carrier holds.
+- A decision table and prose bullets restating its rows are this two-shapes defect: the table owns the symptom-to-container mapping, the prose keeps only definitions and law no cell carries.
+- A section's first container after the lead carries its primary payload; supporting carriers follow it, never precede it.
+- A header absorbs what its entries repeat: entries that each begin with the same word belong under a header carrying that word once.
+- A lead or header that enumerates the members of a set whose entries each expand one member is a table of contents the entries already are: cut it to a bare charter and keep in it only a member no entry expands.
 
 ## [05]-[VISUAL_TOPOLOGY]
 
 A tree, codemap, or diagram carries structure and relations; prose carries the law the structure obeys.
 
-- A node, edge, or tree-entry label is a concept name plus at most one charter phrase, under ten words; signatures, versions, and mechanism never ride a label.
+- A node, edge, or tree-entry label is a concept name with at most one charter phrase, under ten words; signatures, versions, and mechanism never ride a label.
 - A visual is declared regenerable, verified by tooling where a verifier exists, and never paraphrased back into prose.
 - One visual owns one question; a visual needing two legends is two visuals, and a visual that repeats a table is deleted.

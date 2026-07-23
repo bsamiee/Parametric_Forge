@@ -135,6 +135,12 @@ if (!metaMatch) {
             // pure-literal heuristics — high-confidence violations only
             if (/\.\.\./.test(metaBody)) errors.push('meta contains a spread `...` — it must be a pure literal');
             if (/`/.test(rawMeta)) errors.push('meta contains a template literal — it must be a pure literal');
+            if (/~\s*\+|\+\s*~/.test(metaBody)) {
+                errors.push('meta contains string concatenation — the engine rejects BinaryExpression; collapse to one single-line string literal');
+            }
+            if (/:\s*(?!true\b|false\b|null\b|['"[{\d-])[A-Za-z_$]/.test(metaBody)) {
+                errors.push('meta references an identifier value — the engine requires a pure literal');
+            }
             if (/[A-Za-z_$][\w$]*\s*\(/.test(metaBody)) {
                 errors.push('meta appears to contain a function call — it must be a pure literal');
             }
@@ -191,7 +197,7 @@ for (const key of ['effort', 'model']) {
         const lit = src.slice(m.index + m[0].length).match(/^\s*(['"])([^'"]*)\1/);
         if (!lit) continue; // a number, variable, or non-literal — not statically checkable
         const val = lit[2];
-        if (key === 'model' && val.includes('-')) continue; // a full model id (e.g. claude-opus-4-8), not a short alias
+        if (key === 'model' && val.includes('-')) continue; // a full model id, not a short alias
         if (!ALLOWED[key].has(val)) {
             warnings.push(
                 `${key} value '${val}' at line ${lineOf(m.index)} is not in ` +

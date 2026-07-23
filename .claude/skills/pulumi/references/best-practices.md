@@ -104,7 +104,7 @@ ESC centralizes secrets across stacks: a `Pulumi.yaml` `environment:` list pulls
 
 ## [06]-[ALIASES_WHEN_REFACTORING]
 
-Renaming a resource, moving it into a component, or changing its parent reads as delete-plus-create without an alias — destruction and recreation of live infrastructure. Detection signal: preview shows replace or delete+create where update was intended.
+Renaming a resource, moving it into a component, or changing its parent reads as `delete+create` without an alias — destruction and recreation of live infrastructure. Detection signal: preview shows replace or delete+create where update was intended.
 
 ```typescript rejected
 // was: new aws.s3.Bucket("my-bucket")

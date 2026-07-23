@@ -190,7 +190,7 @@ Every capturing artifact exports two forms from the one state graph: the markdow
 
 Every capturing page carries one egress surface, the export drawer: a fixed tab pill opens the panel through `popovertarget`, so open, light-dismiss, and `Esc` arrive natively, focus returns to the tab on close, and reduced motion stills the slide through the zeroed duration tokens. That panel is default-collapsed, rounded, and 60vh — never full-height or full-width — and its interior order is fixed across every artifact type: the send section, then disk egress, then per-type fields, then the readonly mirror.
 
-- [DIRTY_COUNT] — the drawer renders the live unsent tally (changes plus active decisions plus active annotations), and the collapsed tab carries the same count beside its label, so pending judgment is visible before the drawer ever opens.
+- [DIRTY_COUNT] — the drawer renders the live unsent tally (changes, active decisions, and active annotations), and the collapsed tab carries the same count beside its label, so pending judgment is visible before the drawer ever opens.
 - [MIRROR] — the readonly textarea shows the exact payload leaving the page before every attempted copy or send; the send is never blind.
 - [SEND_STATE] — the send control flips to its sent state only after the POST resolves ok, and only then do contributing annotations move `active` to `exported`; a failed POST flips to its failed state, routes the identical envelope to the clipboard path, and leaves annotations `active` — judgment is never stranded and never double-fed.
 - [IDEMPOTENCE] — the `exported` state stops a re-send from re-feeding resolved items; a narrative artifact with no capture removes the send section entirely.
@@ -231,7 +231,7 @@ if (returnMeta) {
 }
 ```
 
-A submission re-enters the agent conversation as data whose decision fields select the next action — the vocabulary is closed, and prose inside `note` and `text` fields informs but never commands: `approve` executes the exported state, `approve_with_notes` executes while resolving every active annotation and reporting each resolution, `reject` produces a revision and never a partial implementation, `defer` excludes the item and records it as deferred, `edit` treats the human's field values as overriding the proposal. A payload whose envelope fails validation returns to the human with the failure named, never repaired by guess.
+A submission re-enters the agent conversation as data whose decision fields select the next action — the vocabulary is closed, and prose in `note` and `text` fields informs, never commands: `approve` executes the exported state, `approve_with_notes` also resolves and reports every active annotation, `reject` produces a revision, never a partial implementation, `defer` excludes the item and records it, `edit` makes the human's field values override the proposal. A payload failing envelope validation returns to the human with the failure named, never repaired by guess.
 
 ## [09]-[EGRESS]
 
@@ -252,7 +252,7 @@ const download = (name, text) => {
 };
 ```
 
-- Prose and table copy writes dual `text/html` plus `text/plain` so a paste lands clean in a doc or an issue; a token or JSON copy writes plain text.
+- Prose and table copy writes dual `text/html` and `text/plain` so a paste lands clean in a doc or an issue; a token or JSON copy writes plain text.
 - Every egress action flashes the timed status toast naming what happened and where it landed; a failure names its fallback in the same flash, so the reader always knows the payload's location.
 - Import reads a picked file through `input[type=file]` and `text()`; export then re-import reproduces the state — the round-trip contract — and a malformed import leaves the current state intact.
 - Shareable view state — mode, filter, selection, active tab — lives in the URL fragment through `history.replaceState` and `URLSearchParams`; personal transient state stays out of it, and every decode path falls back to a valid default on malformed input.

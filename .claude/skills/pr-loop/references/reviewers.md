@@ -14,7 +14,7 @@ Keyed by GitHub identity. Each row registers a reviewer's completion signal, fal
 ## [02]-[GREPTILE]
 
 - Logins: `greptile-apps[bot]` (staging `greptile-apps-staging[bot]`). `@greptileai`/`@greptile` are trigger keywords, never author matches.
-- Completes when: the `Greptile Review` check-run (app `greptile-apps`) reaches `COMPLETED`, OR the summary issue comment's footer `Last reviewed commit: .../commit/<sha>` matches the current head. Greptile posts the summary as an issue comment plus the check-run — no PR review object; the review-object surface stays empty by design.
+- Completes when: the `Greptile Review` check-run (app `greptile-apps`) reaches `COMPLETED`, OR the summary issue comment's footer `Last reviewed commit: .../commit/<sha>` matches the current head. Greptile posts the summary as an issue comment beside the check-run — no PR review object; the review-object surface stays empty by design.
 - Ignore: summary `updated_at` churn; `<!-- greptile-status -->` skip/excluded-author comments; Greptile's internal "addressed" flag (never a GitHub thread resolve).
 - Re-trigger: push (auto; `triggerOnUpdates: true`, drafts included via `triggerOnDrafts: true`) or comment `@greptileai`. Footer's Re-trigger link is web-only — unusable from `gh`.
 - Severity: inline bold category prefix — `**logic:**`=3, `**syntax:**`=2, `**style:**`=1; legacy P1/P2/P3 badges map 3/2/1. `Confidence Score: N/5` lives in the summary body; convergence demands `5/5` at the current head — a completion signal never gates on it.
@@ -22,7 +22,7 @@ Keyed by GitHub identity. Each row registers a reviewer's completion signal, fal
 ## [03]-[MACROSCOPE]
 
 - Login: `macroscopeapp[bot]`; GitHub App id `900172` — key every check read on `checkSuite.app.databaseId`, never a check-name roster (custom rules add named checks beside `Macroscope - Correctness Check` and `Macroscope - Approvability Check`).
-- Completes when: at least one app-900172 check-run exists at head and ALL of them read `status == COMPLETED`. Conclusions are `neutral` by design — a gate treating non-`success` as failure wedges forever; `neutral` is done, and approvability lives in the comment verdict, not the conclusion.
+- Completes when: at least one app-900172 check-run exists at head and ALL of them read `status == COMPLETED`. Conclusions are `neutral` by design — `neutral` is done, and approvability lives in the comment verdict, not the conclusion.
 - Surfaces: a review object, inline comments, an issue-comment summary, and a PR-body block between `<!-- Macroscope's pull request summary starts here -->` markers.
 - Re-trigger: push (auto). Explicit: `POST repos/{o}/{r}/check-runs/{id}/rerequest` on an app-900172 run is the primary route — best-effort, a user token rerequesting another app's run may 403, falling back to the next push; the `@macroscope-app review` mention is vendor-documented but unverified live.
 - Severity: first line `<emoji> **<word>**` — Critical=4, High=3, Medium=2, Low=1. Approvability blocks on unresolved comments at or above its Minimum Blocking Severity (default Medium).

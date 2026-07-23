@@ -90,7 +90,7 @@ git tag -a v1.0.0 -m "Release v1.0.0" && git push origin v1.0.0
 git tag -fa v1 -m "Update v1 to v1.0.0" && git push origin v1 --force
 ```
 
-Publish the moving major tag for discoverability, but consumers reference `@<SHA> # vN.N.N` only — a `@v1` or `@v1.0.0` ref is retargetable and rates HIGH risk in `supply_chain.md` [01.1]-[DETECTION_RULES].
+Publish the moving major tag for discoverability; consumers reference `@<SHA> # vN.N.N` only — every tag ref is mutable, and the per-form severity tiers live in `supply_chain.md` [01.1]-[DETECTION_RULES].
 
 ## [06]-[RUNTIME]
 
@@ -152,7 +152,7 @@ runs:
 
 [CONSUMER_OVERRIDE]: `entrypoint:` in action.yml overrides Dockerfile `ENTRYPOINT`. `args:` overrides Dockerfile `CMD`. Consumer workflows cannot override action's entrypoint — it is set by the action author.
 
-[IMPORTANT] Docker actions only run on Linux runners. Container startup adds 5-30s overhead. Prefer distroless/scratch base images.
+[IMPORTANT] Docker actions bind Linux runners. Container startup carries 5-30s of runner- and workload-bound overhead; distroless/scratch bases own image footprint and pull cost.
 
 ## [09]-[LOCAL_ACTION_CACHING]
 

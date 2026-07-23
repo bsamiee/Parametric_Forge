@@ -194,4 +194,4 @@ Strategy keys, their defaults, and the `fail-fast` / `continue-on-error` interac
 
 - [01]-[ENVIRONMENT_PROMOTION]: Chain stages via `needs:`, each carrying independent protection rules — reviewers, wait timers, branch restrictions.
 - [02]-[REUSABLE_WORKFLOWS]: Nesting and per-run limits live in `modern_features.md` [01.1]-[LIMITS]; `secrets: inherit` at each level; `job_workflow_ref` earns SLSA L3.
-- [03]-[CONCURRENCY_GROUPS]: One running plus one pending per group; `cancel-in-progress: true` for CI, `false` for deploys to avoid state corruption.
+- [03]-[CONCURRENCY_GROUPS]: One running and one pending per group; `cancel-in-progress: true` for CI, `false` for deploys to avoid state corruption.

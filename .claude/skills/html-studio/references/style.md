@@ -230,7 +230,7 @@ Each artifact class fixes the content column, and one `--measure` rules the page
 - [GRID_OWNS]: grid owns page shells and two-dimensional rhythm through `grid-template-areas`, so a container query rewrites the area map and reflows the whole page at one edit; flex packs one axis; every interior gap rides `gap`, never a child margin.
 - [SUBGRID]: a card adopting `grid-template-rows: subgrid` aligns its header, body, and footer to sibling cards across the parent tracks; label-field pairs adopt column subgrid the same way.
 - [AUTO_FIT]: `repeat(auto-fit, minmax(min(100%, 18rem), 1fr))` wraps a collection with no query and never overflows a narrow container.
-- [MIN_ZERO]: a bare `1fr` track carries a min-content floor and overflows long content; `minmax(0, 1fr)` on the track plus `min-inline-size: 0` on the child release it.
+- [MIN_ZERO]: a bare `1fr` track carries a min-content floor and overflows long content; `minmax(0, 1fr)` on the track and `min-inline-size: 0` on the child release it.
 - [CONTAINER_QUERIES]: breakpoints live at the container wherever a container ancestor exists; a size container never styles itself from its own query, so a queried component wraps in an element carrying `container-type: inline-size`.
 - [STICKY]: a sticky element pins one axis and one concern — toolbar at top, contents rail at `top: var(--s4)` with `align-self: start`, a column header inside its own scroll container; a panel sticky on both axes is a fixed element wearing the wrong position.
 - [LOGICAL_AXES]: layout speaks `margin-inline`, `padding-block`, `inset-inline`, and `border-inline-start`; physical sides survive only where geometry is physical — shadows, transforms, gradient angles, print imposition.

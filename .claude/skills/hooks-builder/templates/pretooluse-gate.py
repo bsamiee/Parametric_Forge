@@ -28,7 +28,7 @@ _ENV_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")  # a leading NAME=value en
 _DOLLAR_SUB = re.compile(r"\$\(")  # command-substitution open; the matching close is scanned with paren depth
 _BACKTICK = re.compile(r"`([^`]*)`")  # backtick substitution; the inner command executes and is descended like $(...)
 CTRL = re.compile(r"[\x00-\x1f\x7f]+")  # scrub control chars from untrusted text before it reaches a terminal-facing reason
-_PATCH_TARGET = re.compile(r"^\*\*\* (?:Add|Update|Delete|Move to) File: (.+)$", re.MULTILINE)  # apply_patch envelope target paths
+_PATCH_TARGET = re.compile(r"^\*\*\* (?:(?:Add|Update|Delete) File|Move to): (.+)$", re.MULTILINE)  # apply_patch envelope target paths
 
 HOME = PurePosixPath(os.environ.get("HOME", "/nonexistent"))
 WRAPPERS = frozenset(("sudo", "doas", "env", "command", "nice", "nohup", "stdbuf", "timeout", "xargs"))

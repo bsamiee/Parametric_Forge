@@ -5,7 +5,7 @@
 # │  Identity:    [ACTION_NAME], [DESCRIPTION], [AUTHOR_NAME]                   │
 # │  Branding:    [ICON_NAME], [COLOR]                                          │
 # │                                                                             │
-# │  Runtime:     node24 (enforced default — node20 is removed)                 │
+# │  runs.using:   node24                                                       │
 # │  Toolkit:     @actions/core@3.x (ESM-only), @actions/github@9.x             │
 # │  Bundle:      npx @vercel/ncc build src/index.ts -o dist --minify           │
 # │                                                                             │

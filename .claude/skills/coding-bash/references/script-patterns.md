@@ -131,7 +131,7 @@ _use _mw_version
 
 ## [02]-[METADATA_DRIVEN_HELP]
 
-`_OPT_META` encodes all option data — adding an option is one table entry plus one `case` branch. Explicit key list controls iteration order (associative arrays have no insertion order).
+`_OPT_META` encodes all option data — adding an option is one table entry and one `case` branch. Explicit key list controls iteration order (associative arrays have no insertion order).
 
 ```bash conceptual
 # Terminal colors — NO_COLOR compliant (https://no-color.org), CI-aware

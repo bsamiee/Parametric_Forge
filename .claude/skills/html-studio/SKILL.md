@@ -1,8 +1,12 @@
 ---
 name: html-studio
-description: Author single-file, self-contained interactive HTML artifacts — reports, dashboards, roadmaps, plans, decision docs, and their variants (diff-reviews, quizzes, wargames, buy-in packets, boards, decks, explainers, atlases) — as typed deliverable compositions under one design system, then validated headless (`gate`, `render`) and optionally served with a return channel (`serve`, `receipts`) that brings the reader's judgment back as data. Use when a plan, roadmap, comparison, decision, dataset, or architecture reads better as an interactive page than markdown, when a page should return the user's adjustments as data, or when the user says HTML plan, roadmap, dashboard, deck, wargame, quiz, or report. Distinct from the Artifact tool's hosted fragments; mermaid fences belong to mermaid-diagramming.
-allowed-tools:
-    - Bash(uv run ${CLAUDE_SKILL_DIR}/scripts/studio.py *)
+description: >-
+    Authors single-file interactive HTML artifacts — reports, dashboards, roadmaps, plans,
+    decision docs, and variants: diff-reviews, quizzes, wargames, decks, boards, walkthroughs,
+    prototypes — validated headless and optionally served so reader verdicts, edits, and
+    annotations return as data. Use when a comparison, dataset, architecture, or UI mock
+    reads better as a page than markdown, when a page must return the reader's judgment,
+    or on "make this an HTML page", "build me a dashboard", "turn this into a deck".
 ---
 
 # [HTML_STUDIO]
@@ -38,6 +42,5 @@ Every artifact is one self-contained file: a deliverable type fixes its composit
 ## [04]-[INTEGRATION]
 
 - A durable artifact homes at `docs/atlas/` as `<kind>.<scope>[.<slug>].html`; a session artifact stays in scratch and never commits.
-- Chart marks and palettes defer to the `dataviz` skill.
+- Chart form, mark, and palette selection precedes realization; this bundle owns the page shell and the SVG once the form is chosen.
 - Mermaid fences defer to `mermaid-diagramming`, whose render lane delivers a mermaid-sourced figure as pre-rendered inline SVG the page hosts.
-- Interview method, kind contracts, and the durable-versus-ephemeral ruling defer to the `interviewing` skill.

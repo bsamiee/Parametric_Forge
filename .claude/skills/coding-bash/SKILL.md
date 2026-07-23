@@ -1,21 +1,17 @@
 ---
 name: coding-bash
 description: >-
-    Use for Bash 5.2+/5.3 scripts, shell CLIs, entrypoints, CI jobs, cron,
-    text-processing pipelines, ShellCheck remediation, and shell reviews —
-    "write a shell script", "fix this bash", "make a CLI wrapper".
-    Enforces strict mode, dispatch-table routing, fork-minimal primitives,
-    atomic I/O, signal-safe cleanup, and pragmatic functional shell patterns.
+    Authors, hardens, reviews, and debugs Bash and shell scripts. Use whenever
+    creating, editing, or reading any .sh/.bash file, and ShellCheck remediation.
 ---
 
 # [CODING_BASH]
 
 All code follows these governing principles:
-
 - [FUNCTIONAL] — immutable locals, pure functions, dispatch tables, and tightly bounded mutable shell state
 - [POLYMORPHIC] — one parser, one dispatcher, one logger; extend via table entries not code branches
 - [PRODUCTION_HARDENED] — ERR traps, atomic I/O, signal forwarding, cleanup registries, version gating
-- [FORK_MINIMAL] — `printf -v`, `$(<file)`, `EPOCHSECONDS`, fork-free `${ }` (5.3), `BASH_MONOSECONDS` timing, `mapfile` over subshell patterns
+- [FORK_MINIMAL] — `printf -v`, `$(<file)`, `EPOCHSECONDS`, fork-free `${ }`, `BASH_MONOSECONDS` timing, `mapfile` over subshell patterns
 - [ECOSYSTEM_FIRST] — `rg`/`fd`/`jq`/`sd`/`choose`/`mlr` over sed/grep/find/cut when available
 - [EXECUTABLE_DOCTRINE] — examples and templates must pass syntax, ShellCheck, and their own self-tests
 
@@ -24,8 +20,8 @@ All code follows these governing principles:
 [FOUNDATION]: every task loads [bash-scripting-guide.md](references/bash-scripting-guide.md) — primitives, strict mode, expansion, arrays.
 
 [TASK_ROUTED]: load only when the task matches.
-- [01]-[VERSION_FEATURES](references/version-features.md): 5.2/5.3 features, fork-free substitution, version gating
-- [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, 5.3 vars
+- [01]-[VERSION_FEATURES](references/version-features.md): runtime features, fork-free substitution, version gating
+- [02]-[VARIABLE_FEATURES](references/variable-features.md): call stacks, namerefs, traps, process lifecycle, runtime variables
 - [03]-[ARRAY_OPERATIONS](references/array-operations.md): set algebra, structural transforms, higher-order traversal
 - [04]-[STRING_OPERATIONS](references/string-operations.md): transform pipelines, regex extraction, codecs, templates
 - [05]-[FILE_OPERATIONS](references/file-operations.md): atomic writes, FD multiplexing, directory traversal
@@ -62,7 +58,7 @@ All code follows these governing principles:
 
 ## [03]-[CONVENTIONS]
 
-[ECOSYSTEM_TOOL_SELECTION]: prefer the ecosystem's richer alternative when available:
+[ECOSYSTEM_TOOL_SELECTION]: richer ecosystem tools own each available operation:
 
 | [INDEX] | [TASK]           | [PREFERRED] | [FALLBACK]         | [NEVER]               |
 | :-----: | :--------------- | :---------- | :----------------- | :-------------------- |
@@ -77,7 +73,7 @@ All code follows these governing principles:
 
 [SELECTION_RULES]:
 - Probe availability via `command -v` before use; fall back gracefully
-- `rg`/`fd` integrate with `.gitignore` by default — prefer for repo-aware searches
+- `rg` and `fd` own repo-aware searches through default `.gitignore` integration
 - `jq` is mandatory for JSON — never parse JSON with sed/awk/grep
 - `mlr` handles format conversion (CSV to JSON, TSV to JSON) natively
 - Pipeline preference: single `awk` program over chained `grep | sed | cut`
@@ -110,7 +106,7 @@ All code follows these governing principles:
 - `_CLEANUP_STACK` LIFO registry invoked by EXIT trap. `_CLEANING` guard prevents re-entrant execution on cascading signals.
 - Exit codes: 0=success, 1=general error, 2=usage error. Custom codes in `EX_*` constants.
 - `_die()` for fatal errors (log + exit). `_die_usage()` for argument errors (log + hint + exit 2).
-- Timing: `BASH_MONOSECONDS` (`5.3+`) for elapsed-time durations — monotonic, immune to NTP drift, zero forks.
+- Timing: `BASH_MONOSECONDS` for elapsed-time durations — monotonic, immune to NTP drift, zero forks.
 - `EPOCHREALTIME` only for absolute timestamps and microsecond benchmarks (`_bench()` shape: `(end_s - start_s) * 1000000 + 10#end_us - 10#start_us`).
 - Version-safe `BASH_MONOSECONDS` / `EPOCHREALTIME` fallback dispatch: `references/version-features.md`.
 
@@ -132,7 +128,7 @@ All code follows these governing principles:
 - Temporary files: `mktemp` + `_register_cleanup "rm -f -- $(printf '%q' "${tmp}")"` or an equivalent static quoted cleanup template.
 - Work directories: `mktemp -d` with `SRANDOM` in path for uniqueness.
 - Signal forwarding for PID 1: trap TERM/INT, `kill -"${sig}" "${_CHILD_PID}"`, exit with signal code (143/130). Guard on `(( _CHILD_PID > 0 ))`.
-- On 5.3, `BASH_TRAPSIG` carries the signal number, so one unified handler routes every signal through a dispatch table.
+- `BASH_TRAPSIG` carries the signal number, so one unified handler routes every signal through a dispatch table.
 - `GLOBSORT` controls glob ordering (e.g., `-mtime` for newest-first file discovery).
 - Retry: `_retry_exec max delay max_delay cmd...` — backoff `delay=$(( delay * 2 > max_delay ? max_delay : delay * 2 ))` with `SRANDOM` jitter.
 - Env contracts: `declare -Ar _ENV_CONTRACT=([VAR]='^regex$')` validated at startup — dispatch table over env vars, regex per key.
@@ -169,16 +165,16 @@ All code follows these governing principles:
 
 ## [07]-[FIRST_CLASS_TOOLS]
 
-| [INDEX] | [TOOL]       | [VER]    | [PROVIDES]                                 |
-| :-----: | :----------- | :------- | :----------------------------------------- |
-|  [01]   | `bash`       | 5.2+/5.3 | Shell runtime, builtins, `${ }` (5.3)      |
-|  [02]   | `shellcheck` | 0.11.0+  | Static analysis, SC codes                  |
-|  [03]   | `bats-core`  | 1.13+    | Test framework, TAP output                 |
-|  [04]   | `kcov`       | 43+      | Coverage instrumentation                   |
-|  [05]   | `rg`         | 15+      | Content search, `.gitignore`-aware         |
-|  [06]   | `fd`         | 10+      | File search, `.gitignore`-aware            |
-|  [07]   | `jq`         | 1.8+     | JSON processing, streaming, `trim`, `skip` |
-|  [08]   | `yq`         | 4.46+    | YAML processing                            |
-|  [09]   | `mlr`        | 6+       | CSV/TSV/JSON format transforms             |
-|  [10]   | `sd`         | 1+       | Stream editing (sed replacement)           |
-|  [11]   | `choose`     | 1.3+     | Column selection (cut replacement)         |
+| [INDEX] | [TOOL]       | [PROVIDES]                                 |
+| :-----: | :----------- | :----------------------------------------- |
+|  [01]   | `bash`       | Shell runtime, builtins, `${ }`            |
+|  [02]   | `shellcheck` | Static analysis, SC codes                  |
+|  [03]   | `bats-core`  | Test framework, TAP output                 |
+|  [04]   | `kcov`       | Coverage instrumentation                   |
+|  [05]   | `rg`         | Content search, `.gitignore`-aware         |
+|  [06]   | `fd`         | File search, `.gitignore`-aware            |
+|  [07]   | `jq`         | JSON processing, streaming, `trim`, `skip` |
+|  [08]   | `yq`         | YAML processing                            |
+|  [09]   | `mlr`        | CSV/TSV/JSON format transforms             |
+|  [10]   | `sd`         | Stream editing (sed replacement)           |
+|  [11]   | `choose`     | Column selection (cut replacement)         |

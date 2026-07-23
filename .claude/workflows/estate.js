@@ -1,20 +1,20 @@
 export const meta = {
     name: 'estate',
     description:
-        'Per-language estate tracks - two gpt-5.6-terra recon lanes per track (codex wrappers, split charges: the estate-scope dossier and the libs-complexity dossier, both written to scratch) then initial/critique/redteam fable passes - closing with a monorepo final track. The T-passes stay native fable because their acceptance gates run network-bound toolchains (dotnet restore, uv sync, pnpm install) a codex sandbox cannot reach. Every pass nominates generalizable findings and reports deliberately-left residuals; a terminal doctrine lander pools both across all tracks and adjudicates the nominations into docs/laws, the constitution, the test/tool READMEs, and the reviewer rules, while the pooled residuals ride the run return untouched - estate residuals are deliberate deferrals, not a drain backlog.',
+        'Per-language estate tracks - two dispatched recon lanes per track (split charges: the estate-scope dossier and the libs-complexity dossier, both written to scratch) then initial/critique/redteam passes - closing with a monorepo final track. The T-passes are write lanes; their acceptance gates run network-bound toolchains (dotnet restore, uv sync, pnpm install). Every pass nominates generalizable findings and reports deliberately-left residuals; a terminal doctrine lander pools both across all tracks and adjudicates the nominations into docs/laws, the constitution, the test/tool READMEs, and the reviewer rules, while the pooled residuals ride the run return untouched - estate residuals are deliberate deferrals, not a drain backlog.',
     whenToUse:
-        'Full estate improvement over tests/tools/root configs per language, then polyglot alignment; passes run on fable, then a terminal doctrine lander lands generalizable findings.',
+        'Full estate improvement over tests/tools/root configs per language, then polyglot alignment; a terminal doctrine lander lands generalizable findings.',
     phases: [
         {
             title: 'Recon',
-            detail: 'per track: two read-only gpt-5.6-terra lanes via codex wrappers (sonnet shells) with split charges - estate-scope facts and the libs-complexity map - each writing its dossier to scratch; CODEX=false restores native opus lanes',
+            detail: 'per track: two dispatched recon lanes with split charges - estate-scope facts and the libs-complexity map - each writing its dossier to scratch',
             model: 'sonnet',
         },
         { title: 'Estate' },
         { title: 'Final' },
         {
             title: 'Doctrine',
-            detail: 'one fable lander pools harvest nominations and deliberately-left residuals across every track pass plus the final track, then adjudicates the nominations against the live doctrine surfaces; residuals ride the return untouched; fires only when a nomination exists',
+            detail: 'one lander pools harvest nominations and deliberately-left residuals across every track pass and the final track, then adjudicates the nominations against the live doctrine surfaces; residuals ride the return untouched; fires only when a nomination exists',
             model: 'fable',
         },
     ],
@@ -23,9 +23,6 @@ export const meta = {
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
 const CORE_PAGES = 4;
-const STALL = 300000;
-const CODEX_STALL = 1500000; // wrapper stall sits above the codex effort tier's blocking-call ceiling: a silent live MCP call is legal waiting, never a stall
-const CODEX = true; // recon lanes run on gpt-5.6-terra via the codex wrapper; false restores native opus lanes
 
 const TRACKS = {
     csharp: {
@@ -39,7 +36,7 @@ const TRACKS = {
             'relocates to the folder registry + folder .api tier, both ends). tests/csharp shared infrastructure: _testkit, _scenariokit, _architecture, ' +
             '_benchmarks, scenarios, tools, README — world-class, discovery-driven, zero hardcoded package lists; tests/csharp/.api is a first-class test-stack ' +
             'catalog tier (mirror tests/python/.api and tests/typescript/.api) with a member-verified catalog per testing package. tools/rhino-bridge scenarios ' +
-            'and universal scenario kits; tools/cs-analyzer; .config C# tooling plus NuGet.config and global.json where improvement is justified; ' +
+            'and universal scenario kits; tools/cs-analyzer; .config C# tooling, NuGet.config, and global.json where improvement is justified; ' +
             'Directory.Build.props/targets and Workspace.slnx coherence chasing every csproj ' +
             'in the monorepo. LAW, not drift: Rasm.Rhino and Rasm.Grasshopper stay OUT of Workspace.slnx under the HOST_BOUNDARY_REENTRY gate in ' +
             'tests/csharp/_architecture/AssemblyBoundaries.spec.cs.',
@@ -108,7 +105,7 @@ const WANT_FINAL = args?.final !== false;
 const ACTIVE = LANGS.filter((l) => TRACKS[l]);
 
 // Per-instance scratch dir — recon dossiers + pass report files. Minted deterministically from the normalized active-track set
-// (clock/randomness would break resume): one FLAT dir under .claude/scratch/, a human-readable basename slug plus an FNV-1a tail
+// (clock/randomness would break resume): one FLAT dir under .claude/scratch/, a human-readable basename slug and an FNV-1a tail
 // so distinct track sets never share a directory and a resume of the same run rehydrates the same one.
 const fnv1a = (s) => {
     let h = 0x811c9dc5;
@@ -191,12 +188,13 @@ const DOCTRINE_SCHEMA = {
 
 const MODEL_LAW =
     'MODEL LAW: you execute every file write and every judgment yourself. Delegate read-only reconnaissance roughly 50/50 between codex ' +
-    '(Bash: codex exec -s read-only --skip-git-repo-check --ignore-user-config -m gpt-5.6-terra -c model_reasoning_effort=high ' +
-    '-c project_doc_max_bytes=65536 ' +
+    '(Bash: codex exec -m gpt-5.6-terra ' +
     '"<self-contained scoped question>" </dev/null 2>/dev/null — synchronous, ' +
-    'one bounded question per leg) and opus subagents (Agent tool, model opus, explicit READ-ONLY mandate; fall back to codex if Agent is unavailable). ' +
-    'Recon returns facts, locations, inventories, and verified member lists — never instructions, prescriptions, or edits; recon agents use exa/tavily, ' +
-    'the nuget MCP, Context7, uv run python -m tools.assay, and fd/rg/loc/tree.';
+    'one bounded question per leg) and native subagents (Agent tool, model opus, explicit READ-ONLY mandate). ' +
+    'Recon returns facts, locations, inventories, and verified member lists — never instructions, prescriptions, or edits. Tooling routes each leg: ' +
+    'codex legs own repo-local facts (fd/rg/loc/tree, file reads); native legs own external lookup and uv run python -m tools.assay' +
+    '. When the Agent tool is unavailable, codex absorbs the ' +
+    'repo-local legs and you gather the uv/MCP evidence in your own shell.';
 
 const GUARDRAILS =
     'HARD GUARDRAILS: never modify any IDEAS.md or TASKLOG.md; never redesign code-fence interiors in libs planning pages (fence comments may tighten per ' +
@@ -208,26 +206,28 @@ const ADMISSION =
     'ADMISSION PROCEDURE (any new tool/package you add): the admission lands COMPLETE in this pass — central manifest row hand-edited ' +
     '(Directory.Packages.props / pyproject.toml / pnpm-workspace.yaml catalog + package.json), consumer wiring (csproj row for C#), a folder README ' +
     'registry row, and a full .api catalog at the correct tier (language-shared tier only for 2+ consumers, folder tier otherwise, tests/<lang>/.api for ' +
-    'test-stack tooling). Gather the catalog facts through ONE delegated read-only recon agent mining verified members (assay api, installed ' +
+    'test-stack tooling). Gather the catalog facts through ONE delegated read-only recon subagent mining verified members (assay api, installed ' +
     'distributions, nuget MCP, type declarations); author the file yourself per the docgen api-catalog template ' +
     '(.claude/skills/docgen/templates/api-catalog.template.md); the restore/lock gate proves the admission. Surgical prose updates only — touch the rows ' +
     'the admission changes, nothing else.';
 
 const REVIEWER_LAW =
-    'REVIEWER-CONFIG ENRICHMENT (opportunistic, never a mandated deliverable): .greptile/rules.md + config.json + files.json and .coderabbit.yaml are the ' +
+    'REVIEWER-CONFIG ENRICHMENT (opportunistic, never a mandated deliverable): .greptile/rules.md + config.json + files.json, ' +
+    '.coderabbit.yaml, and .macroscope/correctness/ are the ' +
     'standing reviewer doctrine. When your pass surfaces a high-signal implicit pattern those files do not already state — a quality shape, a testkit/infra ' +
     'construction law, test/tool code discipline, a libs/ standards nuance, an agent-framed prose norm, or existing guidance now wrong or weaker than the ' +
     'estate practices — land it there in the same pass: harden or correct the owning instruction where one exists, add a new one only when no owner covers ' +
-    'it, and mirror every ruling across both surfaces (the rules.md section and the matching .coderabbit.yaml path_instructions block move together). ' +
+    'it, and mirror every ruling across all three surfaces (the rules.md section, the matching .coderabbit.yaml path_instructions ' +
+    'block, and the owning .macroscope/correctness/ page move together). ' +
     'Admission bar: consistent across the estate, doctrine-derived (docs/stacks/<language>, docs/standards), and invisible to the machine gates — never ' +
     'restate what formatters/gates/analyzers enforce, never duplicate an existing line, never add speculative or one-off rules. Write the guidance as ' +
     'durable law over the finished system: never couched in the planning phase, campaign state, or session narration. yamllint proves .coderabbit.yaml, jq ' +
-    'proves the .greptile JSON files, and rules.md rides the prose gate like any touched .md.';
+    'proves the .greptile JSON files, and rules.md and every .macroscope/ page ride the prose gate like any touched .md.';
 
 const INFRA_LAW =
     'SHARED-INFRA PRIMACY: the shared test infrastructure is the estate CENTER, never a side item — csharp: tests/csharp/_testkit, _scenariokit, ' +
     '_architecture, _benchmarks, scenarios; python: tests/python/_testkit + the conftest topology; typescript: tests/typescript/_testkit, _architecture, ' +
-    'and e2e PLUS nx.json, biome.json, tools/biome, playwright.config.ts, vite.factory.ts, and vitest.config.ts as one system. FIRST explore your ' +
+    'e2e, nx.json, biome.json, tools/biome, playwright.config.ts, vite.factory.ts, and vitest.config.ts as one system. FIRST explore your ' +
     'language libs/ planning corpus in depth — every package folder: domains, owners, seams, receipt families, wire shapes — to understand the extreme ' +
     'complexity arriving when every folder goes live; the infra must anticipate ALL of it NOW. Build intelligent, universal, polymorphic foundations that ' +
     'make future tests near-trivial to write and REDUCE total test code — declarative gauges, law tables, fixture algebras, discovery-driven ' +
@@ -250,7 +250,7 @@ const TIER_LAW = {
         'with the central assumption removed (name the assumption the current shape stands on, derive the form without it, build the stronger ' +
         'form in place — "the current shape also works" is never a refutation), diff-of-the-next-feature ' +
         '(the next case, project, or package lands as one row with consumers untouched or loudly broken), long-tail and failure-mode attack, boundary and ' +
-        'strata integrity, surface sprawl and phantom members, domain completeness — plus a full cold re-review of every dimension. The estate ends ' +
+        'strata integrity, surface sprawl and phantom members, domain completeness — and a full cold re-review of every dimension. The estate ends ' +
         'objectively denser and more capable than the prior pass left it.',
 };
 
@@ -262,20 +262,17 @@ const HARVEST_LAW =
     'HARVEST (required key, usually empty): nominate ONLY findings that generalize beyond this pass — a construction law reusable across the estate, a ' +
     'testkit/infra pattern no doctrine clause names, a review rule that would have caught a defect BEFORE review, a cross-surface coupling discovered the ' +
     'hard way. Each row: altitude (stacks|reviewer|constitution|planning|readme|laws), lang, claim (the generalized law, one sentence), anchors (file:line ' +
-    'evidence), existingClause (the exact doctrine or reviewer clause it would harden, quoted with its path — or "absent" plus the surfaces searched). A ' +
+    'evidence), existingClause (the exact doctrine or reviewer clause it would harden, quoted with its path — or "absent" and the surfaces searched). A ' +
     'pass-local fix never nominates; an empty array is the normal verdict — the terminal doctrine lander refutes weak rows, so nominate substance, never volume.';
 
 // --- [OPERATIONS] ----------------------------------------------------------------------
 
-const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-const RETRY_ATTEMPTS = 2; // re-dispatches per dead critical write pass; the count bounds spend, the backoff buys recovery time
-const RETRY_BACKOFF = 1800000; // usage-limit deaths clear on reset or an operator credit top-up; each attempt waits the window out first
+const RETRY_ATTEMPTS = 2;
 // Bounded re-dispatch for a dead CRITICAL write pass (usage-limit or transport death — agent() returned null): attempt-counted
-// with a backoff before each; the final death isolates the pass but NEVER the chain — every later pass and the final track still
+// with a retry before each; the final death isolates the pass but NEVER the chain — every later pass and the final track still
 // run, and each pass derives its own findings from disk, so a dead predecessor removes grounding, never the stage.
 const retryLane = async (fn) => {
     for (let a = 0; a < RETRY_ATTEMPTS; a++) {
-        await sleep(RETRY_BACKOFF);
         const r = await fn();
         if (r) return r;
     }
@@ -324,18 +321,20 @@ const reconPrompt = (t, name, lane) =>
     'SCOPE: ' +
     t.scope;
 
-// Codex dispatch: the sonnet wrapper makes one blocking Codex MCP call; the recon lane itself writes its
-// dossier (workspace-write, that one file) and returns the receipt as its final message — the wrapper relays
+// Codex dispatch: the wrapper runs one blocking supervised CLI process; the recon lane itself writes its
+// dossier (that one file) and returns the receipt as its final message — the wrapper relays
 // that receipt, no product write, no relay hop. Lane law rides developer-instructions; the prompt carries only the task.
 const fileTag = (label) => label.replace(/[^A-Za-z0-9_.-]+/g, '-');
-// Codex lanes in this workflow are recon-only — the write passes stay native fable behind network-bound gates a codex sandbox
-// cannot reach — so the lane law is the read-only investigation contract; no write/fix branch exists to fork.
+// Codex lanes in this workflow are recon-only, so the lane law is the investigation
+// contract; no write/fix branch exists to fork.
 const laneLaw = (schema, o) =>
     '<context_gathering>\nTerritory: the exact files and directories the task names. Do not open files outside it, ' +
     'including skill or instruction files (.claude/, CLAUDE.md, AGENTS.md).\nBudget: at most ' +
     (o.calls || 60) +
     ' tool calls total. Read in small batches (a handful of files per command, line-capped); never concatenate the whole ' +
-    'territory into one command - tool output truncates and the data is lost.\nStop as soon as the product is complete. ' +
+    'territory into one command - tool output truncates and the data is lost.\nTooling: uv-backed probes (uv run python -m ' +
+    'tools.assay ...) run prefixed UV_CACHE_DIR=.cache/uv - the default uv cache sits outside this workspace.\n' +
+    'Stop as soon as the product is complete. ' +
     'If something is still uncertain at the budget, proceed and record the residue in the product gap/unverified field ' +
     'instead of re-reading.\n</context_gathering>\n\n<verification>\nBefore the final message, confirm every cited ' +
     'spelling appears verbatim in the cited file; anything unconfirmed is recorded as a gap, never asserted.\n' +
@@ -344,40 +343,64 @@ const laneLaw = (schema, o) =>
     JSON.stringify(schema) +
     '\n- JSON only: no prose before or after it, no code fences, no markdown.\n- Every key shown is required.\n' +
     '- Use null for a value you could not determine and [] for an empty list; never guess.\n</output_contract>';
+// A read-recon lane that WRITES its own dossier: workspace-write so the dossier lands, --out aimed at a separate message
+// file (never the dossier the lane writes itself), and the dossier verified independently with test -s.
+const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/codex/scripts/codex-lane.sh';
+const flagsOf = (o) =>
+    [o.model && '--model ' + o.model, o.codexEffort && '--effort ' + o.codexEffort, o.web && '--web']
+        .filter(Boolean)
+        .map((f) => ' ' + f)
+        .join('');
+
 const codexRecon = (task, o) => {
     const root = '/Users/bardiasamiee/Documents/99.Github/Rasm';
-    const model = o.model || 'gpt-5.6-terra';
-    return [
-        'DISPATCH ROLE: ' +
-            model +
-            ' performs the complete TASK below through one blocking Codex MCP call. Follow exactly four steps; ' +
-            'never perform, edit, judge, soften, summarize, or relay the task yourself.',
-        '(1) Call ToolSearch with query "select:mcp__codex__codex".',
-        '(2) Call the loaded mcp__codex__codex tool ONCE with model="' +
-            model +
-            '", sandbox="workspace-write" (the task writes its one dossier file), cwd=' +
-            JSON.stringify(root) +
-            (o.codexEffort ? ', config={"model_reasoning_effort":"' + o.codexEffort + '"}' : '') +
-            ', "developer-instructions" set to the LANE LAW block below VERBATIM, and prompt set to the TASK block below ' +
-            'VERBATIM. If the call errors, do NOT immediately retry: an abandoned workspace-write call usually completes server-side and the ' +
-            'lane writes its dossier as its final act — run step (3) FIRST, and a present, non-empty dossier proceeds to step (4) as success. ' +
-            'Only a missing or empty dossier earns ONE identical retry (a second writer over the same path is the last resort); a failed retry ' +
-            'with no dossier returns the error through step (4).',
-        'LANE LAW:\n\n' + laneLaw(o.schema, o),
-        'TASK:\n\n' + task,
-        '(3) The tool result is a JSON envelope {threadId, content} whose content field holds the final-message text — the ' +
-            'receipt JSON the lane earns by writing its dossier to disk. Parse that content, then verify the dossier landed with ' +
-            'one Bash call: test -s ' +
-            o.product +
-            '. A missing or empty file means the dossier write was lost behind an ok receipt — return ok=false, entries=0, report ' +
-            'and headline empty, and failure="dossier missing or empty at ' +
-            o.product +
-            '"; otherwise return the parsed receipt VERBATIM as your structured output.',
-        '(4) On a second tool error return ok=false, entries=0, report and headline empty, and failure equal to the error ' + 'text VERBATIM.',
-    ].join('\n\n');
+    const lane = o.product + '.lane';
+    const message = lane + '/message.json';
+    return (
+        'DISPATCH ROLE: a delegate performs the complete TASK below through one supervised lane run; never perform, edit, judge, soften, ' +
+        'summarize, or relay the work yourself. (1) Write the LANE LAW block below VERBATIM to ' +
+        lane +
+        '/law.md and the TASK block below VERBATIM to ' +
+        lane +
+        '/task.md, composing neither. (2) Run ONE Bash call with run_in_background true: ' +
+        LANE_SCRIPT +
+        ' --task ' +
+        lane +
+        '/task.md --law ' +
+        lane +
+        '/law.md --dir ' +
+        lane +
+        ' --cwd ' +
+        root +
+        ' --sandbox workspace-write' +
+        flagsOf(o) +
+        ' --out ' +
+        message +
+        '; the harness re-invokes you when the lane exits — Read ' +
+        lane +
+        '/receipt.json then, never a polling loop. Recovery is two-branch and ONCE-only — the whole budget: a receipt reason "crash" ' +
+        'alone (the session persisted on disk) overwrites the task file with "continue and complete the lane, then land the receipt" and ' +
+        're-runs the same command plus --resume <the receipt thread_id>; any other failed receipt (max-timeout, turn-failed, ' +
+        'refusal) re-runs the same command untouched. (3) The lane writes its dossier to ' +
+        o.product +
+        ' itself and lands its final receipt message at ' +
+        message +
+        ' via --out. Verify the dossier landed with one Bash call: test -s ' +
+        o.product +
+        '. A missing or empty file means the dossier write was lost behind an ok receipt — return ok=false, entries=0, report and ' +
+        'headline empty, and failure="dossier missing or empty at ' +
+        o.product +
+        '"; otherwise Read ' +
+        message +
+        ' and return that parsed receipt VERBATIM as your structured output. On a failed receipt return ok=false, entries=0, report and ' +
+        'headline empty, and failure equal to the receipt reason and failure text VERBATIM.\n\nLANE LAW:\n\n' +
+        laneLaw(o.schema, o) +
+        '\n\nTASK:\n\n' +
+        task
+    );
 };
 // QUOTA FALLBACK: a codex receipt whose failure matches usage/quota/limit re-dispatches the SAME task natively at the
-// role's Claude twin (terra->opus); the caller owns the re-dispatch, the sonnet wrapper never executes work itself. The
+// role's native twin; the caller owns the re-dispatch, the wrapper never executes work itself. The
 // recon task already writes its own dossier and returns the receipt, so the native lane runs it verbatim.
 const twinOf = (m) => (/-sol/.test(m || '') ? 'fable' : /-luna/.test(m || '') ? 'sonnet' : 'opus');
 const nativeLane = (task, o) =>
@@ -387,11 +410,10 @@ const nativeLane = (task, o) =>
         model: o.nativeModel || twinOf(o.model),
         effort: 'high',
         schema: o.schema,
-        stallMs: o.stallMs || STALL,
     });
 const reconLane = (t, name, lane, ph) => {
     const task = reconPrompt(t, name, lane);
-    // The estate sweep spans whole test/tool/config trees plus the libs planning corpus — a wider call budget than a bounded page batch.
+    // The estate sweep spans whole test/tool/config trees and the libs planning corpus — a wider call budget than a bounded page batch.
     const o = {
         label: 'recon-' + lane + ':' + name,
         phase: ph,
@@ -399,21 +421,16 @@ const reconLane = (t, name, lane, ph) => {
         schema: DOSSIER_RECEIPT,
         product: dossierPath(name, lane),
         calls: 120,
-        stallMs: STALL,
     };
     const dead = () => ({ ok: false, report: dossierPath(name, lane), entries: 0, headline: '', failure: 'lane died' });
-    return (
-        CODEX
-            ? agent(codexRecon(task, o), {
-                  label: 'terra:' + o.label,
-                  phase: ph,
-                  model: 'sonnet',
-                  effort: 'low',
-                  schema: DOSSIER_RECEIPT,
-                  stallMs: CODEX_STALL,
-              }).then((r) => (r && !r.ok && /usage|quota|limit/i.test(r.failure || '') ? nativeLane(task, o) : r))
-            : nativeLane(task, o)
-    )
+    return agent(codexRecon(task, o), {
+        label: 'terra:' + o.label,
+        phase: ph,
+        model: 'sonnet',
+        effort: 'low',
+        schema: DOSSIER_RECEIPT,
+    })
+        .then((r) => (r && !r.ok && /usage|quota|limit/i.test(r.failure || '') ? nativeLane(task, o) : r))
         .then((r) => r || dead())
         .catch(dead);
 };
@@ -451,7 +468,7 @@ const passPrompt = (t, name, tier, reconRows) =>
     'reasons), harvest (per the harvest law below). ' +
     HARVEST_LAW;
 
-// A T-pass is the run's critical WRITE lane: fable, high effort, network-bound gates — the most usage-limit-exposed lane in the
+// A T-pass is the run's critical WRITE lane: high effort, network-bound gates — the most usage-limit-exposed lane in the
 // run. It rides the attempt-counted retryLane with a suffixed retry label; a final death returns null and the chain continues,
 // because every later pass and the final track derive their own findings from disk (a dead predecessor removes grounding, never a stage).
 const passOpts = (label, phase) => ({ model: 'fable', effort: 'high', phase, label, schema: PASS_RECEIPT });
@@ -464,11 +481,11 @@ const runPass = (t, name, tier, reconRows, label, phase) =>
 // infrastructure and monorepo alignment, so its routing weighs toward the constitution, the test/tool READMEs, and the reviewer rules.
 const doctrinePrompt = (rows, residuals) =>
     'TASK: DOCTRINE LANDER — the durable-learning terminal of an estate run over tests/tools/root config across every ' +
-    'language plus the monorepo final track. Read `docs/laws/README.md` FIRST — it owns the corpus admission and page-shape ' +
+    'language and the monorepo final track. Read `docs/laws/README.md` FIRST — it owns the corpus admission and page-shape ' +
     'law; obey it over any restatement. ROUTING EMPHASIS (orders where you look first, never overrides the ' +
     'admission bar): an estate run owns test/tool/config infrastructure and monorepo alignment, so its lessons weigh toward ' +
     'the constitution at the acting reader, the tests/tools/root READMEs, and the reviewer rules first. Load the `docgen` ' +
-    'skill AND the `skill-writer` skill via the Skill tool BEFORE any durable edit; load `mermaid-diagramming` before ' +
+    'skill via the Skill tool BEFORE any durable edit; load `mermaid-diagramming` before ' +
     "touching any diagram. NOMINATIONS (unverified, biased toward their authors' own work — refute by default): " +
     JSON.stringify(rows) +
     '\nPOOLED RESIDUALS (deliberately-left estate items with reasons — CONTEXT only, never a drain queue: a residual ' +
@@ -479,7 +496,8 @@ const doctrinePrompt = (rows, residuals) =>
     'TOPOLOGY RE-PROOF: re-verify every `docs/laws/topology.md` row whose [SURFACE] this run touched — cull a row whose ' +
     'coupling no longer holds, land a coupling this run proved.\n' +
     'GATE: run `uv run .claude/skills/docgen/scripts/prose_gate.py <every touched .md>` and repair to zero FAILs before ' +
-    'returning; yamllint proves `.coderabbit.yaml` and jq proves the `.greptile` JSON files if you touch them. Return ' +
+    'returning; yamllint proves `.coderabbit.yaml`, jq proves the `.greptile` JSON files, and `.macroscope/` pages ride the same ' +
+    'prose gate if you touch them. Return ' +
     'landed/refined/rejected (each rejection with its reason)/files/summary.';
 
 // --- [COMPOSITION] ---------------------------------------------------------------------
@@ -511,7 +529,7 @@ if (WANT_FINAL && ACTIVE.length) {
 }
 
 // --- [DOCTRINE]
-// Pool harvest nominations and deliberately-left residuals across every track pass plus the final track. RULING: estate
+// Pool harvest nominations and deliberately-left residuals across every track pass and the final track. RULING: estate
 // residuals are string-shaped DELIBERATE deferrals with reasons, not a mechanical {files, claim} backlog, and each T-pass
 // already holds full write authority behind network-bound gates a fresh drain pass cannot re-run — so NO drain loop fits;
 // the pooled residuals ride the run return untouched and feed the lander only as recurrence signal.
@@ -530,7 +548,6 @@ if (HARVEST_ROWS.length) {
         model: 'fable',
         effort: 'high',
         schema: DOCTRINE_SCHEMA,
-        stallMs: STALL,
     });
 }
 log(

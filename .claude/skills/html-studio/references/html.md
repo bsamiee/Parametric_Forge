@@ -55,7 +55,7 @@ Each element earns its row by the reader question it answers natively; the displ
 |  [15]   | `<ol start reversed>`       | true sequence semantics            | styled ul            |
 |  [16]   | `<mark>` `<kbd>` `<code>`   | hit, keystroke, symbol             | tinted spans         |
 
-Meter and progress split by meaning, never by looks: `<meter min max low high optimum value>` states a measurement whose bands judge it — `optimum` placement decides which band renders as good — while `<progress max value>` states completion and renders indeterminate without `value`. Native forms serve inline form-adjacent readouts; a bar whose fill must ride the palette is a `.meter` div driven by the `--value` custom property, carrying `role="meter"` with `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, and a visible text twin — a fill alone is never a reading. `<output for="a b">` names the controls feeding its computation, and its implicit live semantics announce each recomputation.
+`<meter min max low high optimum value>` states a measurement whose bands judge it — `optimum` placement picks the good band — while `<progress max value>` states completion and renders indeterminate without `value`. Native forms serve inline readouts; a palette-driven bar is a `.meter` div driven by `--value`, carrying `role="meter"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`, and a visible text twin — a fill alone is never a reading. `<output for="a b">` names the controls feeding its computation and announces each recomputation via implicit live semantics.
 
 ## [04]-[TABLES]
 

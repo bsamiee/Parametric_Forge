@@ -26,10 +26,9 @@ phase('Collect');
 const collected = [];
 
 // Compose the stop guards the run needs — count target, budget, dry streak, progress gate — and always keep a hard cap; the stop
-// table and the drive-to-zero progress law are the patterns reference loops + reconcile shapes. The `!budget.total ||` spelling lets
-// a budget-less run fall through to the count and dry-streak stops; a PURELY budget-driven loop flips it to `budget.total &&`, or with
-// no target set budget.remaining() is Infinity and the loop runs to the 1000-agent cap. effort: 'low' suits a mechanical collect
-// round; raise it when a round demands real reasoning. The dedup paste below grows per round — small-output-only; a heavy
+// table, the guard spellings, and the drive-to-zero progress law are the patterns reference loops + reconcile shapes. This
+// `!budget.total ||` form suits a loop carrying other stops; a PURELY budget-driven one takes `budget.total &&`. effort: 'low'
+// suits a mechanical collect round; raise it when a round demands real reasoning. The dedup paste below grows per round — small-output-only; a heavy
 // accumulator moves to a run-scratch report file + receipt (the report-file shape; scratch dir instance-minted per the scratch convention).
 
 const seen = new Set();

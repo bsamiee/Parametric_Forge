@@ -36,6 +36,7 @@ DANGER_ROOTS = frozenset((PurePosixPath("/"), PurePosixPath(os.environ.get("HOME
 WRAPPERS = frozenset(("sudo", "env", "command", "nice", "nohup", "time", "xargs", "builtin", "exec"))  # peeled to reach the real argv[0]
 ENV_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")  # a leading NAME=value shell env-prefix, stripped before classifying the leaf
 IFS_SUB = re.compile(r"\$\{?IFS\}?")  # $IFS de-obfuscation: a split hidden behind the field separator resolves to a space
+PATCH_TARGET = re.compile(r"^\*\*\* (?:(?:Add|Update|Delete) File|Move to): (.+)$", re.MULTILINE)  # apply_patch targets incl. rename destinations
 OPAQUE = "\0opaque"  # a leaf marker for an unparseable command; the safety band denies it fail-closed
 CTRL = re.compile(r"[\x00-\x1f\x7f]+")  # control-char scrub for untrusted text flowing into a terminal-facing reason
 MAX_PAYLOAD = 8 * 1024 * 1024  # bound the stdin read; a pathological tool_response never balloons resident memory
@@ -143,9 +144,15 @@ def _safety(payload: Envelope, /) -> Verdict:
             targets = (t for leaf in leaves if leaf[:1] == ["rm"] for t in leaf[1:])
             hit = next((t for t in targets if not t.startswith("-") and PurePosixPath(t) in DANGER_ROOTS), "")
             return Verdict(Code.BLOCK, f"rm targets {CTRL.sub(' ', hit)}; catastrophic") if hit else Verdict()
-        case "Edit" | "Write" | "NotebookEdit" | "apply_patch":
+        case "Edit" | "Write" | "NotebookEdit":
             name = PurePosixPath(payload.tool_input.target).name
             return Verdict(Code.BLOCK, f"{CTRL.sub(' ', name)} is a protected secret file") if name in PROTECTED else Verdict()
+        case "apply_patch":  # targets ride the patch envelope in command, never file_path; no readable target denies fail-closed
+            targets = [t.strip() for t in PATCH_TARGET.findall(payload.tool_input.command)]
+            if not targets:
+                return Verdict(Code.BLOCK, "apply_patch carries no readable target path; failing closed")
+            hit = next((t for t in targets if PurePosixPath(t).name in PROTECTED), "")
+            return Verdict(Code.BLOCK, f"apply_patch target {CTRL.sub(' ', hit)} is a protected secret file") if hit else Verdict()
         case _:
             return Verdict()
 

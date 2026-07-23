@@ -5,24 +5,33 @@
 #
 # Row schema (mirrors the RefutedClass struct):
 #   class_id:          stable kebab-case id for the refuted claim class
+#   corpus:            corpus selector — `code` or `prose`; slice draws only corpus-matched
+#                      rows into a lane's settled-rulings roster (empty = every corpus)
 #   matchers:          case-insensitive regex patterns over the finding claim text; an
 #                      invalid pattern falls back to a literal case-insensitive match
-#   refuting_citation: the ruling or evidence that refuted the class (doc path, ledger id)
+#   refuting_citation: the ruling or evidence that refuted the class (doc path, ledger id),
+#                      carrying the discriminator separating it from its true-positive neighbor
 #   landed_surfaces:   reviewer-config paths that carry the do-not-flag guard
-#   rounds_seen:       round numbers where the class recurred
+#   recurrences:       count of rounds where the class recurred — a bare tally, never round identity
 classes:
     - class_id: interior-revalidation-of-admitted-values
+      corpus: code
       matchers:
         - 're-?valid(at|ity)'
         - 'valid(at|ity)\w*.{0,60}(smart ?enum|value ?(object|struct)|generated (enum|case)|already (validated|admitted|constructed))'
         - '(null|none|invalid|bounds|range).{0,20}(check|guard).{0,60}(smart ?enum|value ?(object|struct)|generated (enum|case)|by construction)'
-      refuting_citation: 'templates/lane-law.md trichotomy — generated-enum instances and value-struct payloads are valid by construction; interior re-validation of admitted values is pushed back'
+        - '(second|re-?run|re-?check)\w*.{0,40}(isvalid|validation|admission) (check|call)'
+        - '(verify|re-?check).{0,50}(issuer|signature|acceptance).{0,50}inside'
+        - 'ThrowIfNull'
+        - 'null \w+s? (is|are) (rejected|checked|guarded)'
+      refuting_citation: 'templates/fix.md trichotomy — generated-enum instances and value-struct payloads are valid by construction; interior re-validation of admitted values is pushed back'
       landed_surfaces:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [1, 2, 3]
+      recurrences: 3
     - class_id: host-api-misspelling-is-truth
+      corpus: code
       matchers:
         - 'ShowSilhouttes'
         - 'TryGetUnmanged'
@@ -32,8 +41,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [3]
+      recurrences: 1
     - class_id: stale-disk-quoted-shape-void
+      corpus: code
       matchers:
         - 'WebAnswer'
         - '(quoted|cited) (code|shape|argument|literal).{0,50}(missing|absent|removed)'
@@ -43,18 +53,22 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/stance.md'
-      rounds_seen: [2, 3]
+      recurrences: 2
     - class_id: absence-positive-claim-bar
+      corpus: ''
       matchers:
-        - '(missing|absent|no such|undeclared|not declared|removed).{0,60}(member|case|method|property|declaration|overload)'
-        - 'does not (define|declare|implement|expose)'
-      refuting_citation: '.macroscope/correctness/general/stance.md — a claimed absence verifies at the positive-claim bar: the current file re-opened and the member proven missing before emission; a removal claim verifies both the declaration and every constructor site'
+        - '\b(missing|absent|no such|undeclared|not declared|removed)\b.{0,60}\b(member|case|method|property|declaration|overload)\b'
+        - '\bdoes not (define|declare|implement|expose)\b'
+        - '\b(dropped|lost|removed)\b.{0,50}(divider|grammar|marker|constant)'
+        - 'already (exists?|carries|declares|present)'
+      refuting_citation: '.macroscope/correctness/general/stance.md — a claimed absence verifies at the positive-claim bar: the current file re-opened and the member proven missing before emission; a removal claim verifies both the declaration and every constructor site, and content a file assembles through composed constants or interpolation traces through the composition — absence of the verbatim spelling at one site is not absence'
       landed_surfaces:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/stance.md'
-      rounds_seen: [1, 2]
+      recurrences: 3
     - class_id: nan-sentinel-banned-verbatim
+      corpus: code
       matchers:
         - 'NaN.{0,20}sentinel'
         - 'Brent\.TryFindRoot'
@@ -63,8 +77,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/stance.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: replay-wrapper-compensation
+      corpus: code
       matchers:
         - 'ReplayHistoryResult'
         - '(detached copy|per-result dispose|compensation).{0,60}(replay|history)'
@@ -73,8 +88,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: host-enum-zero-default
+      corpus: code
       matchers:
         - '(enum|zero member).{0,60}(uninitialized|invalid|malformed).{0,40}(default|field)'
         - 'default.{0,30}enum.{0,40}(invalid|undefined|unset)'
@@ -83,8 +99,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: fabricated-host-invariant
+      corpus: code
       matchers:
         - 'CreatePreviewBitmap'
         - 'Guid\.Empty.{0,60}(invariant|guard|reject|nonempty)'
@@ -95,7 +112,7 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: empty-finding-row
       matchers:
         - '^\s*$'
@@ -105,8 +122,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/stance.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: wire-shape-settled-by-constructor
+      corpus: code
       matchers:
         - 'ArchiveValue\.Rows'
         - '(wire|slot) ?shape.{0,40}(mismatch|drift|wrong)'
@@ -116,8 +134,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: languageext-hashset-mutable-reading
+      corpus: code
       matchers:
         - 'HashSet.{0,60}(mutable|mutati|shared state|not thread|concurrent modif)'
       refuting_citation: '.macroscope/correctness/csharp/api-truths.md [01] — LanguageExt.HashSet is the immutable persistent carrier whose update operations return values; namespace qualification is the standing recurrence guard'
@@ -125,8 +144,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: validation-traverse-short-circuit
+      corpus: code
       matchers:
         - '(Traverse|Validation).{0,60}(short.?circuit|first failure|stops? (at|on) (the )?first)'
       refuting_citation: '.greptile/rules.md [03] — steps converted to Validation before Traverse accumulate every failure applicatively with ToFin following the complete traversal; a first-failure short-circuit claim against that shape is false'
@@ -134,8 +154,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: fin-catch-strictness-escape
+      corpus: code
       matchers:
         - '(host read|side effect|effect).{0,60}(escape|outside|leak).{0,40}(catch|rail|frame)'
         - 'Fin.{0,40}(lazy|deferred|not captured)'
@@ -144,8 +165,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: smartenum-membership-guard
+      corpus: code
       matchers:
         - '(smart ?enum|generated enum).{0,60}(membership|guard|invalid instance)'
         - 'guard.{0,40}undeclared enum'
@@ -154,8 +176,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [2]
+      recurrences: 1
     - class_id: default-ghost-seam-removal
+      corpus: code
       matchers:
         - 'default.?ghost'
         - '(redundant|unnecessary|duplicate).{0,40}(check|guard|seam).{0,60}(struct|zero-?init|default)'
@@ -164,8 +187,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [1, 2]
+      recurrences: 2
     - class_id: full-roster-restore-bracket
+      corpus: code
       matchers:
         - '(restore|bracket).{0,60}(subset|only (the )?changed|partial write)'
         - 'full.?roster.{0,40}(restore|fold|unnecessary)'
@@ -174,8 +198,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: []
+      recurrences: 0
     - class_id: using-var-pattern-var-style
+      corpus: code
       matchers:
         - 'using var.{0,60}(replace|explicit|avoid|restructure)'
         - 'var.{0,30}pattern.{0,40}(explicit type|restructure)'
@@ -184,8 +209,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [2]
+      recurrences: 1
     - class_id: upward-stratum-delegation-demand
+      corpus: code
       matchers:
         - '(delegate|call|reference).{0,50}(directly|upward).{0,40}(stratum|higher)'
         - 'higher stratum.{0,50}(directly|delegate)'
@@ -194,8 +220,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/architecture-law.md'
-      rounds_seen: [2]
+      recurrences: 1
     - class_id: decompile-lease-lineage
+      corpus: code
       matchers:
         - '(dispose|disposal).{0,50}(per.?site|per.?use|missing|each)'
         - 'IDisposable.{0,50}(missing|not disposed|leak)'
@@ -205,8 +232,9 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/csharp/api-truths.md'
-      rounds_seen: [2]
+      recurrences: 1
     - class_id: forbidden-form-comment-remint
+      corpus: code
       matchers:
         - '(forbidden|rejected).?form'
         - 'banned (form|shape).{0,40}(present|used|live|introduced)'
@@ -215,4 +243,228 @@ classes:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
         - '.macroscope/correctness/general/stance.md'
-      rounds_seen: [4]
+      recurrences: 1
+    - class_id: style-preference-not-defect
+      corpus: prose
+      matchers:
+        - '(?s)^(?!.*(hedge|weak.?verb|twin|litany|anchor|mirror|coupling|restat|spread|defect)).*(prefer|consider|suggest).{0,40}(tone|wording|phras|rephras|softer)'
+        - '(?s)^(?!.*(hedge|weak.?verb|twin|litany|anchor|mirror|coupling|restat|spread|defect)).*(too|overly) (terse|verbose|dense|blunt).{0,40}(prose|sentence|line|register)'
+        - '(?s)^(?!.*(hedge|weak.?verb|twin|litany|anchor|mirror|coupling|restat|spread|defect)).*(add|expand|elaborate).{0,30}(explanation|context|detail).{0,30}(reader|clarity)'
+      refuting_citation: 'docgen SKILL [03]-[REGISTER] — the house owns the register: deliberate load-bearing terseness and declarative owner-subject law are the standard, and a bare wording preference is void; the matchers'' negative lookahead encodes the discriminator — a claim naming a catalog defect class (hedge, weak verb, twin truth) never enters this class and adjudicates as a live finding'
+      landed_surfaces: []
+      recurrences: 0
+    - class_id: altitude-misjudgment
+      corpus: prose
+      matchers:
+        - '(too much|excessive|low.?level) (detail|mechanism).{0,50}(reference|catalog|template|\.api)'
+        - '(belongs|move|hoist).{0,30}(to|into).{0,30}(root|index|readme|skill\.md)'
+      refuting_citation: 'docgen references/structure.md altitude tiers — reference, catalog, and template pages carry the mechanism the index abstracts, so depth at its owning tier is by design; the discriminator is direction — mechanism sitting AT the index tier is the true positive (MECHANISM_LEAK), mechanism at its owning reference is not'
+      landed_surfaces: []
+      recurrences: 0
+    - class_id: context-blind-duplication
+      corpus: prose
+      matchers:
+        - '(?s)^(?!.*(duplicat|two rows|both rows|second row)).*(repeat|restat)\w*.{0,60}(destination|target|lead|charter|subject)'
+        - '(?s)^(?!.*(duplicat|two rows|both rows|second row)).*(routing|route|owner|reference) ?(row|entry|table)(?!s)\b.{0,40}(repeat|restat)'
+        - '(?s)^(?!.*(duplicat|two rows|both rows|second row)).*redundant.{0,30}(with|of).{0,30}(lead|target|destination|skill)'
+      refuting_citation: 'docgen references/defects.md [07] — routing surfaces own cross-references as their file class, so a routing row restating its destination''s subject is the routing contract; the discriminator is one fact owned by two NON-routing prose sites — that is the TWIN_TRUTH true positive — and a duplicate route (two rows to one target) is the fork true positive this guard never covers'
+      landed_surfaces: []
+      recurrences: 0
+    - class_id: prose-gate-overlap
+      corpus: prose
+      matchers:
+        - 'article opener'
+        - '(sentence|line|entry).{0,20}(starts|begins|opens).{0,20}(with )?(the|The)\b'
+        - '(heading|index).{0,20}(number|column).{0,30}(fix|correct|renumber)'
+        - '(table|column).{0,20}(padding|width|align)'
+        - '[`"](?:serves|stands|functions|operates) as'
+        - '[`"](?:delv(?:e|es|ed|ing)|tapestry|testament|pivotal|myriad|plethora|holistic|multifaceted|in conclusion|in summary)'
+      refuting_citation: 'docgen [02]-[GATE] — deterministic classes the gate''s Check and Repair vocabularies own belong to prose_gate.py fix, never a review finding; the discriminator is a semantic or altitude defect outside those vocabularies — that stays review work'
+      landed_surfaces: []
+      recurrences: 0
+    - class_id: stale-doctrine
+      corpus: prose
+      matchers:
+        - '(per|cites?|according to|under).{0,40}(deleted|retired|superseded|re-?ruled|former)'
+        - '(law|rule|standard) (no longer|does not) (hold|apply|exist)'
+      refuting_citation: 'docs/laws/ + memory current state — a finding grounded in a superseded ruling is void, the prose twin of stale-disk-quoted-shape-void; the discriminator is the cited law re-verified on current disk — a standing law confirmed there keeps the finding live'
+      landed_surfaces: []
+      recurrences: 0
+    - class_id: template-fence-validity-as-written
+      corpus: prose
+      matchers:
+        - '(valid|literal) (json|yaml|as.?written).{0,60}(fence|body|curl)'
+        - 'placeholder.{0,60}(invalid|not valid|breaks)'
+        - 'must be valid.{0,40}as written'
+      refuting_citation: 'docs/standards/formatting.md:140 — template fences carry neutral placeholders by definition; validity-as-written binds copy-safe bodies only (r4d-03, r4d-04)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: version-anchor-demand
+      corpus: prose
+      matchers:
+        - '(state|add|pin|specify).{0,50}(minimum|version|floor)'
+        - 'per.diagram version floors?'
+        - '\d+\.\d+\.\d+.{0,40}(minimum|floor)'
+        - 'pin (the )?\S{0,25}(cli|tool|binary)'
+        - 'lockfile.?backed (specifier|version|pin)'
+      refuting_citation: '.claude/skills/docgen/references/defects.md — a version literal, band, or pinned lockfile-backed tool specifier inhabits only the manifest, lockfile, or codec owner; durable prose carries the extension rule or the version-free current truth (r4e-04, r4e-08, r5b-06)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: coupling-pointer-demand
+      corpus: prose
+      matchers:
+        - 'point(er)?s? to.{0,50}(external|upstream|official|owning).{0,40}(doc|documentation|schema)'
+      refuting_citation: '.claude/skills/docgen/references/defects.md COUPLING — estate law states verified facts as owned law, never pointers to upstream docs (r4f-10 demand side)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: capability-dropping-cure
+      corpus: prose
+      matchers:
+        - 'remove e\d+'
+        - 'fold the codec into prose'
+        - 'remove.{0,50}(edge|demonstration).{0,40}(fold|delete)'
+      refuting_citation: 'templates/fix.md zero-functionality-removal — a rehome to an unused pair preserves the demonstration the deletion drops (r4e-09)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: allowed-tools-minimization
+      corpus: prose
+      matchers:
+        - 'CLAUDE_SKILL_DIR.{0,60}allowed.?tools'
+        - 'allowed.?tools.{0,60}CLAUDE_SKILL_DIR'
+        - '(Read|tool).{0,60}(bypass|violat).{0,50}(boundary|CLI.only)'
+      refuting_citation: 'en/skills.mdx:274 — ${CLAUDE_PROJECT_DIR} is the documented allowed-tools substitution; .claude/skills/heptabase-cli/references/file-reading.md:14 owns the read boundary (r4b-10, r4f-05)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/tooling/workflows.md'
+      recurrences: 1
+    - class_id: tcc-parent-attribution
+      corpus: prose
+      matchers:
+        - 'appleeventsd'
+        - 'preflight.{0,80}(wrong|different).{0,20}identity'
+        - 'TCC.{0,60}binds.{0,60}process'
+      refuting_citation: '.claude/skills/applescript/references/events.md — TCC attributes automation to the responsible process, devolving to the shared parent for CLI children (r4b-01)'
+      landed_surfaces: []
+      recurrences: 1
+    - class_id: template-header-narration
+      corpus: prose
+      matchers:
+        - '(Ship|Replace) rows?.{0,60}(narration|delete)'
+        - 'header.{0,40}(rows?|schema).{0,50}narration'
+      refuting_citation: 'sibling-template header schema plus docgen structure.md file-kind consistency — a template header states its fill-and-replace contract in the bundle-consistent schema (r4b-05)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/tooling/workflows.md'
+      recurrences: 1
+    - class_id: accepted-exemplar-form
+      corpus: prose
+      matchers:
+        - 'gate paragraph.{0,60}(fixer|mechanics|invocation.only)'
+        - 'embeds? fixer mechanics'
+      refuting_citation: '.claude/skills/docgen/references/defects.md TOOL_ENFORCED_LEAK Accepted form is character-identical to the surviving sentence; settled ruling prose-gate-overlap (r4c-02)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: charter-ruled-one-shot
+      corpus: prose
+      matchers:
+        - '(unbounded|buffer).{0,60}(terminate|drain|incremental)'
+        - 'incremental.{0,40}(reader|runner|drain)'
+      refuting_citation: 'a timeout-bounded one-shot owes no streaming drain — the file-charter cheapness ruling governs before any machinery demand (r4c-06, session-context.py subprocess.run timeout)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/check-run-agents/script-correctness.md'
+      recurrences: 1
+    - class_id: producer-report-custody
+      corpus: prose
+      matchers:
+        - '(keeper|orchestrator|dispatcher).{0,40}(must )?(stamp|write|record).{0,40}(report|telemetry|model|wall)'
+        - 'lane (report )?cannot (prove|verify|attest).{0,40}(model|wall|telemetry)'
+      refuting_citation: 'templates/fix.md [DISPATCH] claude-lane report custody — the lane writes its own report as its final act, the harness states the exact model ID in the lane''s own system prompt, and no rail verb mutates a lane report (r5b-01)'
+      landed_surfaces:
+        - '.greptile/rules.md'
+      recurrences: 1
+    - class_id: owning-roster-derivation-demand
+      corpus: prose
+      matchers:
+        - '(deriv|generat)\w*.{0,50}(from|of).{0,30}(a |an |the )?(schema|registry|single source).{0,40}(elsewhere|other)'
+        - '(table|roster).{0,40}must (be )?derived'
+        - 'hand.?maintained.{0,40}(table|roster).{0,50}drift'
+      refuting_citation: 'docgen defects.md ENUMERATION_ANCHOR boundary — a registry table at its own declaration, minting its members or solely carrying a harness-owned external key set, is the accepted form; derivation owed only where an elsewhere owner exists (r5b-04, r5b-05)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/prose.md'
+      recurrences: 1
+    - class_id: demand-fails-owning-gate
+      corpus: prose
+      matchers:
+        - 'scanned alongside.{0,50}(fence|code span|link|placeholder)'
+        - '(bare|body) placeholder.{0,50}(template|angle|slot)'
+        - '(state|rewrite|surface).{0,60}(alongside|instead).{0,40}(gate|script|census) contract'
+      refuting_citation: 'demand-side gate bar — a demanded form the surface''s own enforcing gate refutes is void: prose_gate.py prose_spans() is the register-check feed (r5d-04, r5d-07)'
+      landed_surfaces:
+        - '.coderabbit.yaml'
+        - '.greptile/rules.md'
+        - '.macroscope/correctness/general/stance.md'
+      recurrences: 1
+    - class_id: computed-projection-consistency-check
+      corpus: code
+      matchers:
+        - (consistency|mismatch|desync|compar\w+).{0,60}(computed|derived) (property|value|projection|length|count)
+        - (stored|declared|independent).{0,50}(byte|length|count|size).{0,50}(comput|deriv)
+      refuting_citation: .macroscope/correctness/general/do-not-flag.md — a consistency-check demand between a declared shape and a value the owner computes from that same shape is void; no independently mutable field exists to drift
+      landed_surfaces:
+        - .coderabbit.yaml
+        - .greptile/rules.md
+        - .macroscope/correctness/general/do-not-flag.md
+      recurrences: 1
+    - class_id: blocked-producer-row-completion
+      corpus: code
+      matchers:
+        - (complet|restor|land|fill|regenerat)\w*.{0,60}\bBLOCKED\b
+        - BLOCKED.{0,50}(row|registry|vocabulary).{0,50}(complet|missing|absent)
+      refuting_citation: .macroscope/correctness/general/do-not-flag.md — a completeness or restoration demand against a registry or research row deliberately BLOCKED on an upstream producer is void; producer ownership rules the landing order
+      landed_surfaces:
+        - .coderabbit.yaml
+        - .greptile/rules.md
+        - .macroscope/correctness/general/do-not-flag.md
+      recurrences: 1
+    - class_id: name-similarity-shared-owner
+      corpus: code
+      matchers:
+        - (unify|share|merge|dedup|single)\w*.{0,60}(type|owner|profile|model).{0,60}(name|similar|both|across)
+        - (same|identical) (type|record|class) name.{0,60}(packages|folders|planes)
+      refuting_citation: .macroscope/correctness/general/do-not-flag.md — a shared type name across independent packages establishes no semantic owner; a declared package or stratum boundary admitting the peers only through a ruled seam refutes the merge outright
+      landed_surfaces:
+        - .coderabbit.yaml
+        - .greptile/rules.md
+        - .macroscope/correctness/general/do-not-flag.md
+      recurrences: 1
+    - class_id: block-map-eager-execution
+      corpus: code
+      matchers:
+        - Block\.map.{0,50}(lazy|deferred|unexecuted|not run)
+      refuting_citation: .macroscope/correctness/python/surface-facts.md — installed expression.collections.Block.map eagerly materializes and executes its mapper; a laziness claim against it is void
+      landed_surfaces:
+        - .coderabbit.yaml
+        - .greptile/rules.md
+        - .macroscope/correctness/python/surface-facts.md
+      recurrences: 1

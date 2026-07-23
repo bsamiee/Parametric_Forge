@@ -1,25 +1,20 @@
 ---
 name: tavily-search
 description: >-
-    Web research through the Tavily CLI as one skill — search (ranked fact-finding with a
-    server-side synthesized answer so raw pages never enter context), research (a cited
-    multi-source report), extract (clean markdown from up to 20 known URLs), map (a site's URL
-    list, no content), and crawl (bulk page content to disk). Default for any current-web
-    question. Triggered by "search for", "look up", "find", "research", "investigate",
-    "compare X vs Y", "what's the latest on", "extract"/"read this page", "map the site"/"find
-    the URL for", and "crawl"/"download the docs"/"get all the pages". Indexed library and
-    framework documentation belongs to context7-mcp; a multi-agent, adversarially-verified
-    report belongs to deep-research.
-allowed-tools: Bash(uvx *), Bash(python3 *), Bash(jq *)
+    Owns live-web retrieval through Tavily CLI (`tvly`), search, extract, map, crawl,
+    research, on the cheapest verb that answers: relevance resolved server-side, not
+    post-filtered locally, and bulk page content routed to disk, never the context window.
+    Beats blind single-URL fetching, which ranks and scopes nothing. Any current-web question
+    routes here.
 ---
 
 # [TAVILY_SEARCH]
 
-`tvly` owns live-web retrieval as one intent surface, and the cheapest verb that answers wins. An open question is `search` — `--include-answer` returns a synthesized answer with no follow-up call, and `--include-raw-content markdown` folds the top results' full content into that same call when you will read them anyway. Known URLs are `extract`. A site is one `crawl --instructions`, or a `map` recon first when the URLs must be inventoried and picked by hand. A cited multi-source report is `research`. Live web content routes here over `WebFetch` — `WebFetch` reads one URL blind, while `tvly` ranks, scopes, and filters server-side.
+`tvly` owns live-web retrieval as one intent surface; the cheapest verb that answers wins. An open question is `search` — `--include-answer` returns a synthesized answer with no follow-up call, `--include-raw-content markdown` folds the top results' full content into the same call. Known URLs are `extract`; a site is one `crawl --instructions`, with `map` recon first when URLs must be picked by hand; a cited multi-source report is `research`. Live web routes here over `WebFetch`, which reads one URL blind while `tvly` ranks, scopes, and filters server-side.
 
 Relevance resolves server-side, never a local post-filter: `--include-answer` on `search`, `--query` with `--chunks-per-source` on `extract`, `--instructions` with `--chunks-per-source` on `crawl`. Triage on the score and snippet every `search` result carries and pull full content only for the URLs that earn it — or skip the round-trip with `--include-raw-content` when the whole top set is wanted. Bulk output routes to disk, `-o` for the JSON envelope and `--output-dir` for one markdown file per crawled page, never into the window.
 
-`crawl` starts shallow — `--max-depth 1`, a tight `--limit` — and widens once the site's shape is known; `--instructions` focuses it semantically and collapses a `map`-then-`extract` round-trip into one call, leaving `map` for cheap URL recon alone. `research` is the loose heavy lane, a cited report over 30-120 seconds: run it detached when it outlives the turn, take `--output-schema` for a structured result, and never spend it on a fact one `search` settles.
+`crawl` starts shallow — `--max-depth 1`, a tight `--limit` — and widens once the site's shape is known; `--instructions` focuses it semantically and collapses a `map`-then-`extract` round-trip into one call, leaving `map` for cheap URL recon alone. `research` is the loose heavy lane, a cited report over 30-120 seconds: take `--output-schema` for a structured result, and never spend it on a fact one `search` settles.
 
 ## [01]-[USAGE]
 

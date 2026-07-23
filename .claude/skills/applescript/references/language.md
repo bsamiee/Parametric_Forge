@@ -44,7 +44,7 @@ tell counterA to add(5)
 
 ## [02]-[PARAMETER_SURFACES]
 
-Positional parameters `on name(x, y)` favor internal algebra; labeled `to name given label:value` and `to selector:x selector:y` forms favor script-command readability; interleaved word-plus-label handlers give script objects and `my` calls a selector-like surface.
+Positional parameters `on name(x, y)` favor internal algebra; labeled `to name given label:value` and `to selector:x selector:y` forms favor script-command readability; interleaved word-and-label handlers give script objects and `my` calls a selector-like surface.
 
 ```applescript conceptual
 to clipValues in xs above floor given inclusive:inclusiveFlag
@@ -97,7 +97,9 @@ return {xs, detached, contents of xr}
 
 ## [05]-[AEDESC_BOUNDARY]
 
-Every AppleScript value crosses a process boundary as an Apple event descriptor: a four-character type code plus payload, or for containers, a nested descriptor list or keyed descriptor record. `NSAppleEventDescriptor` addresses this ABI directly, and inspecting it at a bridge boundary distinguishes a language coercion fault from a transport fault from an application dictionary defect. A list descriptor is built with `listDescriptor()` and grown with `insertDescriptor:atIndex:0`, which appends under the one-based `NSAppleEventDescriptor` insertion contract; a record descriptor is walked with `keywordForDescriptorAtIndex:` paired against `descriptorAtIndex:` so its four-character keys survive, since positional indexing alone drops them.
+Every AppleScript value crosses a process boundary as an Apple event descriptor: a four-character type code and payload — for containers, a nested descriptor list or keyed record. `NSAppleEventDescriptor` addresses this ABI directly; inspecting it at a bridge boundary separates language coercion, transport, and dictionary faults.
+
+A list descriptor is built with `listDescriptor()` and grown with `insertDescriptor:atIndex:0`, appending under the one-based contract; a record descriptor is walked with `keywordForDescriptorAtIndex:` paired against `descriptorAtIndex:` so its four-character keys survive — positional indexing alone drops them.
 
 ```applescript conceptual
 use framework "Foundation"
@@ -128,7 +130,7 @@ if class of x is text then return POSIX path of (POSIX file x)
 error "unsupported path input" number -1700 from x to "alias | file | POSIX text"
 ```
 
-Coercion is asymmetric and lossy in one direction: `record as list` discards labels and yields values in declaration order, while `list as record` has no defined handler. `text` subsumes `string` and `Unicode text`, so `class of "x"` returns `text` and a dictionary naming `string` coerces to `text`. Numeric coercion honors the active `considering numeric strings` attribute for text-to-number conversion, and a malformed numeral faults `-1700` rather than silently yielding zero. A coercion chain is single-step: `x as list as text` performs two independent coercions through an intermediate value, and each step faults independently.
+Coercion is asymmetric: `record as list` discards labels and yields values in declaration order; `list as record` has no handler. `text` subsumes `string` and `Unicode text` — `class of "x"` returns `text`, and a dictionary naming `string` coerces to `text`. Numeric coercion honors the active `considering numeric strings` attribute, and a malformed numeral faults `-1700`, never a silent zero. A chain is single-step: `x as list as text` performs two independent coercions through an intermediate value, each faulting independently.
 
 ## [07]-[FILTER_REFERENCES]
 
@@ -154,7 +156,9 @@ considering numeric strings but ignoring case and white space
 end considering
 ```
 
-`application responses` shares this grammar but governs Apple event transport, not text comparison: `ignoring application responses` sends a targeted command fire-and-forget, and any reply read inside that block requires an inner `considering application responses`. `text item delimiters` is a related but distinct piece of global interpreter state, owned by the `AppleScript` object; every mutation of it is a try-restored critical section, because an unhandled error inside the block leaves the delimiter set for every later script that reads it. Splitting treats every delimiter string in the list as a separator, while joining via `xs as text` uses only the first — one property with asymmetric split and join semantics, and both honor whatever `considering`/`ignoring` attributes are active, so a case-sensitive split needs `considering case` pinned around the delimiter mutation, not merely around the read.
+`application responses` shares this grammar but governs Apple event transport, not text comparison: `ignoring application responses` sends a targeted command fire-and-forget, and any reply read inside that block requires an inner `considering application responses`.
+
+`text item delimiters` is distinct global interpreter state owned by the `AppleScript` object; every mutation is a try-restored critical section — an unhandled error inside the block leaves the delimiter set for every later script that reads it. Splitting treats every delimiter string in the list as a separator while joining via `xs as text` uses only the first — one property with asymmetric split and join semantics — and both honor the active `considering`/`ignoring` attributes, so a case-sensitive split needs `considering case` pinned around the delimiter mutation, not merely the read.
 
 ```applescript conceptual
 set oldDelimiters to AppleScript's text item delimiters
@@ -191,12 +195,12 @@ on applyRemoteMutation(targetBundleID, mutationScript, supportsTransactions)
     if supportsTransactions then
         tell application id targetBundleID
             with transaction
-                run script mutationScript
+                tell me to run script mutationScript
             end transaction
         end tell
     else
         tell application id targetBundleID
-            run script mutationScript
+            tell me to run script mutationScript
         end tell
     end if
 end applyRemoteMutation
@@ -243,7 +247,7 @@ A selective handler binds directly to the number clause instead — `on error nu
 
 ## [11]-[CODE_AND_STATE_BOUNDARIES]
 
-`run script` compiles and executes text, a file, an alias, a script value, or a compiled OSA payload against an explicit parameter vector — a dynamic code boundary where every caller-supplied string becomes executable code, so a generator assembles payloads from closed templates plus escaped values, never from raw untrusted strings.
+`run script` compiles and executes text, a file, an alias, a script value, or a compiled OSA payload against an explicit parameter vector — a dynamic code boundary where every caller-supplied string becomes executable code, so a generator assembles payloads from closed templates and escaped values, never from raw untrusted strings.
 
 ```applescript conceptual
 set loader to "on run argv" & linefeed & "return item 1 of argv & \"/\" & item 2 of argv" & linefeed & "end run"
@@ -272,7 +276,9 @@ on loadOrSeed(pathText, seed)
 end loadOrSeed
 ```
 
-Loading a missing POSIX file raises `-1700` (a coercion fault), not a file-not-found number, so the seed path binds to `-1700` rather than `-43`. `replacing yes` overwrites without a Finder prompt; an existing target with `replacing` omitted raises `-48`. A loaded script object is a detached in-memory copy whose mutations persist only when the caller re-`store`s after mutating it. `store script` and `load script` compile only when `use scripting additions` accompanies a `use framework` import, and `store script` cannot coerce a script object once Foundation is imported into the same top level — the ASObjC bridge reclassifies the object and the store faults `-1700`. Loading a foreign compiled script carries the same trust profile as `run script`.
+Loading a missing POSIX file raises `-1700` (a coercion fault), not a file-not-found number, so the seed path binds to `-1700`, never `-43`. `replacing yes` overwrites without a Finder prompt; omitting `replacing` on an existing target raises `-48`. A loaded script object is a detached in-memory copy whose mutations persist only through a re-`store`.
+
+Both verbs compile only when `use scripting additions` accompanies a `use framework` import, and `store script` cannot coerce a script object once Foundation is imported at the same top level — the ASObjC bridge reclassifies it and the store faults `-1700`. A foreign compiled script carries the `run script` trust profile.
 
 Within a single running script, `property` values persist with the compiled script object until recompilation while `global` values persist across handler calls within one run but reset with each fresh compilation; a handler cannot declare a `property`, and a local declaration shadows a same-named property or global for the remainder of that handler.
 
@@ -294,7 +300,9 @@ Top-level executable statements form an implicit `run` handler, and a script obj
 
 ## [12]-[TERMINOLOGY_AND_TEXT_ALGEBRA]
 
-An application's `.sdef` dictionary decides which terms compile; AppleScript syntax is the presentation layer over the underlying Apple event code map. `using terms from application "Mail"` imports a dictionary's terminology for a handler such as `perform mail action with messages` without changing the command target; `use application` imports terminology at compile time and admits multi-application term composition that one `tell` target cannot express. When a term is absent, misspelled, or deliberately bypassed, a chevron literal addresses the Apple event ABI directly with no dictionary resolution — the source-level peer of `NSAppleEventDescriptor` construction: `«event XXXXYYYY»` names an event by four-character class and id, `«class XXXX»` names a type or property code, `«constant ****XXXX»` names an enumerator, and `«data XX...»` carries raw descriptor bytes.
+An application's `.sdef` dictionary decides which terms compile; AppleScript syntax is the presentation layer over the Apple event code map. `using terms from application "Mail"` imports terminology for a handler such as `perform mail action with messages` without changing the command target; `use application` imports terminology at compile time and admits multi-application term composition one `tell` target cannot express.
+
+When a term is absent, misspelled, or deliberately bypassed, a chevron literal addresses the Apple event ABI directly with no dictionary resolution — the source-level peer of `NSAppleEventDescriptor` construction: `«event XXXXYYYY»` names an event by four-character class and id, `«class XXXX»` names a type or property code, `«constant ****XXXX»` names an enumerator, and `«data XX...»` carries raw descriptor bytes.
 
 ```applescript conceptual
 tell application id "com.apple.finder"
@@ -304,7 +312,9 @@ end tell
 
 `osadecompile` emits chevron literals for any compiled script referencing terminology the current dictionary no longer defines; a compile/decompile round-trip against a target whose `.sdef` changed surfaces every unresolved term as a raw code, a version-drift receipt rather than corruption. A rail that must survive dictionary churn pins its load-bearing verbs as chevron literals rather than terms a future OS release may retire.
 
-Text is a sequenced container with a fixed element vocabulary — `characters`, `words`, `paragraphs`, and `text items` — and every element form takes `every`, `item N`, `items X thru Y`, negative indices, `first`, `last`, `middle`, and `some`; word and paragraph segmentation is Unicode-aware and locale-influenced, while `text items` alone is delimiter-driven and therefore deterministic against the active `text item delimiters`. Character identity is the Unicode code point — `id of t` returns one integer for a single character and a list of code points for longer text, and `character id N` plus `string id {…}` invert it across the whole code-point range.
+Text is a sequenced container with a fixed element vocabulary — `characters`, `words`, `paragraphs`, and `text items` — and every element form takes `every`, `item N`, `items X thru Y`, negative indices, `first`, `last`, `middle`, and `some`; word and paragraph segmentation is Unicode-aware and locale-influenced, while `text items` alone is delimiter-driven and deterministic against `text item delimiters`.
+
+Character identity is the Unicode code point — `id of t` returns one integer for a single character and a list for longer text; `character id N` and `string id {…}` invert it across the full code-point range.
 
 ## [13]-[HANDLER_DISPATCH]
 
@@ -314,7 +324,7 @@ AppleScript has no first-class function type, but a single-handler script object
 on strategyTable()
     script upper
         on apply(t)
-            return do shell script "printf %s " & quoted form of t & " | tr a-z A-Z"
+            return do shell script "/usr/bin/printf %s " & quoted form of t & " | /usr/bin/tr a-z A-Z"
         end apply
     end script
     script tagged

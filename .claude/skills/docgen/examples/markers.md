@@ -1,6 +1,6 @@
 # [MARKER_CRAFT]
 
-A closed marker vocabulary plus a templated entry shape keeps many agents consistent inside one file class: the marker carries state, the schema carries structure, and prose carries only law. Each entry names one marker defect and its fix under the fixed Detection / Rejected / Accepted / Reason / Reframe card.
+Marker repair lands state in declared tokens: an undeclared spelling, a narrated status, or an exploded token list converts to the schema owner's greppable form.
 
 ## [01]-[ENTRY_LEADER_LEDGER]
 
@@ -79,7 +79,7 @@ A dense delta or checklist spells each state as a full word where a declared com
     - [!] index migration
     ```
 - Reason: Compact glyphs with globally declared meanings carry state at delta density; a full-word status widens every line where the glyph suffices.
-- Reframe: Render `[O]` `[X]` `[!]` `[~]` in dense checked or delta lists only, with meanings declared once at the owner and never duplicating a field the entry already holds.
+- Reframe: Render declared compact glyphs in dense checked or delta lists only, meanings stated once at the owner and never duplicating a field the entry already holds.
 
 ## [05]-[UNDECLARED_MARKER_SPRAWL]
 

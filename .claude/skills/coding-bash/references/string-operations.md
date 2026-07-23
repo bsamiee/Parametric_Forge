@@ -162,7 +162,7 @@ _build_key() {
 }
 ```
 
-`printf -v` writes to the variable in the CURRENT scope — not a subshell. This means `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash `5.3+` `${ cmd; }` is the third fork-free capture mechanism — use when the producer is a function (not a format string), since `printf -v` cannot capture another function's stdout. `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` generates 128-bit hex identifiers from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
+`printf -v` writes into the CURRENT scope, never a subshell. `local -n` namerefs compose with `printf -v` for zero-allocation output. `${var@Q}` is the PE equivalent of `printf '%q'` — use PE form in expansion contexts, `printf -v` form when building into a separate variable. Bash `5.3+` `${ cmd; }` is the third fork-free capture — for function producers, since `printf -v` cannot capture another function's stdout. `printf -v TRACE_ID '%08x%08x%08x%08x' "${SRANDOM}" "${SRANDOM}" "${SRANDOM}" "${SRANDOM}"` mints 128-bit hex ids from CSPRNG without forking `uuidgen` or reading `/dev/urandom`.
 
 ## [04]-[CODEC_PATTERNS]
 
@@ -246,12 +246,15 @@ printf 'Host: %s\n' "${HOST}"
 printf 'Port: %d\n' "${PORT}"
 EOF
 }
-# envsubst with explicit variable list — without list, ALL env vars expand
+# Explicit selection binds template variables; child scope preserves caller values and export marks.
 _render_from_file() {
     local -r template="$1"; shift
-    local var; for var in "$@"; do export "${var}"; done
-    envsubst "$(printf '${%s} ' "$@")" < "${template}"
-    for var in "$@"; do unset "${var}"; done
+    local envsubst_path
+    envsubst_path="$(type -P envsubst)" || return 127
+    readonly envsubst_path
+    local var; local -a scope=()
+    for var in "$@"; do scope+=("${var}=${!var-}"); done
+    env "${scope[@]}" "${envsubst_path}" "$(printf '${%s} ' "$@")" < "${template}"
 }
 # Printf format strings are injection-safe: %s cannot execute code
 _render_row() {
@@ -259,7 +262,7 @@ _render_row() {
 }
 ```
 
-`envsubst` explicit variable list prevents unintended expansion of `$PATH`, `$HOME`, and `$IFS`. `_render_from_file` exports then unexports to avoid polluting the environment. `printf` format strings over `eval`-based templates — format specifiers cannot execute code.
+`envsubst` explicit lists bind only requested expansions. `_render_from_file` owns executable resolution before child-scope admission; `${!var-}` preserves caller values and export marks. `printf` format strings reject code execution.
 
 ## [06]-[RULES]
 

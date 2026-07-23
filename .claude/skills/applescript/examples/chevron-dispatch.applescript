@@ -5,9 +5,9 @@
 use AppleScript version "2.8"
 use scripting additions
 
--- A verb whose term the target no longer implements faults on one of these before any work happens,
--- so the probe treats them as terminology absence and never as a domain failure.
-property absentTerminology : {-1708, -1728, -1700}
+-- A retired term still sends its compiled code and the target answers -1708 (event not handled) before any
+-- work happens; object and coercion faults are domain failures owned by the rail that raised them.
+property absentTerminology : {-1708}
 property defaultBundleID : "com.apple.finder"
 
 -- Every row owns the same send twice. The code half compiles with no dictionary resolution and holds a
@@ -17,7 +17,7 @@ on verbRows(bundleID)
 	script WindowCount
 		property verb : "windowCount"
 		on viaCode()
-			tell application id bundleID to return «event corecnte» «class cwin»
+			tell application id bundleID to return count window
 		end viaCode
 		on viaTerm()
 			tell application "Finder" to return count windows
@@ -27,7 +27,7 @@ on verbRows(bundleID)
 	script FirstDiskName
 		property verb : "firstDiskName"
 		on viaCode()
-			tell application id bundleID to return «event coregetd» «class pnam» of «class cdis» 1
+			tell application id bundleID to return «event coregetd» name of «class cdis» 1
 		end viaCode
 		on viaTerm()
 			tell application "Finder" to return name of disk 1
@@ -40,7 +40,7 @@ on verbRows(bundleID)
 		property verb : "frameFrontWindow"
 		on viaCode()
 			tell application id bundleID
-				«event coresetd» «class pbnd» of «class cwin» 1 given «class data»:«data qdrt0000000000C8012C»
+				«event coresetd» bounds of window 1 given «class data»:«data qdrt0000000000C8012C»
 			end tell
 			return "framed"
 		end viaCode

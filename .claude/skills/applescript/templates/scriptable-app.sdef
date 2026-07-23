@@ -3,12 +3,14 @@
 <!--
 Title    : scriptable-app.sdef
 Purpose  : Dictionary spine of a scriptable app. One suite declares the terminology AppleScript,
-           JXA, Cocoa Scripting, and ScriptingBridge all read, and every cocoa binding maps a
-           term onto a key-value-coding accessor on the running object graph.
+           JXA, Cocoa Scripting, and ScriptingBridge all read; each cocoa row binds its term to
+           the runtime counterpart its attribute names — key for KVC access, class for the
+           backing type, method for the verb selector, name for the Objective-C spelling.
 Ship     : Info.plist sets NSAppleScriptEnabled true and OSAScriptingDefinition to this file's
            base name; the file itself installs into Contents/Resources.
-Replace  : every UPPER_SNAKE slot token, every four-byte code, and every cocoa name.
-           Slots stay NMTOKEN-shaped, so a filled term reads as space-separated words.
+Replace  : every UPPER_SNAKE slot token, every minted code — four bytes on a term, eight on a
+           command (event class + event ID) — and every cocoa value. Slots stay NMTOKEN-shaped,
+           so a filled term reads as space-separated words.
 -->
 <dictionary title="DICTIONARY_TITLE">
 
@@ -17,8 +19,8 @@ Replace  : every UPPER_SNAKE slot token, every four-byte code, and every cocoa n
   <suite name="SUITE_NAME" code="Suit" description="SUITE_CHARTER">
     <cocoa name="SUITE_COCOA_NAME"/>
 
-    <!-- Enumerators are a closed vocabulary the compiler admits by name, each binding one
-         Objective-C constant whose raw value equals the four-byte code. A new case is a new row. -->
+    <!-- Each enumerator binds one Objective-C constant whose raw value equals the four-byte
+         code; a new case is a new row. -->
     <enumeration name="ENUM_NAME" code="Enum">
       <enumerator name="CASE_A" code="EnA1" description="CASE_A_MEANING">
         <cocoa name="ENUM_CONSTANT_A"/>
@@ -32,6 +34,7 @@ Replace  : every UPPER_SNAKE slot token, every four-byte code, and every cocoa n
          application object gains elements and properties with no rival root class. -->
     <class-extension extends="application" description="APPLICATION_ROLE">
       <cocoa class="NSApplication"/>
+      <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>
       <element type="CLASS_NAME" access="rw">
         <cocoa key="TO_MANY_KVC_KEY"/>
         <accessor style="index"/>
@@ -49,6 +52,7 @@ Replace  : every UPPER_SNAKE slot token, every four-byte code, and every cocoa n
     <class name="CLASS_NAME" code="Cobj" plural="CLASS_PLURAL" inherits="item"
            description="CLASS_CHARTER">
       <cocoa class="MODEL_CLASS"/>
+      <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>
       <property name="id" code="ID  " type="text" access="r" description="STABLE_IDENTITY">
         <cocoa key="UNIQUE_ID_KEY"/>
       </property>
@@ -72,8 +76,10 @@ Replace  : every UPPER_SNAKE slot token, every four-byte code, and every cocoa n
 
     <!-- A command's cocoa class names the NSScriptCommand subclass that runs the verb, and each
          parameter's cocoa key is the exact key that subclass reads back out of its evaluated
-         arguments. Access groups slice the suite, so a sandboxed sender earns the one group it
-         names instead of blanket automation. A new verb is another command row under this suite. -->
+         arguments. Access groups slice the suite: a sandboxed sender earns the one group it
+         names instead of blanket automation, and the group spans every declaration on the
+         specifier path — command, class, and containment route — or the sender's specifier dies
+         short of the object. A new verb is another command row under this suite. -->
     <command name="COMMAND_NAME" code="SuitCmnd" description="COMMAND_CHARTER">
       <cocoa class="COMMAND_CLASS"/>
       <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>

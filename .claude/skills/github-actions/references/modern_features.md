@@ -181,30 +181,26 @@ This section owns matrix strategy semantics; `advanced-triggers.md` routes here.
 
 This section owns the JavaScript-action runtime status; `supply_chain.md` and `custom-actions.md` route here.
 
-| [INDEX] | [RUNTIME]  | [STATUS]                                                  |
-| :-----: | :--------- | :-------------------------------------------------------- |
-|  [01]   | Node.js 12 | Removed — actions fail at runtime.                        |
-|  [02]   | Node.js 16 | Removed — actions fail at runtime.                        |
-|  [03]   | Node.js 20 | Removed — past upstream EOL, superseded by node24.        |
-|  [04]   | Node.js 22 | Skipped — GitHub jumped node20 directly to node24.        |
-|  [05]   | Node.js 24 | Required — use `using: 'node24'` for JavaScript actions.  |
+| [INDEX] | [RUNTIME]  | [STATUS]                                                    |
+| :-----: | :--------- | :---------------------------------------------------------- |
+|  [01]   | Node.js 12 | Removed — actions fail at runtime.                          |
+|  [02]   | Node.js 16 | Removed — actions fail at runtime.                          |
+|  [03]   | Node.js 20 | Deprecated — past upstream EOL; opt-out only until removal. |
+|  [04]   | Node.js 22 | Skipped — GitHub jumped node20 directly to node24.          |
+|  [05]   | Node.js 24 | Required — use `using: 'node24'` for JavaScript actions.    |
 
-### [08.1]-[MIGRATION_HISTORY]
+### [08.1]-[MIGRATION_TIMELINE]
 
-| [INDEX] |         [DATE] | [EVENT]                                                                                |
-| :-----: | -------------: | :------------------------------------------------------------------------------------- |
-|  [01]   |      Fall 2025 | Runner v2.328+ gained side-by-side node20 and node24.                                  |
-|  [02]   |  March 4, 2026 | node24 became the forced default; node20 failed without the unsecure-version override. |
-|  [03]   | April 30, 2026 | Node.js 20 reached upstream EOL.                                                       |
-|  [04]   |    Summer 2026 | node20 removed entirely; the environment-variable override stopped working.            |
+`NODE_RUNTIME` owns migration state. Runner policy owns transition dates. Each runtime row binds one admitted state and its detection rule.
 
 ### [08.2]-[DETECTION_RULES]
 
-| [INDEX] | [CHECK]                              | [TAG]       | [WHAT_TO_FLAG]                                                          |
-| :-----: | :----------------------------------- | :---------- | :---------------------------------------------------------------------- |
-|  [01]   | node20 action                        | `[RUNTIME]` | Actions using `runs.using: 'node20'` — broken on current runners.       |
-|  [02]   | Old action major                     | `[RUNTIME]` | `actions/cache@v3`/`@v4`, `actions/checkout@v4` — require latest major. |
-|  [03]   | `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` | `[RUNTIME]` | Migration-era env var — flag as dead config in any workflow.            |
+| [INDEX] | [CHECK]                                   | [TAG]       | [WHAT_TO_FLAG]                                                          |
+| :-----: | :---------------------------------------- | :---------- | :---------------------------------------------------------------------- |
+|  [01]   | node20 action                             | `[RUNTIME]` | Actions using `runs.using: 'node20'` — dead at node20 removal.          |
+|  [02]   | Old action major                          | `[RUNTIME]` | `actions/cache@v3`/`@v4`, `actions/checkout@v4` — require latest major. |
+|  [03]   | `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`      | `[RUNTIME]` | Pre-default testing var — inert since node24 became the default.        |
+|  [04]   | `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION` | `[RUNTIME]` | node20 opt-out pin — flag for migration before node20 removal.          |
 
 [IMPORTANT] node24 is incompatible with macOS 13.4 and earlier; ARM32 self-hosted runners are unsupported.
 

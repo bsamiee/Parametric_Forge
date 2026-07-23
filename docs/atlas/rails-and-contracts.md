@@ -21,7 +21,7 @@ Darwin builds and switches locally; NixOS check is eval-only, build proves closu
 
 ## [03]-[FORGE_ACCEPT]
 
-`forge-accept --list` emits the ordered step vocabulary; `--from STEP` and `--only STEP` select into it. The ordering is contractual: `preflight` gates `switch` (flake root, WezTerm cask, `nix.custom.conf`, activation sweep, deploy lock), and the late `maghz` step gates the Codex Postgres MCP on tunnel `state=up`. The `fleet` step runs `forge-mcp doctor --network` and `forge-mcp drift`; the `lanes` step compares expected secret key names across CLI/TUI/GUI without values. Every row is `ts / step / status / detail` with status in `PASS|WARN|FAIL|INSTRUCT|SKIP`, closed by a summary row with per-status counts and `result`.
+`forge-accept --list` emits the ordered step vocabulary; `--from STEP` and `--only STEP` select into it. Ordering is contractual: `preflight` gates `switch` through the flake root, WezTerm cask, `nix.custom.conf`, activation sweep, and deploy lock; `maghz` evaluates each declared tunnel receipt. `fleet` runs `forge-mcp doctor --network` and `forge-mcp drift`; `lanes` compares expected secret key names across CLI, TUI, and GUI without values. Rows carry `ts / step / status / detail` and close with the folded result.
 
 ## [04]-[DRIFT_MAINTENANCE_SWEEP]
 

@@ -90,6 +90,6 @@ Before the resolve step, the main agent verifies the returned ledger — a malfo
 
 Three rails per substantive round; the loop's no-progress guard consumes the third. A round passes only on all three.
 
-- [ARTIFACT]: Ledger honesty — the verification above, plus each `commit_sha` an ancestor of the re-pinned head (`git merge-base --is-ancestor`, the same predicate `resolve-threads.sh` gates on).
+- [ARTIFACT]: Ledger honesty — the verification above, and each `commit_sha` an ancestor of the re-pinned head (`git merge-base --is-ancestor`, the same predicate `resolve-threads.sh` gates on).
 - [BEHAVIOR]: Transcript spot-check — sample fixed rows; each shows a Read of the anchored file before its Edit, and the round's languages show a doctrine Read before that language's first edit. A sampled row without read-before-edit is a behavior FAIL even when the code change looks right.
 - [CONSUMPTION]: Next round's merged set must strictly shrink — the actionable count decreases and no `fixed` row's `dedup_key` reappears fresh. A reappearing fixed key is an ineffective-fix signal the oscillation guard stops on.

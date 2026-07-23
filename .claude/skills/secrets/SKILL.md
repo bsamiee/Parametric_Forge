@@ -1,11 +1,16 @@
 ---
 name: secrets
-description: Estate secret custody and consumption over 1Password and Doppler — op as the permanent local store, Doppler as the runtime backend, scoped CLI reads, directory-scope resolution, the SessionStart pull rail, service-token custody classes, secret-file templating, and the read-only Doppler MCP row. Use when reading or wiring secrets, minting or routing tokens, debugging missing session env keys, rendering secret-bearing config files, or touching op/doppler surfaces. Topology mutation — projects, configs, tokens, scopes — belongs to Parametric_Forge/services/topology.ts and its driver, never to ad-hoc CLI calls or per-repo files.
+description: >-
+    Owns secret custody over 1Password and Doppler — op the permanent local store and
+    SSH-key custodian, Doppler the runtime backend. Use when creating a secret, token, or env key
+    or when one fails to resolve, creating and managing them, the op agent key, a tool or code logic
+    needs a scoped token, or a config file needs secret material. Minting tokens and creating projects,
+    configs, or scopes is Pulumi topology in Parametric_Forge/services/topology.ts — the pulumi skill.
 ---
 
 # [SECRETS]
 
-Two permanent backends custody estate secrets. 1Password (`op`) is the local store: the `Tokens` vault holds every API key, service token, IaC credential, and Pulumi passphrase, the `Personal` vault holds the `Forge SSH Key`, and `op inject` resolves them into the mode-600 op cache (`~/.config/hm-op-session.sh`) on every `forge-redeploy --switch` — the bootstrap baseline a fresh machine emits from before any Doppler token exists. Doppler is the runtime backend: op-served config-scoped service tokens resolve its declared configs, and its session cache overlays the op baseline with fresher per-key values. Both stores are maintained forever; neither retires the other.
+`op` owns permanent local custody. Doppler owns runtime delivery. Estate custody binds both backends — both maintained forever, neither retires the other.
 
 Topology — projects, environments, configs, service tokens, directory scopes — lives as IaC rows in `Parametric_Forge/services/topology.ts`, materialized by `estate.ts` and applied by `driver.ts` over the Pulumi Automation API. `doppler` reads and writes secret values against declared configs; the SessionStart hook is the sole consumption rail; `~/.doppler` holds CLI config and fallback state.
 
@@ -60,7 +65,7 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 
 ## [05]-[PULL_RAIL]
 
-SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail, canonical in Parametric_Forge and byte-identical in every repo copy. A warm session replays its cache into `CLAUDE_ENV_FILE` and dispatches a detached refresh; a cold boot resolves Doppler inline.
+SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail, canonical in Parametric_Forge and byte-identical in every repo copy. A warm session replays its cache into `CLAUDE_ENV_FILE` and dispatches a detached refresh; a cold boot resolves Doppler inline. `op inject` resolves the vaults into the mode-600 op cache (`~/.config/hm-op-session.sh`) on every `forge-redeploy --switch` — the bootstrap baseline a fresh machine emits from before any Doppler token exists — and the Doppler session cache overlays that baseline with fresher per-key values.
 
 - `DOPPLER_SOURCES` rows carry the shape `project:config:snapshot[:TOKEN_ENV_VAR]`; each resolves independently and in parallel.
 - `TOKEN_ENV_VAR` names an op-served config-scoped service token; an empty or unset segment falls back to ambient CLI auth, and a degraded token retries ambient once and blames the token in the receipt.
@@ -70,7 +75,7 @@ SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail, can
 
 ## [06]-[CUSTODY]
 
-Local custody is `op`, never the OS keychain: every service, IaC, and MCP token plus the SSH key lives in a `Tokens` or `Personal` vault item. A personal `doppler login` is the one credential Doppler keeps in the keychain, used for the operator's ad-hoc interactive work alone — no rail depends on it.
+Local custody is `op`, never the OS keychain: every service, IaC, and MCP token and the SSH key live in a `Tokens` or `Personal` vault item. A personal `doppler login` is the one credential Doppler keeps in the keychain, used for the operator's ad-hoc interactive work alone — no rail depends on it.
 
 | [INDEX] | [CLASS]                          | [CUSTODY]                                    | [USE]                           |
 | :-----: | :------------------------------- | :------------------------------------------- | :------------------------------ |
@@ -89,5 +94,5 @@ Local custody is `op`, never the OS keychain: every service, IaC, and MCP token 
 
 - One item, one official name: an item carries the credential's real published name, never a handrolled synonym; a consumer needing a different env-var name renames the item at the source and repoints every reader, never adds a second item or a duplicate export aliasing the same secret. A naming mistake is fixed by renaming in `op` and Doppler, never papered over.
 - A new project lands as project/config rows in `Parametric_Forge/services/topology.ts` and a directory scope row, then `pulumi up`; retiring it deletes its rows.
-- A repo carries zero Doppler files; its agents resolve through scope plus hook automatically.
+- A repo carries zero Doppler files; its agents resolve through scope and hook automatically.
 - Rendered secret material is ephemeral: `--mount`/`--mount-template` over durable renders; plaintext binds only where the target owner requires it.

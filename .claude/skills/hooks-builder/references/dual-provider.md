@@ -1,6 +1,8 @@
 # [DUAL_PROVIDER]
 
-One hook body serves both Claude Code and Codex when the control channel is exit 2 plus a stderr reason — on the shared tool, prompt, and `Stop`/`SubagentStop` events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`) that path blocks identically on both, needs no dialect branching, and ports verbatim. Divergence begins the moment a hook injects context or rewrites a value through stdout JSON: the per-event output dialect differs, and a payload written for one provider no-ops on the other. One canonical body plus a thin per-provider adapter survives this — the body reads the shared stdin shape and decides, the adapter normalizes the dialect on the way out for the provider that needs it.
+One hook body serves both Claude Code and Codex when the control channel is exit 2 with a stderr reason — on the shared tool, prompt, and `Stop`/`SubagentStop` events (`PreToolUse`, `PostToolUse`, `UserPromptSubmit`, `Stop`, `SubagentStop`) that path blocks identically on both and ports verbatim.
+
+Divergence begins the moment a hook injects context or rewrites a value through stdout JSON: the per-event dialect differs, and a payload written for one provider no-ops on the other. One canonical body behind a thin per-provider adapter survives this — the body reads the shared stdin shape and decides, the adapter normalizes the dialect on the way out.
 
 ## [01]-[DIVERGENCE]
 
@@ -15,7 +17,9 @@ One hook body serves both Claude Code and Codex when the control channel is exit
 |  [07]   | Terminal escape | `terminalSequence` JSON field                    | None; notifications ride `tui.notifications`             |
 |  [08]   | Per-turn key    | `prompt_id` (UUID)                               | `turn_id` (present on every event except `SessionStart`) |
 
-Codex's stdin shape is a strict superset-safe overlay: `session_id`, `transcript_path`, `cwd`, `model`, `permission_mode`, and `hook_event_name` map name-for-name onto Claude's, and Codex adds `turn_id` additively — a body reading the shared fields ignores `turn_id` harmlessly, so the same stdin parse serves both. A subagent hook reuses the parent `session_id` on both providers. Environment variables are not part of this shared overlay — only the stdin object is certified across providers, and Codex is never confirmed to export `CLAUDE_PROJECT_DIR`. So a provider-blind body derives its project root from the stdin `cwd`, never from `os.environ["CLAUDE_PROJECT_DIR"]`: a security gate that measures its sandbox against a `CLAUDE_PROJECT_DIR` that silently falls back to `os.getcwd()` under Codex relaxes the one root it must hold constant. Root off `cwd`, and env-var reads stay adapter-scoped where the adapter can guarantee them.
+Codex's stdin shape is a superset-safe overlay: `session_id`, `transcript_path`, `cwd`, `model`, `permission_mode`, and `hook_event_name` map name-for-name onto Claude's, and Codex adds `turn_id` additively, so one stdin parse serves both; a subagent hook reuses the parent `session_id` on both providers.
+
+Only the stdin object is certified across providers — Codex is never confirmed to export `CLAUDE_PROJECT_DIR`, so a provider-blind body derives its project root from stdin `cwd`, never `os.environ["CLAUDE_PROJECT_DIR"]`: a gate measuring its sandbox against a root that silently falls back to `os.getcwd()` relaxes the one root it must hold constant. Env-var reads stay adapter-scoped where the adapter can guarantee them.
 
 ## [02]-[OUTPUT_DIALECTS]
 
@@ -32,7 +36,9 @@ Codex runs two block dialects that are not interchangeable, and a generator must
 
 `[ADAPTER]` names why each event reaches or skips a `jq` branch: `passthrough` events share their shape byte-for-byte with Claude, so the adapter's `else .` is correct by identity — `SessionStart`, `UserPromptSubmit`, and the exit-2 `Stop`/`SubagentStop` family all ride it; `translate` events (`PreToolUse` `defer`/`ask`->`deny`, `PostToolUse` redaction block, `PermissionRequest` rebuild) diverge and carry an explicit branch. A maintainer reading `translate` knows the branch is load-bearing, never incidental.
 
-On Claude, `PreToolUse` also accepts a top-level `decision: "approve"/"block"`; on Codex only `decision: "block"` lands, since `approve`, `permissionDecision: "ask"`, `continue`, and `stopReason` are parsed-but-unsupported and fail the hook open — so a gate maps `ask`/`defer` to `deny`, never `ask`. Codex `PermissionRequest` reserves `interrupt`, `updatedInput`, and `updatedPermissions` and fails closed if any is set, so the rewrite Claude's `PermissionRequest` accepts is a Codex trap — rewrite at `PreToolUse` instead, which both providers honor. Codex `PostToolUse` skips `updatedToolOutput`; its `decision: "block"` instead replaces the tool result with the reason, so block-and-summarize redacts on Codex where the same block leaves the raw output in context on Claude — one canonical body emits Claude's `updatedToolOutput` and the adapter translates it to a Codex `decision: "block"` carrying the scrubbed render. Common output envelope (`continue`, `stopReason`, `suppressOutput`, `systemMessage`) is identical on both.
+On Claude, `PreToolUse` also accepts a top-level `decision: "approve"/"block"`; on Codex only `decision: "block"` lands — `approve`, `permissionDecision: "ask"`, `continue`, and `stopReason` are parsed-but-unsupported and fail the hook open, so a gate maps `ask`/`defer` to `deny`. Codex `PermissionRequest` reserves `interrupt`, `updatedInput`, and `updatedPermissions` and fails closed if any is set — the rewrite Claude's `PermissionRequest` accepts is a Codex trap, so rewrite at `PreToolUse`, which both providers honor.
+
+Codex `PostToolUse` skips `updatedToolOutput`; its `decision: "block"` replaces the tool result with the reason, so block-and-summarize redacts on Codex where the same block leaves raw output in context on Claude — the canonical body emits Claude's `updatedToolOutput` and the adapter translates it to a Codex `decision: "block"` carrying the scrubbed render. Common output envelope (`continue`, `stopReason`, `suppressOutput`, `systemMessage`) is identical on both.
 
 ## [03]-[CANONICAL_BODY_PLUS_ADAPTER]
 
@@ -49,7 +55,7 @@ Its codex-adapter template is the worked form; the dispatch-daemon example shows
 
 ## [04]-[CODEX_PLACEMENT]
 
-Codex hooks are enabled by default (disable with `[features].hooks = false`) and load from four roots plus enabled-plugin bundles: `~/.codex/hooks.json`, `~/.codex/config.toml`, `<repo>/.codex/hooks.json`, and `<repo>/.codex/config.toml`. Repo-scoped `.codex/` loads only for trusted projects, and a restart re-scans. `hooks.json` shape matches Claude's `settings.json > hooks`; the inline TOML form is an array-of-tables with a nested `.hooks` sub-table:
+Codex hooks are enabled by default (disable with `[features].hooks = false`) and load from four roots and enabled-plugin bundles: `~/.codex/hooks.json`, `~/.codex/config.toml`, `<repo>/.codex/hooks.json`, and `<repo>/.codex/config.toml`. Repo-scoped `.codex/` loads only for trusted projects, and a restart re-scans. `hooks.json` shape matches Claude's `settings.json > hooks`; the inline TOML form is an array-of-tables with a nested `.hooks` sub-table:
 
 ```toml template
 [[hooks.PreToolUse]]
@@ -62,8 +68,10 @@ timeout = 30
 statusMessage = "Checking command"
 ```
 
-Trust is recorded against the hook's SHA: a new or changed hook is marked for review and skipped until trusted through the `/hooks` browser; `--dangerously-bypass-hook-trust` runs enabled hooks once without persisting trust. Managed hooks (policy-trusted) cannot be user-disabled. `Bash|apply_patch` is the portable file-plus-shell matcher, since Codex's `apply_patch` is the tool Claude calls `Edit`/`Write`. Codex runs `Stop`/`SubagentStop` on the hook bus at turn scope, so a dual-provider completion hook ports directly; `notify = ["prog", "lane"]` is a separate legacy notification channel beside the bus, spawning `prog` with one JSON argument at turn end for a desktop or attention signal, never the turn-done hook.
+Trust is recorded against the hook's SHA: a new or changed hook is marked for review and skipped until trusted through the `/hooks` browser; `--dangerously-bypass-hook-trust` runs enabled hooks once without persisting trust, and managed (policy-trusted) hooks cannot be user-disabled.
+
+`Bash|apply_patch` is the portable file-and-shell matcher, since Codex's `apply_patch` is the tool Claude calls `Edit`/`Write`. Codex runs `Stop`/`SubagentStop` on the hook bus at turn scope, so a dual-provider completion hook ports directly; `notify = ["prog", "lane"]` is a separate legacy channel beside the bus, spawning `prog` with one JSON argument at turn end for a desktop or attention signal, never the turn-done hook.
 
 ## [05]-[COMPONENT_HOOK_PORT]
 
-A skill or subagent that ships hooks in its frontmatter carries those hooks to both providers. Codex reuses the Claude plugin layout — it sets `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA`, and a component's `PreToolUse`/`PostToolUse`/`Stop` frontmatter hook fires the same command body under both harnesses. A frontmatter hook block ports verbatim when its bodies obey the exit-2 path; a body that rewrites through stdout JSON needs the adapter beside it exactly as a standalone hook does. Codex reads `name` and `description` from the component and ignores Claude-only frontmatter keys as inert, so the hook block travels with the component and the full skill-bundle packaging contract belongs to the skill-writer and codex skills.
+A skill or subagent shipping hooks in its frontmatter carries them to both providers. Codex reuses the Claude plugin layout — it sets `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA`, and a component's `PreToolUse`/`PostToolUse`/`Stop` frontmatter hook fires the same command body under both harnesses. A hook block ports verbatim when its bodies obey the exit-2 path; a body that rewrites through stdout JSON needs the adapter beside it as a standalone hook does. Codex reads `name` and `description` and ignores Claude-only keys; skill-bundle packaging belongs to the codex skill.

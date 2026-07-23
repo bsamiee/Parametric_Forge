@@ -6,8 +6,7 @@ A validated fence reaches its reader through a host, and every host binds one of
 
 Durable markdown carries the source lane: the fence itself, one diagram per fence, placed beside the prose that cites it.
 
-- A platform that renders fences client-side injects its own `initialize`; a themed fence keeps its face wherever the host honors frontmatter, and a docs host that owns a site-level theme takes the whole-theme drop rule in the theming reference.
-- GitHub is a partial-strip host: it renders fences and honors theme colors while dropping the `themeCSS` type stamps and the `themeVariables` font stack — a README fence keeps its palette, never its mono face.
+- A platform that renders fences client-side injects its own `initialize`; a payload-only fence takes the host theme by construction, so it reads native on every renderer — GitHub, docs sites, chat surfaces alike.
 - `accTitle` and `accDescr` travel inside the fence, so every downstream render carries its SVG `<title>` and `<desc>` without the embedding page adding anything.
 - Bundled validator consumes the markdown file directly — the fence in its final host position is the artifact under test, never a copy in a scratch file.
 
@@ -19,10 +18,9 @@ Render lane binds on self-containment and CSP, never on the host being HTML: a s
 uv run scripts/validate_mermaid.py --export <dir> <file.md ...>
 ```
 
-Export row is the contract: each passing fence lands as an SVG whose root id is unique per fence (multi-diagram pages never collide on ids, selectors, or aria references), whose `accTitle`/`accDescr` ride as `<title>`/`<desc>` with the aria wiring intact, whose `width="100%"` plus `viewBox` scale to any container, and whose Dracula canvas is baked so the diagram self-carries on light and dark hosts alike.
+Export row is the contract: each passing fence lands as an SVG whose root id is unique per fence (multi-diagram pages never collide on ids, selectors, or aria references), whose `accTitle`/`accDescr` ride as `<title>`/`<desc>` with the aria wiring intact, and whose `width="100%"` and `viewBox` scale to any container.
 
 - SVG sits inside a container with `overflow-x: auto`; a wide diagram scrolls in its own box and never forces page-level horizontal scroll.
-- On a dark host the baked `#282A36` canvas reads as a raised panel; the container steps its own surface down a level or frames the SVG with a visible border — the elevation rule the theming reference states for inline placement.
 - Source fence rides beside the render — a collapsed `<details>` block carrying the fence keeps the diagram legible to machine readers, who see explicit labeled edges where a human sees layout. Spatial implication is invisible to an agent; the fence is the diagram's machine form.
 - A page that must re-render user-edited diagram source is an editor, not an artifact: only there does an inlined mermaid runtime earn its megabytes, initialized once with the host's security posture, and the artifact contract stops applying.
 

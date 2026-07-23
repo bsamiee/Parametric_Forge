@@ -3,7 +3,7 @@
  *
  * Demonstrates pipeline (no barrier): each finding verifies the moment ITS review
  * returns, never waiting for the slowest reviewer. Model and effort are independent
- * axes — verify drops to model: 'sonnet' yet keeps effort: 'high', so the refute
+ * axes — verify drops the model tier yet keeps effort: 'high', so the refute
  * still reasons hard; effort tiers the reasoning, not the model.
  *
  * Run before opening a PR:  Workflow({ name: 'review-branch' })

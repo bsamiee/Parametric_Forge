@@ -1,6 +1,6 @@
 # [HOSTINGER_DEPLOYMENT]
 
-SSH-first deployment for Dockerized applications on a Hostinger VPS: SSH plus Docker Compose carries the deploy, and the Hostinger API carries account-level infrastructure — keys, firewalls, snapshots. A repo that already ships compose files and deployment scripts deploys over SSH; the Docker Manager API serves quick prototyping and simple single-container deploys from a URL. A working SSH workflow is never replaced with the Docker Manager API unbidden, and a repo's own deployment scripts and runbooks run before any generic command below.
+SSH-first deployment for Dockerized applications on a Hostinger VPS: SSH and Docker Compose carry the deploy, and the Hostinger API carries account-level infrastructure — keys, firewalls, snapshots. A repo that already ships compose files and deployment scripts deploys over SSH; the Docker Manager API serves quick prototyping and simple single-container deploys from a URL. A working SSH workflow is never replaced with the Docker Manager API unbidden, and a repo's own deployment scripts and runbooks run before any generic command below.
 
 ## [01]-[INPUTS_AND_ACCESS]
 
@@ -20,7 +20,6 @@ SETUP
 ```
 
 Baseline gates before the first deploy:
-
 - Docker engine and compose plugin present.
 - App directory exists.
 - `.env` exists with non-empty values for every required key.
@@ -50,9 +49,8 @@ Updates follow the same order with `docker compose pull` (registry images) or a 
 ## [04]-[VERIFY]
 
 Three levels, infrastructure to functionality:
-
 1. Container health: `docker compose ps` shows every service `Up` or `healthy`; `docker compose ps --format json | jq '.[] | select(.State != "running")'` catches restart loops.
-2. Application logs: `docker compose logs --tail=200 app`, plus a grep for `error|fatal|exception` across services.
+2. Application logs: `docker compose logs --tail=200 app`, and a grep for `error|fatal|exception` across services.
 3. Functional smoke: `curl -sf https://app.example.com/health` from outside, or `curl -sf http://localhost:3000/health` on-box; an application-specific end-to-end probe from the client surface closes the check.
 
 ## [05]-[ROLLBACK]
@@ -73,7 +71,6 @@ Failed-deploy recovery, smallest hammer first: restore the previous compose or i
 |  [06]   | Monarx malware scanner            | API                        |
 
 Standing safety rows:
-
 - Secrets enter commands as environment variables and never print.
 - `.env` files never land in git.
 - Critical env keys validate non-empty before deploy.

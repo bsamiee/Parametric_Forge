@@ -86,7 +86,9 @@ Every card, PDF, and whiteboard mention UUID resolves from a CLI read or list fi
 
 ### [03.1]-[BLOCKS]
 
-Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or null; string attrs (`src`, `url`, `width`, `title`, and peers) are string or null; `originalWidth`/`originalHeight` are number or null; timestamp attrs are ISO 8601 strings (see [Timestamp Attrs](#timestamp-attrs)). Media `reference` attrs are preserved from `read`, never created manually (see [Media References](#media-references)). For `table_cell`/`table_header`, `colspan?`/`rowspan?` are positive integers, `colwidth?` is a positive integer[] or null, and `backgroundColor?`/`textColor?` are an editor color or null (see [Editor Colors](#editor-colors)). For `embed` and `mention`, `objectType` is `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`, and `objectId` is a UUID string, or `YYYY-MM-DD` when `objectType` is `journal`. Deprecated `image`/`video` attrs live in [Deprecated attributes](#deprecated-attributes).
+Optional attrs carry a trailing `?`. Every `id` and `fileId` is a UUID string or null; string attrs (`src`, `url`, `width`, `title`, and peers) are string or null; `originalWidth`/`originalHeight` are number or null; timestamp attrs are ISO 8601 strings (see [Timestamp Attrs](#timestamp-attrs)). Media `reference` attrs are preserved from `read`, never created manually (see [Media References](#media-references)).
+
+For `table_cell`/`table_header`, `colspan?`/`rowspan?` are positive integers, `colwidth?` is a positive integer[] or null, and `backgroundColor?`/`textColor?` are an editor color or null (see [Editor Colors](#editor-colors)). For `embed` and `mention`, `objectType` is `note`, `journal`, `highlightElement`, `image`, `video`, or `audio`, and `objectId` is a UUID string, or `YYYY-MM-DD` when `objectType` is `journal`. Deprecated `image`/`video` attrs live in [Deprecated attributes](#deprecated-attributes).
 
 <!-- prettier-ignore -->
 

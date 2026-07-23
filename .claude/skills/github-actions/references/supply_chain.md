@@ -33,7 +33,7 @@ Org-level SHA-pin enforcement is the supply-chain control; OCI immutable action 
 |  [02]   | Org SHA enforcement disabled | Flag if repo is GHEC/GHES 3.12+ and enforcement not enabled. |
 |  [03]   | `publish-immutable-action`   | Flag — repo exists but is unusable for external consumers.   |
 
-[CURRENT_POSTURE]: SHA pinning plus Dependabot automated updates.
+[CURRENT_POSTURE]: SHA pinning with Dependabot automated updates.
 
 ## [02]-[OIDC_FEDERATION]
 

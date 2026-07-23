@@ -233,13 +233,13 @@ SELECT pg_try_advisory_lock(hashtext('leader_election'));
 ```
 
 - `hashtext()` for text-to-int8 key derivation — deterministic, collision-resistant for human-readable lock names
-- Transaction-level (`pg_advisory_xact_lock`) preferred — no risk of orphaned locks on crash
+- Transaction-level `pg_advisory_xact_lock` is the default form — auto-release at COMMIT/ROLLBACK leaves no orphaned locks on crash
 - Session-level via `sql.reserve` in Effect-SQL — session-pinned connection required through PgBouncer
 - Two key spaces: 64-bit single-key and 32-bit dual-key — use dual-key for `(entity_type_hash, entity_id_hash)` patterns
 
 Optimization contracts:
 
-- `SKIP LOCKED` queue semantics are ruled by [05]-[BATCH_QUEUE_PATTERNS](functions.md)
+- `SKIP LOCKED` queue semantics — skip-not-retry and the reclaiming sweep — ride the batch-queue owner in `functions.md`
 - Prepared statements: `PREPARE stmt AS ...` + `EXECUTE stmt(...)` — avoids repeated parse/plan after 5th execution (custom plan to generic plan transition)
 - `plan_cache_mode = force_custom_plan` for parameterized queries where generic plan is suboptimal (skewed data distribution)
 - Statistics target: `ALTER TABLE orders ALTER COLUMN status SET STATISTICS 1000` — increase for high-cardinality skewed columns
@@ -271,7 +271,7 @@ enable_partition_pruning = on             # default on; planner eliminates non-m
 
 Partitioning contracts:
 
-- Declarative partitioning (RANGE, LIST, HASH) preferred over inheritance-based
+- Declarative partitioning (RANGE, LIST, HASH) owns every partitioned table
 - Partition key must appear in WHERE clause for pruning to activate — queries without partition key scan all partitions
 - Join-wise partition matching: PG can perform partition-wise joins when both sides share identical partition scheme
 - Partition count: 100-1000 partitions manageable; >10000 degrades planning time

@@ -76,17 +76,17 @@ A massive subject grows under hierarchy — composites, subgraphs, summarizing n
 - Structural edges never imply time.
 - No edge skips an abstraction level — the intermediate owner joins the view or the whole view drops one level.
 
-## [06]-[VISUAL_ENCODING]
+## [06]-[STRUCTURAL_ENCODING]
 
-Every visual channel is spent deliberately; a channel spent twice on one meaning, or once on two meanings, is a defect.
+Every structural channel is spent deliberately; a channel spent twice on one meaning, or once on two meanings, is a defect.
 
-- Shape carries kind, color carries category or status, stroke carries state, edge style carries relation modality, text carries exact semantics — and critical meaning lands twice, text plus one visual form.
-- A `subgraph` asserts membership; a color class asserts a distributed category; both together assert two real memberships, never reinforcement. A node enclosed for visual neatness reads as a member — the enclosure is the claim.
-- Six categorical classes bound a diagram; past six the category moves to labels, groups, or a split. Every color-coded meaning carries a redundant encoding, so the diagram survives grayscale and color-blind readers.
+- Shape carries kind, containment carries membership, edge form carries relation modality, text carries exact semantics — and critical meaning lands twice: text and one structural form.
+- A `subgraph` asserts membership; a node enclosed for visual neatness reads as a member — the enclosure is the claim.
+- Meaning never rides appearance: shape, containment, dash rhythm, and label carry every semantic, so the diagram reads identically under any renderer theme and in grayscale.
 - Node labels are noun phrases with the discriminating word first; edge labels are verb phrases; direct labels beat legends — a legend is a lookup jump forced on every read.
 - Dashed and dotted strokes carry modality — optional, planned, inferred — never primary direction; direction rides the arrowhead.
 - Dense many-to-many interiors defeat node-link reading; the repair is a summarizing node, a split, or a table, never a bigger canvas.
-- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine carries no stronger one; where it does, the stronger lever is spent, and the styling reference names each family's lever.
+- Peers declare contiguously and flows declare in walk order — declaration order is the author's one lever over layout stability wherever the engine carries no stronger one; where it does, the stronger lever is spent, and the config reference names each family's lever.
 - A diagram read by an agent keeps its source fence beside the render, names nodes uniquely, and states every relation as an explicit labeled edge — spatial implication is invisible to a machine reader.
 
 ## [07]-[TYPE_SELECTION]
@@ -143,7 +143,7 @@ Question table refines within the selected cluster:
 |  [29]   | plausible causes of one effect        | `ishikawa-beta`      |
 |  [30]   | wire-format bit contract              | `packet`             |
 
-Quantitative rows — pie, xychart, sankey — hold only for a one-off structural illustration inside a doc that must stay a mermaid fence; a reused, interactive, or precision-critical chart routes to the dataviz lane, while a capability profile stays a committed `radar-beta` fence.
+Quantitative rows — pie, xychart, sankey — hold only for a one-off structural illustration inside a doc that must stay a mermaid fence; a reused, interactive, or precision-critical chart leaves the fence entirely, while a capability profile stays a committed `radar-beta` fence.
 
 [CONTRAST]: classic mismatches, each repaired by payload alignment:
 - lifecycle drawn as flowchart -> `stateDiagram-v2`

@@ -1,6 +1,6 @@
 # [LIST_CRAFT]
 
-List repair is symptom-indexed: each entry names one defect an agent already sees in a bullet run, carries the fixed Detection / Rejected / Accepted / Reason / Reframe card, and shows both list shapes as tiny fences. A mega bullet is a compressed section wearing a hyphen — repair classifies its fragments and routes each to its container; a closed roster whose payload is the enumeration is a registry entry, legal at length, and a `- Field: value` record field answers to the card economy — its defect class is fragment fusion, never length.
+List repair classifies fragments before cutting: a fragment's class, never its length, selects the container it routes to.
 
 ## [01]-[MEGA_BULLET]
 
@@ -198,3 +198,39 @@ Child entries nested under a parent that is not their governing rule are peers m
 
 - Reason: The children are codec and protocol records owning a concern the boundary rule does not govern, so they belong in a registry table; nested under the boundary bullet they read as subordinate details and the parent overstuffs to hold them.
 - Reframe: Keep the boundary law as one line and lift the mis-nested children to the registry table or record set that owns them.
+
+## [09]-[SAME_DECISION_SIBLINGS]
+
+Sibling entries each re-carrying one decision in different words are sediment wearing a list — the merge-inverse of the shredded split: restatements collapse into one denser entry while every distinct clause survives intact.
+
+- Detection: Delete all but the strongest sibling; no law lost proves the run was restatements. An entry carrying a genuinely distinct decision — a boundary, an exception, a failure law — stays a sibling.
+- Rejected:
+    ```markdown rejected
+    - `Compose` folds every row through one dispatch table, never a call-site branch.
+    - Dispatch rides the table; a call-site branch is the deleted form.
+    - Every row resolves through the one table — branching at the call site defeats it.
+    - A row missing its table entry fails loudly at registration, never silently at dispatch.
+    ```
+- Accepted:
+    ```markdown accepted
+    - `Compose` folds every row through one dispatch table, never a call-site branch.
+    - A row missing its table entry fails loudly at registration, never silently at dispatch.
+    ```
+- Reason: Entries one through three re-spell one decision — table-owned dispatch — while the fourth carries a distinct failure law; the merge keeps the strongest spelling with its call-site clause intact and the failure entry whole, so resolution rises as the run shrinks.
+- Reframe: Classify each sibling against the strongest one before deleting: a restatement merges into it, a distinct decision survives as its own entry with its clause intact — never a concatenated mega-entry, never a paragraph flood.
+
+## [10]-[ARTICLE_HOOK]
+
+An entry opening on `the` buries its owner one word deep and reads as a caption, not a law; an index-line hook is the commonest hiding spot, the article trailing a `[NN]-[TOKEN]:` leader that scans as structure.
+
+- Detection: The body after the marker colon opens on `The`/`the`. Lowercasing or deleting the article clears nothing — the subject is still not leading; the cure is a voice recast, not a surface edit.
+- Rejected:
+    ```markdown rejected
+    - [02]-[SOLVE_VOCABULARY]: the solve, eigen, norm, and gauge route algebra every receipt discriminates on.
+    ```
+- Accepted:
+    ```markdown accepted
+    - [02]-[SOLVE_VOCABULARY]: `Solve`, `eigen`, `norm`, and `gauge` route the algebra every receipt discriminates on.
+    ```
+- Reason: The rejected hook fronts the article and buries its four owners behind it; the recast promotes the route families to the subject under the owning verb `route`, so the reader meets the owner first and the hook states law in the same span.
+- Reframe: Recast the entry so its owning subject leads — a code-spanned owner, name, quantifier, possessive, demonstrative, or bare noun — under an owning verb; deleting or lowercasing the article and leaving the subject buried is the non-cure.

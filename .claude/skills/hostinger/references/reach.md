@@ -13,7 +13,7 @@ curl -X GET "https://developers.hostinger.com/api/reach/v1/profiles/{profileUuid
 
 ## [02]-[CONTACTS]
 
-A contact takes `email` (required) plus nullable `name`, `surname`, `phone`, and `note`. Two create paths differ by scope: `POST /contacts` is account-wide, and `POST /profiles/{profileUuid}/contacts` binds the contact to one sender profile — the scoped form when a contact must belong to a single profile. Under double opt-in a new contact lands `pending` and receives no campaigns until it confirms; deletion is permanent.
+A contact takes `email` (required) with nullable `name`, `surname`, `phone`, and `note`. Two create paths differ by scope: `POST /contacts` is account-wide, and `POST /profiles/{profileUuid}/contacts` binds the contact to one sender profile — the scoped form when a contact must belong to a single profile. Under double opt-in a new contact lands `pending` and receives no campaigns until it confirms; deletion is permanent.
 
 ```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/reach/v1/contacts" \

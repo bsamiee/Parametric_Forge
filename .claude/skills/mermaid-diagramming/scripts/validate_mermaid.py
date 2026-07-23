@@ -48,7 +48,6 @@ class Check(StrEnum):
     COLLECT = "collect"
     CONTRACT = "contract"
     EXPORT = "export"
-    FRONTMATTER = "frontmatter"
     LEGIBILITY = "legibility"
     LOGIC = "logic"
     PROOF = "proof"
@@ -82,10 +81,7 @@ RENDER_TIMEOUT = 120
 SUFFIXES = frozenset({".md", ".mmd"})
 
 ACCESS = re.compile(r"^\s*(accTitle|accDescr)(?:\s*:|\s*\{)")
-BACKING_FLAT = re.compile(r"(edgeLabelBackground|relationLabelBackground)\s*:\s*[\"']?#282A36\b", re.IGNORECASE)
 BLOCKQUOTE = re.compile(r"^\s*(?:>\s?)+")
-FONT_BARE = re.compile(r"fontFamily\s*:\s*[\"']?monospace[\"']?\s*$", re.MULTILINE)
-FONT_HYPHEN = re.compile(r"fontFamily\s*:\s*[\"']?[^\"'\n]*\w-\w")
 CLASS_ASSIGN = re.compile(r"^\s*class\s+([\w,\s.-]+?)\s+([\w,-]+)\s*;?\s*$")
 CLASS_DEF = re.compile(r"^\s*classDef\s+([\w,-]+)\s+(.+)$")
 DEPRECATED_INIT = re.compile(r"%%\{\s*init\s*:")
@@ -99,28 +95,11 @@ FC_SHAPE = re.compile(
 FC_SKIP = re.compile(r"^\s*(subgraph\b|end\b|direction\b|classDef\b|linkStyle\b|style\b|click\b|class\b|accTitle|accDescr)")
 FC_STR = re.compile(r'("[^"]*"|`[^`]*`)')
 FENCE_OPEN = re.compile(r"^((?:\s*>)*\s*)(`{3,}|~{3,})\s*mermaid\b")
-HEX_COLOR = re.compile(r"#[0-9A-Fa-f]{8}\b|#[0-9A-Fa-f]{6}\b")
 IDENT = re.compile(r"[A-Za-z0-9_]+")
 LINK_STYLE = re.compile(r"^\s*linkStyle\s+([0-9,\s]+|default)\s+(.+)$")
 SQ_ARROW = re.compile(r"^\s*([\w-]*\w)\s*(?:<<--?>>|--?(?:>>|>|\)|x))\s*[+-]?\s*([\w-]*\w)\s*:")
 SQ_PARTICIPANT = re.compile(r"^(?:create\s+)?(?:participant|actor)\s+([\w-]+)(?:@\{.*\})?(?:\s+as\s+.+)?\s*$")
 ST_TRANSITION = re.compile(r"^\s*(\[\*\]|[\w.]+)\s*-->\s*(\[\*\]|[\w.]+)")
-ACCENT_OPAQUE = re.compile(r"fill:#(?:50FA7B|8BE9FD|FFB86C|FFD866|FF5555|BD93F9|FF79C6)(?![0-9A-Fa-f]{2})", re.IGNORECASE)
-PADDING_22 = re.compile(r"padding:\s*22\b")
-STATE_START_STALE = re.compile(r"state-start\{r:(?!3\.4px)")
-TERMINAL_STALE = re.compile(r"scale\(\.64\)")
-YELLOW_DARK_LINE = re.compile(r"fill:#FFD866[0-9A-Fa-f]{0,2}\b(?=[^\n]*color:#282A36)", re.IGNORECASE)
-YELLOW_DARK_TAG = re.compile(r"tagLabelBackground\s*:\s*[\"']?#FFD866", re.IGNORECASE)
-YELLOW_DARK_TAG_INK = re.compile(r"tagLabelColor\s*:\s*[\"']?#282A36", re.IGNORECASE)
-YELLOW_DARK_NOTE = re.compile(r"noteBkgColor\s*:\s*[\"']?#FFD866", re.IGNORECASE)
-YELLOW_DARK_NOTE_INK = re.compile(r"noteTextColor\s*:\s*[\"']?#282A36", re.IGNORECASE)
-CLUSTER_TITLE = re.compile(r"cluster-label[^{}]*\{(?![^{}]*font-size:13\.5px)[^{}]*\}")
-SECTION_TITLE = re.compile(r"\.sectionTitle\{(?![^{}]*font-size:13\.5px)[^{}]*\}")
-MARKER_CIRCLE_STALE = re.compile(r"\.marker circle\{(?![^{}]*scale\(\.48\))[^{}]*transform[^{}]*\}")
-THEME_BASE = re.compile(r"^\s*theme\s*:\s*base\s*$", re.MULTILINE)
-LOOK_CLASSIC = re.compile(r"^\s*look\s*:\s*classic\s*$", re.MULTILINE)
-GRADIENT_KILL = re.compile(r"^\s*useGradient\s*:\s*false\s*$", re.MULTILINE)
-SHADOW_KILL = re.compile(r"^\s*dropShadow\s*:", re.MULTILINE)
 
 # Refusal probe on the workspace 11.16.0 binary: block/mindmap/sankey/venn refuse accTitle/accDescr at parse, kanban/ishikawa render the
 # directives as content, timeline/eventmodeling accept them inert with no aria output — none earns an acc-missing warn.
@@ -138,59 +117,9 @@ ACC_EXEMPT = frozenset({
 })
 # Timeline and eventmodeling parse the directives yet emit no aria output, so a fence carrying them claims accessibility it never delivers.
 ACC_INERT = frozenset({"eventmodeling", "timeline"})
-CANVAS = "#282A36"
-# A semantic rail is chosen by the relation an edge encodes — its label — never the names of the nodes it joins; an invisible ~~~ rank pin
-# is layout furniture and never a semantic edge. Word-boundary prefixes keep `default` off the fault vocabulary.
-FAULT_LABEL = re.compile(r"\b(fault|error|reject)", re.IGNORECASE)
-RAIL_LABEL = re.compile(r"\b(fault|error|reject|trace|data|wire|external|receipt)", re.IGNORECASE)
 TRANSFORM_BOX_RULE = re.compile(r"[^{}]+\{[^{}]*transform-box:fill-box[^{}]*\}")
-CANON = frozenset({
-    "primary",
-    "boundary",
-    "success",
-    "error",
-    "external",
-    "data",
-    "payload",
-    "recessed",
-    "annotation",
-    "edgeSuccess",
-    "edgeError",
-    "edgeExternal",
-    "edgeData",
-    "edgeControl",
-    "edgeTrace",
-})
-PALETTE = frozenset({
-    "#036A96",
-    "#14710A",
-    "#1F1F1F",
-    "#21222C",
-    "#282A36",
-    "#44475A",
-    "#50FA7B",
-    "#6272A4",
-    "#644AC9",
-    "#6C664B",
-    "#846E15",
-    "#8BE9FD",
-    "#A3144D",
-    "#A34D14",
-    "#BD93F9",
-    "#CB3A2A",
-    "#CFCFDE",
-    "#D6BCFA",
-    "#F8F8F2",
-    "#FF5555",
-    "#FF79C6",
-    "#FFB86C",
-    "#FFD866",
-    "#FFFBEB",
-})
-ENGINE_HOOKS = frozenset({"#444444"})
-FILL_ALPHAS = frozenset({"", "1A", "26", "33", "4D", "54", "66", "80", "BF"})
 RENDER_CONFIG = {
-    "theme": "base",
+    "theme": "default",
     # Root htmlLabels false renders flowchart/state/class/ER labels as native SVG text (probe-verified on 11.16.0, <br/> line breaks
     # included), so the one canonical SVG rasterizes browserlessly with no label loss; families on their own label path ignore the key.
     "htmlLabels": False,
@@ -230,8 +159,7 @@ def _browser_path() -> str | None:
 
 PUPPETEER_CONFIG = {
     # Shell headless mode plus a bare non-bundle binary keeps every render crash silent (no ReportCrash dialog); breakpad off drops the crash
-    # handler entirely. Throwaway-profile render never touches the macOS keychain: mock-keychain and the basic password store kill the
-    # "Chrome Safe Storage" prompt.
+    # handler. Throwaway-profile renders never touch the macOS keychain: mock-keychain and the basic password store kill the Chrome Safe Storage prompt.
     "headless": "shell",
     # FontationsFontBackend off routes web-font shaping back through CoreText, shedding the fontations-attributed share of the benign
     # macOS-26 teardown traps (SIGTRAP in Chromium's Rust region after a successful render; RustyPng has no runtime switch since M142).
@@ -248,46 +176,6 @@ PUPPETEER_CONFIG = {
 # A stale session env can still carry an .app-bundle pin that puppeteer honors over its cache; the render subprocess drops it so the config
 # executablePath (or a clean renderer error) is the only launch route.
 RENDER_ENV = {k: v for k, v in os.environ.items() if not (k == "PUPPETEER_EXECUTABLE_PATH" and ".app/" in v)}
-THEMED = frozenset({
-    "architecture-beta",
-    "block",
-    "block-beta",
-    "kanban",
-    "packet",
-    "packet-beta",
-    "treeView-beta",
-    "classDiagram",
-    "cynefin-beta",
-    "erDiagram",
-    "eventmodeling",
-    "flowchart",
-    "gantt",
-    "gitGraph",
-    "graph",
-    "ishikawa-beta",
-    "journey",
-    "pie",
-    "quadrantChart",
-    "radar-beta",
-    "railroad-abnf-beta",
-    "railroad-beta",
-    "railroad-ebnf-beta",
-    "railroad-peg-beta",
-    "requirementDiagram",
-    "sankey",
-    "sankey-beta",
-    "sequenceDiagram",
-    "stateDiagram",
-    "stateDiagram-v2",
-    "swimlane-beta",
-    "timeline",
-    "treemap",
-    "treemap-beta",
-    "venn-beta",
-    "wardley-beta",
-    "xychart",
-    "xychart-beta",
-})
 
 
 # --- [MODELS] ---------------------------------------------------------------------------
@@ -521,129 +409,26 @@ def parse(fence: Fence) -> tuple[Diagram | None, tuple[Row, ...]]:
 def contract(diagram: Diagram) -> tuple[Row, ...]:
     body = diagram.fence.body
     access = [line.strip().split(":", 1)[0].split("{", 1)[0].strip() for line in body.splitlines() if ACCESS.match(line)]
-    off_palette = sorted({
-        value
-        for value in (hex_value.upper() for hex_value in HEX_COLOR.findall(body))
-        if (value[:7] not in PALETTE or value[7:] not in FILL_ALPHAS) and value not in ENGINE_HOOKS
-    })
     defs = {definition.name: definition for definition in diagram.defs}
     used = {use.name for use in diagram.uses}
-    rows = [row(diagram.fence, Check.FRONTMATTER, "warn", "no-frontmatter")] if not body.startswith("---") else []
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", "deprecated-init-directive")] if DEPRECATED_INIT.search(body) else []
+    rows = [row(diagram.fence, Check.CONTRACT, "warn", "deprecated-init-directive")] if DEPRECATED_INIT.search(body) else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-order")] if access and access[:2] != ["accTitle", "accDescr"] else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-pair-incomplete")] if ("accTitle" in body) != ("accDescr" in body) else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-missing")] if not access and diagram.header and diagram.header not in ACC_EXEMPT else []
     rows += [row(diagram.fence, Check.CONTRACT, "warn", "acc-inert")] if access and diagram.header in ACC_INERT else []
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", f"off-palette:{value}") for value in off_palette]
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:theme-base")]
-        if diagram.header in THEMED and not THEME_BASE.search(diagram.frontmatter)
-        else []
-    )
-    rows += (
-        [
-            row(diagram.fence, Check.CONTRACT, "warn", f"floor:{name}")
-            for name, pattern in (("look-classic", LOOK_CLASSIC), ("use-gradient", GRADIENT_KILL), ("drop-shadow", SHADOW_KILL))
-            if not pattern.search(diagram.frontmatter)
-        ]
-        if diagram.header in THEMED
-        else []
-    )
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:fontFamily")]
-        if diagram.header in THEMED and "fontFamily" not in diagram.frontmatter
-        else []
-    )
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", "floor:fontFamily-stack")] if FONT_BARE.search(diagram.frontmatter) else []
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", "floor:fontFamily-hyphen")] if FONT_HYPHEN.search(diagram.frontmatter) else []
-    rows += [
-        row(diagram.fence, Check.CONTRACT, "warn", f"floor:label-backing:{name}") for name in sorted(set(BACKING_FLAT.findall(diagram.frontmatter)))
-    ]
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:clusterBkg")]
-        if diagram.family == Family.FLOWCHART
-        and any(c.startswith("subgraph") for c in diagram.containers)
-        and "clusterBkg" not in diagram.frontmatter
-        else []
-    )
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "flowchart-floor:canonical-class-count")]
-        if diagram.family == Family.FLOWCHART and len(set(defs) & CANON) < 3
-        else []
-    )
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", f"class:non-canonical:{name}") for name in sorted(set(defs) - CANON)]
     rows += [row(diagram.fence, Check.CONTRACT, "warn", f"class:unused:{name}") for name in sorted(set(defs) - used)]
-    rows += [
-        row(diagram.fence, Check.CONTRACT, "warn", f"class:missing-color:{name}")
-        for name, definition in sorted(defs.items())
-        if "color:" not in definition.style
-    ]
-    rows += [
-        row(diagram.fence, Check.CONTRACT, "warn", f"class:accent-fill-opaque:{name}")
-        for name, definition in sorted(defs.items())
-        if ACCENT_OPAQUE.search(definition.style)
-    ]
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", "floor:padding-25")] if PADDING_22.search(diagram.frontmatter) else []
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:container-title")]
-        if CLUSTER_TITLE.search(diagram.frontmatter) or SECTION_TITLE.search(diagram.frontmatter)
-        else []
-    )
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:terminal-circle")]
-        if STATE_START_STALE.search(diagram.frontmatter) or TERMINAL_STALE.search(diagram.frontmatter)
-        else []
-    )
-    rows += (
-        [row(diagram.fence, Check.CONTRACT, "warn", "floor:marker-circle-scale")]
-        if diagram.family == Family.FLOWCHART and MARKER_CIRCLE_STALE.search(diagram.frontmatter)
-        else []
-    )
-    yellow_dark = (
-        any(YELLOW_DARK_LINE.search(line) for line in diagram.lines)
-        or (YELLOW_DARK_TAG.search(diagram.frontmatter) and YELLOW_DARK_TAG_INK.search(diagram.frontmatter))
-        or (YELLOW_DARK_NOTE.search(diagram.frontmatter) and YELLOW_DARK_NOTE_INK.search(diagram.frontmatter))
-    )
-    rows += [row(diagram.fence, Check.CONTRACT, "warn", "floor:yellow-dark-ink")] if yellow_dark else []
     return tuple(rows)
 
 
 def style_logic(diagram: Diagram) -> tuple[Row, ...]:
+    # Coherence over styling a fence chooses to carry — never a demand that styling exist.
     count = len(diagram.edges)
-    rows = [
+    return tuple(
         row(diagram.fence, Check.LOGIC, "fail", f"linkStyle-out-of-range:{index}")
         for link in diagram.links
         for index in link.indices
         if index >= count
-    ]
-    class_styles = {definition.name: definition.style for definition in diagram.defs}
-    edge_classes = {use.target: class_styles.get(use.name, "") for use in diagram.uses}
-    styled = {index for link in diagram.links for index in link.indices} | {edge.index for edge in diagram.edges if edge.ident in edge_classes}
-    if diagram.family == Family.FLOWCHART:
-        rows += [
-            row(diagram.fence, Check.CONTRACT, "warn", f"edge:semantic-rail:{edge.index}")
-            for edge in diagram.edges
-            if "~" not in edge.token and RAIL_LABEL.search(edge.label) and edge.index not in styled
-        ]
-        fault_edges = [edge for edge in diagram.edges if "~" not in edge.token and FAULT_LABEL.search(edge.label)]
-        rows += [
-            row(diagram.fence, Check.CONTRACT, "warn", f"edge:fault-not-red:{edge.index}")
-            for edge in fault_edges
-            for link in diagram.links
-            if edge.index in link.indices and "#FF5555" not in link.style.upper()
-        ]
-        rows += [
-            row(diagram.fence, Check.CONTRACT, "warn", f"edge:fault-not-red:{edge.index}")
-            for edge in fault_edges
-            if edge.ident in edge_classes and "#FF5555" not in edge_classes[edge.ident].upper()
-        ]
-    if diagram.family == Family.SEQUENCE:
-        grouped = any(line.strip().startswith(("rect ", "box ")) for line in diagram.lines)
-        guarded = any(line.strip().startswith(("alt ", "par ", "critical", "break ")) for line in diagram.lines)
-        rows += [row(diagram.fence, Check.CONTRACT, "warn", "sequence-floor:region-without-box-or-rect")] if guarded and not grouped else []
-    if diagram.family == Family.C4 and "UpdateRelStyle" not in diagram.fence.body and "UpdateElementStyle" not in diagram.fence.body:
-        rows += [row(diagram.fence, Check.CONTRACT, "warn", "c4-floor:update-style")]
-    return tuple(rows)
+    )
 
 
 def _flowchart_logic(diagram: Diagram) -> tuple[Row, ...]:
@@ -878,7 +663,7 @@ def _group_box(group: Element, tx: float, ty: float) -> tuple[float, float, floa
 
 
 def _edge_polyline(el: Element, tx: float, ty: float) -> list[tuple[float, float]] | None:
-    # The exact ELK/dagre data-points routing waypoints when present; else the sampled path, curve smoothing included.
+    # Exact ELK/dagre data-points routing waypoints when present; else the sampled path, curve smoothing included.
     if raw := el.get("data-points"):
         with suppress(ValueError, KeyError, TypeError):
             waypoints = json.loads(base64.b64decode(raw))
@@ -987,18 +772,6 @@ def _slug(diagram: Diagram) -> str:
     return f"{stem}-{diagram.fence.line}"
 
 
-def _canvased(svg: str) -> str:
-    # The renderer bakes background-color: white onto the SVG root; the Dracula canvas replaces it so the artifact self-carries on any host.
-    head, sep, tail = svg.partition(">")
-    if "background-color" in head:
-        head = re.sub(r"background-color:\s*[^;\"]+", f"background-color: {CANVAS}", head)
-    elif 'style="' in head:
-        head = head.replace('style="', f'style="background-color: {CANVAS}; ', 1)
-    else:
-        head = head.replace("<svg", f'<svg style="background-color: {CANVAS};"', 1)
-    return head + sep + tail
-
-
 def proof_png(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, svg_path: Path, workdir: Path, proof_dir: Path) -> Row:
     target = proof_dir / f"{_slug(diagram)}.png"
     svg = svg_path.read_text(encoding="utf-8", errors="ignore")
@@ -1007,10 +780,10 @@ def proof_png(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, svg_p
         # resvg applies CSS transform without transform-box support, scaling from the canvas origin and casting label chips adrift, so
         # every transform-box:fill-box rule drops from the raster copy — geometry stays true, only the micro-scale garnish is shed.
         flattened = workdir / f"{_slug(diagram)}-raster.svg"
-        flattened.write_text(_canvased(TRANSFORM_BOX_RULE.sub("", svg)), encoding="utf-8")
+        flattened.write_text(TRANSFORM_BOX_RULE.sub("", svg), encoding="utf-8")
         with suppress(subprocess.TimeoutExpired, OSError):
             raster = subprocess.run(
-                [resvg, "--zoom", "2", "--background", CANVAS, str(flattened), str(target)],
+                [resvg, "--zoom", "2", "--background", "white", str(flattened), str(target)],
                 capture_output=True,
                 text=True,
                 timeout=RENDER_TIMEOUT,
@@ -1025,7 +798,7 @@ def proof_png(prefix: tuple[str, ...], cwd: Path | None, diagram: Diagram, svg_p
     browser.write_bytes(ENCODER.encode(PUPPETEER_CONFIG))
     try:
         proc = subprocess.run(
-            [*prefix, "-q", "-i", str(src), "-o", str(target), "-c", str(cfg), "-p", str(browser), "-b", CANVAS, "-s", "2"],
+            [*prefix, "-q", "-i", str(src), "-o", str(target), "-c", str(cfg), "-p", str(browser), "-s", "2"],
             cwd=cwd,
             env=RENDER_ENV,
             capture_output=True,
@@ -1137,7 +910,7 @@ def export_svg(source: Path, diagram: Diagram, export_dir: Path) -> Row:
     if root_id := next(iter(re.findall(r'<svg[^>]*?\bid="([^"]+)"', svg)), None):
         svg = svg.replace(root_id, slug)
     target = export_dir / f"{slug}.svg"
-    target.write_text(_canvased(svg), encoding="utf-8")
+    target.write_text(svg, encoding="utf-8")
     return row(diagram.fence, Check.EXPORT, "ok", f"exported:{target}")
 
 

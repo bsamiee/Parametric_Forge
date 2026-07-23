@@ -38,7 +38,7 @@ Directory scopes replace `doppler.yaml`: `scopes apply` runs `doppler configure 
 
 ## [05]-[TUNNELS]
 
-One `vpsTunnels.maghz` row in `ssh.nix` projects the interactive SSH host, the transport-only tunnel host, the launchd/systemd tunnel agent, and the loopback forwards. The forwards carry named services, each with a probe class (`pg` via `pg_isready`, `http` via a GET path, or bind-only `none` that is never service-probed); the row owns the service-to-port map. The `postgres` forward (probe `pg`) is load-bearing beyond loopback convenience: the Codex Postgres MCP is `required=true`, so its startup depends on the tunnel reaching `state=up`. A down forward breaks the MCP gate, not just the port.
+One `vpsTunnels.maghz` row in `ssh.nix` projects the interactive SSH host, transport-only tunnel host, launchd or systemd tunnel agent, and loopback forwards. Forwards carry named services and their probe class: `pg` uses `pg_isready`, `http` uses a GET path, and bind-only `none` skips service probing. One row owns the complete service-to-port map.
 
 ## [06]-[GITHUB_AS_CODE]
 

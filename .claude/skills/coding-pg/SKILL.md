@@ -1,23 +1,24 @@
 ---
 name: coding-pg
 description: >-
-    Use for PostgreSQL 18 SQL, migrations, DDL, functions, RLS policies,
-    indexes, query plans, extensions, and SQL embedded in TypeScript via
-    @effect/sql-pg. Enforces set-algebraic queries, schema-level invariants,
-    current PostgreSQL features, extension-first design, tenant security,
-    observability, and migration safety.
+    Owns PostgreSQL work: schema and DDL, migrations and lock levels, set-algebraic
+    queries, functions and PL/pgSQL, indexes, RLS and tenant isolation, extensions (pgvector,
+    PostGIS, TimescaleDB, pg_partman, pg_cron, pg_duckdb), logical replication and CDC, server
+    tuning (vacuum, WAL, parallel query, JIT), EXPLAIN plans, wait-event and lock-contention
+    diagnosis, and SQL embedded in TypeScript through @effect/sql-pg. Use when authoring,
+    reviewing, migrating, or debugging any .sql file or SQL string and "lint my SQL".
+    Provisioning and hosting a database instance belongs to pulumi.
 ---
 
 # [CODING_PG]
 
 All SQL follows these governing principles:
-
 - [POLYMORPHIC] — one function/query per concern, generic over specific via parameter dispatch and dynamic SQL
 - [SET_ALGEBRAIC] — express operations as set transformations; zero row-at-a-time iteration
 - [STRONGLY_TYPED] — domain types, composite types, range types; zero untyped `text` columns for structured data
 - [PROGRAMMATIC] — variable-driven predicates, parameterized DDL, zero stringly-typed identifiers
 - [DECLARATIVE_FIRST] — constraints, generated columns, and RLS policies enforce invariants at the schema level; application logic is last resort
-- [SOURCE_CURRENT] — every example states PostgreSQL 18 semantics
+- [SOURCE_CURRENT] — every example uses PostgreSQL semantics
 
 ## [01]-[ROUTING]
 
@@ -119,7 +120,7 @@ All SQL follows these governing principles:
 |  [15]   | NONCOMPOSABLE_CAGG            | `PERCENTILE_CONT` in hierarchical CAGG; non-composable across tiers            |
 |  [16]   | LEGACY_UUID                   | Non-ordered UUID generation on new ordered PKs where `uuidv7()` fits better    |
 |  [17]   | STALE_HEALTH_VIEW             | Materialized views for real-time health monitoring instead of inline queries   |
-|  [18]   | EXCLUDE_OVER_WITHOUT_OVERLAPS | EXCLUDE instead of WITHOUT OVERLAPS PK/UNIQUE for temporal overlap in PG 18    |
+|  [18]   | EXCLUDE_OVER_WITHOUT_OVERLAPS | EXCLUDE instead of WITHOUT OVERLAPS PK/UNIQUE for temporal overlap             |
 |  [19]   | RAW_UUID_ID                   | Raw `S.UUID` for PK/FK instead of `S.UUID.pipe(S.brand('EntityId'))`           |
 |  [20]   | BARE_FOR_UPDATE               | `FOR UPDATE` without `SKIP LOCKED` on batch/queue processing patterns          |
 |  [21]   | NULL_UNSAFE_ANTIJOIN          | `NOT IN (SELECT ...)` instead of `NOT EXISTS`; NULL in subquery yields UNKNOWN |

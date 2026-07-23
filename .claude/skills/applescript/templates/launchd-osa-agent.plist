@@ -12,8 +12,7 @@ Replace  : LABEL, the ProgramArguments vector, the trigger region, the log paths
 <dict>
 
   <!-- Label is the job's identity across bootstrap, kickstart, and unload, and it matches the
-       file name. TCC charges every Apple event this job sends against the signed executable
-       launchd starts here, never against the script file that executable reads. -->
+       file name. -->
   <key>Label</key>
   <string>LABEL</string>
 
@@ -80,7 +79,8 @@ Replace  : LABEL, the ProgramArguments vector, the trigger region, the log paths
   <string>WORKING_DIRECTORY</string>
 
   <!-- A GUI session job reaches window-server and per-user automation surfaces a system daemon
-       never sees; the bundle identifier row binds the job to its owning app's Login Items entry. -->
+       never sees. Login Items honors the bundle row only when the argv[0] executable carries the
+       named bundle's Team ID — an Apple-signed interpreter there breaks the association. -->
   <key>LimitLoadToSessionType</key>
   <string>Aqua</string>
   <key>AssociatedBundleIdentifiers</key>

@@ -16,7 +16,7 @@ Production testing for Bash `5.2+`/5.3: bats-core suites, subshell isolation, PA
 
 ## [01]-[BATS_CORE_FRAMEWORK]
 
-bats-core `1.13+`: `setup_file`/`teardown_file` (suite fixtures), `bats_load_library` (dependency resolution), `bats::on_failure` (`v1.12+` failure-only diagnostics), test tagging via `# bats test_tags=` with `--filter-tags` (`v1.8+`), `--negative-filter` (`v1.13+`), `--abort` (`v1.13+` fail-fast — halts entire suite on first failure), JUnit/TAP13 formatters, `--jobs` parallel execution. Each `@test` runs in a subshell — variable mutations isolated by default. `v1.13` fix: `run` now unsets `output`, `stderr`, `lines`, `stderr_lines` at invocation start — eliminates variable crosstalk between successive `run` calls within a test.
+bats-core `1.13+`: `setup_file`/`teardown_file` (suite fixtures), `bats_load_library` (dependency resolution), `bats::on_failure` (`v1.12+` failure-only diagnostics), test tagging via `# bats test_tags=` with `--filter-tags` (`v1.8+`), `--negative-filter` (`v1.13+`), `--abort` (`v1.13+` suite-halting fail-fast), JUnit/TAP13 formatters, `--jobs` parallel execution. Each `@test` runs in a subshell — variable mutations isolated by default. `v1.13`: `run` unsets `output`, `stderr`, `lines`, `stderr_lines` at invocation start — no crosstalk between successive `run` calls.
 
 ```bash conceptual
 #!/usr/bin/env bats

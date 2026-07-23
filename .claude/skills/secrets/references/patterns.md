@@ -1,6 +1,6 @@
 # [PATTERNS]
 
-Consumption shapes for secret material that is not process-env shaped, plus the plan envelope that bounds design.
+Consumption shapes for secret material that is not process-env shaped, and the plan envelope that bounds design.
 
 ## [01]-[TEMPLATES]
 
@@ -47,18 +47,4 @@ doppler run --project <token-project> --config <token-config> --fallback <snapsh
 
 ## [05]-[PLAN_GATES]
 
-Developer-plan quotas are the operating envelope: 10 projects, 4 environments per project, 10 configs per environment, 5 config syncs, 5 webhooks, 50 service tokens, 3-day activity logs. Plan-gated features stay out of estate design:
-
-| [INDEX] | [FEATURE]                              | [PLAN]     |
-| :-----: | :------------------------------------- | :--------- |
-|  [01]   | `doppler run --watch` process restarts | Team       |
-|  [02]   | Automatic secret rotation              | Team       |
-|  [03]   | Service accounts and OIDC identities   | Team       |
-|  [04]   | Config inheritance                     | Team       |
-|  [05]   | Trusted IPs                            | Team       |
-|  [06]   | Change Requests                        | Team       |
-|  [07]   | Change Request policies                | Enterprise |
-|  [08]   | RBAC and custom roles                  | Team       |
-|  [09]   | Custom permissions                     | Enterprise |
-|  [10]   | Integration access scoping             | Team       |
-|  [11]   | Dynamic secrets                        | Enterprise |
+`PLAN_GATES` rejects every capability the active subscription withholds. Live entitlement proof owns each admission. `RBAC` and `Integration Access Scoping` bind Team and Enterprise; `Custom Roles` binds Enterprise or the Team add-on.

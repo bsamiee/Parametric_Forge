@@ -108,23 +108,6 @@
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) launcherRows;
-  # Maghz postgres DSN via MAGHZ_MCP__DATABASE_URI, launchd GUI replay fallback; loud exit 78 when unresolved so required-server failure is visible.
-  maghzPostgres = pkgs.writeShellApplication {
-    name = "forge-maghz-postgres-mcp";
-    runtimeInputs = [pkgs.uv];
-    text = ''
-      if [ -z "''${MAGHZ_MCP__DATABASE_URI:-}" ] && [ -x /bin/launchctl ]; then
-        MAGHZ_MCP__DATABASE_URI="$(/bin/launchctl getenv MAGHZ_MCP__DATABASE_URI || true)"
-        export MAGHZ_MCP__DATABASE_URI
-      fi
-      if [ -z "''${MAGHZ_MCP__DATABASE_URI:-}" ]; then
-        echo "postgres-mcp: MAGHZ_MCP__DATABASE_URI is unset; replay Forge GUI secrets (gui-op-secrets) and confirm the maghz tunnel" >&2
-        exit 78
-      fi
-      export DATABASE_URI="$MAGHZ_MCP__DATABASE_URI" UV_PYTHON_DOWNLOADS=automatic
-      ${superviseStdio ''uvx --python 3.13 postgres-mcp --access-mode=restricted''}
-    '';
-  };
   # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. Lifecycle gate: the
   # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool (start Rhino, then reconnect). The
   # shared supervised lane ties the router subtree to client liveness through the stdin relay, so a dead, killed, or reconnecting client tears the
@@ -250,9 +233,6 @@
       + (if (.codex.bearerEnvVar // null) == null then {}
          else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
          end);
-    # Mirror of the projection client-idle derivation so a projected `timeout` reads as clean, not false drift.
-    def claude_idle_timeout:
-      (.codex.toolTimeoutSec * 1000) as $ms | if $ms > 1800000 then $ms else null end;
     ($fleet[0]) as $rows
     | ($claude[0] // {}) as $cl
     | ($codex[0] // {}) as $cx
@@ -265,7 +245,7 @@
              elif $cl[$row.name] == null then ["claude\t\($row.name): MISSING in claude"]
              elif $lvl == "presence" then []
              else ($cl[$row.name]) as $c
-              | ((if $row.transport == "stdio" then
+              | (if $row.transport == "stdio" then
                   (if ($c.type // "stdio") != "stdio" then ["claude\t\($row.name): claude type != stdio"] else [] end)
                   + (if ($c.command // "") != $row.command then ["claude\t\($row.name): claude command \($c.command // "absent") != \($row.command)"] else [] end)
                   + (if ($c.args // []) != ($row.args // []) then ["claude\t\($row.name): claude args \($c.args // [])"] else [] end)
@@ -275,8 +255,6 @@
                   + (if ($c.url // "") != $row.url then ["claude\t\($row.name): claude url \($c.url // "absent")"] else [] end)
                   + (if ($c.headers // {}) != ($row | claude_headers) then ["claude\t\($row.name): claude header inheritance contract drift"] else [] end)
                 end)
-                + (($row | claude_idle_timeout) as $want
-                   | if ($c.timeout // null) != $want then ["claude\t\($row.name): claude timeout \($c.timeout // "absent") != \($want // "absent")"] else [] end))
              end)
             + (if ($who | index("codex")) | not then []
                elif $cx[$row.name] == null then ["codex\t\($row.name): MISSING in codex"]
@@ -349,11 +327,6 @@
       + (if (.codex.bearerEnvVar // null) == null then {}
          else {Authorization: ("Bearer " + (.codex.bearerEnvVar | env_ref))}
          end);
-    # Client idle ceiling: Claude Code aborts a silent MCP call at 1800000ms unless the row carries `timeout` (ms). A row whose tool budget outlasts
-    # that default projects toolTimeoutSec as milliseconds so the client waits the full budget; the supervisor reaps the subtree once the client
-    # generation ends (EOF or client death), and workflow-lane wrappers stall above both. Short-call rows stay under the default, gain no field.
-    def claude_idle_timeout:
-      (.codex.toolTimeoutSec * 1000) as $ms | if $ms > 1800000 then $ms else null end;
     {
       mcpServers: ([
         .[]
@@ -362,12 +335,11 @@
         | {
             key: .name,
             value: (
-              (if .transport == "stdio" then
+              if .transport == "stdio" then
                 {type: "stdio", command, args: (.args // []), env: claude_env}
               else
                 {type: "http", url, headers: claude_headers}
               end)
-              + (claude_idle_timeout as $t | if $t == null then {} else {timeout: $t} end))
           }
       ] | from_entries),
       managed_names: [.[] | select((.clients // ["claude", "codex"]) | index("claude")) | .name]
@@ -1081,7 +1053,7 @@
   '';
 in {
   config = {
-    home.packages = launchers ++ [forgeSuperviseStdio maghzPostgres rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
+    home.packages = launchers ++ [forgeSuperviseStdio rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
 
     # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
     home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''

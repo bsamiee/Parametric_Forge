@@ -192,20 +192,6 @@ in [
       toolTimeoutSec = 600;
     };
   }
-  {
-    name = "postgres";
-    transport = "stdio";
-    command = "${profileBin}/forge-maghz-postgres-mcp";
-    args = [];
-    envKeys = ["MAGHZ_MCP__DATABASE_URI"];
-    claudeEnvNames = [];
-    probe = "network";
-    codex = {
-      required = true;
-      startupTimeoutSec = 30;
-      toolTimeoutSec = 180;
-    };
-  }
   rec {
     name = "google-workspace";
     transport = "stdio";
@@ -379,32 +365,6 @@ in [
       required = false;
       startupTimeoutSec = 20;
       toolTimeoutSec = 180;
-    };
-  }
-  rec {
-    # Codex itself as a Claude-side MCP tool: `codex`/`codex-reply` run gpt-5.6 sessions natively — interactive and light dispatch only; heavy
-    # work lanes ride the per-lane `codex exec` script (codex-lane.sh in each repo's codex skill). Claude-only: codex never registers itself.
-    # The binary installs via forge-install-codex (dev-tools.nix) into ~/.local/bin, outside profileBin.
-    name = "codex";
-    transport = "stdio";
-    inherit
-      (mkSupervised {
-        cmd = "${homeDir}/.local/bin/codex";
-        args = ["mcp-server"];
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
-    envKeys = [];
-    probe = "stdio";
-    clients = ["claude"];
-    codex = {
-      required = false;
-      startupTimeoutSec = 30;
-      # The claude projection derives this row's client idle `timeout` (ms, omitted under 1800 s → Claude's native default) and the supervisor
-      # idle lease (+300 s) from this one value. Every work lane rides codex-lane.sh, so this budget covers interactive/light calls only.
-      toolTimeoutSec = 900;
     };
   }
   {

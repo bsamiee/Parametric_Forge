@@ -1,11 +1,16 @@
 ---
 name: github-actions
 description: >-
-    Generates and validates GitHub Actions workflows and custom actions (composite/Docker/JavaScript)
-    with SHA-pinned supply chain security, SLSA attestation, OIDC federation, and
-    harden-runner enforcement. Use when creating, editing, reviewing, or validating
-    CI/CD pipelines, reusable workflows, monorepo CI patterns, container build/deploy
-    orchestration, or advanced triggers (workflow_run, dispatch, ChatOps).
+    Owns GitHub Actions workflows and custom actions under `.github/` — workflow YAML,
+    composite/Docker/JavaScript actions, reusable `workflow_call`, monorepo and
+    container/release pipelines, SLSA/SBOM attestation, advanced triggers (workflow_run,
+    dispatch, ChatOps) — their hardening (SHA pinning, OIDC, harden-runner,
+    injection-safe `run:`), and the local gate `gha check|pin|run` over actionlint,
+    zizmor, and act. Use on "the CI run is failing", "pin these actions", "this workflow
+    has a security warning", "run the workflow locally", and on any actionlint rule,
+    deprecated runner label, or `::set-output` error. `.claude/workflows/*.js`
+    orchestrators belong to workflow-creator; shell bodies inside `run:` belong to
+    coding-bash.
 ---
 
 # [GITHUB_ACTIONS]
@@ -78,7 +83,7 @@ Every generated workflow enforces defense-in-depth: supply chain integrity preve
 
 [IMPORTANT]:
 - [ALWAYS]: OIDC federation (`id-token: write`) for cloud auth — eliminates static credentials entirely.
-- [ALWAYS]: `actions/create-github-app-token` for cross-repo ops — scoped, 1-hour expiry, survives offboarding.
+- [ALWAYS]: `actions/create-github-app-token` owns cross-repo operations.
 - [ALWAYS]: `>> $GITHUB_OUTPUT` for step outputs; `>> $GITHUB_STEP_SUMMARY` for job summaries.
 - [NEVER]: Direct `${{ }}` interpolation of untrusted input in `run:` blocks — route through `env:` indirection.
 

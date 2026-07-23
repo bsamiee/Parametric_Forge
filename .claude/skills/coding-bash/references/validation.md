@@ -16,7 +16,7 @@ Validation is sequential — each gate must pass before the next runs. `bash -n`
 ## [02]-[CRITICAL_SC_CODES]
 
 [SC2086]:
-Unquoted `$var` undergoes word splitting AND pathname globbing. An input containing `* /etc/passwd` expands to every file in CWD plus `/etc/passwd`. Under `rm`, this is arbitrary file deletion. SC2086 is classified "info" because quoting is occasionally intentionally omitted (arithmetic contexts, `[[ ]]` RHS patterns) — the severity does NOT reflect the risk. Treat every SC2086 as a potential injection vector until proven safe.
+Unquoted `$var` undergoes word splitting AND pathname globbing. An input containing `* /etc/passwd` expands to every file in CWD and `/etc/passwd`. Under `rm`, this is arbitrary file deletion. SC2086 is classified "info" because quoting is occasionally intentionally omitted (arithmetic contexts, `[[ ]]` RHS patterns) — the severity does NOT reflect the risk. Treat every SC2086 as a potential injection vector until proven safe.
 
 [SC2155]:
 `local v=$(cmd)` masks the exit code of `cmd`. Under `set -e`, a failing command inside the subshell is silently swallowed because `local` itself returns 0. Its fix — `local v; v=$(cmd)` — exposes the real exit code to `errexit`. This interaction between `set -Eeuo pipefail` and declare-assign is the most common source of silent failures in strict-mode scripts.

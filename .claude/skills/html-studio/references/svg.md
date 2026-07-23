@@ -1,6 +1,6 @@
 # [SVG]
 
-Inline SVG is the artifact's pen: every diagram, infographic, and figure is generated vector geometry the reader inspects, clicks, and downloads — never a raster, never a runtime library. Every figure is a parameterized construction — a generator function over data plus the recipes here — so the same code draws three rings or thirty, and every numeric law carries its degenerate-input behavior.
+Inline SVG is the artifact's pen: every diagram, infographic, and figure is generated vector geometry the reader inspects, clicks, and downloads — never a raster, never a runtime library. Every figure is a parameterized construction — a generator function over data and the recipes here — so the same code draws three rings or thirty, and every numeric law carries its degenerate-input behavior.
 
 ## [01]-[CANVAS]
 
@@ -79,11 +79,11 @@ Meaning rides two orthogonal class axes — geometry names what a node is, role 
 - `<text>` carries geometry-bound labels, ticks, and short values as positioned vector glyphs; paragraphs and wrapping copy ride an HTML overlay positioned over the figure. `<foreignObject>` is legal for in-page rich labels but dies in standalone export — an export-bound figure keeps text as `<text>`.
 - Sizing against text: authoring-time boxes size from the longest label at `0.62em × chars + 2×pad` for mono; runtime-precise fitting measures with `getComputedTextLength()` after `document.fonts.ready`. Deterministic no-script fitting binds `textLength` + `lengthAdjust="spacing"` on `<text>` — never on `tspan`, which Firefox ignores. Multi-line labels are explicit `<tspan x dy="1.15em">` rows.
 - `getBBox()` is unreliable inside `display:none` and excludes transforms — measure in a `visibility:hidden` staging state, and read a transformed box through `getBoundingClientRect()`.
-- Single-line centering is `text-anchor` plus `dominant-baseline="central"`; a column of tick numerals right-aligns through `text-anchor="end"` at one shared x, so magnitudes line up digit-for-digit. Curved text rides `<textPath>` only when the measured text fits the arc with 12% slack (`arcLength ≥ 1.12 × textWidth`) and stays near-upright — reverse the hidden path when the tangent points down so glyphs never invert; `side="right"` is not interoperable. Otherwise a straight callout wins.
+- Single-line centering is `text-anchor` and `dominant-baseline="central"`; a column of tick numerals right-aligns through `text-anchor="end"` at one shared x, so magnitudes line up digit-for-digit. Curved text rides `<textPath>` only when the measured text fits the arc with 12% slack (`arcLength ≥ 1.12 × textWidth`) and stays near-upright — reverse the hidden path when the tangent points down so glyphs never invert; `side="right"` is not interoperable. Otherwise a straight callout wins.
 - Every label crossing geometry takes a `paint-order: stroke` halo — `stroke` bound to the canvas tone at 4–5px under the fill — one text node, no duplicate shadow text.
-- Label placement under pressure runs the anchor ring: try the eight positions around the mark (E, W, N, S, then diagonals) with a 2px inflation, score each candidate by overlap area against placed labels and marks plus leader length, place best-first by priority, and demote the lowest-priority colliders to a legend row rather than shipping overlap. A leader line is straight or one elbow, never a routing system.
+- Label placement under pressure runs the anchor ring: try the eight positions around the mark (E, W, N, S, then diagonals) with a 2px inflation, score each candidate by leader length and overlap area against placed labels and marks, place best-first by priority, and demote the lowest-priority colliders to a legend row rather than shipping overlap. A leader line is straight or one elbow, never a routing system.
 - Corridors: 6px mark-to-label, 10–12px leader-end-to-text, 64px of clear margin outside a radial figure for callouts; a radial leader elbows at `r + 12`. Outer canvas padding runs 24–32, figure-to-legend gap 20–28.
-- [CALLOUT] — the annotated-figure overlay: each badge is an `--accent` circle at `r ≈ 9` carrying a mono ordinal, its leader runs from the badge rim to the point — straight or one elbow — and captions ride an ordered HTML list beside the figure keyed by ordinal. A dimension line is two 1px witness ticks plus a spanning line whose center gaps for the value; a span bracket is a squared-U path with its label at the mid-outer edge.
+- [CALLOUT] — the annotated-figure overlay: each badge is an `--accent` circle at `r ≈ 9` carrying a mono ordinal, its leader runs from the badge rim to the point — straight or one elbow — and captions ride an ordered HTML list beside the figure keyed by ordinal. A dimension line is two 1px witness ticks and a spanning line whose center gaps for the value; a span bracket is a squared-U path with its label at the mid-outer edge.
 - Direct labels beat a legend up to roughly six marks; a legend survives only where marks are too dense to label in place, and it never restates a direct label already on the canvas.
 - Labels stay horizontal except tangential ring labels; a rotated axis title reads slower than a horizontal title placed above the axis.
 
@@ -167,7 +167,7 @@ Every axis and micro mark declares its domain law: ticks land on the 1–2–5�
 
 ## [10]-[CHARTS]
 
-A quantitative figure is hand-authored from the same kernels as every diagram — scales, ticks, and axes are generated geometry, never a runtime charting library. Chart-form selection and palette law ride the `dataviz` skill; this section owns the SVG realization once the form is chosen, and the domain law above binds every scale it builds.
+A quantitative figure is hand-authored from the same kernels as every diagram — scales, ticks, and axes are generated geometry, never a runtime charting library. This section owns the SVG realization once the chart form is chosen, and the domain law above binds every scale it builds.
 
 ```js copy-safe
 const linear = (d0, d1, r0, r1) => (v) => r0 + (d1 - d0 < 1e-9 ? 0.5 : (v - d0) / (d1 - d0)) * (r1 - r0);
@@ -185,10 +185,10 @@ const ticks = (lo, hi, target = 5) => {
 };
 ```
 
-- [FRAME] — the plot rect insets from the canvas by measured label budgets, never guessed margins: left is the widest formatted y label plus 8, bottom 30, top 14 of headroom so the topmost tick label never clips, right 8 or the direct-label gutter when series label at line end. A time domain rides `linear` over UTC milliseconds with ticks landed on calendar boundaries — day, week, month, quarter — never on raw 1–2–5 steps.
+- [FRAME] — the plot rect insets from the canvas by measured label budgets, never guessed margins: left is the widest formatted y label + 8, bottom 30, top 14 of headroom so the topmost tick label never clips, right 8 or the direct-label gutter when series label at line end. A time domain rides `linear` over UTC milliseconds with ticks landed on calendar boundaries — day, week, month, quarter — never on raw 1–2–5 steps.
 - [AXES] — layer order is gridlines, marks, then axis furniture: gridlines run the plot width at every y tick in 1px `--line`, the zero baseline steps to `--line-strong`, and vertical gridlines ship only under dense scatter. Tick stubs are 4px outside the plot edge; y labels right-align at one shared x so magnitudes align digit-for-digit, x labels center under their ticks — all mono 11px `tabular-nums` through one `Intl.NumberFormat` per axis, the unit stated once in the axis title.
 - [TITLES] — axis titles are horizontal sans 12px `--text-muted`: the y title sits above the axis at the plot's top-left, the x title below the label row. Nothing on a chart rotates: a crowded x axis thins to every nth tick, shortens its format, or the chart flips to horizontal bars.
-- [BARS] — categorical bars ride the band scale and grow from the zero baseline, one `--series-*` fill at full opacity with no stroke, `rx` ≤ 2; value labels sit just past the bar end in mono 11px, inside only when the bar holds the label plus padding at the contrast floor. Long category names flip the chart horizontal; grouped bars cap at four series before small multiples, and a stack is legal only when the total is the subject, splitting at zero when it diverges.
+- [BARS] — categorical bars ride the band scale and grow from the zero baseline, one `--series-*` fill at full opacity with no stroke, `rx` ≤ 2; value labels sit just past the bar end in mono 11px, inside only when the bar holds the label and padding at the contrast floor. Long category names flip the chart horizontal; grouped bars cap at four series before small multiples, and a stack is legal only when the total is the subject, splitting at zero when it diverges.
 - [LINES] — a series line is 2px on its `--series-*` token, straight or monotone per [SMOOTH_LINE]; up to five series label directly at the line's right end under the anchor ring, and past that the chart splits into small multiples before it grows a legend. A missing point breaks the line — a visible gap or a dashed `4 6` bridge, never a silent interpolation — and the area variant fills to the zero baseline at 18%, single-series or stacked only.
 - [SCATTER] — dots at `r` 3–4 filled at 75% opacity so overplot reads as density; a highlighted point takes full opacity and a 2px ring; a trend, threshold, or cluster claim enters as an explicit annotated mark, never left for the reader to infer.
 - [MULTIPLES] — sibling panels lock one shared domain per the shared-domain law, tile at equal size with a mono panel title at each top-left, and render axis labels on the bottom rank and left file alone.
@@ -202,7 +202,7 @@ Detail lives outboard, never crammed into boxes; animation exists to show flow, 
 - A meaning-bearing SVG names itself: `role="img"` with `<title>` + `<desc>` wired through `aria-labelledby` for atomic figures; `role="graphics-document"` only when sub-elements are genuinely navigable. A decorative SVG takes `aria-hidden="true"` and no tabindex. Long interpretation rides adjacent HTML through `aria-describedby`, never `<desc>` alone — and `<desc>` states the figure's takeaway, never its construction.
 - Every interactive region is focusable with a name — `<g data-k tabindex="0" role="button" aria-label="...">` with Enter and Space sharing the click path — and in-page navigation is a native SVG `<a href="#...">`, not a click handler.
 - A thin stroke gets invisible hit geometry: a transparent twin path at ≥24px effective width carries the pointer while the visible path stays precise.
-- Connected highlighting is data plus CSS — nodes carry `data-k`, dependent marks carry a space-separated `data-rel` roster, `:has()` on the figure root lights the neighborhood with zero script — and the same states bind to a `data-selected` stamp so touch and keyboard reach what hover shows:
+- Connected highlighting is data and CSS — nodes carry `data-k`, dependent marks carry a space-separated `data-rel` roster, `:has()` on the figure root lights the neighborhood with zero script — and the same states bind to a `data-selected` stamp so touch and keyboard reach what hover shows:
 
 ```css copy-safe
 .diagram:has([data-k="api"]:hover) [data-rel~="api"],
@@ -236,7 +236,9 @@ const setFlow = (key) => {
 
 ## [12]-[EXPORT]
 
-A figure sheet delivers standalone illustrations — doc headers, README figures — each exportable alone, its download filename derived from the figure's `<title>` slug so sibling figures export distinct names. A standalone frame is `viewBox="0 0 720 320"`, rects at `rx="10"`, strokes 1.5px neutral and 2px emphasis, flat fills only. Export is a pipeline, never a bare serialize: the clone carries `xmlns`, explicit `width`/`height`, `<title>`/`<desc>`, every `var(--token)` resolved to its literal, ids rewritten with the figure slug, interactive-only state stripped, and its own `<style>` in `<defs>` — page CSS does not travel, and a `<foreignObject>` label dies outside the page.
+A figure sheet delivers standalone illustrations — doc headers, README figures — each exportable alone, its download filename the `<title>` slug so siblings export distinct names. A standalone frame is `viewBox="0 0 720 320"`, rects at `rx="10"`, strokes 1.5px neutral and 2px emphasis, flat fills only.
+
+Export is a pipeline, never a bare serialize: the clone carries `xmlns`, explicit `width`/`height`, `<title>`/`<desc>`, every `var(--token)` resolved to its literal, ids rewritten with the figure slug, interactive-only state stripped, and its own `<style>` in `<defs>` — page CSS never travels, and a `<foreignObject>` label dies outside the page.
 
 ```js copy-safe
 const exportSvg = (svg, filename) => {

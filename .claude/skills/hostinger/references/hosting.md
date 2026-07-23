@@ -30,7 +30,7 @@ curl -X POST "https://developers.hostinger.com/api/hosting/v1/accounts/{username
 - [PLUGINS]: `installWordPressPluginsV1` takes `{ "plugins": [...] }` (1-20 slugs from `searchWordPressPluginsV1`); `activate`/`deactivate` take one `plugin`, `uninstall`/`update` take a `plugins` list. `updateHostingerWordPressPluginV1` targets the bundled Hostinger plugins by `slug`.
 - [THEMES]: `installWordPressThemeV1` takes `theme`; the Hostinger slugs (`hostinger-blog`, `hostinger-affiliate-theme`, `hostinger-ai-theme`) alone honor `palette`, `layout`, and `font`, and any other slug ignores them.
 - [CORE]: `updateWordPressCoreV1` takes optional `minor` and `version`; `showWordPressCoreVersionV1` and `listAvailableWordPressCoreUpdatesV1` read state.
-- [ACCESS]: `createLoginLinksV1` mints an auto-login URL; `getInstallationJWTTokenV1` returns a one-hour JWT plus the install's WordPress `mcp_url` for direct in-site automation.
+- [ACCESS]: `createLoginLinksV1` mints an auto-login URL; `getInstallationJWTTokenV1` returns a one-hour JWT and the install's WordPress `mcp_url` for direct in-site automation.
 - [DELETE]: `deleteWordPressInstallationV1` with `delete_files`/`delete_database` (both default false) is irreversible and cascades to plugins, themes, and staging sites.
 
 ## [03]-[DATABASES]
@@ -62,7 +62,7 @@ Horizons AI builder generates a site from a prompt: `horizons_createWebsiteV1` t
 
 ## [07]-[COMPOSITE_DEPLOY]
 
-Seven tools — `deployStaticWebsite`, `deployJsApplication`, `deployWordpressPlugin`, `deployWordpressTheme`, `importWordpressWebsite`, `listJsDeployments`, `showJsDeploymentLogs` — are MCP-side compositions over an upload pipeline absent from the published spec (`POST /api/hosting/v1/files/upload-urls` → upload → a per-type deploy or build endpoint). They cannot be reproduced from the OpenAPI paths alone. `deployStaticWebsite` uploads PRE-BUILT static files with no build step; `deployJsApplication` uploads SOURCE ONLY and builds server-side (the MCP routes by the presence of `package.json`); `importWordpressWebsite` takes a site archive plus a `.sql` dump, naming a directory input `<dir>_YYYYMMDD_HHMMSS.zip`.
+`deployStaticWebsite`, `deployJsApplication`, `deployWordpressPlugin`, `deployWordpressTheme`, `importWordpressWebsite`, `listJsDeployments`, and `showJsDeploymentLogs` compose an upload pipeline absent from the spec (`POST /api/hosting/v1/files/upload-urls` → upload → a per-type deploy or build endpoint). `deployStaticWebsite` uploads PRE-BUILT files, no build step; `deployJsApplication` uploads SOURCE ONLY and builds server-side, routed by `package.json` presence; `importWordpressWebsite` takes a site archive and a `.sql` dump, naming a directory input `<dir>_YYYYMMDD_HHMMSS.zip`.
 
 ## [08]-[API_REFERENCE]
 

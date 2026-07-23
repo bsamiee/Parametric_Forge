@@ -14,7 +14,7 @@ A reader's first question selects the type; everything else on the page serves t
 |  [04]   | plan         | how, stage by stage — approve or not | operational    | `plan`          |
 |  [05]   | decision-doc | which option, on what grounds        | reading        | `decision`      |
 
-A type with no envelope kind ships no drawer send section; a type with one ships the full capture grammar from the interaction reference. `kind` is closed to this table plus the variant kinds below — a novel deliverable claims the nearest kind and carries its distinguishing fields under `extensions`.
+A type with no envelope kind ships no drawer send section; a type with one ships the full capture grammar from the interaction reference. `kind` is closed to this table and the variant kinds below — a novel deliverable claims the nearest kind and carries its distinguishing fields under `extensions`.
 
 ## [02]-[REPORT]
 
@@ -32,7 +32,7 @@ A report argues a verdict from evidence; the verdict leads and the evidence desc
 A dashboard answers its headline question in the default state with zero interaction; every control past that point is a lens, never a gate.
 
 - [SPINE]: a stat row (headline numerals with trend deltas) above the fold; the primary chart region; the breakdown tables; the anomaly or exception list last — a healthy dashboard's exception list renders its authored empty state.
-- [MARKS]: chart form, palette, and mark law defer to the dataviz owner; the page contributes the shell, the `--series-*` bindings, and the zero-baseline hairline order.
+- [MARKS]: the page contributes the shell, the `--series-*` bindings, and the zero-baseline hairline order once chart form and palette are settled.
 - [TABLES]: every table carries `<tfoot>` aggregates recomputed from visible rows; numeric columns bind `td.num`; the widest table scrolls inside its own wrapper.
 - [FILTERS]: filter clusters live in `<search>`; an active filter is always visible with its match count; scope filters hide, attention filters dim — and every visible aggregate recomputes under both.
 - [DENSITY]: one screen answers the standing question; a dashboard that needs a tour failed selection — the material wanted a report.
@@ -59,7 +59,7 @@ A plan orders its sections by tweak pressure, never by execution order: the deci
 - [DECISIONS]: each leading decision renders the chosen shape as real material — a schema block, a signature, a rendered flow — never prose describing an unbuilt surface; the alternative it beat carries its one-line cost so a reviewer can reopen it deliberately.
 - [STAGES]: stage cards carry `data-id`, an owner and gate kv ledger, and the stage's exit test as its closing line; a data-flow or sequence figure earns its place when three or more stages hand material to each other.
 - [RISK]: risk tables cross risk by trigger by mitigation; a risk without a named observable trigger is a mood, and the table refuses it.
-- [CAPTURE]: per-stage verdicts (`approve`, `defer`, `reject`) plus the global decision; annotations anchor to stage ids; the fold-back copy control emits the approved plan in execution order — capture order and emission order deliberately invert, because the reviewer reads by tweak pressure and the executor reads by sequence.
+- [CAPTURE]: per-stage verdicts (`approve`, `defer`, `reject`) and the global decision; annotations anchor to stage ids; the fold-back copy control emits the approved plan in execution order — capture order and emission order deliberately invert, because the reviewer reads by tweak pressure and the executor reads by sequence.
 - [ANTI]: a linear narrative that buries the reversible decision under stage seven; ASCII or prose diagrams where one SVG figure carries the flow; a mock described instead of rendered.
 
 ## [06]-[DECISION_DOC]

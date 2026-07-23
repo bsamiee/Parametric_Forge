@@ -1,17 +1,13 @@
 ---
 name: pulumi
 description: >-
-    Use this skill for any task that creates, modifies, inspects, or destroys cloud infrastructure
-    or SaaS configuration, from one-off CLI operations to full multi-resource projects, across
-    providers in the Pulumi ecosystem — AWS, Azure, GCP, Kubernetes, Cloudflare, Hostinger, Auth0,
-    Datadog, Vercel, and others — driven through one CLI, one state model, and one credential layer.
-    Trigger even when the task does not name Pulumi; phrasings like "deploy this app," "provision a
-    database," "stand up a VPC," "configure Auth0," or "tear down staging" qualify, as do tasks that
-    migrate Terraform, CloudFormation, CDK, Bicep, or ARM code to Pulumi, Automation API embedding,
-    ComponentResource authoring, Output/apply questions, and failed pulumi up or preview debugging.
-    Do not trigger for application runtime code that reads or writes data via cloud SDKs; that is
-    application code, not infrastructure. Interactive Hostinger domain, DNS, and VPS operations
-    belong to the hostinger skill.
+    Owns Pulumi infrastructure-as-code: creating, inspecting, and destroying cloud and SaaS
+    resources on any Pulumi-registry provider — `pulumi do` one-offs, projects and stacks,
+    ComponentResource design and packaging, Automation API, ESC environments, policy packs, drift
+    schedules. Use when reviewing or refactoring Pulumi code, debugging a failed `up` or `preview`,
+    chasing an unexpected replace or delete in a preview, adopting resources via `pulumi import`,
+    converting Terraform, CloudFormation, CDK, Bicep, or ARM code, and on tasks that never name
+    Pulumi — "deploy this app", "provision a database", "stand up a VPC", "tear down staging".
 ---
 
 # [PULUMI]
@@ -24,7 +20,7 @@ Pulumi creates and manages cloud infrastructure — virtual machines, storage, K
 |  [02]   | L2      | Pulumi project in a host language | Multiple related resources                    |
 |  [03]   | L3      | Pulumi Cloud governance layer     | Governance and hosted runs                    |
 
-A single-bucket request in a directory with no Pulumi project is an L1 task — no project scaffolding. A VPC with subnets and a cluster is L2 from the start. Nightly drift detection on an existing stack is L3. Converting Terraform, CloudFormation, CDK, ARM, or Bicep code is `pulumi convert` plus the docs at https://www.pulumi.com/docs/iac/adopting-pulumi/, independent of the level model.
+A single-bucket request in a directory with no Pulumi project is an L1 task — no project scaffolding. A VPC with subnets and a cluster is L2 from the start. Nightly drift detection on an existing stack is L3. Converting Terraform, CloudFormation, CDK, ARM, or Bicep code is `pulumi convert` guided by https://www.pulumi.com/docs/iac/adopting-pulumi/, independent of the level model.
 
 Level choice requires knowing what is already on disk: inspect the filesystem first, and in a restricted context ask before any Pulumi command runs — a command that requires a login silently provisions a new agent account parallel to one the operator already owns.
 
@@ -39,7 +35,7 @@ An uncertain CLI flag, command shape, or resource property is looked up, never g
 
 ## [02]-[ONE_SHOT_OPERATIONS]
 
-`pulumi do` runs one-shot, stateless resource operations against any provider — no project files, no `${...}` wiring, no Pulumi state. `npx pulumi <command>` is the canonical invocation and the only one carrying a CLI new enough for the resource verbs — the PATH `pulumi` predates them. `npx pulumi version` confirms availability without touching Pulumi Cloud.
+`pulumi do` runs one-shot, stateless resource operations against any provider — no project files, no `${...}` wiring, no Pulumi state. `npx pulumi <command>` is the canonical invocation — the PATH `pulumi` lacks the resource verbs. `npx pulumi version` confirms availability without touching Pulumi Cloud.
 
 ```text
 pulumi do <pkg:mod:type> create [flags]
@@ -53,7 +49,7 @@ pulumi do <pkg:mod:type> list [flags]
 - `delete <id>` is irreversible — explicit operator confirmation of the specific resource precedes `--yes`, never a non-interactive default.
 - `list` enumerates existing instances where the resource type implements listing.
 
-First invocation in an agent context without saved credentials may provision an ephemeral agent account and print a claim banner to stderr. Surface the claim URL to the operator immediately and again in the final response — a session ending without it strands resources. On authentication failure, ask the operator to run `pulumi login`; never fall back to `pulumi login --local` or set `PULUMI_CONFIG_PASSPHRASE`. Provider credentials are separate and arrive through the provider's native environment variables (`AWS_PROFILE`, `CLOUDFLARE_API_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`); when absent, ask before any command that calls out to the cloud.
+First invocation without saved credentials provisions an ephemeral agent account and prints a claim banner to stderr; surface the claim URL to the operator immediately and again in the final response — a session ending without it strands resources. On authentication failure, ask the operator to run `pulumi login`; never fall back to `pulumi login --local` or set `PULUMI_CONFIG_PASSPHRASE`. Provider credentials arrive separately through the provider's native environment variables (`AWS_PROFILE`, `CLOUDFLARE_API_TOKEN`); when absent, ask before any command that calls out to the cloud.
 
 When a `Pulumi.yaml` project already manages a resource, changes go through the program — never `pulumi do`.
 

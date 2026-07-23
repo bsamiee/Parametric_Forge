@@ -1,6 +1,6 @@
 # [INTRO_CRAFT]
 
-A lead is one charter sentence opening with the document's own law, plus at most one boundary-consequence sentence — never the doc-set, the siblings, the audience, or the process. Each entry contrasts a leaked lead against its reframe under the fixed Detection / Rejected / Accepted / Reason / Reframe card.
+Lead repair re-seats the charter in the opening slot: a doc-set, sibling, audience, or process frame is replaced by the document's own law, never softened in place.
 
 ## [01]-[INDEX_LEAD]
 

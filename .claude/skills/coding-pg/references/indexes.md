@@ -74,7 +74,7 @@ HNSW tuning: `m=4` for high-dimensional (>1000D), `m=32` for low-dimensional (<1
 
 IVFFlat: `lists` parameter controls cluster count (sqrt(rows) typical). Requires `VACUUM` after bulk insert — stale cluster statistics degrade recall significantly.
 
-DiskANN label constraint: label pre-filtering works for discrete low-cardinality dimensions encoded into the indexed label column — not continuous range predicates. Temporal filtering alongside vector search requires composite strategy: DiskANN labels for tenant/category plus post-filtering for time-range, or partitioned vector tables by time window with per-partition HNSW indexes.
+DiskANN label constraint: label pre-filtering works for discrete low-cardinality dimensions encoded into the indexed label column — not continuous range predicates. Temporal filtering alongside vector search requires composite strategy: DiskANN labels for tenant/category with time-range post-filtering, or partitioned vector tables by time window with per-partition HNSW indexes.
 
 ## [05]-[BRIN_BLOCK_RANGE_INDEX]
 

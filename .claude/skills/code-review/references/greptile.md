@@ -5,9 +5,10 @@ Greptile reviews committed unmerged commits against a base ref — uncommitted e
 ## [01]-[RUN_FACTS]
 
 - Command roster: `review` (subcommands `show [id]`, `status`), `config [path] [--json]`, `login`, `logout`, `whoami`, `settings`, `update`; `onboard` and `fix` sit outside review work.
-- `review` flags: `--json` emits the findings envelope on stdout — the harvest source; `-b/--branch <base>` sets the base (omitted, the repo default); `--instructions <text>` carries per-review focus, the same channel as `@greptile <text>` on a PR; `--resume` continues an unfinished review with no new spend — the stall and kill recovery, never a re-spending relaunch; `--include <paths...>` admits sensitivity-held files (`.env`, `*.pem`) the engine otherwise silently excludes.
-- Exit 0 plus a parseable envelope is success at any comment count — identical re-reviews yield differing counts, so zero comments is never failure. A refusal or client error is nonzero exit with the message on its own stderr line and EMPTY stdout — no ledger row, no spend.
+- `review` flags: `--json` emits the findings envelope on stdout — the harvest source; `-b/--branch <base>` sets the base (omitted, the repo default); `--instructions <text>` carries per-review focus, the same channel as `@greptile <text>` on a PR; `--resume` continues an unfinished review with no new spend, never a re-spending relaunch; `--include <paths...>` admits sensitivity-held files (`.env`, `*.pem`) the engine otherwise silently excludes.
+- Exit 0 with a parseable envelope is success at any comment count — identical re-reviews yield differing counts, so zero comments is never failure. A refusal or client error is nonzero exit with the message on its own stderr line and EMPTY stdout — no ledger row, no spend.
 - Size gating is a client-side preflight over `git diff -U3 <merge-base>...HEAD`, refusing in under a second before any network at three hard caps: over 500 changed files (`this review touches N files`), over 50 changed Greptile config files, and over 3,000,000 payload bytes (`this review is too large to send`) summing per-file patch and path bytes, range commit subjects and bodies, changed-config contents, and `--instructions` text. A large campaign lands as slice commits, each reviewed with `-b` at the prior boundary.
+- Comment generation degrades before the caps refuse: a full-campaign single-range review under the preflight can return a rich summary with an EMPTY `comments` array — the summary carries real cross-file findings as prose, but the structured pipeline receives zero rows. A pinned-base range serves the cross-file coherence read; comment-bearing collection rides bounded ranges, and a summary-only round's findings hand-carry into the pool until rail ingestion owns them.
 - `review status --commit <ref> --json` (default `HEAD`) is the out-of-band phase oracle: `COMPLETED` exits 0, `IN_FLIGHT` exits 3, a never-reviewed commit exits 1 with a stderr hint. Stream silence between launch and the terminal JSON dump is the engine's normal shape.
 
 ## [02]-[ENVELOPE]
@@ -19,7 +20,7 @@ Greptile reviews committed unmerged commits against a base ref — uncommitted e
 
 ## [03]-[CONFIG_CASCADE]
 
-`.greptile/` in any directory configures reviews for that tree; three optional files, plus a single-file form (`greptile.json` or `.greptile.json`) that loses to a same-directory `.greptile/`.
+`.greptile/` in any directory configures reviews for that tree; three optional files, and a single-file form (`greptile.json` or `.greptile.json`) that loses to a same-directory `.greptile/`.
 
 - [CONFIG]: `config.json` — review settings, run filters, structured rules, cross-repo context.
 - [RULES]: `rules.md` — free-prose review charter; severities and rule ids live only in `config.json`.
@@ -42,11 +43,15 @@ Generation knobs change the `comments[]` set the CLI surfaces — one cloud engi
 |  [07]   | `fileChangeLimit` | hosted-PR skip gate on changed-file count; never the CLI size preflight               |
 |  [08]   | `context.repos`   | `owner/repo` list, same SCM host and credentials                                      |
 
+`scope` globs never cross dot-directories, so every dot-dir surface — `.claude/**`, `libs/.planning/**`, `**/.api/**` — carries its explicit glob, and a scoped rule proves live only through the `greptile config <path>` oracle probed at a path INSIDE the dot-dir; the oracle truncates each rule's text with an ellipsis, so a deep-clause substring proves against `.greptile/config.json` full text instead.
+
 `rules[].severity` (`low`/`medium`/`high`) is a generation-stage importance hint against the strictness threshold — load-bearing at strictness 3, near-inert at 1 — never a local pass/fail gate and never the emitted P-scale. Every other field is PR-only decoration, absent from `--json`: `statusCheck`, `statusCommentsEnabled`, the four summary-section toggles, `triggerOnUpdates`/`triggerOnDrafts`/`skipReview`, the label/author/branch/keyword PR filters, and `shouldUpdateDescription`/`updateSummaryOnly`/`hideFooter`/`fixWithAI` — GitHub delivery and rendering over the same generated review.
 
 ## [05]-[DISTILL_SURFACE]
 
-A distill fact takes exactly one home — double-spelling one fact across `config.json` and `rules.md` is the named defect: structured hunt rules live only as `config.json` `rules[]` rows `{id, rule, severity, enabled, scope}` (an outgrown row splits into sibling ids, never a swollen blob), and stance or do-not-flag law lives only in the owning `rules.md` section, one sentence per fact. Placement follows the cascade: a repo-wide fact lands at the root `.greptile/`, a tree-scoped fact in that tree's own `.greptile/`. Correct rule TEXT plus a tight `scope` is the real bite, with `severity` set honestly for strictness-robustness. No JSON Schema exists for `config.json` — `greptile config` is the format gate, and it reads the UNCOMMITTED working-tree cascade, so a landed rule proves itself pre-commit by substring on the resolved rule TEXT (org rules re-key to server UUIDs and reflow, so an id match always misses); a raw JSON parse is the syntactic floor alone.
+A distill fact takes exactly one home — double-spelling one fact across `config.json` and `rules.md` is the named defect: structured hunt rules live only as `config.json` `rules[]` rows `{id, rule, severity, enabled, scope}` (an outgrown row splits into sibling ids, never a swollen blob), and stance or do-not-flag law lives only in the owning `rules.md` section, one sentence per fact. Placement follows the cascade — a repo-wide fact at the root `.greptile/`, a tree-scoped fact in that tree's own — and correct rule text with a tight `scope` is the real bite, `severity` set honestly.
+
+No JSON Schema exists for `config.json` — `greptile config` is the format gate, and it reads the UNCOMMITTED working-tree cascade, so a landed rule proves itself pre-commit by substring on the resolved rule text (org rules re-key to server UUIDs and reflow, so an id match always misses); a raw JSON parse is the syntactic floor alone.
 
 ## [06]-[RETRIEVAL_BRIDGE]
 

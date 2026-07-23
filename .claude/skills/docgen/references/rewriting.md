@@ -15,8 +15,8 @@ Rebuilding an existing document is harder than writing a fresh one: the source's
 2. [EXTRACT] — Keep exactly three things from the source: facts that fail the regeneration test, mechanism that has an owner here or lower, and open questions that become tracked items. Everything else is frame.
 3. [CLASSIFY] — Every suspect passage gets a defect class before any fix; a passage that resists classification is either legal register or a new class worth naming, and an unclassified suspect never survives by default.
 4. [REBUILD] — Author the new document from the exemplar's shape and the extracted payload; the source is consulted for payload completeness, never for structure, order, emphasis, or wording.
-5. [DEMOTE] — Mechanism found above its altitude moves to its owner before the higher copy dies; capability found gated or defended lands as present-tense law; open work moves to the card owner. Only then is the defective prose deleted.
-6. [RECONCILE] — A fact moved or an owner renamed touches its twins: the counterpart seam, the pointing consumer, the registry row. Both ends land in the same pass; a reported-not-fixed ripple is an unfinished rewrite.
+5. [DEMOTE] — Mechanism above its altitude moves to its owner before the copy dies, gated or defended capability lands as present-tense law, open work moves to the card owner. A demotion is unproven until its target, opened, carries every demoted member across every candidate owner, not the first; a compound of charter facet and forkable mechanism splits first — mechanism to its owner, facet re-homed — never cut whole for its mechanism's owner elsewhere. Only then does the defective prose die.
+6. [RECONCILE] — A fact moved or an owner renamed touches its twins: the counterpart seam, the pointing consumer, the registry row. Both ends land in the same pass; a reported-not-fixed ripple is an unfinished rewrite. A fold into a denser owner re-scans that destination — merging a rule into a home that already states it mints a twin the fold itself created.
 
 ## [03]-[WORKED_REFRAME]
 
@@ -34,7 +34,7 @@ A correct rewrite is shorter, carries more capability, and leaves nothing to re-
 
 ## [04]-[TABLE_REPAIR]
 
-A broken table is rebuilt through the structural moves, never flattened: teardown into mega-prose lines or a bare unlabeled list destroys the structure the fix was meant to save, and is the same hamfisted inheritance as softening. Split, extract, hoist, relieve — the moves themselves are the structure reference's table-refactor law; this procedure owns only their order:
+A broken table is rebuilt through the structural moves, never flattened: teardown into mega-prose lines or a bare unlabeled list destroys the structure the fix was meant to save, and is the same hamfisted inheritance as softening. Each move is the table law's, composed as given; this procedure owns only the order:
 
 1. [ELIGIBILITY_FIRST] — Test the table against the eligibility triple before touching cells; a failed test converts the whole container to a record set, indexed list, or cards, and a passed test repairs in place.
 2. [MOVES] — Run the refactor moves in place; the cell keeps its atomic value and the index column re-numbers.
@@ -55,9 +55,9 @@ A mega bullet is a compressed section wearing a hyphen: a law, its mechanism, tw
 A rewrite is done only when it survives every test; failing any one means the frame leaked through.
 
 - [COLD_READ]: A fresh agent reading only the result cannot reconstruct the source's structure, emphasis, or history — no seam shows where the old frame was.
-- [REGENERATION]: Every surviving sentence is law an agent cannot regenerate from disk plus stated invariants; everything regenerable is fenced or gone.
+- [REGENERATION]: Every surviving sentence is law an agent cannot regenerate from disk and stated invariants; everything regenerable is fenced or gone.
 - [REGISTER]: Every law sentence has an owning subject and owning verb; no sentence's subject is a forbidden alternative, a consumer count, a process artifact, or the document itself, and no sentence freezes, seals, or legislates a count against rebuild.
-- [VOLUME]: A finished rewrite carries fewer lines than the source with zero payload lost — the demotion count proves the payload moved. A rewrite that grew re-imported frame; a rewrite that shrank by dropping mechanism destroyed capability.
+- [VOLUME]: A finished rewrite carries fewer lines than the source with zero payload lost — the demotion count proves the payload moved, and every demotion target reopened still carries its demoted member and no wider set the demotion silently inherits as new law. A rewrite that grew re-imported frame; a rewrite that shrank by dropping mechanism destroyed capability.
 
 ## [07]-[PERSISTENCE]
 

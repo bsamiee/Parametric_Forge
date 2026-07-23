@@ -84,20 +84,13 @@ const VERIFY = {
 
 // Steady worker pool — holds <=cap long chains; preferred over parallel(thunks) for
 // hundreds of long multi-stage edits.
-const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 const pool = async (items, cap, worker) => {
     const out = new Array(items.length);
     let i = 0;
-    let gate = Promise.resolve(); // serialized launch gate:
-    const launch = () => {
-        gate = gate.then(() => sleep(1500));
-        return gate;
-    }; // launches spaced ~1500ms
     const run = async () => {
         while (i < items.length) {
             const k = i++;
-            await launch();
-            out[k] = await worker(items[k], k);
+            out[k] = await worker(items[k], k).catch(() => null); // per-member guard: one throw rejects the whole pool
         }
     };
     await Promise.all(Array.from({ length: Math.min(cap, items.length) }, () => run()));

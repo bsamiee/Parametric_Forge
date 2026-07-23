@@ -23,7 +23,7 @@ export const meta = {
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
-// One row per language class. An omitted model inherits the session default; only the mechanical SQL row drops to Sonnet.
+// One row per language class. An omitted model inherits the session default; only the mechanical SQL row drops a tier.
 const ROUTES = {
     cs: {
         prompt: (f) =>

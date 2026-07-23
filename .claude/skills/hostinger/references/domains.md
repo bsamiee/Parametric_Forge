@@ -96,7 +96,7 @@ curl -X GET "https://developers.hostinger.com/api/v2/direct/verifications/active
 
 ## [07]-[BULK_AUDIT]
 
-Portfolio-wide security posture reads as one list call plus a per-domain detail loop: `GET /api/domains/v1/portfolio`, then check `domain_lock` and `privacy_protection` on each, enabling both wherever absent. This same loop shape serves any portfolio-wide mutation.
+Portfolio-wide security posture reads as one list call and a per-domain detail loop: `GET /api/domains/v1/portfolio`, then check `domain_lock` and `privacy_protection` on each, enabling both wherever absent. This same loop shape serves any portfolio-wide mutation.
 
 ## [08]-[API_REFERENCE]
 

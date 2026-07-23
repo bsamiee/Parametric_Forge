@@ -1454,7 +1454,7 @@
     '';
   };
 
-  # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through the maghz codex gate, idempotent
+  # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through the Maghz tunnel, idempotent
   # and re-enterable from any step (--from/--only). Probes stay owner-local (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
   # owner orders and asserts. Key material is asserted by NAME only, never value.
   forgeAccept = mkTool {
@@ -1727,8 +1727,7 @@
         esac
       }
 
-      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in acceptance untouched. The codex gate stays keyed to maghz — the
-      # postgres MCP DSN rides that tunnel specifically.
+      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in acceptance untouched.
       step_maghz() {
         local name last state kinds receipts
         local -a tunnel_names=(${lib.concatStringsSep " " (lib.attrNames config.forge.ssh.hosts)})
@@ -1767,12 +1766,6 @@
                 row WARN "$name" "tunnel state=''${state:-unknown}: ''${last#*state=}"
                 ;;
             esac
-          fi
-          [ "$name" = maghz ] || continue
-          if [ "$state" = "up" ]; then
-            row PASS maghz-codex "tunnel up; codex-required postgres MCP startup gate clear"
-          else
-            row INSTRUCT maghz-codex "postgres MCP is codex-required: codex startup hard-fails while the tunnel is ''${state:-down}; sequence tunnel-up (or local compose with a repointed DSN) before launching codex"
           fi
         done
       }

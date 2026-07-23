@@ -3,7 +3,7 @@
 # requires-python = ">=3.15"
 # dependencies = ["cyclopts>=4", "expression>=5", "msgspec>=0.19", "ruamel.yaml>=0.18"]
 # ///
-# ruff: noqa: T201, D100, D101, D102, D103
+# ruff: noqa: T201, D100, D101, D102, D103, DOC201 — command docstrings are cyclopts help text; a Returns section would pollute --help
 
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
@@ -11,6 +11,7 @@ from collections import Counter
 from collections.abc import Callable, Mapping
 from copy import replace as evolved
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from functools import reduce
 import hashlib
 import io
@@ -23,6 +24,8 @@ import re
 import shlex
 import shutil
 import signal
+from statistics import median
+import string
 import subprocess
 import sys
 import time
@@ -49,7 +52,7 @@ type Phase = Literal["launched", "reviewing", "completed", "failed", "refused", 
 type RunKind = Literal["engine", "gather"]
 type Provenance = Literal["relitigation", "refuted_remint", "new_work", "late_discovery", ""]
 type Balance = Literal["count", "loc"]
-type SliceAxis = Literal["folder"]
+type Weigh = Callable[[Finding], float]
 type FaultSignature = Literal[
     "oversized",
     "billing",
@@ -83,6 +86,12 @@ type FaultCode = Literal[
     "unreadable",
     "unwritable",
     "malformed",
+    "bad-matcher",
+    "empty-class",
+    "no-matchers",
+    "unknown-key",
+    "duplicate-class",
+    "dedup-collapse",
     "no-findings",
     "no-lanes",
     "bad-lane",
@@ -91,16 +100,23 @@ type FaultCode = Literal[
     "no-payload",
     "already-sliced",
     "already-closed",
+    "routing-undrained",
 ]
 
 # --- [CONSTANTS] ------------------------------------------------------------------------
 
 CLAIM_STEM: Final = 120
-FOLDER_DEPTH: Final = 2
+DEDUP_GUARD_FLOOR: Final = 8
+DEDUP_GUARD_SHARE: Final = 0.5
+DIGEST_FOLDS: Final = 8
+DIGEST_TOP: Final = 3
 HEADLINE: Final = 160
 JSON_SCAN_CAP: Final = 64
-LANES_CAP: Final = 12
-LANE_ALPHABET: Final = "abcdefghijkl"
+LANE_ALPHABET: Final = string.ascii_lowercase
+LANE_LOAD: Final = 12  # findings per lane the auto cut targets when --lanes is omitted
+LANES_CAP: Final = 14  # operational lane ceiling; LANE_ALPHABET carries the structural headroom above it
+PROSE_ROOTS: Final[frozenset[str]] = frozenset({".claude", "docs"})
+PROSE_SUFFIXES: Final[frozenset[str]] = frozenset({".md", ".mdx", ".markdown"})
 KILL_ESCALATE_S: Final = 3.0
 KILL_TICK_S: Final = 0.2
 LIVENESS_NOTE_S: Final = 60.0
@@ -128,13 +144,30 @@ STATE_DIR: Final = Path(".cache/review")
 CR_STORE: Final = Path.home() / ".coderabbit" / "reviews"
 GREPTILE_LEDGER: Final = Path.home() / ".greptile" / "reviews.json"
 SELF: Final = Path(__file__).resolve()
-REGISTRY_PATH: Final = SELF.parent.parent / "templates" / "refuted-classes.yaml"
+# REVIEW_RAIL_BUNDLE relocates every bundle-owned data surface (registry, prompt templates) so the rail runs from any copy of this one file.
+BUNDLE: Final = Path(os.environ.get("REVIEW_RAIL_BUNDLE", "") or SELF.parent.parent).resolve()
+REGISTRY_PATH: Final = BUNDLE / "templates" / "refuted-classes.yaml"
+CODEX_SESSIONS: Final = Path.home() / ".codex" / "sessions"
+PROMPT_TEMPLATES: Final[tuple[str, ...]] = ("fix.md", "close.md", "harvest.md")
+AGENT_DEFINITION: Final = ".claude/agents/reviewer-harvest.md"
+PROMPT_PRINT_WIDTH: Final = 12
+SPAWN_TOOL: Final = "spawn_agent"
+WALL_OUTLIER_FACTOR: Final = 2.0  # a lane is a wall-time outlier above this multiple of the lane median
 CR_META_NAMES: Final = frozenset({"git.json", "internalState.json", "diff.json", "incrementalDiff.json"})
+GT_ORACLE_FILES: Final[tuple[str, ...]] = (".greptile/config.json", ".greptile/rules.md")
+MS_HOME: Final = ".macroscope"
 ROSTER_KEYS: Final = ("members", "roster", "symbols")
 SEVERITIES: Final[tuple[Severity, ...]] = ("critical", "major", "minor", "trivial", "info")
 RANK: Final[Mapping[Severity, int]] = MappingProxyType({level: rank for rank, level in enumerate(SEVERITIES)})
 TERMINAL: Final[frozenset[Phase]] = frozenset({"completed", "failed", "refused", "stalled", "timed-out", "killed"})
 REFUSAL_SIGNATURES: Final[frozenset[FaultSignature]] = frozenset({"oversized"})
+ACCEPTED_VERDICTS: Final[frozenset[str]] = frozenset({"fixed", "upgraded", "already_resolved"})
+NOVEL_PROVENANCE: Final[frozenset[Provenance]] = frozenset({"new_work", "late_discovery"})
+# Constant engine boilerplate opening a finding's fix text; a new engine's preamble is one more row. Stripped at mint so fingerprints,
+# claim-scoped queries, and class matchers carry finding content only — unstripped, every verify/fix/minimal regex matches all rows.
+ENGINE_PREAMBLES: Final[tuple[str, ...]] = (
+    "Verify each finding against current code. Fix only still-valid issues, skip the rest with a brief reason, keep changes minimal, and validate.",
+)
 SEVERITY_ROWS: Final[tuple[tuple[str, Severity], ...]] = (
     ("critical", "critical"),
     ("p0", "critical"),
@@ -219,6 +252,7 @@ class Range(msgspec.Struct, frozen=True):
 
 
 class Finding(msgspec.Struct, frozen=True):
+    # No raw engine payload rides the finding — the receipt's `source` names the store a payload re-reads from; content fields carry the evidence.
     id: str
     fingerprint: str
     reviewer: Reviewer
@@ -228,9 +262,10 @@ class Finding(msgspec.Struct, frozen=True):
     claim: str
     fix_instructions: str
     class_match: str
-    raw: msgspec.Raw
     corroborators: tuple[Reviewer, ...] = ()
     provenance: Provenance = ""
+    anchored: bool = False
+    actionable: bool = False
 
 
 class Run(msgspec.Struct, frozen=True):
@@ -269,6 +304,7 @@ class LaneManifest(msgspec.Struct, frozen=True):
     count: int
     criticals: int
     suggested_scope_line: str
+    brief: str = ""
 
 
 class LaneSlice(msgspec.Struct, frozen=True):
@@ -283,6 +319,7 @@ class LedgerRow(msgspec.Struct, frozen=True):
     severity: str = ""
     verdict: str = ""
     note: str = ""
+    shape: str = ""  # fixer-stamped capability shape (substitution|collapse|completion); the rollup never infers it from prose
 
 
 class Improvement(msgspec.Struct, frozen=True):
@@ -304,16 +341,48 @@ class LaneReport(msgspec.Struct, frozen=True):
     capability: tuple[msgspec.Raw, ...] = ()
     routing: tuple[msgspec.Raw, ...] = ()
     uncertain: tuple[msgspec.Raw, ...] = ()
+    files: tuple[str, ...] = ()  # files the lane actually edited, fixer-reported; the manifest carries the assigned set
+    gate_clean: bool | None = None
     model: str = ""
     wall_s: float = 0.0
 
 
+class CloserReport(msgspec.Struct, frozen=True):
+    # Closer intake per templates/close.md: one verdict row per routed demand plus the edited-file roster.
+    rows: tuple[LedgerRow, ...] = ()
+    files: tuple[str, ...] = ()
+
+
+class RoutingRow(msgspec.Struct, frozen=True):
+    lane: str
+    target_file: str
+    needed_change: str
+    key: str  # "<lane-letter>:<target_file>" — the id spelling closer verdict rows answer with
+
+
+class RoutingDrain(msgspec.Struct, frozen=True):
+    # Oracle: lane-report routing[] rows matched against close-*-report.json verdict rows by key or bare target_file.
+    total: int = 0
+    drained: int = 0
+    deferred: bool = False
+    verdicts: dict[str, int] = msgspec.field(default_factory=dict)
+    pending: tuple[RoutingRow, ...] = ()
+
+
+class WallSpread(msgspec.Struct, frozen=True):
+    # Oracle: LaneStat.wall_s; an outlier lane exceeds WALL_OUTLIER_FACTOR x median.
+    median_s: float = 0.0
+    max_s: float = 0.0
+    outliers: tuple[str, ...] = ()
+
+
 class RefutedClass(msgspec.Struct, frozen=True):
     class_id: str
+    corpus: str = ""
     matchers: tuple[str, ...] = ()
     refuting_citation: str = ""
     landed_surfaces: tuple[str, ...] = ()
-    rounds_seen: tuple[int, ...] = ()
+    recurrences: int = 0
 
 
 class Registry(msgspec.Struct, frozen=True):
@@ -325,64 +394,36 @@ class CrMeta(msgspec.Struct, frozen=True, rename="camel"):
     timestamp: float = 0.0
 
 
-class CrRange(msgspec.Struct, frozen=True):
-    start: int = 0
-    end: int = 0
-
-
 class CrRich(msgspec.Struct, frozen=True, rename="camel"):
     id: str = ""
     severity: str = "info"
     file_name: str = ""
     start_line: int = 0
     end_line: int = 0
-    line_range: CrRange | None = None
+    line_range: Range | None = None
     title: str = ""
     comment: str = ""
     codegen_instructions: str = ""
-    fingerprint: str = ""
-
-
-class GtRange(msgspec.Struct, frozen=True):
-    start: int = 0
-    lines: int = 0
-
-
-class GtHunk(msgspec.Struct, frozen=True, rename="camel"):
-    header: str = ""
-    old_range: GtRange | None = None
-    new_range: GtRange | None = None
-    before: str | None = None
-    after: str | None = None
 
 
 class GtComment(msgspec.Struct, frozen=True, rename="camel"):
+    # Declared fields are the consumed set only — undeclared payload regions (hunk, side, evidence) decode tolerantly and cannot abort a harvest.
     id: str = ""
     path: str = ""
     start_line: int = 0
     end_line: int = 0
-    side: str = ""
     severity: str = ""
-    security_issue: bool = False
-    category: str = ""
     body: str = ""
-    verified_evidence: str | None = None
     suggestion: str | None = None
-    hunk: GtHunk | str | None = None
 
 
 class GreptileRow(msgspec.Struct, frozen=True, rename="camel"):
     run_id: str = ""
     remote_url: str = ""
-    base_ref: str = ""
-    head_ref: str = ""
-    base_sha: str = ""
     head_sha: str = ""
     created_at: str = ""
-    completed_at: str = ""
     status: str = ""
     comment_count: int = 0
-    confidence: int = 0
 
 
 class GreptileLedger(msgspec.Struct, frozen=True):
@@ -392,13 +433,10 @@ class GreptileLedger(msgspec.Struct, frozen=True):
 
 class MsIssue(msgspec.Struct, frozen=True):
     issue_id: str = ""
-    sequence: int = 0
     path: str = ""
-    function: str = ""
     line: int = 0
     end_line: int = 0
     severity: str = ""
-    category: str = ""
     body: str = ""
 
 
@@ -411,6 +449,19 @@ class LaneStat(msgspec.Struct, frozen=True):
     phantom: tuple[str, ...]
     wall_s: float
     report_valid: bool
+    gate_clean: bool | None = None
+    fault: str = ""
+    files: tuple[str, ...] = ()  # fixer-reported touched files
+    strays: tuple[str, ...] = ()  # reported files outside the lane manifest — the cross-lane-write signal
+    shapes: dict[str, int] = msgspec.field(default_factory=dict)  # fixer-stamped shape histogram; blank stamps count as "unstamped"
+
+
+class LaneGrade(msgspec.Struct, frozen=True):
+    depth_of_fix: float
+    scope_clean: float
+    refute_cited: float
+    gate_clean: float
+    bijective: float
 
 
 class RoundRow(msgspec.Struct, frozen=True):
@@ -425,11 +476,21 @@ class RoundRow(msgspec.Struct, frozen=True):
     new_classes: int
     routed: int
     capability_rows: int
-    provenance_by_class: dict[str, int]
+    provenance_by_kind: dict[str, int]
     corroboration_histogram: dict[str, int]
     commit: str
     at: float
     focus: str = ""
+    fp_share: float = 0.0
+    relitigation_share: float = 0.0
+    novel_quality: float = 0.0
+    hunt_axis_fire: dict[str, int] = msgspec.field(default_factory=dict)
+    by_model: dict[str, dict[str, int]] = msgspec.field(default_factory=dict)
+    grades: dict[str, LaneGrade] = msgspec.field(default_factory=dict)
+    shape_fire: dict[str, int] = msgspec.field(default_factory=dict)  # fixer-stamped LedgerRow.shape counts, stamped rows only
+    routing: RoutingDrain = msgspec.field(default_factory=RoutingDrain)
+    wall_spread: WallSpread = msgspec.field(default_factory=WallSpread)
+    prompts: dict[str, str] = msgspec.field(default_factory=dict)  # content hashes of dispatch templates + agent definition
 
 
 class Delta(msgspec.Struct, frozen=True):
@@ -459,7 +520,7 @@ class StatusReceipt(msgspec.Struct, frozen=True):
     phase: Phase
     elapsed_s: float
     last_pulse_age_s: float
-    findings_seen: int
+    findings_seen: int | None
     detail: str
     signature: FaultSignature | None
     remedy: str
@@ -489,8 +550,10 @@ class KillReceipt(msgspec.Struct, frozen=True):
 class FindingsReceipt(msgspec.Struct, frozen=True):
     round: int
     reviewer: Reviewer
+    admitted: int
     total: int
     deduped: int
+    collapse_ratio: float
     cross_deduped: int
     classified: int
     counts_by_severity: dict[str, int]
@@ -498,6 +561,51 @@ class FindingsReceipt(msgspec.Struct, frozen=True):
     scope_misfire: bool
     source: str
     path: str
+    prior_round: int | None = None
+
+
+class FindingLine(msgspec.Struct, frozen=True):
+    id: str
+    severity: Severity
+    file: str
+    range: Range
+    claim: str
+
+
+class ClassFire(msgspec.Struct, frozen=True):
+    class_id: str
+    count: int
+    ids: tuple[str, ...]
+
+
+class FolderCut(msgspec.Struct, frozen=True):
+    folder: str
+    count: int
+    files: int
+    criticals: int
+
+
+class Digest(msgspec.Struct, frozen=True):
+    round: int
+    reviewer: Reviewer
+    scope: str
+    total: int
+    counts_by_severity: dict[str, int]
+    anchored_share: float
+    actionable_share: float
+    corroborated: int
+    provenance: dict[str, int]
+    classes: tuple[ClassFire, ...]
+    folders: tuple[FolderCut, ...]
+    top: dict[str, tuple[FindingLine, ...]]
+
+
+class QueryReceipt(msgspec.Struct, frozen=True):
+    round: int
+    matched: int
+    total: int
+    filters: dict[str, str]
+    rows: tuple[FindingLine, ...]
 
 
 class GatherReceipt(msgspec.Struct, frozen=True):
@@ -517,10 +625,61 @@ class SliceReceipt(msgspec.Struct, frozen=True):
     cleared: int
 
 
+class PackageTier(msgspec.Struct, frozen=True):
+    root: str
+    api: str = ""  # blank when the package ships no .api overlay
+
+
+class LaneFill(msgspec.Struct, frozen=True):
+    lane: str
+    files: tuple[str, ...]
+    packages: tuple[PackageTier, ...] = ()
+    substrate: tuple[str, ...] = ()  # language-root .api tiers beside the package overlays
+    doctrine: tuple[str, ...] = ()  # docs/stacks/<language> roots owning the lane's files
+    unplaced: tuple[str, ...] = ()  # files outside every tiered root — no package, no .api, no stack doctrine
+
+
+class FillReceipt(msgspec.Struct, frozen=True):
+    round: int
+    lanes: tuple[LaneFill, ...]
+
+
+class EventHead(msgspec.Struct, frozen=True):
+    type: str = ""
+    thread_id: str = ""
+
+
+class RolloutCall(msgspec.Struct, frozen=True):
+    type: str = ""
+    name: str = ""
+    arguments: str = ""
+
+
+class RolloutLine(msgspec.Struct, frozen=True):
+    type: str = ""
+    payload: RolloutCall | None = None
+
+
+class SpawnRow(msgspec.Struct, frozen=True):
+    lane: str
+    session: str = ""
+    rollout: str = ""
+    spawns: int = 0
+    agents: tuple[str, ...] = ()
+    fault: str = ""  # no-events | no-session | no-rollout — a per-lane fact, never a refusal
+
+
+class SpawnReceipt(msgspec.Struct, frozen=True):
+    round: int
+    oracle: str  # the rollout store queried; the per-lane events stream false-negatives spawns and is never consulted
+    lanes: tuple[SpawnRow, ...]
+
+
 class ReconcileReceipt(msgspec.Struct, frozen=True):
     round: int
     lanes: tuple[LaneStat, ...]
-    bijective: bool
+    bijective: bool  # proves id bijection alone; routing states the closer drain
+    routing: RoutingDrain = msgspec.field(default_factory=RoutingDrain)
 
 
 class HarvestReceipt(msgspec.Struct, frozen=True):
@@ -540,12 +699,38 @@ class RoundReceipt(msgspec.Struct, frozen=True):
     delta: Delta | None
 
 
+class RowVerdict(msgspec.Struct, frozen=True):
+    at: int
+    class_id: str
+    faults: tuple["Fault", ...] = ()
+
+
+class RegistryCheckReceipt(msgspec.Struct, frozen=True):
+    path: str
+    standing: int
+    rows: int
+    clean: int
+    faulted: tuple[RowVerdict, ...]
+
+
+class RegistryApplyReceipt(msgspec.Struct, frozen=True):
+    path: str
+    appended: tuple[str, ...]
+    standing: int
+
+
 class VerifyReceipt(msgspec.Struct, frozen=True):
     rule: str
     path: str
     effective: bool
     matched: str
     source: str
+
+
+class SelftestReceipt(msgspec.Struct, frozen=True):
+    proofs: int
+    passed: int
+    failures: tuple[str, ...]
 
 
 # --- [ERRORS] ---------------------------------------------------------------------------
@@ -559,12 +744,18 @@ class Fault(msgspec.Struct, frozen=True):
 # --- [SERVICES] -------------------------------------------------------------------------
 
 APP: Final = App(
-    help="One verb rail over CodeRabbit, Greptile, and Macroscope: launch, status, kill, findings, slice, reconcile, harvest, gather, round, verify."
+    help=(
+        "One verb rail over CodeRabbit, Greptile, and Macroscope: launch, status, kill, findings, slice, reconcile, lanes, harvest, gather,"
+        " round, registry, verify, selftest."
+    )
 )
 ENCODER: Final = msgspec.json.Encoder()
 RAW_JSON: Final = json.JSONDecoder()
 YAML_SAFE: Final = YAML(typ="safe")
-YAML_RT: Final = YAML(typ="rt")
+YAML_RT: Final = YAML(typ="rt")  # round-trip policy pinned to the registry file's own layout, so an apply rewrites only what it appends
+YAML_RT.preserve_quotes = True
+YAML_RT.width = 4096
+YAML_RT.indent(mapping=2, sequence=4, offset=2)
 
 # --- [BOUNDARIES] -----------------------------------------------------------------------
 
@@ -579,8 +770,12 @@ def refused(fault: Fault, /) -> int:
     return 1
 
 
-def delivered(outcome: Result[object, Fault], /) -> int:
-    return outcome.map(emitted).default_with(refused)
+def delivered(outcome: Result[object, Fault], /, *, clean: Callable[[object], bool] = lambda _receipt: True) -> int:
+    def landed(receipt: object, /) -> int:
+        emitted(receipt)
+        return 0 if clean(receipt) else 1
+
+    return outcome.map(landed).default_with(refused)
 
 
 def read_bytes(path: Path, /) -> Result[bytes, Fault]:
@@ -589,8 +784,13 @@ def read_bytes(path: Path, /) -> Result[bytes, Fault]:
 
 def written(path: Path, payload: bytes, /, *, append: bool = False) -> Result[Path, Fault]:
     def sunk() -> Path:
-        with path.open("ab" if append else "wb") as sink:
-            sink.write(payload)
+        if append:
+            with path.open("ab") as sink:
+                sink.write(payload)
+            return path
+        staging = path.with_name(f"{path.name}.tmp")  # whole-file writes stage then replace, so a torn write never truncates the target
+        staging.write_bytes(payload)
+        staging.replace(path)
         return path
 
     return catch(exception=OSError)(sunk)().map_error(lambda unwritable: Fault(code="unwritable", detail=f"{path}: {unwritable}"))
@@ -620,17 +820,40 @@ def json_value(payload: bytes, origin: str, /) -> Result[object, Fault]:
     return catch(exception=msgspec.DecodeError)(parsed)().map_error(lambda garbled: Fault(code="malformed", detail=f"{origin}: {garbled}"))
 
 
-def json_document(text: str, at: int, /) -> Option[object]:
-    return catch(exception=ValueError)(RAW_JSON.raw_decode)(text, at).to_option().map(itemgetter(0))
+def json_document(text: str, at: int, /) -> Option[tuple[object, int]]:
+    return catch(exception=ValueError)(RAW_JSON.raw_decode)(text, at).to_option()
 
 
 def shaped[T](path: Path, shape: type[T], /) -> Option[T]:
     return read_bytes(path).bind(lambda payload: decoded(payload, shape, str(path))).to_option()
 
 
-def yaml_loaded(path: Path, /) -> Result[object, Fault]:
+def null_scrubbed(value: object, /) -> object:
+    match value:
+        case dict() as mapping:
+            return {key: null_scrubbed(item) for key, item in mapping.items() if item is not None}
+        case list() as items:
+            return [null_scrubbed(item) for item in items]
+        case _:
+            return value
+
+
+def report_decoded[T](payload: bytes, shape: type[T], origin: str, /) -> Result[T, Fault]:
+    # Reports are agent-written: the contract spells null for empty collections, so nulls scrub to absent keys before the strict tuple decode.
+    return json_value(payload, origin).bind(
+        lambda value: catch(exception=msgspec.ValidationError)(
+            lambda: msgspec.json.decode(msgspec.json.encode(null_scrubbed(value)), type=shape, strict=False)
+        )().map_error(lambda drift: Fault(code="malformed", detail=f"{origin}: {drift}"))
+    )
+
+
+def report_shaped[T](path: Path, shape: type[T], /) -> Result[T, Fault]:
+    return read_bytes(path).bind(lambda payload: report_decoded(payload, shape, str(path)))
+
+
+def yaml_loaded(path: Path, /, *, codec: YAML = YAML_SAFE) -> Result[object, Fault]:
     try:
-        parsed: object = YAML_SAFE.load(path.read_text(encoding="utf-8"))
+        parsed: object = codec.load(path.read_text(encoding="utf-8"))
     except OSError as unreachable_file:
         return Error(Fault(code="unreadable", detail=f"{path}: {unreachable_file}"))
     except YAMLError as garbled:
@@ -727,6 +950,22 @@ def round_dirs(repo: Path, /) -> tuple[Path, ...]:
 
 def run_loaded(round_dir: Path, /) -> Result[Run, Fault]:
     return read_bytes(round_dir / RUN_NAME).bind(lambda payload: decoded(payload, Run, str(round_dir / RUN_NAME)))
+
+
+def round_minted(repo: Path, /) -> Result[tuple[int, Path], Fault]:
+    def attempted(retries: int, /) -> Result[tuple[int, Path], Fault]:
+        rounds = round_dirs(repo)
+        number = (round_number(rounds[-1]) if rounds else 0) + 1
+        round_dir = repo / STATE_DIR / f"round-{number:03d}"
+        try:
+            round_dir.mkdir(parents=True)
+        except FileExistsError:  # mkdir is the atomic arbiter; a concurrent launch took this number, so re-derive the next
+            return attempted(retries - 1) if retries else Error(Fault(code="unwritable", detail=f"{round_dir}: numbering contention"))
+        except OSError as unmakeable:
+            return Error(Fault(code="unwritable", detail=f"{round_dir}: {unmakeable}"))
+        return Ok((number, round_dir))
+
+    return attempted(3)
 
 
 def round_context(repo: Path, round_no: int | None, /) -> Result[Context, Fault]:
@@ -828,7 +1067,8 @@ def sig_caught(prior: Option[tuple[FaultSig, str]], rows: tuple[FaultSig, ...], 
 def scanned(probe: StreamProbe, chunk: str, markers: Markers, /) -> StreamProbe:
     lines = (probe.remainder + chunk).split("\n")
 
-    def stepped(acc: StreamProbe, line: str, /) -> StreamProbe:
+    def stepped(acc: StreamProbe, raw_line: str, /) -> StreamProbe:
+        line = ANSI_RE.sub("", raw_line)  # markers match undecorated text, the same boundary strip every harvest leg applies
         exit_hit = EXIT_LINE_RE.match(line)
         bare = line.strip()
         return evolved(
@@ -912,20 +1152,22 @@ def status_of(context: Context, probe: StreamProbe, broken: Option[str], /) -> S
         case _:
             exit_code = None
     settled_at = mtime.map(lambda held: max(held - context.run.started, 0.0)).default_value(live.elapsed)
+    terminal = phase in TERMINAL
+    clamped = min(live.elapsed, settled_at) if terminal else live.elapsed  # one clock: elapsed, budget, and pulse age agree on terminal receipts
     return StatusReceipt(
         round=context.run.round,
         reviewer=context.run.reviewer,
         scope=context.run.scope.line,
         phase=phase,
-        elapsed_s=round(min(live.elapsed, settled_at) if phase in TERMINAL else live.elapsed, 1),
-        last_pulse_age_s=round(live.pulse_age, 1),
-        findings_seen=probe.ticks,
+        elapsed_s=round(clamped, 1),
+        last_pulse_age_s=0.0 if terminal else round(live.pulse_age, 1),
+        findings_seen=probe.ticks if markers.tick.is_some() else None,
         detail=detail,
         signature=sig,
         remedy=remedy,
         exit_code=exit_code,
         alive=live.alive,
-        budget_s=round(max(markers.deadline_s - live.elapsed, 0.0), 1),
+        budget_s=round(max(markers.deadline_s - clamped, 0.0), 1),
         keepalive=markers.keepalive,
         log=str(log),
     )
@@ -969,7 +1211,9 @@ def observed(context: Context, /) -> StatusReceipt:
         broken = payload.swap().to_option().bind(lambda fault: Some(fault.detail) if log.is_file() else Nothing)
         return status_of(context, scanned(StreamProbe(), text + "\n", markers), broken)
 
-    return sentineled(context).default_with(scanned_status)
+    first = sentineled(context).default_with(scanned_status)
+    # A read-then-probe race can see the process gone before its exit marker flushed; one fresh re-read decides, so a completed run never grades died.
+    return first if first.signature != "died" else scanned_status()
 
 
 def log_chunk(log: Path, offset: int, /) -> tuple[str, int]:
@@ -989,7 +1233,12 @@ def stepped_status(context: Context, probe: StreamProbe, offset: int, /) -> tupl
         case _:
             chunk, moved = log_chunk(context.round_dir / LOG_NAME, offset)
             grown = scanned(probe, chunk, ADAPTERS[context.run.reviewer].markers)
-            return status_of(context, grown, Nothing), grown, moved
+            first = status_of(context, grown, Nothing)
+            if first.signature != "died":
+                return first, grown, moved
+            tail, settled = log_chunk(context.round_dir / LOG_NAME, moved)  # confirm death against a fresh tail before the terminal verdict lands
+            regrown = scanned(grown, tail, ADAPTERS[context.run.reviewer].markers)
+            return status_of(context, regrown, Nothing), regrown, settled
 
 
 def liveness_line(receipt: StatusReceipt, /) -> str:
@@ -1033,9 +1282,10 @@ def swept_worktrees(repo: Path, since: float | None, /) -> tuple[str, ...]:
             if branch.startswith(WORKTREE_BRANCH):
                 sh((*git, "branch", "-D", branch))
     if since is None:
+        live = {branch for _path, branch in worktree_rows(repo) if branch}  # a branch still backing a live worktree is never reaped
         leftovers = sh((*git, "branch", "--list", f"{WORKTREE_BRANCH}*", "--format=%(refname:short)")).map(str.splitlines).default_with(lambda _f: [])
         for branch in leftovers:
-            if branch.strip():
+            if branch.strip() and branch.strip() not in live:
                 sh((*git, "branch", "-D", branch.strip()))
     return tuple(str(path) for path, _branch in victims)
 
@@ -1046,13 +1296,20 @@ def survivors_swept(repo: Path, needle: str, /) -> tuple[int, ...]:
     listed = sh(("pgrep", "-f", needle)).map(str.splitlines).default_with(lambda _f: [])
     pids = tuple(int(line) for line in listed if line.strip().isdigit() and int(line) not in own)
 
+    def engine_led(pid: int, /) -> bool:
+        # Only a process whose argv[0] IS the engine binary is a survivor; a shell or rail invocation merely naming it is a bystander.
+        command = sh(("ps", "-p", str(pid), "-o", "command=")).default_with(lambda _f: "")
+        head = command.split(maxsplit=1)[0] if command else ""
+        return Path(head).name == needle
+
     def anchored(pid: int, /) -> bool:
         cwd = sh(("lsof", "-a", "-p", str(pid), "-d", "cwd", "-Fn")).default_with(lambda _f: "")
         return any(line.startswith("n") and Path(os.path.realpath(line[1:])) == anchor for line in cwd.splitlines())
 
-    doomed = tuple(pid for pid in pids if anchored(pid))
+    doomed = tuple(pid for pid in pids if engine_led(pid) and anchored(pid))
     for pid in doomed:
-        catch(exception=ProcessLookupError)(os.kill)(pid, SIG_KILL)
+        if breathing(pid, needle):  # re-verify identity at the last instant, closing most of the pid-reuse window
+            catch(exception=ProcessLookupError)(os.kill)(pid, SIG_KILL)
     return doomed
 
 
@@ -1113,7 +1370,12 @@ def fingerprinted(file: str, span: Range, claim: str, /) -> str:
     return hashlib.sha256(f"{file}|{span.start}:{span.end}|{stemmed(claim)}".encode()).hexdigest()[:16]
 
 
-def minted(reviewer: Reviewer, file: str, span: Range, claim: str, fix: str, severity: str, payload: bytes, /) -> Option[Finding]:
+def depreambled(text: str, /) -> str:
+    return next((text[len(mark) :].lstrip() for mark in ENGINE_PREAMBLES if text.startswith(mark)), text)
+
+
+def minted(reviewer: Reviewer, file: str, span: Range, claim: str, fix: str, severity: str, /) -> Option[Finding]:
+    claim, fix = depreambled(claim), depreambled(fix)
     if not file and not claim:
         return Nothing
     return Some(
@@ -1127,7 +1389,8 @@ def minted(reviewer: Reviewer, file: str, span: Range, claim: str, fix: str, sev
             claim=claim,
             fix_instructions=fix,
             class_match="",
-            raw=msgspec.Raw(payload),
+            anchored=bool(file) and span.start > 0,
+            actionable=bool(fix),
         )
     )
 
@@ -1137,30 +1400,50 @@ def counted(rows: tuple[Finding, ...], /) -> dict[str, int]:
     return {level: tally[level] for level in SEVERITIES if level in tally}
 
 
-def compiled(registry: Registry, /) -> tuple[tuple[str, tuple[re.Pattern[str], ...]], ...]:
-    def pattern(matcher: str, /) -> re.Pattern[str]:
-        return catch(exception=re.PatternError)(re.compile)(matcher, re.IGNORECASE).default_with(
-            lambda _bad: re.compile(re.escape(matcher), re.IGNORECASE)
-        )
+def provenance_hist(rows: tuple[Finding, ...], /) -> dict[str, int]:
+    return {str(key): count for key, count in Counter(row.provenance for row in rows if row.provenance).items()}
 
-    return tuple((row.class_id, tuple(pattern(matcher) for matcher in row.matchers)) for row in registry.classes)
+
+def lenient_pattern(matcher: str, /) -> re.Pattern[str]:
+    return catch(exception=re.PatternError)(re.compile)(matcher, re.IGNORECASE).default_with(
+        lambda _bad: re.compile(re.escape(matcher), re.IGNORECASE)
+    )
+
+
+def compiled(registry: Registry, /) -> tuple[tuple[str, tuple[re.Pattern[str], ...]], ...]:
+    return tuple((row.class_id, tuple(lenient_pattern(matcher) for matcher in row.matchers)) for row in registry.classes)
 
 
 def classified(matchers: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...], claim: str, /) -> str:
     return next((class_id for class_id, patterns in matchers if any(pattern.search(claim) for pattern in patterns)), "")
 
 
+def claim_scope(row: Finding, /) -> str:
+    return f"{row.claim}\n{row.fix_instructions}"
+
+
+SEARCH_SCOPES: Final[Mapping[str, Callable[[Finding], str]]] = MappingProxyType({
+    "claim": lambda row: row.claim,
+    "fix": lambda row: row.fix_instructions,
+    "both": claim_scope,
+})
+
+
+def finding_order(row: Finding, /) -> tuple[int, str, int]:
+    return (RANK[row.severity], row.file, row.range.start)
+
+
 def normalized(rows: tuple[Finding, ...], registry: Registry, /) -> tuple[Finding, ...]:
     matchers = compiled(registry)
-    stamped = tuple(replace(row, class_match=classified(matchers, row.claim)) for row in rows)
+    stamped = tuple(replace(row, class_match=classified(matchers, claim_scope(row))) for row in rows)
     ordered = sorted(stamped, key=lambda row: (row.fingerprint, RANK[row.severity]))
     survivors = tuple(next(iter(bunch)) for _, bunch in groupby(ordered, key=lambda row: row.fingerprint))
-    return tuple(sorted(survivors, key=lambda row: (RANK[row.severity], row.file, row.range.start)))
+    return tuple(sorted(survivors, key=finding_order))
 
 
 def unioned(pools: tuple[tuple[Finding, ...], ...], registry: Registry, /) -> tuple[Finding, ...]:
     matchers = compiled(registry)
-    tagged = tuple(replace(row, class_match=row.class_match or classified(matchers, row.claim)) for pool in pools for row in pool)
+    tagged = tuple(replace(row, class_match=row.class_match or classified(matchers, claim_scope(row))) for pool in pools for row in pool)
     ordered = sorted(tagged, key=lambda row: row.fingerprint)
 
     def collapsed(bunch: tuple[Finding, ...], /) -> Finding:
@@ -1170,7 +1453,7 @@ def unioned(pools: tuple[tuple[Finding, ...], ...], registry: Registry, /) -> tu
         return replace(primary, corroborators=tuple(dict.fromkeys((*primary.corroborators, *others))))
 
     survivors = tuple(collapsed(tuple(bunch)) for _, bunch in groupby(ordered, key=lambda row: row.fingerprint))
-    return tuple(sorted(survivors, key=lambda row: (RANK[row.severity], row.file, row.range.start)))
+    return tuple(sorted(survivors, key=finding_order))
 
 
 def pruned_against(prior: tuple[Finding, ...], rows: tuple[Finding, ...], /) -> tuple[tuple[Finding, ...], int]:
@@ -1180,16 +1463,19 @@ def pruned_against(prior: tuple[Finding, ...], rows: tuple[Finding, ...], /) -> 
 
 
 def prior_pool(repo: Path, current: int, dedup_against: int | None, /) -> Result[Option[tuple[Path, tuple[Finding, ...]]], Fault]:
-    if dedup_against is not None:
-        held = repo / STATE_DIR / f"round-{dedup_against:03d}" / FINDINGS_NAME
-        return read_bytes(held).bind(lambda payload: decoded(payload, tuple[Finding, ...], str(held))).map(lambda rows: Some((held.parent, rows)))
+    if dedup_against is not None and dedup_against >= current:
+        return Error(
+            Fault(code="bad-flag", detail=f"--dedup-against {dedup_against} must name a round before {current}; a self-dedup empties the round")
+        )
     candidates = tuple(
         d for d in round_dirs(repo) if round_number(d) < current and (d / FINDINGS_NAME).is_file() and tuple(d.glob("lane-?-report.json"))
     )
-    if not candidates:
+    found = repo / STATE_DIR / f"round-{dedup_against:03d}" if dedup_against is not None else (candidates[-1] if candidates else None)
+    if found is None:
         return Ok(Nothing)
-    tail = candidates[-1]
-    return Ok(shaped(tail / FINDINGS_NAME, tuple[Finding, ...]).map(lambda rows: (tail, rows)))
+    held = found / FINDINGS_NAME
+    # A prior round that qualifies must decode loudly: a swallowed decode fault here is a silently empty provenance histogram downstream.
+    return read_bytes(held).bind(lambda payload: decoded(payload, tuple[Finding, ...], str(held))).map(lambda rows: Some((found, rows)))
 
 
 def provenanced(rows: tuple[Finding, ...], prior: Option[tuple[Path, tuple[Finding, ...]]], /) -> tuple[Finding, ...]:
@@ -1237,6 +1523,45 @@ def scope_dirty(repo: Path, scope: Scope, /) -> bool:
             return False
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class DedupTrace:
+    deduped: int = 0
+    collapse_ratio: float = 0.0
+    cross_deduped: int = 0
+    prior_round: int | None = None
+
+
+NO_DEDUP: Final = DedupTrace()
+
+
+def findings_receipt(
+    context: Context,
+    rows: tuple[Finding, ...],
+    /,
+    *,
+    admitted: int,
+    trace: DedupTrace = NO_DEDUP,
+    provenance: dict[str, int] | None = None,
+    source: str = "",
+) -> FindingsReceipt:
+    return FindingsReceipt(
+        round=context.run.round,
+        reviewer=context.run.reviewer,
+        admitted=admitted,
+        total=len(rows),
+        deduped=trace.deduped,
+        collapse_ratio=round(trace.collapse_ratio, 3),
+        cross_deduped=trace.cross_deduped,
+        classified=sum(1 for row in rows if row.class_match),
+        counts_by_severity=counted(rows),
+        provenance=provenance if provenance is not None else provenance_hist(rows),
+        scope_misfire=admitted == 0 and scope_dirty(context.repo, context.run.scope),
+        source=source or str(context.round_dir / FINDINGS_NAME),
+        path=str(context.round_dir / FINDINGS_NAME),
+        prior_round=trace.prior_round,
+    )
+
+
 # --- [HARVEST_LEGS]
 
 
@@ -1263,60 +1588,83 @@ def cr_epoch(repo: Path, run: Run, now: float, /) -> Option[Path]:
 
 def cr_span(rich: CrRich, /) -> Range:
     match rich.line_range:
-        case CrRange(start=start, end=end) if start or end:
+        case Range(start=start, end=end) if start or end:
             return Range(start=start, end=end)
         case _:
             return Range(start=rich.start_line, end=rich.end_line or rich.start_line)
 
 
 def cr_admitted(path: Path, /) -> Option[Finding]:
-    def projected(payload: bytes, rich: CrRich, /) -> Option[Finding]:
-        span = cr_span(rich)
+    def projected(rich: CrRich, /) -> Option[Finding]:
         claim = headline(rich.title or rich.comment)
-        return minted("coderabbit", rich.file_name, span, claim, rich.codegen_instructions or rich.comment, rich.severity, payload).map(
-            lambda row: replace(row, id=rich.id, fingerprint=rich.fingerprint or row.fingerprint)
+        return minted("coderabbit", rich.file_name, cr_span(rich), claim, rich.codegen_instructions or rich.comment, rich.severity).map(
+            lambda row: replace(row, id=rich.id)
         )
 
-    return (
-        read_bytes(path).to_option().bind(lambda payload: decoded(payload, CrRich, str(path)).to_option().bind(lambda rich: projected(payload, rich)))
-    )
+    return read_bytes(path).to_option().bind(lambda payload: decoded(payload, CrRich, str(path)).to_option().bind(projected))
 
 
 def cr_store_rows(epoch: Path, /) -> tuple[Finding, ...]:
     return tuple(Block.of_seq(sorted(epoch.glob("*.json"))).choose(lambda path: Nothing if path.name in CR_META_NAMES else cr_admitted(path)))
 
 
+CR_LOC_RE: Final[re.Pattern[str]] = re.compile(
+    r"In @(?P<file>\S+?)\s+(?:at line (?P<one>\d+)|around lines (?P<low>\d+)\s*-\s*(?P<high>\d+))[,:]?\s*", re.IGNORECASE
+)
+
+
+def cr_stream_rows(log: Path, /) -> tuple[Finding, ...]:
+    # Salvage mint for a dead engine: the liveness stream's finding lines carry severity, file, and the whole codegen instruction —
+    # the rich store never lands when the service kills the review, so the stream is the only surviving findings source.
+    def salvaged(raw: bytes, /) -> Option[Finding]:
+        doc = json_value(raw, "<stream-finding>").to_option().map(stringly).default_value({})
+        if doc.get("type") != "finding":
+            return Nothing
+        body = depreambled(str(doc.get("codegenInstructions") or "")).strip()
+        met = CR_LOC_RE.search(body)
+        span = Range() if met is None else Range(start=int(met["one"] or met["low"] or 0), end=int(met["one"] or met["high"] or 0))
+        rest = body[met.end() :].strip() if met else body
+        file = str(doc.get("fileName") or "") or (met["file"].lstrip("@") if met else "")
+        return minted("coderabbit", file, span, headline(rest), rest, str(doc.get("severity") or "")).map(
+            lambda row: replace(row, id=row.fingerprint[:12])
+        )
+
+    return tuple(Block.of_seq(read_bytes(log).map(bytes.splitlines).default_with(lambda _f: [])).choose(salvaged))
+
+
 def cr_harvested(context: Context, /) -> Result[tuple[Finding, ...], Fault]:
-    return (
-        cr_epoch(context.repo, context.run, time.time())
-        .map(lambda epoch: Ok(cr_store_rows(epoch)))
-        .default_with(
-            lambda: Error(
-                Fault(
-                    code="store-missing",
-                    detail=f"no {CR_STORE} epoch matched the run window (workingDirectory==repo, timestamp within ±{STORE_SLACK_S:.0f}s)",
-                )
-            )
+    held = cr_epoch(context.repo, context.run, time.time()).map(lambda epoch: Ok(cr_store_rows(epoch)))
+    if held.is_some():
+        return held.value
+    # No store epoch: a run the service killed mid-review never writes one — salvage the stream for a non-completed round only,
+    # so a completed run with a missing store still fails loud as the correlation defect it is.
+    salvage = cr_stream_rows(context.round_dir / LOG_NAME) if observed(context).phase != "completed" else ()
+    if salvage:
+        return Ok(salvage)
+    return Error(
+        Fault(
+            code="store-missing",
+            detail=f"no {CR_STORE} epoch matched the run window (workingDirectory==repo, timestamp within ±{STORE_SLACK_S:.0f}s)",
         )
     )
 
 
 def json_offsets(text: str, /) -> tuple[int, ...]:
     starts = accumulate((len(line) for line in text.splitlines(keepends=True)), initial=0)
-    candidates = (
+    return tuple(
         at + len(line) - len(stripped)
         for at, line in zip(starts, text.splitlines(keepends=True), strict=False)
         if (stripped := line.lstrip())[:1] in {"[", "{"}
     )
-    return tuple(islice(candidates, JSON_SCAN_CAP))
 
 
 def json_documents(text: str, /) -> tuple[object, ...]:
+    # JSON_SCAN_CAP bounds decoded documents, never candidate lines, so a pretty-printed prelude cannot exhaust the budget before the envelope.
     def stepped(acc: tuple[int, tuple[object, ...]], at: int, /) -> tuple[int, tuple[object, ...]]:
         horizon, docs = acc
-        if at < horizon:
+        if at < horizon or len(docs) >= JSON_SCAN_CAP:
             return acc
-        return catch(exception=ValueError)(RAW_JSON.raw_decode)(text, at).to_option().map(lambda pair: (pair[1], (*docs, pair[0]))).default_value(acc)
+        return json_document(text, at).map(lambda pair: (pair[1], (*docs, pair[0]))).default_value(acc)
 
     seed: tuple[int, tuple[object, ...]] = (0, ())
     return reduce(stepped, json_offsets(text), seed)[1]
@@ -1336,11 +1684,11 @@ def greptile_rows(doc: object, /) -> tuple[dict[str, object], ...]:
 
 def greptile_payload(text: str, origin: str, /) -> Result[tuple[dict[str, object], ...], Fault]:
     docs = Block.of_seq(json_documents(text))
-    populated = docs.map(greptile_rows).choose(lambda rows: Some(rows) if rows else Nothing)
+    populated = tuple(docs.choose(lambda doc: Some(held) if (held := greptile_rows(doc)) else Nothing))
     enveloped = docs.choose(lambda doc: Some(doc) if isinstance(doc, dict) and "comments" in doc else Nothing)
     return (
-        Ok(populated.head())
-        if not populated.is_empty()
+        Ok(populated[-1])  # the final envelope is the settled one; an incremental protocol's earlier envelopes are partials
+        if populated
         else Ok(())
         if not enveloped.is_empty()
         else Error(Fault(code="no-payload", detail=f"{origin}: no greptile --json envelope (top-level comments[]) in the stream"))
@@ -1353,9 +1701,9 @@ def gt_admitted(row: dict[str, object], /) -> Result[Option[Finding], Fault]:
 
     def projected(comment: GtComment, /) -> Option[Finding]:
         span = Range(start=comment.start_line, end=comment.end_line or comment.start_line)
-        return minted(
-            "greptile", comment.path, span, headline(comment.body), comment.suggestion or comment.body, comment.severity, ENCODER.encode(row)
-        ).map(lambda held: replace(held, id=comment.id))
+        return minted("greptile", comment.path, span, headline(comment.body), comment.suggestion or comment.body, comment.severity).map(
+            lambda held: replace(held, id=comment.id)
+        )
 
     return (
         catch(exception=msgspec.ValidationError)(converted)()
@@ -1419,7 +1767,6 @@ def ms_admitted(text: str, at: int, /) -> Option[Finding]:
                         headline(issue.body),
                         issue.body,
                         issue.severity,
-                        ENCODER.encode(payload),
                     )
                     if issue.issue_id or issue.path
                     else Nothing
@@ -1427,7 +1774,7 @@ def ms_admitted(text: str, at: int, /) -> Option[Finding]:
             )
         )
 
-    return json_document(text, at).bind(converted)
+    return json_document(text, at).map(itemgetter(0)).bind(converted)
 
 
 def ms_harvested(context: Context, /) -> Result[tuple[Finding, ...], Fault]:
@@ -1441,65 +1788,299 @@ def ms_harvested(context: Context, /) -> Result[tuple[Finding, ...], Fault]:
 # --- [SLICING]
 
 
-def folder_of(file: str, /) -> str:
-    parts = PurePosixPath(file).parts
-    return "/".join(parts[:FOLDER_DEPTH]) if len(parts) > FOLDER_DEPTH else "/".join(parts[:-1]) or file
-
-
-GROUPERS: Final[Mapping[SliceAxis, Callable[[str], str]]] = MappingProxyType({"folder": folder_of})
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Bundle:
+    label: str
+    rows: tuple[Finding, ...]
+    weight: float
 
 
 def loc_of(path: Path, /) -> int:
     return read_bytes(path).map(lambda payload: payload.count(b"\n")).default_with(lambda _f: 0)
 
 
-def rulings_of(registry: Registry, /) -> tuple[str, ...]:
-    return tuple(f"{row.class_id}: {row.refuting_citation}".rstrip(": ") for row in registry.classes)
+def row_weigher(balance: Balance, repo: Path, rows: tuple[Finding, ...], /) -> Weigh:
+    match balance:
+        case "count":
+            return lambda _row: 1.0
+        case "loc":
+            share = Counter(row.file for row in rows)
+            cost = {file: float(max(loc_of(repo / file), 1)) for file in share}
+            return lambda row: cost[row.file] / share[row.file]
 
 
-def sliced(
-    rows: tuple[Finding, ...], lanes: int, axis: SliceAxis, balance: Balance, repo: Path, round_no: int, rulings: tuple[str, ...], /
-) -> tuple[LaneSlice, ...]:
-    grouper = GROUPERS[axis]
-    ordered = sorted(rows, key=lambda row: grouper(row.file))
-    groups = tuple((key, tuple(bunch)) for key, bunch in groupby(ordered, key=lambda row: grouper(row.file)))
+def bundled(label: str, rows: tuple[Finding, ...], weigh: Weigh, /) -> Bundle:
+    return Bundle(label=label, rows=rows, weight=sum(weigh(row) for row in rows))
 
-    def weighed(bunch: tuple[Finding, ...], /) -> int:
-        return len(bunch) if balance == "count" else sum(loc_of(repo / file) for file in {row.file for row in bunch})
 
-    weighted = sorted(((weighed(bunch), key, bunch) for key, bunch in groups), key=itemgetter(0), reverse=True)
-    by_folder = dict(groups)
+def seam_depth(parts: tuple[tuple[str, ...], ...], /) -> int:
+    # Default is the common-prefix length, so a path that is a component-wise prefix of its sibling still yields a real seam.
+    return next((at for at, level in enumerate(zip(*parts, strict=False)) if len(set(level)) > 1), min(len(held) for held in parts))
 
-    def packed(
-        acc: tuple[tuple[int, tuple[str, ...]], ...], entry: tuple[int, str, tuple[Finding, ...]], /
-    ) -> tuple[tuple[int, tuple[str, ...]], ...]:
+
+def corpus_label(files: tuple[str, ...], /) -> str:
+    parts = tuple(PurePosixPath(file).parts for file in files)
+    return files[0] if len(parts) == 1 else "/".join(parts[0][: seam_depth(parts)]) or "."
+
+
+def seam_split(bundle: Bundle, weigh: Weigh, /) -> tuple[Bundle, ...]:
+    files = sorted({row.file for row in bundle.rows})
+    if len(files) > 1:
+        parts = {file: PurePosixPath(file).parts for file in files}
+        depth = seam_depth(tuple(parts[file] for file in files))
+
+        def seam(file: str, /) -> str:
+            held = parts[file]
+            return held[depth] if depth < len(held) else ""
+
+        ordered = sorted(bundle.rows, key=lambda row: (seam(row.file), row.file, row.range.start))
+        cut = tuple(
+            bundled("/".join(parts[held[0].file][: depth + 1]) or "<unanchored>", held, weigh)
+            for _seam, bunch in groupby(ordered, key=lambda row: seam(row.file))
+            if (held := tuple(bunch))
+        )
+        if len(cut) > 1:  # a degenerate single-group cut falls through to the index halving, so every split proves progress
+            return cut
+    if len(bundle.rows) > 1:
+        halved = tuple(sorted(bundle.rows, key=lambda row: (row.range.start, row.fingerprint)))
+        mid = len(halved) // 2
+        return tuple(bundled(f"{bundle.label}#{mark}", held, weigh) for mark, held in (("a", halved[:mid]), ("b", halved[mid:])))
+    return ()
+
+
+def partitioned(rows: tuple[Finding, ...], lanes: int, weigh: Weigh, /) -> tuple[Bundle, ...]:
+    if not rows:
+        return ()
+    seed = bundled(corpus_label(tuple(sorted({row.file for row in rows}))), rows, weigh)
+    target = seed.weight / max(lanes, 1)
+    bundles: tuple[Bundle, ...] = (seed,)
+    while True:  # bounded: every pass splits one multi-row bundle, so passes cannot exceed len(rows)
+        splittable = tuple(held for held in bundles if len(held.rows) > 1)
+        pool = tuple(held for held in splittable if held.weight > target) or (splittable if len(bundles) < lanes else ())
+        if not pool:
+            return bundles
+        victim = max(pool, key=lambda held: held.weight)
+        bundles = (*(held for held in bundles if held is not victim), *seam_split(victim, weigh))
+
+
+def auto_lanes(total: int, /) -> int:
+    return min(LANES_CAP, max(1, -(-total // LANE_LOAD)))
+
+
+def corpus_of(files: tuple[str, ...], /) -> str:
+    paths = tuple(
+        PurePosixPath(file) for file in files if file
+    )  # repo-root markdown is estate prose; libs/** markdown carries code fences and stays code
+    return (
+        "prose"
+        if paths and all(path.suffix in PROSE_SUFFIXES and (len(path.parts) == 1 or path.parts[0] in PROSE_ROOTS) for path in paths)
+        else "code"
+    )
+
+
+def rulings_of(registry: Registry, corpus: str, /) -> tuple[str, ...]:
+    return tuple(f"{row.class_id}: {row.refuting_citation}".rstrip(": ") for row in registry.classes if not row.corpus or row.corpus == corpus)
+
+
+def packed_into(bundles: tuple[Bundle, ...], lanes: int, /) -> tuple[tuple[Bundle, ...], ...]:
+    def packed(acc: tuple[tuple[float, tuple[Bundle, ...]], ...], entry: Bundle, /) -> tuple[tuple[float, tuple[Bundle, ...]], ...]:
         slot = min(range(len(acc)), key=lambda at: acc[at][0])
         weight, held = acc[slot]
-        return (*acc[:slot], (weight + entry[0], (*held, entry[1])), *acc[slot + 1 :])
+        return (*acc[:slot], (weight + entry.weight, (*held, entry)), *acc[slot + 1 :])
 
-    seeds: tuple[tuple[int, tuple[str, ...]], ...] = tuple((0, ()) for _ in range(min(lanes, LANES_CAP)))
-    packs = reduce(packed, weighted, seeds)
+    seeds: tuple[tuple[float, tuple[Bundle, ...]], ...] = tuple((0.0, ()) for _ in range(lanes))
+    ordered = sorted(bundles, key=lambda held: held.weight, reverse=True)
+    return tuple(held for _weight, held in reduce(packed, ordered, seeds))
 
-    def lane_carved(at: int, folders: tuple[str, ...], /) -> LaneSlice:
+
+def sliced(rows: tuple[Finding, ...], lanes: int, balance: Balance, repo: Path, round_no: int, registry: Registry, /) -> tuple[LaneSlice, ...]:
+    weigh = row_weigher(balance, repo, rows)
+    packs = packed_into(partitioned(rows, min(lanes, LANES_CAP), weigh), min(lanes, LANES_CAP))
+
+    def lane_carved(at: int, pack: tuple[Bundle, ...], /) -> LaneSlice:
         letter = LANE_ALPHABET[at]
-        picked_rows = sorted(
-            (row for folder in folders for row in by_folder[folder]), key=lambda row: (RANK[row.severity], row.file, row.range.start)
-        )
+        labels = tuple(sorted(dict.fromkeys(held.label for held in pack)))
+        picked_rows = sorted((row for held in pack for row in held.rows), key=finding_order)
         stamped = tuple(replace(row, id=f"r{round_no}{letter}-{index + 1:02d}") for index, row in enumerate(picked_rows))
         criticals = sum(1 for row in stamped if row.severity == "critical")
+        files = tuple(sorted({row.file for row in stamped}))
         return LaneSlice(
             manifest=LaneManifest(
                 lane=f"lane-{letter}",
-                files=tuple(sorted({row.file for row in stamped})),
+                files=files,
                 count=len(stamped),
                 criticals=criticals,
-                suggested_scope_line=f"{', '.join(sorted(folders))} — {len(stamped)} findings, {criticals} critical",
+                suggested_scope_line=f"{', '.join(labels)} — {len(stamped)} findings, {criticals} critical",
             ),
-            settled_rulings=rulings,
+            settled_rulings=rulings_of(registry, corpus_of(files)),
             findings=stamped,
         )
 
-    return tuple(lane_carved(at, folders) for at, (_, folders) in enumerate(packs) if folders)
+    return tuple(lane_carved(at, pack) for at, pack in enumerate(packs) if pack)
+
+
+def closer_sliced(rows: tuple[RoutingRow, ...], lanes: int, reviewer: Reviewer, /) -> tuple[LaneSlice, ...]:
+    # One bundle per target file keeps closer territories file-disjoint by construction — concurrent closers never share a write target.
+    def fabricated(row: RoutingRow, /) -> Finding:
+        return Finding(
+            id=row.key,
+            fingerprint=fingerprinted(row.target_file, Range(), f"{row.key}|{row.needed_change}"),
+            reviewer=reviewer,
+            file=row.target_file,
+            range=Range(),
+            severity="major",
+            claim=row.needed_change,
+            fix_instructions=f"grep lane-{row.lane}-report.json routing[] for this target's full demand before editing",
+            class_match="",
+        )
+
+    ordered = sorted(rows, key=lambda row: (row.target_file, row.key))
+    bundles = tuple(
+        bundled(file, tuple(fabricated(row) for row in bunch), lambda _row: 1.0) for file, bunch in groupby(ordered, key=lambda row: row.target_file)
+    )
+    packs = packed_into(bundles, max(1, min(lanes, len(bundles), LANES_CAP)))
+
+    def carved(at: int, pack: tuple[Bundle, ...], /) -> LaneSlice:
+        picked = sorted((row for held in pack for row in held.rows), key=finding_order)
+        files = tuple(sorted({row.file for row in picked}))
+        return LaneSlice(
+            manifest=LaneManifest(
+                lane=f"close-{LANE_ALPHABET[at]}",
+                files=files,
+                count=len(picked),
+                criticals=0,
+                suggested_scope_line=f"{', '.join(files)} — {len(picked)} routed rows",
+            ),
+            settled_rulings=(),
+            findings=tuple(picked),
+        )
+
+    return tuple(carved(at, pack) for at, pack in enumerate(packs) if pack)
+
+
+def span_of(span: Range, /) -> str:
+    return f"{span.start}" if span.end in {0, span.start} else f"{span.start}-{span.end}"
+
+
+def brief_rendered(pack: LaneSlice, round_no: int, /) -> str:
+    manifest = pack.manifest
+    ordered = sorted(pack.findings, key=lambda row: (row.file, row.range.start))
+    tally = Counter(row.file for row in ordered)
+
+    def entry(row: Finding, /) -> tuple[str, ...]:
+        fix = row.fix_instructions.strip()
+        head, *rest = fix.splitlines() or ("",)
+        return (
+            f"- [{row.severity.upper()}] {row.id} L{span_of(row.range)} — {row.claim}",
+            *((f"  fix: {head}", *(f"       {line}" for line in rest)) if fix else ()),
+        )
+
+    sections = (
+        f"# [LANE_BRIEF] round {round_no} — {manifest.lane} — {manifest.suggested_scope_line}",
+        "",
+        "## [FILES]",
+        *(f"- {file} ({count})" for file, count in sorted(tally.items())),
+        "",
+        "## [FINDINGS]",
+        *(
+            line
+            for file, bunch in groupby(ordered, key=lambda row: row.file)
+            for line in (f"### {file}", *(piece for row in bunch for piece in entry(row)))
+        ),
+        "",
+        "## [SETTLED_RULINGS]",
+        *(f"- {ruling}" for ruling in pack.settled_rulings),
+    )
+    return "\n".join(sections) + "\n"
+
+
+# --- [DIGEST]
+
+
+def lined(row: Finding, /) -> FindingLine:
+    return FindingLine(id=row.id or row.fingerprint[:8], severity=row.severity, file=row.file, range=row.range, claim=row.claim)
+
+
+def line_rendered(line: FindingLine, /) -> str:
+    return f"[{line.severity.upper()}] {line.file}:{span_of(line.range)} {line.id} — {line.claim}"
+
+
+def digest_built(context: Context, rows: tuple[Finding, ...], top_n: int, /) -> Digest:
+    total = len(rows)
+    stamped = sorted((row for row in rows if row.class_match), key=lambda row: row.class_match)
+    fired = tuple(
+        ClassFire(class_id=class_id, count=len(held), ids=tuple(row.id or row.fingerprint[:8] for row in held))
+        for class_id, bunch in groupby(stamped, key=lambda row: row.class_match)
+        if (held := tuple(bunch))
+    )
+    cuts = sorted(partitioned(rows, DIGEST_FOLDS, row_weigher("count", context.repo, rows)), key=lambda held: len(held.rows), reverse=True)
+    ranked_rows = sorted(rows, key=finding_order)
+    top = {
+        str(level): tuple(lined(row) for row in islice((row for row in ranked_rows if row.severity == level), top_n))
+        for level in SEVERITIES
+        if any(row.severity == level for row in rows)
+    }
+    return Digest(
+        round=context.run.round,
+        reviewer=context.run.reviewer,
+        scope=context.run.scope.line,
+        total=total,
+        counts_by_severity=counted(rows),
+        anchored_share=round(sum(1 for row in rows if row.anchored) / total, 3) if total else 0.0,
+        actionable_share=round(sum(1 for row in rows if row.actionable) / total, 3) if total else 0.0,
+        corroborated=sum(1 for row in rows if row.corroborators),
+        provenance=provenance_hist(rows),
+        classes=fired,
+        folders=tuple(
+            FolderCut(
+                folder=held.label,
+                count=len(held.rows),
+                files=len({row.file for row in held.rows}),
+                criticals=sum(1 for row in held.rows if row.severity == "critical"),
+            )
+            for held in cuts
+        ),
+        top=top,
+    )
+
+
+def digest_rendered(digest: Digest, /) -> str:
+    severity = " ".join(f"{level}={count}" for level, count in digest.counts_by_severity.items())
+    provenance = " ".join(f"{key}={count}" for key, count in digest.provenance.items())
+    classes = ", ".join(f"{fire.class_id} x{fire.count} ({', '.join(fire.ids)})" for fire in digest.classes)
+    lines = (
+        f"[DIGEST] round {digest.round} — {digest.reviewer} — {digest.scope} — {digest.total} findings",
+        f"severity: {severity or 'none'}",
+        f"anchored {digest.anchored_share:.0%}  actionable {digest.actionable_share:.0%}  corroborated {digest.corroborated}",
+        f"provenance: {provenance or 'unstamped'}",
+        f"classes: {classes or 'none fired'}",
+        "folders:",
+        *(
+            f"  {cut.folder} — {cut.count} findings / {cut.files} files" + (f" / {cut.criticals} critical" if cut.criticals else "")
+            for cut in digest.folders
+        ),
+        *(line for level, held in digest.top.items() for line in (f"top {level}:", *(f"  {line_rendered(row)}" for row in held))),
+    )
+    return "\n".join(lines)
+
+
+def queried(
+    rows: tuple[Finding, ...], floor: Option[Severity], glob: str, matcher: Option[re.Pattern[str]], searched: Callable[[Finding], str], /
+) -> tuple[Finding, ...]:
+    def kept(row: Finding, /) -> bool:
+        return (
+            floor.map(lambda level: RANK[row.severity] <= RANK[level]).default_value(value=True)
+            and (not glob or fnmatch(row.file, glob))
+            and matcher.map(lambda pattern: pattern.search(searched(row)) is not None).default_value(value=True)
+        )
+
+    return tuple(row for row in rows if kept(row))
+
+
+def query_rendered(receipt: QueryReceipt, /) -> str:
+    filters = " ".join(f"{key}={value}" for key, value in receipt.filters.items())
+    head = f"[QUERY] round {receipt.round} — {receipt.matched}/{receipt.total} findings" + (f" — {filters}" if filters else "")
+    return "\n".join((head, *(line_rendered(row) for row in receipt.rows)))
 
 
 # --- [RECONCILE]
@@ -1509,27 +2090,92 @@ def lane_slices(round_dir: Path, /) -> tuple[tuple[Path, LaneSlice], ...]:
     return tuple(Block.of_seq(sorted(round_dir.glob("lane-?.json"))).choose(lambda path: shaped(path, LaneSlice).map(lambda held: (path, held))))
 
 
+def report_pairs(round_dir: Path, /) -> tuple[tuple[str, LaneReport], ...]:
+    return tuple(
+        Block.of_seq(sorted(round_dir.glob("lane-?-report.json"))).choose(
+            lambda path: report_shaped(path, LaneReport).to_option().map(lambda held: (path.name.removesuffix("-report.json"), held))
+        )
+    )
+
+
 def lane_reports(round_dir: Path, /) -> tuple[LaneReport, ...]:
-    return tuple(Block.of_seq(sorted(round_dir.glob("lane-?-report.json"))).choose(lambda path: shaped(path, LaneReport)))
+    return tuple(report for _lane, report in report_pairs(round_dir))
+
+
+def closer_reports(round_dir: Path, /) -> tuple[CloserReport, ...]:
+    return tuple(Block.of_seq(sorted(round_dir.glob("close-*-report.json"))).choose(lambda path: report_shaped(path, CloserReport).to_option()))
+
+
+def routing_mined(pairs: tuple[tuple[str, LaneReport], ...], /) -> tuple[RoutingRow, ...]:
+    def mined(lane: str, raw: msgspec.Raw, /) -> Option[RoutingRow]:
+        body = json_value(bytes(raw), "routing-row").map(stringly).default_with(lambda _f: {})
+        target = str(body.get("target_file", ""))
+        letter = lane.removeprefix("lane-")
+        change = headline(str(body.get("needed_change", "")))
+        return Some(RoutingRow(lane=letter, target_file=target, needed_change=change, key=f"{letter}:{target}")) if target else Nothing
+
+    return tuple(Block.of_seq(tuple((lane, raw) for lane, report in pairs for raw in report.routing)).choose(lambda pair: mined(*pair)))
+
+
+def routing_drained(rows: tuple[RoutingRow, ...], closers: tuple[CloserReport, ...], /) -> RoutingDrain:
+    # A verdict row answers by the stamped "<lane-letter>:<target_file>" key, a bare target path in id, or its file field.
+    answered = frozenset(name for report in closers for row in report.rows for name in (row.id, row.file) if name)
+    pending = tuple(row for row in rows if row.key not in answered and row.target_file not in answered)
+    return RoutingDrain(
+        total=len(rows),
+        drained=len(rows) - len(pending),
+        verdicts=dict(Counter(row.verdict or "<blank>" for report in closers for row in report.rows)),
+        pending=pending,
+    )
+
+
+def round_drain(round_dir: Path, /) -> RoutingDrain:
+    return routing_drained(routing_mined(report_pairs(round_dir)), closer_reports(round_dir))
+
+
+def reports_complete(round_dir: Path, /) -> Result[tuple[LaneReport, ...], Fault]:
+    # An undecodable or absent report must refuse, never shrink the pool — a partial harvest poisons the class census and grades irreversibly.
+    slices = lane_slices(round_dir)
+    decodable = frozenset(
+        path.name.removesuffix("-report.json") for path in round_dir.glob("lane-?-report.json") if report_shaped(path, LaneReport).is_ok()
+    )
+    missing = tuple(sorted(slice_.manifest.lane for _path, slice_ in slices if slice_.manifest.lane not in decodable))
+    if missing:
+        return Error(
+            Fault(code="no-report", detail=f"lanes without a decodable report: {', '.join(missing)}; repair or re-emit before harvest/round")
+        )
+    return Ok(lane_reports(round_dir))
 
 
 def lane_stat(lane_path: Path, slice_: LaneSlice, round_dir: Path, /) -> LaneStat:
     report_path = round_dir / f"{slice_.manifest.lane}-report.json"
-    report = shaped(report_path, LaneReport)
+    outcome = report_shaped(report_path, LaneReport)
+    report = outcome.to_option()
     ids = {row.id for row in slice_.findings}
     ledger_ids = tuple(row.id for row in report.map(lambda held: held.ledger).default_value(()))
+    touched = report.map(lambda held: held.files).default_value(())
     sliced_at = catch(exception=OSError)(lane_path.stat)().map(lambda held: held.st_mtime).default_with(lambda _f: 0.0)
     reported_at = catch(exception=OSError)(report_path.stat)().map(lambda held: held.st_mtime).default_with(lambda _f: sliced_at)
     wall = report.bind(lambda held: Some(held.wall_s) if held.wall_s > 0 else Nothing).default_with(lambda: reported_at - sliced_at)
+    match report:
+        case Option(tag="some", some=held):
+            gate: bool | None = held.gate_clean
+        case _:
+            gate = None
     return LaneStat(
         lane=slice_.manifest.lane,
-        model=report.map(lambda held: held.model).default_value(""),
+        model=report.map(lambda held: held.model.strip().casefold()).default_value(""),  # agent-written; case drift must not fork grade cohorts
         findings=slice_.manifest.count,
         verdicts=report.map(lambda held: dict(Counter(row.verdict or "<blank>" for row in held.ledger))).default_value({}),
         missing=tuple(sorted(ids - set(ledger_ids))),
         phantom=tuple(sorted(set(ledger_ids) - ids - {""})),
         wall_s=round(max(wall, 0.0), 1),
         report_valid=report.is_some(),
+        gate_clean=gate,
+        fault=outcome.swap().to_option().map(lambda held: f"{held.code}: {held.detail}").default_value(""),
+        files=tuple(sorted(touched)),
+        strays=tuple(sorted(set(touched) - set(slice_.manifest.files))),
+        shapes=report.map(lambda held: dict(Counter(row.shape or "unstamped" for row in held.ledger))).default_value({}),
     )
 
 
@@ -1538,6 +2184,116 @@ def reconciled(round_dir: Path, /) -> Result[tuple[LaneStat, ...], Fault]:
     if not slices:
         return Error(Fault(code="no-lanes", detail=f"no lane-?.json under {round_dir}; slice first"))
     return Ok(tuple(lane_stat(path, slice_, round_dir) for path, slice_ in slices))
+
+
+# --- [SPAWN_AUDIT]
+
+
+def session_of(events: Path, /) -> str:
+    lines = read_bytes(events).map(bytes.splitlines).default_with(lambda _f: [])
+    heads = Block.of_seq([line for line in lines if b"thread.started" in line]).choose(lambda line: decoded(line, EventHead, str(events)).to_option())
+    return next((head.thread_id for head in heads if head.type == "thread.started" and head.thread_id), "")
+
+
+def rollout_of(session: str, /) -> str:
+    hits = sorted(CODEX_SESSIONS.glob(f"*/*/*/rollout-*-{session}.jsonl")) if session else []
+    return str(hits[-1]) if hits else ""
+
+
+def spawn_scanned(lines: list[bytes], /) -> tuple[int, tuple[str, ...]]:
+    # A bare string grep over-matches: the tool name also rides developer-message text and event_msg echoes,
+    # while the per-lane events stream records zero spawns outright — only a rollout response_item function_call is a real dispatch.
+    def called(line: bytes, /) -> Option[RolloutCall]:
+        if SPAWN_TOOL.encode() not in line:
+            return Nothing
+        return (
+            decoded(line, RolloutLine, "<rollout>")
+            .to_option()
+            .bind(
+                lambda row: (
+                    Some(row.payload)
+                    if row.type == "response_item"
+                    and row.payload is not None
+                    and row.payload.type == "function_call"
+                    and row.payload.name == SPAWN_TOOL
+                    else Nothing
+                )
+            )
+        )
+
+    def agent_of(call: RolloutCall, /) -> Option[str]:
+        named = json_value(call.arguments.encode(), "<spawn-args>").to_option().map(stringly)
+        return named.bind(lambda body: Some(str(body["task_name"])) if body.get("task_name") else Nothing)
+
+    calls = tuple(Block.of_seq(lines).choose(called))
+    return len(calls), tuple(Block.of_seq(calls).choose(agent_of))
+
+
+def spawn_rows(round_dir: Path, /) -> tuple[SpawnRow, ...]:
+    def lane_of(events: Path, /) -> str:
+        # flat layout: lane-<x>-events.jsonl in the round dir; lane-dir layout: lane-<x>-run/events.jsonl from a codex-lane --dir.
+        return events.parent.name.removesuffix("-run") if events.name == "events.jsonl" else events.name.removesuffix("-events.jsonl")
+
+    def audited(events: Path, /) -> SpawnRow:
+        lane = lane_of(events)
+        session = session_of(events)
+        if not session:
+            return SpawnRow(lane=lane, fault="no-session")
+        rollout = rollout_of(session)
+        if not rollout:
+            return SpawnRow(lane=lane, session=session, fault="no-rollout")
+        spawns, agents = spawn_scanned(read_bytes(Path(rollout)).map(bytes.splitlines).default_with(lambda _f: []))
+        return SpawnRow(lane=lane, session=session, rollout=rollout, spawns=spawns, agents=agents)
+
+    events_files = sorted((
+        *round_dir.glob("lane-?-events.jsonl"),
+        *round_dir.glob("close-*-events.jsonl"),
+        *round_dir.glob("harvest-events.jsonl"),
+        *round_dir.glob("lane-?-run/events.jsonl"),
+        *round_dir.glob("close-*-run/events.jsonl"),
+        *round_dir.glob("harvest-run/events.jsonl"),
+    ))
+    named = {lane_of(path) for path in events_files}
+    silent = tuple(
+        SpawnRow(lane=slice_.manifest.lane, fault="no-events")
+        for _path, slice_ in lane_slices(round_dir)
+        if slice_.manifest.lane not in named  # a claude-transport lane writes no events stream; its spawn story is a per-lane fact, not a refusal
+    )
+    return tuple(sorted((*map(audited, events_files), *silent), key=lambda row: row.lane))
+
+
+# --- [LANE_FILL]
+
+LANGS: Final[frozenset[str]] = frozenset({"csharp", "python", "typescript"})
+
+
+def tiers_of(file: str, /) -> tuple[str, str, str]:
+    # (package_root, substrate_api, doctrine_root); "" marks a tier the path does not carry — package .api existence resolves at the verb.
+    match PurePosixPath(file).parts:
+        case ("libs", lang, package, _leaf, *_) if lang in LANGS:
+            return (f"libs/{lang}/{package}", f"libs/{lang}/.api", f"docs/stacks/{lang}")
+        case ("libs", lang, *_) if lang in LANGS:
+            return ("", f"libs/{lang}/.api", f"docs/stacks/{lang}")
+        case ("tests", lang, *_) if lang in LANGS:
+            return ("", f"tests/{lang}/.api", f"docs/stacks/{lang}")
+        case _:
+            return ("", "", "")
+
+
+def lane_filled(repo: Path, manifest: LaneManifest, /) -> LaneFill:
+    placed = tuple((file, *tiers_of(file)) for file in manifest.files)
+    packages = tuple(
+        PackageTier(root=root, api=f"{root}/.api" if (repo / root / ".api").is_dir() else "")
+        for root in dict.fromkeys(root for _file, root, _sub, _doc in placed if root)
+    )
+    return LaneFill(
+        lane=manifest.lane,
+        files=manifest.files,
+        packages=packages,
+        substrate=tuple(dict.fromkeys(sub for _file, _root, sub, _doc in placed if sub and (repo / sub).is_dir())),
+        doctrine=tuple(dict.fromkeys(doc for _file, _root, _sub, doc in placed if doc)),
+        unplaced=tuple(file for file, root, sub, _doc in placed if not root and not sub),
+    )
 
 
 # --- [RECURRENCE]
@@ -1572,17 +2328,11 @@ def slugged(claim: str, /) -> str:
     return "-".join(stemmed(claim).split()[:4]) or "unnamed"
 
 
-def proposal_block(fresh: tuple[Refutation, ...], round_no: int, /) -> tuple[str, ...]:
+def proposal_block(fresh: tuple[Refutation, ...], /) -> tuple[str, ...]:
     if not fresh:
         return ()
     rows = [
-        {
-            "class_id": slugged(entry.claim),
-            "matchers": [stemmed(entry.claim)],
-            "refuting_citation": "",
-            "landed_surfaces": [],
-            "rounds_seen": [round_no],
-        }
+        {"class_id": slugged(entry.claim), "matchers": [stemmed(entry.claim)], "refuting_citation": "", "landed_surfaces": [], "recurrences": 1}
         for entry in fresh
     ]
     sink = io.StringIO()
@@ -1601,7 +2351,7 @@ def improvement_lines(reports: tuple[LaneReport, ...], /) -> tuple[str, ...]:
 
 
 def ineffective_of(registry: Registry, recurred_ids: frozenset[str], /) -> tuple[RefutedClass, ...]:
-    return tuple(row for row in registry.classes if row.class_id in recurred_ids and row.landed_surfaces and row.rounds_seen)
+    return tuple(row for row in registry.classes if row.class_id in recurred_ids and row.landed_surfaces and row.recurrences)
 
 
 def feed_rendered(
@@ -1619,13 +2369,13 @@ def feed_rendered(
         ),
         "## [GUARD_INEFFECTIVE]",
         *(
-            f"- `{row.class_id}` — landed on {', '.join(row.landed_surfaces)}; seen rounds {', '.join(map(str, row.rounds_seen))} and again this"
+            f"- `{row.class_id}` — landed on {', '.join(row.landed_surfaces)}; recurred {row.recurrences} prior rounds and again this"
             " round — the wording failed: harden it, never skip as already-owned"
             for row in ineffective_of(registry, recurred_ids)
         ),
         "## [NEW_REFUTED]",
         *(f"- {entry.claim} — {entry.evidence}" for entry in fresh),
-        *proposal_block(fresh, run.round),
+        *proposal_block(fresh),
         "## [IMPROVEMENTS]",
         *improvement_lines(reports),
         "## [CAPABILITY_LANDED]",
@@ -1674,26 +2424,26 @@ def reference_stub(slug: str, members: tuple[str, ...], evidence: str, round_no:
     ))
 
 
-def feedback_stub(row: RefutedClass, round_no: int, /) -> str:
-    rounds = ", ".join(map(str, (*row.rounds_seen, round_no)))
+def feedback_stub(row: RefutedClass, /) -> str:
+    rounds = f"{row.recurrences + 1} rounds"
     surfaces = ", ".join(row.landed_surfaces)
     slug = slugged(row.class_id)
     citation = f" Citation: {row.refuting_citation}." if row.refuting_citation else ""
     return "\n".join((
         "---",
         f"name: feedback_{slug}",
-        f'description: "{row.class_id} recurs across rounds {rounds} despite guards on {surfaces}"',
+        f'description: "{row.class_id} recurs across {rounds} despite guards on {surfaces}"',
         "metadata:",
         "  node_type: memory",
         "  type: feedback",
         "---",
         (
-            f"`{row.class_id}` recurs across rounds {rounds} despite landed guards on {surfaces} — the guard mechanism, not the claim, needs a"
+            f"`{row.class_id}` recurs across {rounds} despite landed guards on {surfaces} — the guard mechanism, not the claim, needs a"
             f" process change.{citation}"
         ),
         "",
         "Proposed MEMORY.md index row:",
-        f"- [{slug.replace('-', ' ')}](feedback_{slug}.md) — {row.class_id} guard ineffective across rounds {rounds}",
+        f"- [{slug.replace('-', ' ')}](feedback_{slug}.md) — {row.class_id} guard ineffective across {rounds}",
         "",
     ))
 
@@ -1702,10 +2452,10 @@ def proposals_written(
     context: Context, recurred_ids: frozenset[str], reports: tuple[LaneReport, ...], registry: Registry, /
 ) -> Result[tuple[str, ...], Fault]:
     refs = tuple(Block.of_seq(tuple(row for report in reports for row in report.capability)).choose(roster_row))
-    feds = tuple(row for row in registry.classes if len(row.rounds_seen) >= 2 and row.landed_surfaces and row.class_id in recurred_ids)
+    feds = tuple(row for row in registry.classes if row.recurrences >= 2 and row.landed_surfaces and row.class_id in recurred_ids)
     jobs: tuple[tuple[str, str], ...] = (
         *((f"reference_{slug}.md", reference_stub(slug, members, evidence, context.run.round)) for slug, members, evidence in refs),
-        *((f"feedback_{slugged(row.class_id)}.md", feedback_stub(row, context.run.round)) for row in feds),
+        *((f"feedback_{slugged(row.class_id)}.md", feedback_stub(row)) for row in feds),
     )
     if not jobs:
         return Ok(())
@@ -1735,10 +2485,79 @@ def corroboration_hist(repo: Path, rows: tuple[Finding, ...], /) -> dict[str, in
     return dict(Counter(str(len(index.get(row.fingerprint, frozenset({row.reviewer})))) for row in rows))
 
 
+def lane_graded(lanes: tuple[LaneStat, ...], refuted: tuple[Refutation, ...], /) -> LaneGrade:
+    verdicts = sum((Counter(stat.verdicts) for stat in lanes), Counter())
+    fixed, upgraded = verdicts.get("fixed", 0), verdicts.get("upgraded", 0)
+
+    def share(kept: int, /) -> float:
+        return round(kept / len(lanes), 3)
+
+    return LaneGrade(
+        depth_of_fix=round(upgraded / (fixed + upgraded), 3) if fixed + upgraded else 0.0,
+        scope_clean=share(sum(1 for stat in lanes if not stat.phantom)),
+        refute_cited=round(sum(1 for entry in refuted if entry.evidence) / len(refuted), 3) if refuted else 1.0,
+        gate_clean=share(sum(1 for stat in lanes if stat.gate_clean is True)),
+        bijective=share(sum(1 for stat in lanes if stat.report_valid and not stat.missing and not stat.phantom)),
+    )
+
+
+def convergence_shares(hist: Mapping[str, int], survivors: int, pushed_back: int, /) -> tuple[float, float]:
+    # The cross-round prune drops relitigation rows before findings.json lands, so both shares read the pre-prune histogram, never the survivors.
+    dropped = hist.get("relitigation", 0) + hist.get("refuted_remint", 0)
+    pool = survivors + dropped
+    if pool == 0:
+        return 0.0, 0.0
+    return round((pushed_back + hist.get("refuted_remint", 0)) / pool, 3), round(hist.get("relitigation", 0) / pool, 3)
+
+
+def prompt_prints(repo: Path, /) -> dict[str, str]:
+    # Content hashes of the dispatch prompt surfaces, so a behavior delta between rounds is attributable to a prompt edit rather than asserted.
+    sources = (*((name, BUNDLE / "templates" / name) for name in PROMPT_TEMPLATES), (PurePosixPath(AGENT_DEFINITION).name, repo / AGENT_DEFINITION))
+    return {
+        name: read_bytes(path).map(lambda payload: hashlib.sha256(payload).hexdigest()[:PROMPT_PRINT_WIDTH]).default_value("absent")
+        for name, path in sources
+    }
+
+
+def wall_spread_of(stats: tuple[LaneStat, ...], /) -> WallSpread:
+    walls = tuple(stat.wall_s for stat in stats if stat.wall_s > 0)
+    if not walls:
+        return WallSpread()
+    mid = float(median(walls))
+    return WallSpread(
+        median_s=round(mid, 1),
+        max_s=round(max(walls), 1),
+        outliers=tuple(stat.lane for stat in stats if mid > 0 and stat.wall_s > WALL_OUTLIER_FACTOR * mid),
+    )
+
+
+def graded(stats: tuple[LaneStat, ...], reports: tuple[LaneReport, ...], /) -> dict[str, LaneGrade]:
+    grouped = groupby(sorted((stat for stat in stats if stat.model), key=lambda stat: stat.model), key=lambda stat: stat.model)
+    lanes_by_model = {model: tuple(bunch) for model, bunch in grouped}
+    return {
+        model: lane_graded(lanes, tuple(entry for report in reports if report.model.strip().casefold() == model for entry in report.refuted))
+        for model, lanes in lanes_by_model.items()
+    }
+
+
 def row_built(
-    context: Context, rows: tuple[Finding, ...], stats: tuple[LaneStat, ...], reports: tuple[LaneReport, ...], registry: Registry, /
+    context: Context,
+    rows: tuple[Finding, ...],
+    stats: tuple[LaneStat, ...],
+    reports: tuple[LaneReport, ...],
+    registry: Registry,
+    drain: RoutingDrain,
+    /,
 ) -> RoundRow:
     recurred, fresh = recurrence(registry, rows, reports)
+    hist = shaped(context.round_dir / PROVENANCE_NAME, dict[str, int]).default_value({})
+    own_ids = frozenset(row.id for row in rows if row.id)
+    pushed = frozenset(entry.id for report in reports for entry in report.ledger if entry.verdict == "pushed-back" and entry.id) & own_ids
+    fp_share, relitigation_share = convergence_shares(hist, len(rows), len(pushed))
+    by_verdict = {entry.id: entry.verdict for report in reports for entry in report.ledger if entry.id}
+    novel = tuple(row for row in rows if row.provenance in NOVEL_PROVENANCE)
+    grouped = groupby(sorted((stat for stat in stats if stat.model), key=lambda stat: stat.model), key=lambda stat: stat.model)
+    by_model = {model: dict(sum((Counter(stat.verdicts) for stat in bunch), Counter())) for model, bunch in grouped}
     return RoundRow(
         round=context.run.round,
         reviewer=context.run.reviewer,
@@ -1751,11 +2570,21 @@ def row_built(
         new_classes=len(fresh),
         routed=sum(len(report.routing) + len(report.uncertain) for report in reports),
         capability_rows=sum(len(report.capability) for report in reports),
-        provenance_by_class=shaped(context.round_dir / PROVENANCE_NAME, dict[str, int]).default_value({}),
+        provenance_by_kind=hist,
         corroboration_histogram=corroboration_hist(context.repo, rows),
         commit=sh(("git", "-C", str(context.repo), "rev-parse", "--short", "HEAD")).default_with(lambda _f: ""),
         at=round(time.time(), 1),
         focus=context.run.focus,
+        fp_share=fp_share,
+        relitigation_share=relitigation_share,
+        novel_quality=round(sum(1 for row in novel if by_verdict.get(row.id) in ACCEPTED_VERDICTS) / len(novel), 3) if novel else 0.0,
+        hunt_axis_fire=dict(Counter(entry.axis for report in reports for entry in report.improvements if entry.axis)),
+        by_model=by_model,
+        grades=graded(stats, reports),
+        shape_fire=dict(Counter(entry.shape for report in reports for entry in report.ledger if entry.shape)),
+        routing=drain,
+        wall_spread=wall_spread_of(stats),
+        prompts=prompt_prints(context.repo),
     )
 
 
@@ -1799,37 +2628,63 @@ def cr_verified(repo: Path, guard: SurfaceGuard, /) -> VerifyReceipt:
     return VerifyReceipt(rule=guard.text, path=str(path), effective=hit is not None, matched=hit[0] if hit else "", source="path_instructions")
 
 
-def gt_verified(repo: Path, rule: str, path: str, /) -> Result[VerifyReceipt, Fault]:
+def gt_verified(repo: Path, rule: str, path: str, /) -> VerifyReceipt:
+    # `greptile config` truncates each rendered rule with an ellipsis and a bare invocation resolves at repo root where scoped rules never apply,
+    # so a cascade miss falls through to full-text over the config surfaces; the receipt's source names the oracle that matched.
+    needle = rule.casefold()
     argv = ("greptile", "config", *((path,) if path else ()))
-    return sh(argv, cwd=repo).map(
-        lambda effective: VerifyReceipt(
-            rule=rule,
-            path=path,
-            effective=rule.casefold() in ANSI_RE.sub("", effective).casefold(),
-            matched=next((plain(line) for line in effective.splitlines() if rule.casefold() in line.casefold()), ""),
-            source=shlex.join(argv),
-        )
+
+    def excerpted(text: str, /) -> Option[str]:
+        at = text.casefold().find(needle)
+        if at < 0:
+            return Nothing
+        stop = held if (held := text.find("\n", at)) >= 0 else len(text)
+        return Some(plain(text[text.rfind("\n", 0, at) + 1 : stop]))
+
+    oracles: tuple[tuple[str, Callable[[], str]], ...] = (
+        (shlex.join(argv), lambda: sh(argv, cwd=repo).map(lambda held: ANSI_RE.sub("", held)).default_with(lambda _f: "")),
+        *(
+            (name, lambda file=repo / name: read_bytes(file).map(lambda raw: raw.decode(errors="replace")).default_with(lambda _f: ""))
+            for name in GT_ORACLE_FILES
+        ),
+    )
+
+    def probed(source: str, texted: Callable[[], str], /) -> Option[VerifyReceipt]:
+        return excerpted(texted()).map(lambda line: VerifyReceipt(rule=rule, path=path, effective=True, matched=line, source=source))
+
+    hit: Option[VerifyReceipt] = next((found for source, texted in oracles if (found := probed(source, texted)).is_some()), Nothing)
+    return hit.default_with(
+        lambda: VerifyReceipt(rule=rule, path=path, effective=False, matched="", source=" -> ".join(source for source, _texted in oracles))
     )
 
 
 def ms_verified(repo: Path, guard: SurfaceGuard, /) -> VerifyReceipt:
-    home = repo / ".macroscope"
-    target = home / guard.path if guard.path else home
-    text = read_bytes(target).map(lambda raw: raw.decode(errors="replace")).default_with(lambda _f: "") if target.is_file() else ""
-    effective = bool(guard.path) and target.is_file() and (not guard.text or guard.text.casefold() in text.casefold())
-    return VerifyReceipt(
-        rule=guard.text, path=str(target), effective=effective, matched=str(target) if effective else "", source="macroscope-topic-file"
-    )
+    # Ledger paths are repo-relative like every other surface; a topic-file path written relative to `.macroscope/` resolves the same target.
+    home = repo / MS_HOME
+
+    def texted(target: Path, /) -> str:
+        return read_bytes(target).map(lambda raw: raw.decode(errors="replace")).default_with(lambda _f: "") if target.is_file() else ""
+
+    if guard.path:
+        held = PurePosixPath(guard.path)
+        target = repo / guard.path if held.parts[:1] == (MS_HOME,) else home / guard.path
+        effective = guard.text.casefold() in texted(target).casefold()
+        return VerifyReceipt(
+            rule=guard.text, path=str(target), effective=effective, matched=str(target) if effective else "", source="macroscope-topic-file"
+        )
+    hits = tuple(path for path in sorted(home.rglob("*.md")) if guard.text.casefold() in texted(path).casefold())
+    return VerifyReceipt(rule=guard.text, path=str(home), effective=bool(hits), matched=str(hits[0]) if hits else "", source="macroscope-topic-scan")
 
 
 def surface_checked(repo: Path, guard: SurfaceGuard, /) -> VerifyReceipt:
+    # A textless row proves nothing on any oracle; naming it malformed keeps `effective: false` meaning failed wording alone.
+    if not guard.text.strip():
+        return VerifyReceipt(rule=guard.text, path=guard.path, effective=False, matched="row carries no guard text", source="surface-ledger")
     match REVIEWER_ALIASES.get(guard.surface.strip().lower()):
         case "coderabbit":
             return cr_verified(repo, guard)
         case "greptile":
-            return gt_verified(repo, guard.text, guard.path).default_with(
-                lambda fault: VerifyReceipt(rule=guard.text, path=guard.path, effective=False, matched=fault.detail, source="greptile config")
-            )
+            return gt_verified(repo, guard.text, guard.path)
         case "macroscope":
             return ms_verified(repo, guard)
         case _:
@@ -1851,6 +2706,409 @@ def round_verified(context: Context, /) -> Result[tuple[VerifyReceipt, ...], Fau
     )
 
 
+# --- [REGISTRY_GUARD]
+
+ROW_FIELDS: Final[frozenset[str]] = frozenset(RefutedClass.__struct_fields__)
+
+
+def class_entries(parsed: object, origin: str, /) -> Result[tuple[object, ...], Fault]:
+    match parsed:
+        case {"classes": list() as items}:
+            return Ok(tuple(items))
+        case list() as items:
+            return Ok(tuple(items))
+        case None:
+            return Ok(())
+        case _:
+            return Error(Fault(code="malformed", detail=f"{origin}: expected a top-level classes: row list (or a bare row list)"))
+
+
+def entries_of(path: Path, /) -> Result[tuple[object, ...], Fault]:
+    return yaml_loaded(path).bind(lambda parsed: class_entries(parsed, str(path)))
+
+
+def proposed_entries(path: Path, /) -> Result[tuple[object, ...], Fault]:
+    return entries_of(path).bind(
+        lambda entries: Ok(entries) if entries else Error(Fault(code="no-payload", detail=f"{path}: zero proposed rows under classes:"))
+    )
+
+
+def matcher_faults(row: RefutedClass, /) -> tuple[Fault, ...]:
+    # Loud complement of lenient_pattern: classification degrades an invalid matcher to a literal, so this gate is where a broken regex surfaces.
+    return tuple(
+        Block.of_seq(row.matchers).choose(
+            lambda matcher: (
+                catch(exception=re.PatternError)(re.compile)(matcher, re.IGNORECASE)
+                .swap()
+                .to_option()
+                .map(lambda broken: Fault(code="bad-matcher", detail=f"{matcher!r}: {broken}"))
+            )
+        )
+    )
+
+
+def row_checked(at: int, entry: object, taken: frozenset[str], /) -> RowVerdict:
+    if not isinstance(entry, dict):
+        return RowVerdict(at=at, class_id="", faults=(Fault(code="malformed", detail=f"row {at}: not a class mapping"),))
+    try:
+        row = msgspec.convert(entry, type=RefutedClass, strict=True)
+    except msgspec.ValidationError as drift:
+        return RowVerdict(at=at, class_id=str(entry.get("class_id", "")), faults=(Fault(code="malformed", detail=f"row {at}: {drift}"),))
+    alien = frozenset(str(key) for key in entry) - ROW_FIELDS  # convert ignores unknown keys, so the field-set difference is the loud check
+    return RowVerdict(
+        at=at,
+        class_id=row.class_id,
+        faults=(
+            *((Fault(code="unknown-key", detail=", ".join(sorted(alien))),) if alien else ()),
+            *((Fault(code="empty-class", detail=f"row {at}: class_id is empty"),) if not row.class_id else ()),
+            *((Fault(code="no-matchers", detail=f"{row.class_id}: a row with no matchers never fires"),) if not row.matchers else ()),
+            *matcher_faults(row),
+            *(
+                (Fault(code="duplicate-class", detail=f"{row.class_id}: already registered — a matcher merge is a human edit"),)
+                if row.class_id and row.class_id in taken
+                else ()
+            ),
+        ),
+    )
+
+
+def rows_checked(entries: tuple[object, ...], standing: frozenset[str], /) -> tuple[RowVerdict, ...]:
+    def stepped(acc: tuple[frozenset[str], tuple[RowVerdict, ...]], pair: tuple[int, object], /) -> tuple[frozenset[str], tuple[RowVerdict, ...]]:
+        taken, verdicts = acc
+        verdict = row_checked(pair[0], pair[1], taken)
+        return taken | ({verdict.class_id} if verdict.class_id else set()), (*verdicts, verdict)
+
+    seed: tuple[frozenset[str], tuple[RowVerdict, ...]] = (standing, ())
+    return reduce(stepped, tuple(enumerate(entries, start=1)), seed)[1]
+
+
+def check_built(path: Path, standing: frozenset[str], entries: tuple[object, ...], /) -> RegistryCheckReceipt:
+    verdicts = rows_checked(entries, standing)
+    faulted = tuple(verdict for verdict in verdicts if verdict.faults)
+    return RegistryCheckReceipt(path=str(path), standing=len(standing), rows=len(entries), clean=len(verdicts) - len(faulted), faulted=faulted)
+
+
+def registry_checked(rows_spec: str, /) -> Result[RegistryCheckReceipt, Fault]:
+    if not rows_spec:
+        if not REGISTRY_PATH.is_file():
+            return Ok(check_built(REGISTRY_PATH, frozenset(), ()))
+        return entries_of(REGISTRY_PATH).map(lambda entries: check_built(REGISTRY_PATH, frozenset(), entries))
+    path = Path(rows_spec)
+    return registry_loaded().bind(
+        lambda registry: proposed_entries(path).map(lambda entries: check_built(path, frozenset(row.class_id for row in registry.classes), entries))
+    )
+
+
+def registry_applied(rows_path: Path, /) -> Result[RegistryApplyReceipt, Fault]:
+    def admitted(entries: tuple[object, ...], registry: Registry, /) -> Result[tuple[RefutedClass, ...], Fault]:
+        verdicts = rows_checked(entries, frozenset(row.class_id for row in registry.classes))
+        faulted = tuple(verdict for verdict in verdicts if verdict.faults)
+        if faulted:
+            roster = "; ".join(
+                f"row {held.at} ({held.class_id or '<unnamed>'}): {', '.join(fault.code for fault in held.faults)}" for held in faulted
+            )
+            return Error(
+                Fault(
+                    code="malformed",
+                    detail=f"{rows_path}: {len(faulted)}/{len(verdicts)} rows refused — {roster}; `registry --check --rows` details each fault",
+                )
+            )
+        return Ok(tuple(msgspec.convert(entry, type=RefutedClass, strict=True) for entry in entries))
+
+    def landed(rows: tuple[RefutedClass, ...], /) -> Result[RegistryApplyReceipt, Fault]:
+        held: Result[object, Fault] = yaml_loaded(REGISTRY_PATH, codec=YAML_RT) if REGISTRY_PATH.is_file() else Ok({"classes": []})
+
+        def grown(doc: object, /) -> Result[RegistryApplyReceipt, Fault]:
+            match doc:
+                case {"classes": list() as standing}:
+                    standing.extend(msgspec.to_builtins(row) for row in rows)  # in-place append on the round-trip tree keeps comments and quotes
+                    sink = io.StringIO()
+                    YAML_RT.dump(doc, sink)
+                    return written(REGISTRY_PATH, sink.getvalue().encode()).map(
+                        lambda _path: RegistryApplyReceipt(
+                            path=str(REGISTRY_PATH), appended=tuple(row.class_id for row in rows), standing=len(standing)
+                        )
+                    )
+                case _:
+                    return Error(Fault(code="malformed", detail=f"{REGISTRY_PATH}: expected a top-level classes: list"))
+
+        return held.bind(grown)
+
+    return registry_loaded().bind(lambda registry: proposed_entries(rows_path).bind(lambda entries: admitted(entries, registry)).bind(landed))
+
+
+# --- [SELFTEST]
+
+
+def selftest_fixture() -> tuple[bytes, bytes]:
+    # Maximal-shape lane report: every field populated at the richest spelling the templates/fix.md output contract admits, the null variant derived from it —
+    # one primary, so a contract change edits one site and both variants follow.
+    primary: dict[str, object] = {
+        "ledger": [
+            {"id": "r9a-01", "file": "docs/<file-a>.md", "severity": "major", "verdict": "fixed", "note": "<repair>", "shape": "substitution"},
+            {"id": "r9a-02", "file": "libs/<file-b>.py", "severity": "minor", "verdict": "pushed-back", "note": "<refusal>"},
+            {
+                "id": "r9a-03",
+                "file": "libs/<file-b>.py",
+                "severity": "critical",
+                "verdict": "already_resolved",
+                "note": "<prior>",
+                "shape": "completion",
+            },
+            {"id": "r9a-04", "file": "libs/<file-b>.py", "severity": "trivial", "verdict": "upgraded", "note": "<collapse>", "shape": "collapse"},
+        ],
+        "improvements": [
+            {"page": "docs/<file-a>.md", "pattern": "<pattern-a>", "what": "<upgrade-a>", "axis": "hunt-axis:<axis-a>"},
+            {"page": "libs/<file-b>.py", "pattern": "<pattern-b>", "what": "<upgrade-b>", "axis": ""},
+        ],
+        "refuted": [{"claim": "<claim-a>", "evidence": "<citation-a>"}],
+        "capability": [{"page": "docs/<file-a>.md", "pattern": "<roster-a>", "members": ["<member-a>", "<member-b>"]}, "<capability-line>"],
+        "routing": [{"target_file": "libs/<file-c>.py", "needed_change": "<change>"}],
+        "uncertain": ["<open-question>"],
+        "files": ["docs/<file-a>.md", "libs/<file-b>.py"],
+        "gate_clean": True,
+        "model": "<model>",
+        "wall_s": 1.5,
+    }
+    nulled = {**primary, **dict.fromkeys(("ledger", "improvements", "refuted", "capability", "routing", "uncertain", "files", "gate_clean"))}
+    return ENCODER.encode(primary), ENCODER.encode(nulled)
+
+
+def registry_proofs() -> tuple[tuple[str, bool], ...]:
+    template: dict[str, object] = {
+        "class_id": "<class-a>",
+        "corpus": "code",
+        "matchers": [r"claim.{0,20}pattern"],
+        "refuting_citation": "<citation-a>",
+        "landed_surfaces": [".coderabbit.yaml"],
+        "recurrences": 2,
+    }
+    entries: tuple[object, ...] = (
+        template,
+        {**template, "class_id": "<class-b>", "matchers": ["broken[("]},
+        {**template},
+        {**template, "class_id": "<class-c>", "surface": "<alien>"},
+        {**template, "class_id": "<standing-a>"},
+        "<not-a-mapping>",
+    )
+    fired = tuple(tuple(fault.code for fault in verdict.faults) for verdict in rows_checked(entries, frozenset({"<standing-a>"})))
+    return (
+        ("registry-clean-row-passes", fired[0] == ()),
+        ("registry-bad-matcher-loud", fired[1] == ("bad-matcher",)),
+        ("registry-intra-duplicate-loud", fired[2] == ("duplicate-class",)),
+        ("registry-unknown-key-loud", fired[3] == ("unknown-key",)),
+        ("registry-standing-duplicate-loud", fired[4] == ("duplicate-class",)),
+        ("registry-shape-drift-loud", fired[5] == ("malformed",)),
+    )
+
+
+def mint_proofs() -> tuple[tuple[str, bool], ...]:
+    preamble = ENGINE_PREAMBLES[0]
+    span = Range(start=3, end=4)
+
+    def fixed_as(fix: str, /) -> Option[Finding]:
+        return minted("coderabbit", "libs/<file-b>.py", span, "<claim-a>", fix, "major")
+
+    stripped = fixed_as(f"{preamble}\n\n<repair>")
+    bare = fixed_as(preamble)
+    clean = fixed_as("<repair>")
+    poisoned_claim = minted("coderabbit", "libs/<file-b>.py", span, preamble, "<repair>", "major")
+    return (
+        ("mint-strips-engine-preamble", stripped.map(lambda row: row.fix_instructions == "<repair>").default_value(value=False)),
+        ("mint-preamble-only-fix-inactionable", bare.map(lambda row: not row.fix_instructions and not row.actionable).default_value(value=False)),
+        (
+            "mint-fingerprint-preamble-blind",
+            stripped.map2(lambda left, right: left.fingerprint == right.fingerprint, clean).default_value(value=False),
+        ),
+        ("mint-preamble-only-claim-empties", poisoned_claim.map(lambda row: not row.claim).default_value(value=False)),
+    )
+
+
+def selftest_finding(file: str, at: int, /) -> Finding:
+    return Finding(
+        id=f"r9a-{at:02d}",
+        fingerprint=f"<fp-{at}>",
+        reviewer="coderabbit",
+        file=file,
+        range=Range(start=at, end=at + 1),
+        severity="major",
+        claim="<claim-a>",
+        fix_instructions="<repair>",
+        class_match="",
+    )
+
+
+def query_proofs() -> tuple[tuple[str, bool], ...]:
+    row = selftest_finding("libs/<file-b>.py", 1)
+
+    def hit(scope: str, pattern: str, /) -> bool:
+        return len(queried((row,), Nothing, "", Some(lenient_pattern(pattern)), SEARCH_SCOPES[scope])) == 1
+
+    return (
+        ("query-claim-scope-blind-to-fix", not hit("claim", "repair") and hit("fix", "repair") and hit("both", "repair")),
+        ("query-fix-scope-blind-to-claim", not hit("fix", "claim-a") and hit("claim", "claim-a") and hit("both", "claim-a")),
+    )
+
+
+def slice_proofs() -> tuple[tuple[str, bool], ...]:
+    weigh = row_weigher("count", Path(), ())
+    chain = partitioned((selftest_finding("libs", 1), selftest_finding("libs/x.py", 2), selftest_finding("libs/x.py/y", 3)), 2, weigh)
+    fileless = partitioned((selftest_finding("", 1), selftest_finding("libs/x.py", 2)), 2, weigh)
+    return (
+        ("partition-prefix-chain-terminates", len(chain) >= 2),
+        ("partition-fileless-bucketed", len(fileless) == 2 and any(held.label == "<unanchored>" for held in fileless)),
+    )
+
+
+def stream_proofs() -> tuple[tuple[str, bool], ...]:
+    prelude = "[\n" + ",\n".join("[1]" for _ in range(JSON_SCAN_CAP + 16)) + "\n]"
+    envelope = '{"comments": [{"id": "a", "path": "<p>", "body": "<b>"}]}'
+    grown = '{"comments": [{"id": "b", "path": "<p>", "body": "<b>"}, {"id": "c", "path": "<p>", "body": "<b>"}]}'
+    return (
+        ("stream-pretty-prelude-survives", greptile_payload(f"{prelude}\n{envelope}", "<selftest>").map(len) == Ok(1)),
+        ("stream-last-envelope-wins", greptile_payload(f"{envelope}\n{grown}", "<selftest>").map(len) == Ok(2)),
+    )
+
+
+def routing_proofs() -> tuple[tuple[str, bool], ...]:
+    pairs = (
+        ("lane-a", LaneReport(routing=(msgspec.Raw(b'{"target_file": "libs/<file-c>.py", "needed_change": "<change-a>"}'),))),
+        ("lane-b", LaneReport(routing=(msgspec.Raw(b'{"target_file": "docs/<file-d>.md", "needed_change": "<change-b>"}'),))),
+    )
+    rows = routing_mined(pairs)
+    closers = (CloserReport(rows=(LedgerRow(id="a:libs/<file-c>.py", verdict="landed"),), files=("libs/<file-c>.py",)),)
+    drain = routing_drained(rows, closers)
+    bare = routing_drained(rows, (CloserReport(rows=(LedgerRow(id="docs/<file-d>.md", verdict="refuted"),)),))
+    cut = closer_sliced(rows, 2, "coderabbit")
+    flat = tuple(file for slice_ in cut for file in slice_.manifest.files)
+    deferred = replace(drain, deferred=True)
+    return (
+        ("routing-rows-mined-keyed", tuple(row.key for row in rows) == ("a:libs/<file-c>.py", "b:docs/<file-d>.md")),
+        ("routing-drain-counts", (drain.total, drain.drained) == (2, 1) and tuple(row.key for row in drain.pending) == ("b:docs/<file-d>.md",)),
+        ("routing-drain-verdicts", drain.verdicts == {"landed": 1}),
+        ("routing-drain-bare-file-id", bare.drained == 1 and tuple(row.key for row in bare.pending) == ("a:libs/<file-c>.py",)),
+        ("closer-territories-disjoint", len(cut) == 2 and len(flat) == len(set(flat))),
+        ("closer-cut-keeps-keys", tuple(sorted(row.id for slice_ in cut for row in slice_.findings)) == ("a:libs/<file-c>.py", "b:docs/<file-d>.md")),
+        ("routing-deferral-recorded", deferred.deferred and deferred.pending == drain.pending),
+    )
+
+
+def spawn_proofs() -> tuple[tuple[str, bool], ...]:
+    true_call = (
+        b'{"timestamp":"<t>","type":"response_item",'
+        b'"payload":{"type":"function_call","name":"spawn_agent","arguments":"{\\"task_name\\":\\"miner_a\\"}"}}'
+    )
+    echo = b'{"type":"response_item","payload":{"type":"message","text":"plan: call spawn_agent twice"}}'
+    event = b'{"type":"event_msg","payload":{"type":"function_call","name":"spawn_agent","arguments":"{}"}}'
+    head = decoded(b'{"type":"thread.started","thread_id":"<uuid-a>"}', EventHead, "<selftest>")
+    return (
+        ("spawn-grep-filters-echoes", spawn_scanned([true_call, echo, event]) == (1, ("miner_a",))),
+        ("spawn-thread-head-decodes", head.map(lambda held: held.thread_id) == Ok("<uuid-a>")),
+    )
+
+
+def fill_proofs() -> tuple[tuple[str, bool], ...]:
+    return (
+        (
+            "tiers-package-resolves",
+            tiers_of("libs/csharp/<package-a>/<file>.cs") == ("libs/csharp/<package-a>", "libs/csharp/.api", "docs/stacks/csharp"),
+        ),
+        ("tiers-substrate-only", tiers_of("libs/python/<file>.py") == ("", "libs/python/.api", "docs/stacks/python")),
+        ("tiers-tests-substrate", tiers_of("tests/typescript/<file>.ts") == ("", "tests/typescript/.api", "docs/stacks/typescript")),
+        ("tiers-unplaced", tiers_of("docs/<file>.md") == ("", "", "")),
+    )
+
+
+def rollup_proofs() -> tuple[tuple[str, bool], ...]:
+    def stat_of(lane: str, wall: float, /) -> LaneStat:
+        return LaneStat(lane=lane, model="<model-a>", findings=1, verdicts={}, missing=(), phantom=(), wall_s=wall, report_valid=True)
+
+    spread = wall_spread_of((stat_of("lane-a", 10.0), stat_of("lane-b", 12.0), stat_of("lane-c", 40.0)))
+    prints = prompt_prints(Path("<no-repo>"))
+    hex_digits = set("0123456789abcdef")
+    return (
+        ("wall-spread-outlier-rule", spread == WallSpread(median_s=12.0, max_s=40.0, outliers=("lane-c",))),
+        ("wall-spread-empty-total", wall_spread_of(()) == WallSpread()),
+        ("prompt-prints-keyed", set(prints) == {*PROMPT_TEMPLATES, PurePosixPath(AGENT_DEFINITION).name}),
+        ("prompt-prints-hash-or-absent", all(v == "absent" or (len(v) == PROMPT_PRINT_WIDTH and set(v) <= hex_digits) for v in prints.values())),
+        ("bundle-registry-derives", REGISTRY_PATH == BUNDLE / "templates" / "refuted-classes.yaml"),
+    )
+
+
+def grade_proofs() -> tuple[tuple[str, bool], ...]:
+    def stat_of(lane: str, verdicts: dict[str, int], phantom: tuple[str, ...], /, *, gate: bool) -> LaneStat:
+        return LaneStat(
+            lane=lane, model="<model-a>", findings=2, verdicts=verdicts, missing=(), phantom=phantom, wall_s=1.0, report_valid=True, gate_clean=gate
+        )
+
+    stats = (
+        stat_of("lane-a", {"fixed": 1, "upgraded": 1}, (), gate=True),
+        stat_of("lane-b", {"fixed": 1, "pushed-back": 1}, ("r9b-09",), gate=False),
+    )
+    reports = (LaneReport(refuted=(Refutation(claim="<claim-a>", evidence="<citation-a>"), Refutation(claim="<claim-b>")), model="<model-a>"),)
+    held = graded(stats, reports).get("<model-a>")
+    expected = LaneGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=0.5, gate_clean=0.5, bijective=0.5)
+    vacuous = LaneGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=1.0, gate_clean=0.5, bijective=0.5)
+    return (
+        ("grades-five-axes-computed", held == expected),
+        ("grades-vacuous-refute-full-marks", lane_graded(stats, ()) == vacuous),
+        ("auto-lanes-clamps", (auto_lanes(1), auto_lanes(LANE_LOAD), auto_lanes(LANE_LOAD + 1), auto_lanes(10_000)) == (1, 1, 2, LANES_CAP)),
+        ("convergence-shares-read-histogram", convergence_shares({"relitigation": 30, "refuted_remint": 10, "new_work": 60}, 60, 5) == (0.15, 0.3)),
+    )
+
+
+def selftest_proofs() -> tuple[tuple[str, bool], ...]:
+    primary, nulled = selftest_fixture()
+    full = report_decoded(primary, LaneReport, "<selftest-primary>")
+    empty = report_decoded(nulled, LaneReport, "<selftest-null>")
+    broken = report_decoded(b'{"ledger": 7}', LaneReport, "<selftest-broken>")
+
+    def full_proofs(report: LaneReport, /) -> tuple[tuple[str, bool], ...]:
+        rosters = tuple(Block.of_seq(report.capability).choose(roster_row))
+        recurred, fresh = recurrence(Registry(), (), (report,))
+        lines = improvement_lines((report,))
+        return (
+            ("ledger-verdicts-cover-contract", {row.verdict for row in report.ledger} == ACCEPTED_VERDICTS | {"pushed-back"}),
+            ("improvement-axis-duality", {bool(row.axis) for row in report.improvements} == {True, False}),
+            ("refuted-populated", bool(report.refuted)),
+            ("capability-raw-projects", all(raw_text(row) for row in report.capability)),
+            ("capability-roster-mined", len(rosters) == 1),
+            ("routing-populated", bool(report.routing)),
+            ("uncertain-populated", bool(report.uncertain)),
+            ("report-files-surface", report.files == ("docs/<file-a>.md", "libs/<file-b>.py")),
+            (
+                "ledger-shape-mix",
+                dict(Counter(row.shape or "unstamped" for row in report.ledger))
+                == {"substitution": 1, "unstamped": 1, "completion": 1, "collapse": 1},
+            ),
+            ("gate-clean-true", report.gate_clean is True),
+            ("fresh-refutations-surface", not recurred and len(fresh) == len(report.refuted)),
+            ("improvements-group-by-axis", any(line.startswith("### [hunt-axis:") for line in lines) and "### [general]" in lines),
+        )
+
+    def empty_proofs(report: LaneReport, /) -> tuple[tuple[str, bool], ...]:
+        drained = (report.ledger, report.improvements, report.refuted, report.capability, report.routing, report.uncertain, report.files)
+        return (("null-collections-default-empty", not any(drained)), ("null-gate-clean-none", report.gate_clean is None))
+
+    return (
+        ("primary-decodes", full.is_ok()),
+        ("null-variant-decodes", empty.is_ok()),
+        ("malformed-faults-loud", broken.swap().to_option().map(lambda fault: fault.code == "malformed").default_value(value=False)),
+        *full.map(full_proofs).default_value(()),
+        *empty.map(empty_proofs).default_value(()),
+        *registry_proofs(),
+        *mint_proofs(),
+        *query_proofs(),
+        *slice_proofs(),
+        *stream_proofs(),
+        *routing_proofs(),
+        *spawn_proofs(),
+        *fill_proofs(),
+        *rollup_proofs(),
+        *grade_proofs(),
+    )
+
+
 # --- [COMPOSITION] ----------------------------------------------------------------------
 
 
@@ -1863,6 +3121,7 @@ class Adapter:
     markers: Markers
     harvested: Callable[[Context], Result[tuple[Finding, ...], Fault]]
     source: Callable[[Context], str]
+    accepts_focus: bool = True  # a False row refuses --focus before the preflight's side effects run; `focused` stays the defensive arm
 
 
 def base_resolved(repo: Path, /) -> Result[str, Fault]:
@@ -1951,7 +3210,7 @@ NETWORK_SIG: Final = FaultSig(
 )
 CR_SIGS: Final[tuple[FaultSig, ...]] = (
     FaultSig(
-        pattern=re.compile(r"Unable to determine base branch", re.IGNORECASE),
+        pattern=re.compile(r"Unable to determine base branch|gitService\.getBranchInfo", re.IGNORECASE),
         signature="base-unresolvable",
         remedy="set --base, git config coderabbit.baseBranch, or origin/HEAD",
         nonzero_only=False,
@@ -2057,8 +3316,8 @@ ADAPTERS: Final[Mapping[Reviewer, Adapter]] = MappingProxyType({
         focused=cr_focused,
         markers=Markers(
             start_grace_s=180.0,
-            stall_grace_s=600.0,
-            deadline_s=2700.0,
+            stall_grace_s=1800.0,
+            deadline_s=3600.0,
             keepalive=True,
             done=Some(re.compile(r'"type"\s*:\s*"complete"')),
             pulse=Some(re.compile(r'"type"\s*:\s*"(?:heartbeat|status)"')),
@@ -2101,6 +3360,7 @@ ADAPTERS: Final[Mapping[Reviewer, Adapter]] = MappingProxyType({
         ),
         harvested=ms_harvested,
         source=lambda context: str(context.round_dir / LOG_NAME),
+        accepts_focus=False,
     ),
 })
 
@@ -2109,6 +3369,51 @@ ADAPTERS: Final[Mapping[Reviewer, Adapter]] = MappingProxyType({
 type _Dir = Annotated[Path | None, Parameter(name=("--dir", "--directory"))]
 type _RoundNo = Annotated[int | None, Parameter(name="--round")]
 type _AllLive = Annotated[bool, Parameter(name="--all-live")]
+
+
+@Parameter(name="*")
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Lens:
+    digest: bool = False
+    top: int = DIGEST_TOP
+    file: str = ""
+    severity: str = ""
+    claim: str = ""
+    within: Annotated[str, Parameter(name="--in")] = "both"
+    as_json: Annotated[bool, Parameter(name="--json")] = False
+
+    @property
+    def filtered(self) -> bool:
+        return bool(self.file or self.severity or self.claim)
+
+
+WIDE_LENS: Final = Lens()
+
+
+@Parameter(name="*")
+@dataclass(frozen=True, slots=True, kw_only=True)
+class Watch:
+    follow: bool = False
+    as_json: Annotated[bool, Parameter(name="--json")] = False
+    normalize: bool = False
+
+    @property
+    def faulted(self) -> Option[Fault]:
+        if self.as_json and not self.follow:
+            return Some(Fault(code="bad-flag", detail="--json rides --follow; a bare receipt already prints JSON"))
+        if self.normalize and not self.follow:
+            return Some(Fault(code="bad-flag", detail="--normalize rides --follow; run findings --normalize directly instead"))
+        return Nothing
+
+
+WATCH_OFF: Final = Watch()
+
+
+def followed_through(context: Context, watch: Watch, /) -> int:
+    code = followed(context, watch.as_json)
+    if code != 0 or not watch.normalize:
+        return code
+    return delivered(findings_normalized(context, None))
 
 
 def focus_resolved(spec: str, /) -> Result[str, Fault]:
@@ -2120,6 +3425,8 @@ def launched(repo: Path, reviewer: Reviewer, scope: Scope, focus: str, levers: L
     adapter = ADAPTERS[reviewer]
     if scope.kind not in adapter.scopes:
         return Error(Fault(code="unsupported-scope", detail=f"{reviewer} accepts {sorted(adapter.scopes)}, not {scope.line!r}"))
+    if focus and not adapter.accepts_focus:
+        return Error(Fault(code="unsupported-focus", detail=f"{reviewer} has no per-run instruction flag; land the concern as config, then relaunch"))
     clash = next((receipt for _context, receipt in live_pairs(repo) if receipt.reviewer == reviewer), None)
     if clash is not None:
         return Error(
@@ -2140,24 +3447,14 @@ def launched(repo: Path, reviewer: Reviewer, scope: Scope, focus: str, levers: L
 
 def flown_round(repo: Path, reviewer: Reviewer, scope: Scope, focus: str, base_argv: tuple[str, ...], /) -> Result[LaunchReceipt, Fault]:
     adapter = ADAPTERS[reviewer]
-    rounds = round_dirs(repo)
-    number = (round_number(rounds[-1]) if rounds else 0) + 1
-    round_dir = repo / STATE_DIR / f"round-{number:03d}"
-    made = catch(exception=OSError)(round_dir.mkdir)(parents=True).map_error(
-        lambda unmakeable: Fault(code="unwritable", detail=f"{round_dir}: {unmakeable}")
-    )
 
-    def unrounded(fault: Fault, /) -> Fault:
-        catch(exception=OSError)(shutil.rmtree)(round_dir)
-        return fault
+    def armed_and_spawned(number: int, round_dir: Path, /) -> Result[LaunchReceipt, Fault]:
+        def unrounded(fault: Fault, /) -> Fault:
+            catch(exception=OSError)(shutil.rmtree)(round_dir)
+            return fault
 
-    def armed_and_spawned(_made: object, /) -> Result[LaunchReceipt, Fault]:
-        focus_argv: Result[tuple[str, ...], Fault] = Ok(()) if not focus else adapter.focused(focus, round_dir)
-        return focus_argv.map_error(unrounded).bind(lambda extra: flown((*base_argv, *extra)))
-
-    def flown(argv: tuple[str, ...], /) -> Result[LaunchReceipt, Fault]:
-        return spawned(argv, round_dir / LOG_NAME, repo).bind(
-            lambda pid: written(
+        def flown(argv: tuple[str, ...], pid: int, /) -> Result[LaunchReceipt, Fault]:
+            return written(
                 round_dir / RUN_NAME,
                 ENCODER.encode(
                     Run(
@@ -2187,74 +3484,97 @@ def flown_round(repo: Path, reviewer: Reviewer, scope: Scope, focus: str, base_a
                     run=str(run_path),
                 )
             )
-        )
 
-    return made.bind(armed_and_spawned)
+        def reaped(fault: Fault, pid: int, /) -> Fault:
+            catch(exception=ProcessLookupError)(KILLPG)(pid, SIG_KILL)  # a run.json write failure orphans a live engine; reap it with the dir
+            return unrounded(fault)
+
+        def flown_recorded(argv: tuple[str, ...], /) -> Result[LaunchReceipt, Fault]:
+            return (
+                spawned(argv, round_dir / LOG_NAME, repo)
+                .map_error(unrounded)
+                .bind(lambda pid: flown(argv, pid).map_error(lambda fault: reaped(fault, pid)))
+            )
+
+        focus_argv: Result[tuple[str, ...], Fault] = Ok(()) if not focus else adapter.focused(focus, round_dir)
+        return focus_argv.map_error(unrounded).bind(lambda extra: flown_recorded((*base_argv, *extra)))
+
+    return round_minted(repo).bind(lambda pair: armed_and_spawned(*pair))
 
 
 @APP.command
 def launch(
     *,
-    reviewer: Reviewer,
+    reviewer: str,
     scope: str,
     focus: str = "",
     light: bool = False,
     resume: bool = False,
     include: tuple[str, ...] = (),
+    watch: Watch = WATCH_OFF,
     directory: _Dir = None,
 ) -> int:
+    """Spawn one engine round at a scope; --follow arms the watcher in-verb, --json streams events, --normalize lands findings on completion."""
+    match watch.faulted:
+        case Option(tag="some", some=fault):
+            return refused(fault)
+        case _:
+            pass
     levers = Levers(light=light, resume=resume, include=include)
-    return delivered(
-        repo_root(directory).bind(
-            lambda repo: Scope.of(scope).bind(lambda parsed: focus_resolved(focus).bind(lambda text: launched(repo, reviewer, parsed, text, levers)))
+    outcome = repo_root(directory).bind(
+        lambda repo: reviewer_resolved(reviewer).bind(
+            lambda engine: Scope.of(scope).bind(lambda parsed: focus_resolved(focus).bind(lambda text: launched(repo, engine, parsed, text, levers)))
         )
     )
-
-
-def followed(context: Context, /) -> int:
-    probe, offset = StreamProbe(), 0
-    last: Phase | Literal[""] = ""
-    noted = time.time()
-    while True:  # bounded: phased() converts every hang to a terminal verdict, and the killed sentinel short-circuits, so this loop always exits
-        receipt, probe, offset = stepped_status(context, probe, offset)
-        if receipt.phase in TERMINAL:
+    match outcome:
+        case Result(tag="error", error=fault):
+            return refused(fault)
+        case Result(tag="ok", ok=LaunchReceipt() as receipt):
             emitted(receipt)
-            return 0 if receipt.phase == "completed" else 1
-        now = time.time()
-        if receipt.phase != last:
-            last, noted = receipt.phase, now
-            print(liveness_line(receipt))
-        elif now - noted > LIVENESS_NOTE_S:
-            noted = now
-            print(liveness_line(receipt))
-        time.sleep(POLL_S)
+            if not watch.follow:
+                return 0
+            return context_resolved(directory, receipt.round).map(lambda held: followed_through(held, watch)).default_with(refused)
+        case _:
+            return 1
 
 
-def followed_all(repo: Path, /) -> int:
-    tracked = [(context, StreamProbe(), 0, "") for context, _receipt in live_pairs(repo)]
-    if not tracked:
-        emitted(LiveStatus(rounds=(), all_terminal=True, live=0))
-        return 0
+def pulsed(receipt: StatusReceipt, as_json: bool, /) -> None:
+    print(ENCODER.encode(receipt).decode() if as_json else liveness_line(receipt), flush=True)
+
+
+def chased(contexts: tuple[Context, ...], /, *, as_json: bool, announce_terminal: bool) -> tuple[StatusReceipt, ...]:
+    tracked = [(context, StreamProbe(), 0, "") for context in contexts]
     finals: list[StatusReceipt] = []
     noted = time.time()
-    while tracked:  # bounded: each round's phased() deadline is terminal, so the aggregate loop cannot outlive the max per-round deadline
+    while tracked:  # bounded: each round's phased() deadline is terminal, so the loop cannot outlive the max per-round deadline
         moved: list[tuple[Context, StreamProbe, int, str]] = []
         pulse_due = time.time() - noted > LIVENESS_NOTE_S
         for context, probe, offset, last in tracked:
             receipt, grown, at = stepped_status(context, probe, offset)
             if receipt.phase in TERMINAL:
                 finals.append(receipt)
-                print(liveness_line(receipt))
+                if announce_terminal:
+                    pulsed(receipt, as_json)
             else:
                 if receipt.phase != last or pulse_due:
-                    print(liveness_line(receipt))
+                    pulsed(receipt, as_json)
                 moved.append((context, grown, at, receipt.phase))
         if pulse_due:
             noted = time.time()
         tracked = moved
         if tracked:
             time.sleep(POLL_S)
-    ordered = tuple(sorted(finals, key=lambda receipt: receipt.round))
+    return tuple(sorted(finals, key=lambda receipt: receipt.round))
+
+
+def followed(context: Context, as_json: bool, /) -> int:
+    receipt = chased((context,), as_json=as_json, announce_terminal=False)[0]
+    emitted(receipt)
+    return 0 if receipt.phase == "completed" else 1
+
+
+def followed_all(repo: Path, as_json: bool, /) -> int:
+    ordered = chased(tuple(context for context, _receipt in live_pairs(repo)), as_json=as_json, announce_terminal=True)
     emitted(LiveStatus(rounds=ordered, all_terminal=True, live=0))
     return 0 if all(receipt.phase == "completed" for receipt in ordered) else 1
 
@@ -2275,8 +3595,14 @@ def status_target(repo: Path, round_no: int | None, reviewer_spec: str, /) -> Re
             return Error(Fault(code="ambiguous", detail=f"live rounds: {roster} — pass --round, --reviewer, or --all-live"))
 
 
+def selector_conflict(round_no: int | None, reviewer_spec: str, all_live: bool, /) -> Option[Fault]:
+    picked = sum((round_no is not None, bool(reviewer_spec), all_live))
+    return Some(Fault(code="bad-flag", detail="pass at most one of --round, --reviewer, --all-live")) if picked > 1 else Nothing
+
+
 @APP.command
-def status(*, follow: bool = False, all_live: _AllLive = False, reviewer: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
+def status(*, watch: Watch = WATCH_OFF, all_live: _AllLive = False, reviewer: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
+    """Read or follow a round's phase receipt; --json streams follow events, --normalize lands findings when the follow completes."""
     match repo_root(directory):
         case Result(tag="error", error=fault):
             return refused(fault)
@@ -2284,16 +3610,23 @@ def status(*, follow: bool = False, all_live: _AllLive = False, reviewer: str = 
             pass
         case _:
             return 1
+    match watch.faulted.or_else(selector_conflict(round_no, reviewer, all_live)):
+        case Option(tag="some", some=fault):
+            return refused(fault)
+        case _:
+            pass
     if all_live:
-        if follow:
-            return followed_all(repo)
+        if watch.normalize:
+            return refused(Fault(code="bad-flag", detail="--normalize rides a single-round follow, not --all-live"))
+        if watch.follow:
+            return followed_all(repo, watch.as_json)
         pairs = live_pairs(repo)
         return emitted(LiveStatus(rounds=tuple(receipt for _context, receipt in pairs), all_terminal=not pairs, live=len(pairs)))
-    match status_target(repo, round_no, reviewer), follow:
+    match status_target(repo, round_no, reviewer), watch.follow:
         case (Result(tag="error", error=fault), _):
             return refused(fault)
         case (Result(tag="ok", ok=held), True):
-            return followed(held)
+            return followed_through(held, watch)
         case (Result(tag="ok", ok=held), False):
             return emitted(observed(held))
         case _:
@@ -2327,6 +3660,12 @@ def kill_targets(repo: Path, round_no: int | None, reviewer_spec: str, all_live:
 
 @APP.command
 def kill(*, round_no: _RoundNo = None, reviewer: str = "", all_live: _AllLive = False, directory: _Dir = None) -> int:
+    """Escalate SIGTERM to SIGKILL over a round's process group, sweep engine survivors, and stamp the killed sentinel."""
+    match selector_conflict(round_no, reviewer, all_live):
+        case Option(tag="some", some=fault):
+            return refused(fault)
+        case _:
+            pass
     outcome = repo_root(directory).bind(
         lambda repo: kill_targets(repo, round_no, reviewer, all_live).bind(lambda held: traverse(killed_round, Block.of_seq(held)).map(tuple))
     )
@@ -2379,26 +3718,21 @@ def gather_targets(repo: Path, all_live: bool, reviewer_spec: str, rounds_spec: 
 
 def gathered(repo: Path, sources: tuple[Context, ...], /) -> Result[GatherReceipt, Fault]:
     def landed(srcs: tuple[Context, ...], kept: tuple[Finding, ...], /) -> Result[GatherReceipt, Fault]:
-        rounds = round_dirs(repo)
-        number = (round_number(rounds[-1]) if rounds else 0) + 1
-        round_dir = repo / STATE_DIR / f"round-{number:03d}"
         scope = Scope(kind="union", ref=",".join(f"{REVIEWER_SHORT[src.run.reviewer]}:{src.run.scope.line}" for src in srcs))
-        run = Run(
-            round=number,
-            kind="gather",
-            reviewer=srcs[0].run.reviewer,
-            scope=scope,
-            pid=0,
-            pgid=0,
-            started=time.time(),
-            argv=(),
-            sources=tuple(src.run.round for src in srcs),
-        )
-        made = catch(exception=OSError)(round_dir.mkdir)(parents=True).map_error(
-            lambda unmakeable: Fault(code="unwritable", detail=f"{round_dir}: {unmakeable}")
-        )
-        return made.bind(
-            lambda _made: written(round_dir / RUN_NAME, ENCODER.encode(run)).bind(
+
+        def stored(number: int, round_dir: Path, /) -> Result[GatherReceipt, Fault]:
+            run = Run(
+                round=number,
+                kind="gather",
+                reviewer=srcs[0].run.reviewer,
+                scope=scope,
+                pid=0,
+                pgid=0,
+                started=time.time(),
+                argv=(),
+                sources=tuple(src.run.round for src in srcs),
+            )
+            return written(round_dir / RUN_NAME, ENCODER.encode(run)).bind(
                 lambda _run: written(round_dir / FINDINGS_NAME, ENCODER.encode(kept)).map(
                     lambda path: GatherReceipt(
                         round=number,
@@ -2410,7 +3744,8 @@ def gathered(repo: Path, sources: tuple[Context, ...], /) -> Result[GatherReceip
                     )
                 )
             )
-        )
+
+        return round_minted(repo).bind(lambda pair: stored(*pair))
 
     return (
         traverse(gather_ready, Block.of_seq(sources))
@@ -2429,50 +3764,73 @@ def gathered(repo: Path, sources: tuple[Context, ...], /) -> Result[GatherReceip
 
 @APP.command
 def gather(*, all_live: _AllLive = False, reviewer: str = "", rounds: str = "", directory: _Dir = None) -> int:
+    """Union completed, normalized engine rounds into one pre-normalized gather round with fingerprint collapse and corroborators."""
     return delivered(repo_root(directory).bind(lambda repo: gather_targets(repo, all_live, reviewer, rounds).bind(lambda held: gathered(repo, held))))
 
 
-def findings_normalized(context: Context, dedup_against: int | None, /) -> Result[FindingsReceipt, Fault]:
+def findings_normalized(context: Context, dedup_against: int | None, /, *, partial: bool = False) -> Result[FindingsReceipt, Fault]:
     adapter = ADAPTERS[context.run.reviewer]
     if context.run.kind == "gather":
         return Error(Fault(code="no-process", detail=f"round {context.run.round} is a gather round; its findings.json lands normalized at gather"))
     if tuple(context.round_dir.glob("lane-?.json")):
-        return Error(Fault(code="already-sliced", detail=f"{context.round_dir} carries lane slices; a re-normalize would orphan the stamped ids"))
-    terminal = observed(context)
-    if terminal.phase != "completed":
         return Error(
-            Fault(code="not-completed", detail=f"round {context.run.round} is {terminal.phase}: {terminal.detail or 'wait for the terminal phase'}")
+            Fault(
+                code="already-sliced",
+                detail=f"{context.round_dir} carries lane slices; a re-normalize would orphan the stamped ids — re-cut with `slice`, read with `findings --digest`",
+            )
+        )
+    terminal = observed(context)
+    if terminal.phase != "completed" and not (partial and terminal.phase in TERMINAL):
+        return Error(
+            Fault(
+                code="not-completed",
+                detail=f"round {context.run.round} is {terminal.phase}: "
+                + (terminal.detail or "wait for the terminal phase")
+                + ("" if terminal.phase in TERMINAL else "; a dead engine's store harvests with --partial once terminal"),
+            )
         )
 
     def landed(
-        rows: tuple[Finding, ...], kept: tuple[Finding, ...], prior: Option[tuple[Path, tuple[Finding, ...]]], /
+        rows: tuple[Finding, ...], kept: tuple[Finding, ...], collapse: float, prior: Option[tuple[Path, tuple[Finding, ...]]], /
     ) -> Result[FindingsReceipt, Fault]:
         tagged = provenanced(kept, prior)
-        histogram: dict[str, int] = {str(key): count for key, count in Counter(row.provenance for row in tagged if row.provenance).items()}
+        # Histogram over the full tagged set before the cross-round prune, so relitigation surfaces even though its rows never reach lanes.
+        histogram = provenance_hist(tagged)
         prior_rows: tuple[Finding, ...] = prior.map(itemgetter(1)).default_value(())
         pruned, dropped = pruned_against(prior_rows, tagged)
-        misfire = not rows and scope_dirty(context.repo, context.run.scope)
         return written(context.round_dir / PROVENANCE_NAME, ENCODER.encode(histogram)).bind(
             lambda _hist: written(context.round_dir / FINDINGS_NAME, ENCODER.encode(pruned)).map(
-                lambda path: FindingsReceipt(
-                    round=context.run.round,
-                    reviewer=context.run.reviewer,
-                    total=len(pruned),
-                    deduped=len(rows) - len(kept),
-                    cross_deduped=dropped,
-                    classified=sum(1 for row in pruned if row.class_match),
-                    counts_by_severity=counted(pruned),
+                lambda _path: findings_receipt(
+                    context,
+                    pruned,
+                    admitted=len(rows),
+                    trace=DedupTrace(
+                        deduped=len(rows) - len(kept),
+                        collapse_ratio=collapse,
+                        cross_deduped=dropped,
+                        prior_round=prior.map(lambda pair: round_number(pair[0])).to_optional(),
+                    ),
                     provenance=histogram,
-                    scope_misfire=misfire,
                     source=adapter.source(context),
-                    path=str(path),
                 )
             )
         )
 
     def persisted(rows: tuple[Finding, ...], registry: Registry, /) -> Result[FindingsReceipt, Fault]:
         kept = normalized(rows, registry)
-        return prior_pool(context.repo, context.run.round, dedup_against).bind(lambda prior: landed(rows, kept, prior))
+        collapse = (len(rows) - len(kept)) / len(rows) if rows else 0.0
+        if len(rows) >= DEDUP_GUARD_FLOOR and collapse > DEDUP_GUARD_SHARE:
+            return Error(
+                Fault(
+                    code="dedup-collapse",
+                    detail=(
+                        f"{len(rows)} admitted rows collapsed to {len(kept)} fingerprint survivors ({collapse:.0%}) on an intra-round pass —"
+                        f" degenerate identity inputs mark engine format drift; inspect the raw source ({adapter.source(context)}) before"
+                        " trusting this round"
+                    ),
+                )
+            )
+        return prior_pool(context.repo, context.run.round, dedup_against).bind(lambda prior: landed(rows, kept, collapse, prior))
 
     return registry_loaded().bind(lambda registry: adapter.harvested(context).bind(lambda rows: persisted(rows, registry)))
 
@@ -2488,80 +3846,175 @@ def findings_read(context: Context, /) -> Result[tuple[Finding, ...], Fault]:
 def findings(
     *,
     normalize: bool = False,
+    partial: bool = False,
     dedup_against: Annotated[int | None, Parameter(name="--dedup-against")] = None,
+    lens: Lens = WIDE_LENS,
     round_no: _RoundNo = None,
     directory: _Dir = None,
 ) -> int:
+    """Normalize a completed round's findings, or read them back: bare summary, --digest round read, --file/--severity/--claim/--in query. --normalize --partial harvests a dead engine's store — whatever landed before a terminal failure."""
+
     def summarized(context: Context, /) -> Result[FindingsReceipt, Fault]:
-        return findings_read(context).map(
-            lambda rows: FindingsReceipt(
-                round=context.run.round,
-                reviewer=context.run.reviewer,
-                total=len(rows),
-                deduped=0,
-                cross_deduped=0,
-                classified=sum(1 for row in rows if row.class_match),
-                counts_by_severity=counted(rows),
-                provenance={str(key): count for key, count in Counter(row.provenance for row in rows if row.provenance).items()},
-                scope_misfire=not rows and scope_dirty(context.repo, context.run.scope),
-                source=str(context.round_dir / FINDINGS_NAME),
-                path=str(context.round_dir / FINDINGS_NAME),
-            )
+        return findings_read(context).map(lambda rows: findings_receipt(context, rows, admitted=len(rows)))
+
+    def floor_resolved() -> Result[Option[Severity], Fault]:
+        held = SEVERITY_MAP.get(lens.severity.strip().lower())
+        return (
+            Ok(Some(held) if held is not None else Nothing)
+            if held is not None or not lens.severity
+            else Error(Fault(code="bad-flag", detail=f"--severity {lens.severity!r} is not critical|major|minor|trivial|info (or a native alias)"))
         )
 
-    resolved = context_resolved(directory, round_no)
-    return delivered(resolved.bind(lambda context: findings_normalized(context, dedup_against) if normalize else summarized(context)))
+    def query_of(context: Context, kept: tuple[Finding, ...], total: int, /) -> QueryReceipt:
+        scoped = "" if lens.within == "both" else lens.within
+        floor_label = f">={lens.severity}" if lens.severity else ""  # the severity filter is a floor, and the receipt names the relation
+        filters = {key: value for key, value in (("file", lens.file), ("severity", floor_label), ("claim", lens.claim), ("in", scoped)) if value}
+        return QueryReceipt(round=context.run.round, matched=len(kept), total=total, filters=filters, rows=tuple(lined(row) for row in kept))
+
+    def read_mode(context: Context, /) -> Result[object, Fault]:
+        matcher = Some(lenient_pattern(lens.claim)) if lens.claim else Nothing
+        searched = SEARCH_SCOPES[lens.within]
+
+        def projected(rows: tuple[Finding, ...], floor: Option[Severity], /) -> object:
+            kept = queried(rows, floor, lens.file, matcher, searched)
+            if lens.digest:
+                built = digest_built(context, kept, lens.top)
+                return built if lens.as_json else digest_rendered(built)
+            receipt = query_of(context, kept, len(rows))
+            return receipt if lens.as_json else query_rendered(receipt)
+
+        return floor_resolved().bind(lambda floor: findings_read(context).map(lambda rows: projected(rows, floor)))
+
+    if lens.within not in SEARCH_SCOPES:
+        return refused(Fault(code="bad-flag", detail=f"--in {lens.within!r} is not claim|fix|both"))
+    if lens.within != "both" and not lens.claim:
+        return refused(Fault(code="bad-flag", detail="--in scopes the --claim regex; pass --claim with it"))
+    if dedup_against is not None and not normalize:
+        return refused(Fault(code="bad-flag", detail="--dedup-against rides --normalize"))
+    if partial and not normalize:
+        return refused(Fault(code="bad-flag", detail="--partial rides --normalize"))
+    match normalize, lens.digest or lens.filtered, lens.as_json:
+        case (True, True, _) | (True, _, True):
+            return refused(Fault(code="bad-flag", detail="--normalize excludes --digest, --json, and the query filters; normalize first, then read"))
+        case (False, False, True):
+            return refused(Fault(code="bad-flag", detail="--json rides --digest or the query filters; the bare summary already prints JSON"))
+        case _:
+            pass
+    outcome = context_resolved(directory, round_no).bind(
+        lambda context: (
+            findings_normalized(context, dedup_against, partial=partial)
+            if normalize
+            else read_mode(context)
+            if lens.digest or lens.filtered
+            else summarized(context)
+        )
+    )
+    match outcome:
+        case Result(tag="ok", ok=str() as text):
+            print(text)
+            return 0
+        case held:
+            return delivered(held)
 
 
 @APP.command(name="slice")
 def slice_cmd(
     *,
-    lanes: Annotated[int, Parameter(name="--lanes")] = 3,
-    by: SliceAxis = "folder",
+    lanes: Annotated[int | None, Parameter(name="--lanes")] = None,
     balance: Balance = "count",
+    recut: bool = False,
+    closers: bool = False,
     round_no: _RoundNo = None,
     directory: _Dir = None,
 ) -> int:
+    """Cut normalized findings into balanced per-lane manifests and briefs (--lanes omitted derives the count); --closers instead cuts the lane reports' routing rows into file-disjoint closer territories."""
+
     def carved_round(context: Context, /) -> Result[SliceReceipt, Fault]:
-        if not 1 <= lanes <= LANES_CAP:
+        if lanes is not None and not 1 <= lanes <= LANES_CAP:
             return Error(Fault(code="bad-lane", detail=f"lanes must be 1..{LANES_CAP}, got {lanes}"))
-        stale = (*context.round_dir.glob("lane-?.json"), *context.round_dir.glob("lane-?-report.json"))
-        return unlinked(stale).bind(
-            lambda cleared: registry_loaded().bind(
-                lambda registry: findings_read(context).bind(
-                    lambda rows: slices_written(
-                        context, sliced(rows, lanes, by, balance, context.repo, context.run.round, rulings_of(registry)), cleared
+        reports = tuple(context.round_dir.glob("lane-?-report.json"))
+        if reports and not recut:
+            return Error(
+                Fault(
+                    code="already-sliced",
+                    detail=f"{len(reports)} lane report(s) exist under {context.round_dir}; a re-cut destroys fixer output — pass --recut to proceed",
+                )
+            )
+        stale = (*context.round_dir.glob("lane-?.json"), *reports, *context.round_dir.glob("lane-?-brief.md"))
+        # Registry, findings, and the cut all prove out BEFORE the stale set unlinks, so a refused re-slice leaves the prior lanes intact.
+        return registry_loaded().bind(
+            lambda registry: findings_read(context).bind(
+                lambda rows: unlinked(stale).bind(
+                    lambda cleared: slices_written(
+                        context,
+                        sliced(rows, auto_lanes(len(rows)) if lanes is None else lanes, balance, context.repo, context.run.round, registry),
+                        cleared,
+                        restamped=True,
                     )
                 )
             )
         )
 
-    def slices_written(context: Context, packs: tuple[LaneSlice, ...], cleared: int, /) -> Result[SliceReceipt, Fault]:
+    def carved_closers(context: Context, /) -> Result[SliceReceipt, Fault]:
+        if lanes is not None and not 1 <= lanes <= LANES_CAP:
+            return Error(Fault(code="bad-lane", detail=f"lanes must be 1..{LANES_CAP}, got {lanes}"))
+        landed = tuple(context.round_dir.glob("close-*-report.json"))
+        if landed and not recut:
+            return Error(
+                Fault(
+                    code="already-sliced",
+                    detail=f"{len(landed)} closer report(s) exist under {context.round_dir}; a re-cut destroys closer output — pass --recut to proceed",
+                )
+            )
+        rows = routing_mined(report_pairs(context.round_dir))
+        stale = (*context.round_dir.glob("close-?.json"), *landed, *context.round_dir.glob("close-?-brief.md"))
+        return reports_complete(context.round_dir).bind(
+            lambda _reports: (
+                Error(Fault(code="no-findings", detail=f"round {context.run.round} lane reports carry zero routing rows; nothing to close"))
+                if not rows
+                else unlinked(stale).bind(
+                    lambda cleared: slices_written(
+                        context,
+                        closer_sliced(rows, auto_lanes(len(rows)) if lanes is None else lanes, context.run.reviewer),
+                        cleared,
+                        restamped=False,
+                    )
+                )
+            )
+        )
+
+    def slices_written(context: Context, packs: tuple[LaneSlice, ...], cleared: int, /, *, restamped: bool) -> Result[SliceReceipt, Fault]:
         if not packs:
             return Error(Fault(code="no-findings", detail=f"round {context.run.round} has zero findings to slice; close it with `round` and rotate"))
-        stamped = tuple(row for pack in packs for row in pack.findings)
+        briefed = tuple(
+            replace(pack, manifest=replace(pack.manifest, brief=str(context.round_dir / f"{pack.manifest.lane}-brief.md"))) for pack in packs
+        )
+        stamped = tuple(row for pack in briefed for row in pack.findings)
         writes = (
-            *((context.round_dir / f"{pack.manifest.lane}.json", ENCODER.encode(pack)) for pack in packs),
-            (context.round_dir / FINDINGS_NAME, ENCODER.encode(stamped)),
+            *((context.round_dir / f"{pack.manifest.lane}.json", ENCODER.encode(pack)) for pack in briefed),
+            *((Path(pack.manifest.brief), brief_rendered(pack, context.run.round).encode()) for pack in briefed),
+            *(((context.round_dir / FINDINGS_NAME, ENCODER.encode(stamped)),) if restamped else ()),  # closer cuts never rewrite the finding ids
         )
         outcome: Result[Path, Fault] = reduce(lambda acc, job: acc.bind(lambda _done: written(*job)), writes, Ok(context.round_dir))
         return outcome.map(
             lambda _last: SliceReceipt(
                 round=context.run.round,
-                lanes=tuple(pack.manifest for pack in packs),
+                lanes=tuple(pack.manifest for pack in briefed),
                 stamped=len(stamped),
-                settled_rulings=len(packs[0].settled_rulings),
+                settled_rulings=len({ruling for pack in briefed for ruling in pack.settled_rulings}),
                 cleared=cleared,
             )
         )
 
-    return delivered(context_resolved(directory, round_no).bind(carved_round))
+    return delivered(context_resolved(directory, round_no).bind(carved_closers if closers else carved_round))
 
 
 @APP.command
 def reconcile(
     lane: str = "", /, *, all_lanes: Annotated[bool, Parameter(name="--all")] = False, round_no: _RoundNo = None, directory: _Dir = None
 ) -> int:
+    """Prove per-lane id bijection against the lane reports and surface the routing drain; exit 0 only when every covered lane is bijective."""
+
     def resolved(context: Context, /) -> Result[ReconcileReceipt, Fault]:
         if all_lanes and lane:
             return Error(Fault(code="bad-lane", detail=f"--all excludes a named lane; drop {lane!r} or the flag"))
@@ -2575,23 +4028,46 @@ def reconcile(
                         round=context.run.round,
                         lanes=(kept := tuple(stat for stat in stats if not wanted or stat.lane == f"lane-{wanted}")),
                         bijective=all(stat.report_valid and not stat.missing and not stat.phantom for stat in kept),
+                        routing=round_drain(context.round_dir),
                     )
                 )
             )
         )
 
-    return delivered(context_resolved(directory, round_no).bind(resolved))
+    return delivered(
+        context_resolved(directory, round_no).bind(resolved), clean=lambda receipt: not isinstance(receipt, ReconcileReceipt) or receipt.bijective
+    )
 
 
 @APP.command
-def harvest(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
-    def gathered_feed(context: Context, /) -> Result[HarvestReceipt, Fault]:
-        reports = lane_reports(context.round_dir)
-        if not reports:
-            return Error(Fault(code="no-report", detail=f"no lane-?-report.json under {context.round_dir}; fixer lanes write reports first"))
-        return registry_loaded().bind(lambda registry: findings_read(context).bind(lambda rows: fed(context, registry, rows, reports)))
+def lanes(*, fill: bool = False, spawns: bool = False, lane: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
+    """Read per-lane facts: --fill emits each lane's resolved territory tiers (owning packages, .api overlays, substrate, doctrine roots); --spawns audits the codex rollouts for real spawn_agent dispatches."""
+    if fill == spawns:
+        return refused(Fault(code="bad-flag", detail="pass exactly one of --fill (territory tier data) or --spawns (rollout spawn audit)"))
+    wanted = f"lane-{lane}" if len(lane) == 1 else lane
 
-    def fed(context: Context, registry: Registry, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], /) -> Result[HarvestReceipt, Fault]:
+    def empty(round_dir: Path, /) -> Fault:
+        named = f" matching {wanted!r}" if wanted else ""
+        return Fault(code="no-lanes", detail=f"no lanes{named} under {round_dir}; slice and dispatch first")
+
+    def filled(context: Context, /) -> Result[object, Fault]:
+        rows = tuple(
+            lane_filled(context.repo, slice_.manifest)
+            for _path, slice_ in lane_slices(context.round_dir)
+            if not wanted or slice_.manifest.lane == wanted
+        )
+        return Ok(FillReceipt(round=context.run.round, lanes=rows)) if rows else Error(empty(context.round_dir))
+
+    def audited(context: Context, /) -> Result[object, Fault]:
+        rows = tuple(row for row in spawn_rows(context.round_dir) if not wanted or row.lane == wanted)
+        oracle = f"{CODEX_SESSIONS} rollout response_item function_call name={SPAWN_TOOL}"
+        return Ok(SpawnReceipt(round=context.run.round, oracle=oracle, lanes=rows)) if rows else Error(empty(context.round_dir))
+
+    return delivered(context_resolved(directory, round_no).bind(filled if fill else audited))
+
+
+def harvest_built(context: Context, /) -> Result[HarvestReceipt, Fault]:
+    def fed(registry: Registry, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], /) -> Result[HarvestReceipt, Fault]:
         recurred, fresh = recurrence(registry, rows, reports)
         recurred_ids = frozenset(class_id for class_id, _ in recurred)
         feed = feed_rendered(context.run, recurred, fresh, reports, registry)
@@ -2611,11 +4087,31 @@ def harvest(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
             )
         )
 
-    return delivered(context_resolved(directory, round_no).bind(gathered_feed))
+    return reports_complete(context.round_dir).bind(
+        lambda reports: (
+            Error(Fault(code="no-report", detail=f"no lane-?-report.json under {context.round_dir}; fixer lanes write reports first"))
+            if not reports
+            else registry_loaded().bind(lambda registry: findings_read(context).bind(lambda rows: fed(registry, rows, reports)))
+        )
+    )
+
+
+@APP.command
+def harvest(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
+    """Assemble the round's harvest feed and memory proposals from the complete lane-report set."""
+    return delivered(context_resolved(directory, round_no).bind(harvest_built))
 
 
 @APP.command(name="round")
-def round_cmd(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
+def round_cmd(
+    *,
+    harvest: bool = False,
+    defer_routing: Annotated[bool, Parameter(name="--defer-routing")] = False,
+    round_no: _RoundNo = None,
+    directory: _Dir = None,
+) -> int:
+    """Close the round: append its rounds.jsonl row with computed grades and print the delta; --harvest runs the feed assembly first, and --defer-routing records undrained routing rows as a deliberate deferral instead of refusing."""
+
     def closed(context: Context, /) -> Result[RoundReceipt, Fault]:
         if any(row.round == context.run.round for row in rounds_read(context.repo)):
             return Error(Fault(code="already-closed", detail=f"round {context.run.round} already has a {LEDGER_NAME} row"))
@@ -2623,13 +4119,33 @@ def round_cmd(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
 
     def assembled(context: Context, rows: tuple[Finding, ...], registry: Registry, /) -> Result[RoundReceipt, Fault]:
         if not rows:
-            return appended(context, row_built(context, rows, (), (), registry))
-        reports = lane_reports(context.round_dir)
-        if not reports:
-            return Error(
-                Fault(code="no-report", detail=f"round {context.run.round} has findings but no lane-?-report.json; fix lanes before closing")
+            return appended(context, row_built(context, rows, (), (), registry, RoutingDrain()))
+        return reports_complete(context.round_dir).bind(
+            lambda reports: (
+                Error(Fault(code="no-report", detail=f"round {context.run.round} has findings but no lane-?-report.json; fix lanes before closing"))
+                if not reports
+                else drain_gated(context, rows, reports, registry)
             )
-        return reconciled(context.round_dir).bind(lambda stats: appended(context, row_built(context, rows, stats, reports, registry)))
+        )
+
+    def drain_gated(
+        context: Context, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], registry: Registry, /
+    ) -> Result[RoundReceipt, Fault]:
+        # Drain computes only over the proven-complete report set, so a missing lane report never shrinks the routing pool the gate reads.
+        drain = round_drain(context.round_dir)
+        if drain.pending and not defer_routing:
+            roster = ", ".join(row.key for row in drain.pending[:8]) + (" ..." if len(drain.pending) > 8 else "")
+            return Error(
+                Fault(
+                    code="routing-undrained",
+                    detail=(
+                        f"{len(drain.pending)}/{drain.total} routing rows carry no closer verdict ({roster}); cut territories with"
+                        " `slice --closers`, dispatch closers, and re-run — or record the deferral with --defer-routing"
+                    ),
+                )
+            )
+        marked = replace(drain, deferred=defer_routing and bool(drain.pending))
+        return reconciled(context.round_dir).bind(lambda stats: appended(context, row_built(context, rows, stats, reports, registry, marked)))
 
     def appended(context: Context, row: RoundRow, /) -> Result[RoundReceipt, Fault]:
         prior = next((held for held in reversed(rounds_read(context.repo)) if held.round < row.round), None)
@@ -2637,14 +4153,51 @@ def round_cmd(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
             lambda _path: RoundReceipt(row=row, delta=delta_of(prior, row))
         )
 
-    return delivered(context_resolved(directory, round_no).bind(closed))
+    match context_resolved(directory, round_no):
+        case Result(tag="error", error=fault):
+            return refused(fault)
+        case Result(tag="ok", ok=Context() as context):
+            pass
+        case _:
+            return 1
+    if harvest:
+        match harvest_built(context):
+            case Result(tag="error", error=fault):
+                return refused(fault)
+            case Result(tag="ok", ok=receipt):
+                emitted(receipt)
+            case _:
+                return 1
+    return delivered(closed(context))
+
+
+@APP.command
+def registry(*, check: bool = False, apply: bool = False, rows: str = "") -> int:
+    """Prove proposed refuted-class rows (--check; bare lints the standing yaml) or land a fully clean set append-only (--apply)."""
+    match check, apply, bool(rows):
+        case (True, False, _):
+            match registry_checked(rows):
+                case Result(tag="ok", ok=receipt):
+                    emitted(receipt)
+                    return 0 if not receipt.faulted else 1
+                case Result(tag="error", error=fault):
+                    return refused(fault)
+                case _:
+                    return 1
+        case (False, True, True):
+            return delivered(registry_applied(Path(rows)))
+        case (False, True, False):
+            return refused(Fault(code="bad-flag", detail="--apply requires --rows <path> naming the proposed classes: rows"))
+        case _:
+            return refused(Fault(code="bad-flag", detail="pass exactly one of --check [--rows <path>] or --apply --rows <path>"))
 
 
 @APP.command
 def verify(*, rule: str = "", path: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
+    """Prove a landed guard in its surface's own oracle: --rule for the greptile cascade, --round for the whole surface ledger."""
     match bool(rule), round_no is not None:
         case (True, False):
-            match repo_root(directory).bind(lambda repo: gt_verified(repo, rule, path)):
+            match repo_root(directory).map(lambda repo: gt_verified(repo, rule, path)):
                 case Result(tag="ok", ok=receipt):
                     emitted(receipt)
                     return 0 if receipt.effective else 1
@@ -2665,6 +4218,15 @@ def verify(*, rule: str = "", path: str = "", round_no: _RoundNo = None, directo
             return refused(
                 Fault(code="bad-flag", detail="pass exactly one of --rule <text> (greptile cascade check) or --round N (all-surface ledger check)")
             )
+
+
+@APP.command
+def selftest() -> int:
+    """Prove the rail's pure contracts and exit nonzero naming each failed proof."""
+    rows = selftest_proofs()
+    failures = tuple(name for name, held in rows if not held)
+    emitted(SelftestReceipt(proofs=len(rows), passed=len(rows) - len(failures), failures=failures))
+    return 0 if not failures else 1
 
 
 if __name__ == "__main__":

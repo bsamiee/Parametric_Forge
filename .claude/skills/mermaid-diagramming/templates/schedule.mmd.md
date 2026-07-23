@@ -1,12 +1,10 @@
 # [SCHEDULE]
 
-Draw owned work committed to dates. Template law bakes in the schedule discipline an unassisted attempt fakes — every bar chains through `after` onto its real dependency and a convergence point lists every prerequisite (`after k2 s2`), so the critical path is derivable, never asserted; state marks truth against the real today (`done`, `active`, `crit`), a law the refiller upholds by dating active bars to straddle the today rule; a `vert` task draws the governance gate as a full-height marker — an engine rect classed `.vert` that renders as an opaque pipe until the fill-opacity stamp washes it; excluded days recess instead of glare; and the milestone is the zero-length terminal commitment downstream of the convergence gate. Gantt has no blocked state: a stalled task carries its blocker in the label, and `crit` stays reserved for the critical path rather than doubling as an alarm chip. Use `gantt` with sections in phase order, parallel workstreams as interleaved chains, `axisFormat` with `tickInterval` and `weekday` sized to the span, and the Lavender `.sectionTitle` stamp so lane titles carry the container-title law; themeCSS owns every gantt text size, so the `gantt:` block carries geometry keys only. Today's rule spans the full canvas, so it carries a translucent stroke through the `todayMarker` style string and never blinds what it crosses. Dependency-free decoration bars are the defect — a bar with no `after` and no date commitment is prose, not schedule.
+Draw owned work committed to dates. Template law bakes in the schedule discipline an unassisted attempt fakes — every bar chains through `after` onto its real dependency and a convergence point lists every prerequisite (`after k2 s2`), so the critical path is derivable, never asserted; state marks truth against the real today (`done`, `active`, `crit`), a law the refiller upholds by dating active bars to straddle the today rule; a `vert` task draws the governance gate as a full-height marker; and the milestone is the zero-length terminal commitment downstream of the convergence gate. Gantt has no blocked state: a stalled task carries its blocker in the label, and `crit` stays reserved for the critical path rather than doubling as an alarm chip. Use `gantt` with sections in phase order, parallel workstreams as interleaved chains, and `axisFormat` with `tickInterval` and `weekday` sized to the span; the `gantt:` block carries geometry keys. Dependency-free decoration bars are the defect — a bar with no `after` and no date commitment is prose, not schedule.
 
 ```mermaid
 ---
 config:
-  theme: base
-  look: classic
   gantt:
     barHeight: 20
     barGap: 5
@@ -14,32 +12,6 @@ config:
     leftPadding: 110
     rightPadding: 40
     gridLineStartPadding: 35
-  themeVariables:
-    darkMode: true
-    fontFamily: "SF Mono, Menlo, Cascadia Mono, Segoe UI Mono, Consolas, monospace"
-    useGradient: false
-    dropShadow: "none"
-    textColor: "#F8F8F2"
-    titleColor: "#D6BCFA"
-    taskTextColor: "#F8F8F2"
-    taskTextOutsideColor: "#F8F8F2"
-    taskTextDarkColor: "#F8F8F2"
-    gridColor: "#6272A4"
-    excludeBkgColor: "#21222C"
-    sectionBkgColor: "#21222C"
-    sectionBkgColor2: "#21222C"
-    altSectionBkgColor: "#282A36"
-    taskBkgColor: "#44475A"
-    taskBorderColor: "#BD93F9"
-    activeTaskBkgColor: "#6272A4"
-    activeTaskBorderColor: "#BD93F9"
-    doneTaskBkgColor: "#21222C"
-    doneTaskBorderColor: "#6272A4"
-    critBkgColor: "#FF555580"
-    critBorderColor: "#FF5555"
-    todayLineColor: "#FF79C6"
-    vertLineColor: "#8BE9FD"
-  themeCSS: ".sectionTitle{font-size:13.5px;font-weight:700;fill:#D6BCFA}.taskText,.taskTextOutsideRight,.taskTextOutsideLeft{font-size:12px}.grid .tick text{font-size:11px}.titleText{font-size:15px;font-weight:600}.vert{fill-opacity:.35;stroke-opacity:.6}.vertText{font-size:11px}"
 ---
 gantt
   accTitle: Compute campaign schedule
@@ -50,7 +22,6 @@ gantt
   tickInterval 1week
   weekday monday
   excludes weekends
-  todayMarker stroke-width:2px,stroke:#FF79C6,opacity:0.55
   section Discovery
   Package survey :done, d1, 2026-06-29, 4d
   Api catalogs :done, d2, after d1, 3d

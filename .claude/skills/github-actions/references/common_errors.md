@@ -74,21 +74,12 @@
 |  [03]   | `Unexpected input`                     | `action`          | Remove undocumented inputs, check action metadata.                 |
 |  [04]   | Deprecated input                       | `action`          | Input has `deprecationMessage` — use replacement from action docs. |
 |  [05]   | `Node.js 12/16 actions are deprecated` | `action`          | Update to current major — node12/16 removed from runners.          |
-|  [06]   | `Node.js 20 actions are deprecated`    | `action`          | Update to latest major — node24 is the enforced runner default.    |
+|  [06]   | `Node.js 20 actions are deprecated`    | `action`          | Update to latest major — node24 is the runner default.             |
 |  [07]   | Supply chain compromise                | —                 | Pin to SHA, verify via `git ls-remote`, enable Dependabot.         |
 
 ### [04.1]-[OUTDATED_ACTION_VERSIONS]
 
-Actions whose old majors still appear in the wild. Pin each to `owner/repo@<SHA> # vN.N.N`, resolving the SHA with `git ls-remote` at generation time.
-
-| [INDEX] | [ACTION]                  | [OUTDATED] |
-| :-----: | :------------------------ | :--------- |
-|  [01]   | actions/checkout          | v3, v4     |
-|  [02]   | actions/setup-node        | v3, v4     |
-|  [03]   | actions/cache             | v3, v4     |
-|  [04]   | actions/upload-artifact   | v3, v4     |
-|  [05]   | actions/download-artifact | v3, v4     |
-|  [06]   | github/codeql-action      | v2, v3     |
+Any major below the newest is outdated — no grace band; `git ls-remote` resolves the newest tag and SHA at generation time. Core `actions/*` (checkout, setup-node, cache, upload-artifact, download-artifact) and `github/codeql-action` churn majors fastest and dominate stale references in the wild.
 
 ## [05]-[JOB_CONFIGURATION]
 

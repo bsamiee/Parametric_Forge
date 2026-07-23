@@ -275,7 +275,7 @@ local -a recent_logs=( /var/log/app/*.log )
 shopt -s array_expand_once
 ```
 
-`_TOOL_FALLBACKS` encodes preference-ordered fallback chains — `_resolve_tool` walks via `command -v` and returns the first available implementation. `_ENV_CONTRACT` unifies required/type/enum validation into regex patterns. `_bench` uses EPOCHREALTIME PE arithmetic; `10#${us}` forces decimal on zero-padded microseconds. `BASH_SOURCE[-1]` is the entry script, `BASH_SOURCE[0]` is the current file. `BASH_MONOSECONDS` replaces `EPOCHSECONDS` where NTP drift matters. `BASH_TRAPSIG` carries the trapped signal number, so one handler dispatches every signal by table. `array_expand_once` (replacing `assoc_expand_once`) prevents subscript double-evaluation.
+`_TOOL_FALLBACKS` encodes preference-ordered fallback chains — `_resolve_tool` walks it via `command -v` to the first available implementation. `_ENV_CONTRACT` unifies required/type/enum validation into regex patterns. `_bench` uses EPOCHREALTIME PE arithmetic; `10#${us}` forces decimal on zero-padded microseconds; `BASH_MONOSECONDS` replaces `EPOCHSECONDS` where NTP drift matters. `BASH_SOURCE[-1]` is the entry script, `[0]` the current file. `BASH_TRAPSIG` carries the trapped signal number — one table handler dispatches every signal. `array_expand_once` prevents subscript double-evaluation.
 
 ## [06]-[RULES]
 

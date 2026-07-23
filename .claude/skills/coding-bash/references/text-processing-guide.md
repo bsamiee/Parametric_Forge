@@ -102,16 +102,16 @@ rg --json 'ERROR' logs/ \
 
 Prefer `choose` for simple field selection. Route ALL CSV/TSV through `mlr` or `qsv` — both parse quoted fields and embedded commas, which awk `-F','` splits wrong. Reserve awk for aggregation, state machines, and multi-field formatting on unstructured text.
 
-BSD awk (`/usr/bin/awk` on macOS) ignores GNU-only flags and **exits 0** — a `--csv` invocation silently applies whitespace `FS` and emits wrong data under a success code. Never assume gawk; probe with `command -v gawk` before any GNU-only awk feature.
+`/usr/bin/awk` on macOS owns a permissive `--csv` miss: it ignores the flag and exits `0`. Portability probes bind the exact binary and required flag before dispatch.
 
 ```bash copy-safe
 # Frequency table — single program, no pipe chain
 awk '{ip[$1]++} END {for (i in ip) printf "%6d %s\n", ip[i], i}' access.log | sort -rn
 # Multi-counter in single pass
 awk '/ERROR/{e++} /WARN/{w++} /FATAL/{f++} END {printf "E=%d W=%d F=%d\n",e,w,f}' app.log
-# Quoted-field CSV aggregation — mlr owns it, awk cannot parse embedded commas
+# mlr owns grouped revenue aggregation over quoted CSV.
 mlr --icsv --opprint stats1 -a sum -f revenue -g region sales.csv
-# Same shape via qsv when the input is large or needs indexing
+# qsv owns global revenue-column statistics over large or indexed CSV.
 qsv stats --select revenue sales.csv
 # State machine: extract blocks between markers
 awk '/^BEGIN/{capture=1; next} /^END/{capture=0} capture{print}' structured.log

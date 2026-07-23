@@ -111,7 +111,7 @@ const synth = (schema, depth = 0) => {
         case 'integer':
             return 0;
         case 'boolean':
-            return false;
+            return true; // truthy so a receipt fixture's `ok` guard proceeds past the fixture, matching the string rule
         case 'null':
             return null;
         case 'array':

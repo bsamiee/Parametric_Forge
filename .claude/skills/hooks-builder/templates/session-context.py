@@ -66,8 +66,12 @@ def _run(argv: tuple[str, ...], /) -> str:
 
 
 def _clip(text: str, cap: int, /) -> str:
-    """Bound one probe's contribution at its own policy ceiling, cutting on a line edge so a truncated row never reads as data."""
-    return text if len(text) <= cap else "\n".join(text[:cap].splitlines()[:-1] or [text[:cap]]) + f"\n… clipped at {cap} chars"
+    """Bound one probe's contribution within its policy ceiling, marker included, cutting on a line edge so a truncated row never reads as data."""
+    if len(text) <= cap:
+        return text
+    marker = f"\n… clipped at {cap} chars"
+    body = text[: max(cap - len(marker), 0)]
+    return "\n".join(body.splitlines()[:-1] or [body]) + marker
 
 
 def _persist(key: str, value: str, /) -> None:

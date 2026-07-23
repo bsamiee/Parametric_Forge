@@ -98,7 +98,7 @@ Range types replace dual start/end columns with algebraic interval semantics. Bu
 
 Dual `start_date`/`end_date` columns are forbidden; always use `tstzrange` with a range constraint.
 
-`WITHOUT OVERLAPS` is the temporal constraint mechanism: use it in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. An EXCLUDE constraint is the fallback only when the constraint needs operators beyond equality plus range overlap, such as three-way exclusion with non-equality operators.
+`WITHOUT OVERLAPS` is the temporal constraint mechanism: use it in PRIMARY KEY or UNIQUE constraints for temporal non-overlap. An EXCLUDE constraint is the fallback only when the constraint needs operators beyond equality and range overlap, such as three-way exclusion with non-equality operators.
 
 ```sql conceptual
 CREATE TYPE price_range AS RANGE (SUBTYPE = numeric);
@@ -401,7 +401,7 @@ CREATE INDEX ON chunks (tenant_id, created_at);
 - Tenant isolation via RLS — vector queries automatically scoped
 - `position` preserves document ordering for context window assembly
 - pg_trgm completes the retrieval triad: semantic (vector distance) + lexical (BM25 rank) + fuzzy (trigram similarity) — each captures different user intent failure modes
-- [MULTI_TENANT_SCALE]: replace HNSW with DiskANN plus label-column filtering when `vectorscale` is available.
+- [MULTI_TENANT_SCALE]: replace HNSW with label-filtered DiskANN when `vectorscale` is available.
     - Store discrete tenant/category labels in the indexed label column and query with label containment so filtering participates in index search instead of relying only on post-filtering.
     - HNSW + RLS post-filter visits `ef_search` neighbors first then discards non-matching tenants, which at high selectivity can return fewer than `LIMIT k` results or require expensive iterative scan expansion
 - [WRITE_AMPLIFICATION]: A three-index strategy (HNSW + GIN tsvector + GIN trgm) means each INSERT touches three indexes — acceptable for moderate ingestion but bottleneck for bulk pipelines.

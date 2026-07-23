@@ -1,22 +1,15 @@
 ---
 name: code-review
 description: >-
-    Local code review through three engines — CodeRabbit (working tree), Greptile (committed
-    commits vs base), Macroscope (in-place AST correctness) — driven by one verb rail
-    (`launch`, `status --follow`, `kill`, `findings --normalize`, `slice`, `reconcile`,
-    `harvest`, `gather`, `round`, `verify`) through the COLLECT -> FIX -> DISPOSITION ->
-    DISTILL cycle, with per-reviewer concurrent rounds, cross-engine `gather` union, per-round
-    `--focus` aiming, fixer-lane dispatch under the shipped lane-law template, and distillation
-    through the reviewer-harvest agent into the `.coderabbit.yaml`, `.greptile/`, and
-    `.macroscope/` reviewer-config surfaces. Trigger on any explicit review request,
-    autonomously when a review is warranted (code, quality, security), on "run coderabbit",
-    "run greptile", or "run macroscope", and when tuning any reviewer config. Hosted PR
-    reviewer round-trips belong to pr-loop.
+    Owns the local review cycle over three engines — CodeRabbit, Greptile, and Macroscope
+    (`.coderabbit.yaml`, `.greptile/`, `.macroscope/`). Use on any request to review, and
+    whenever those config files are read, edited, or authored — this skill owns their schemas
+    and rule grammar. Hosted PR reviewer round-trips belong to pr-loop.
 ---
 
 # [CODE_REVIEW]
 
-One rail folds CodeRabbit, Greptile, and Macroscope into a single improvement machine: it launches, watches, and harvests each into one normalized finding schema, fixer lanes drain the findings under the shipped lane-law template, and each round distills refuted classes and lessons into the reviewer configs so the next round runs harder.
+One rail carries the whole cycle: every engine round normalizes into one finding schema, and each round distills its refuted classes and lessons into the reviewer configs so the next round runs harder.
 
 ## [01]-[ROUTING]
 
@@ -25,115 +18,180 @@ One rail folds CodeRabbit, Greptile, and Macroscope into a single improvement ma
 - [02]-[GREPTILE](references/greptile.md): `.greptile/` cascade, the `--json` envelope and status oracle, and the MCP bridge
 - [03]-[MACROSCOPE](references/macroscope.md): `.macroscope/` concern files, the stream grammar, and worktree custody
 
-[TEMPLATES]: the four prompt templates are disjoint — lane-law owns fixer conduct, codex-lane owns dispatch mechanics, harvest-dispatch owns round-instance data, closer-dispatch owns routed-row closure; a fact appearing in two of them is a defect.
-- [01]-[LANE_LAW](templates/lane-law.md): fixer conduct law riding the dispatch's developer channel
-- [02]-[CODEX_LANE](templates/codex-lane.md): channel-split dispatch form — launch, task message, spawn health and audit
-- [03]-[HARVEST_DISPATCH](templates/harvest-dispatch.md): per-round reviewer-harvest prompt — round-instance slots alone
-- [04]-[CLOSER_DISPATCH](templates/closer-dispatch.md): routed-row closer prompt — sizing, arming, land-or-refute stance
-- [05]-[REFUTED_CLASSES](templates/refuted-classes.yaml): refuted-class registry driving the classifier, recurrence detector, and roster
+[TEMPLATES]: each template is self-contained for its own agent; a fact one of them carries is never restated here.
+- [01]-[FIX](templates/fix.md): universal fixer template — conduct law, corpus fills, and both dispatch lanes
+- [02]-[CLOSE](templates/close.md): universal closer template — weight-sized arming, land-or-refute stance
+- [03]-[HARVEST](templates/harvest.md): per-round reviewer-harvest dispatch — round-instance slots and both transports
+- [04]-[REFUTED_CLASSES](templates/refuted-classes.yaml): refuted-class registry compiled into classifier, recurrence detector, and rulings roster
 
 [SCRIPTS]:
 - [01]-[REVIEW_RAIL](scripts/review_rail.py): verb rail printing one JSON receipt per verb
 
 [AGENT]:
-- `reviewer-harvest`: owns the DISTILL leg, dispatched via the Agent tool from `[05]`; its standing law lives in its own system prompt
+- `.claude/agents/reviewer-harvest.md`: owns the DISTILL leg
 
 ## [02]-[CYCLE]
 
-Every round runs COLLECT -> FIX -> DISPOSITION -> DISTILL on two custody lanes that never mix: work under review stays uncommitted or on its slice commits, while distillation — reviewer configs, `docs/`, `tools/` — commits and pushes to origin's default branch the moment it lands, because hosted engines read the indexed default branch and an unpushed guard protects nothing. Steps run in order; each carries what to watch and the knob that tunes it.
+Every session is its own campaign: rounds number from 1, the session's first launch deletes any pre-existing `.cache/review/` state whole — never archived, never resumed, never numbered from — and the campaign close deletes it again once the final round's `round` row prints its delta. Mid-campaign round dirs survive until then: normalize provenance, `--dedup-against`, and the harvest recurrence census read prior rounds.
 
-1. [CUSTODY]: commit non-review surfaces first — reviewer configs, `docs/`, `tools/`, `.claude/` infra — so the review scope holds exactly the work under review. WATCH: a reviewed-work file in the custody commit shrinks the next round's scope silently. KNOB: the commit-scope roster.
-2. [LAUNCH]: `launch` per engine at its canonical scope ([03]), then run the receipt's `watch_cmd` through Bash `run_in_background`. WATCH: the liveness line — `alive=yes` with a counting-down budget is healthy on blind engines. KNOB: engine choice and `--focus`.
-3. [NORMALIZE]: `findings --normalize` per completed round; `gather` unions concurrent engines. WATCH: the provenance histogram before any count judgment — a flat total decomposes into `relitigation|refuted_remint|new_work|late_discovery` before any config takes blame, and rising new-work beside falling relitigation is convergence. KNOB: `--dedup-against`.
-4. [SLICE]: `slice --lanes N` into balanced per-lane manifests. WATCH: severity and folder balance across lanes. KNOB: lane count — small slices direct freed capacity into capability depth, never early finish.
-5. [FIX]: one keeper per lane under the dispatch form (`templates/codex-lane.md`) — lane law on the developer channel, task instance plus imperative miner-spawn step on the user prompt; each lane returns only its report path, so report bodies never enter the orchestrator's context. WATCH: stderr banners within a minute, spawns audited as `function_call` name `spawn_agent` in the parent rollout. KNOB: model tier and lane-law wording — sharpen by replacement, never accumulate.
-6. [RECONCILE]: `reconcile` proves per-lane id bijection and emits the verdict histogram. WATCH: verdict-mix honesty — fixed-versus-upgraded inflation, citation-backed push-back share. KNOB: a dropped finding closes through one focused opus closer armed with the slice's stack doctrine, never a session resume.
-7. [CLOSERS]: routing rows drain concurrently over disjoint territories under `templates/closer-dispatch.md` — opus for small single-file work, one fable with stacks arming for family or design work. WATCH: honest land-versus-refute — a mined candidate that cannot ground is refuted with its citation, never forced. KNOB: closer sizing.
-8. [DISTILL]: `harvest` assembles the feed and memory proposals; dispatch the reviewer-harvest agent under `templates/harvest-dispatch.md`. WATCH: diff-sample the touched blocks — density rose (fewer words, same law), integrations weave rather than append, additions passed the earn test; the ledger's `trimmed` self-report verifies against the actual diff, never trusted alone. KNOB: the agent file — the single versioned tuning surface.
-9. [VERIFY]: project the agent's ledger into `<round-dir>/surface-ledger.json` ([05]), then `verify --round N` proves each guard in its surface's own oracle. WATCH: an ineffective row marks failed wording — harden the owner, never re-skip. KNOB: `templates/refuted-classes.yaml` rows.
-10. [CLOSE]: commit and push the distillation lane, then `round` appends the `rounds.jsonl` row and prints the round-over-round delta; a zero-findings round arrives here straight from normalize and closes clean. WATCH: findings trending down while capability rows rise is the goal line. KNOB: none — the ledger is the sole progress instrument.
-11. [NEXT]: grade the round on the [GRADING] axes, then pick the next engine — recurrence judges per engine, counts flattening under one engine rotate the next round to another, and `--focus` aims a round within one. Greptile rides the early rounds of a campaign while the accumulated diff still fits its size caps; CodeRabbit carries breadth at any diff size; Macroscope joins whenever its lane is open. WATCH: plateau under a hardened config. KNOB: rotation and focus.
+Every round runs on two custody lanes that never mix: work under review — the harvest's corpus-ledger landings in `libs/` and the `tests/` registries included — stays uncommitted or on its slice commits, while the distillation lane — reviewer configs, `docs/`, `tools/`, `.claude/` infra — pushes to origin's default branch on landing, because hosted engines read only the indexed default branch.
 
-- [FRAMING]: both framings ride every surface — negative framing kills false-positive classes through do-not-flag guards citing the refuting ruling, positive framing steers toward house demands through hunt axes and hit-shape rosters. Hit-shape rosters land on every surface regardless of what an engine emits, because fixer miners execute them — the flywheel: fixer discoveries become next-round hit-shapes.
-- [GRADING]: REVIEW-THE-REVIEWER grades every round on FP share, relitigation share, novel-quality share, and hunt-axis fire, ledger-recorded so config changes read before-and-after mechanically. Standing verdict: CodeRabbit emits no missing-capability findings under any `path_instructions` wording — capability-direction rides Macroscope check-run agents and Greptile structured rules.
+Step order never proves a drain, the owning receipt does: `reconcile` surfaces `routing.pending`, `round` refuses `routing-undrained` while it is non-empty, and `harvest`/`round` refuse a partial lane-report set.
 
-## [03]-[USAGE]
+[STEP_1]-[CUSTODY]: commit the distillation lane first, so review scope holds exactly the work under review.
+- Lockfiles and equivalent generated churn (`packages.lock.json`, `pnpm-lock.yaml`, `uv.lock`, and kin) ride the custody commit-and-push every round — zero review value, and each burns an engine file-cap slot.
+- WATCH: a reviewed-work file in the custody commit shrinks the next round's scope silently.
+- KNOB: commit-scope roster.
+
+[STEP_2]-[LAUNCH]: `launch --reviewer <engine> --scope <scope> --follow --normalize` spawns one engine round at its canonical scope; the receipt proves the spawn, and the follow exits 0 only on `completed`, landing the findings receipt in the same verb. Bare `launch` prints `watch_cmd` instead: it self-exits at the terminal phase, its exit re-invokes the agent, and `findings --normalize --round N` lands the receipt.
+- KNOB: engine choice and `--focus`.
+
+[STEP_3]-[NORMALIZE]: `findings --normalize` per completed round; `gather --all-live|--reviewer <names>|--rounds <numbers>` unions completed normalized rounds into one pre-normalized round every later step targets — `--all-live` takes every engine round with no ledger row and no prior gather, pass `--rounds` when older rounds sit open. `findings --digest --round N` prints the round read — severity counts, class fires, folder cuts, top rows per severity — where engine rotation and lane count decide; query filters answer every targeted read, never hand-jq over `findings.json`.
+- WATCH: provenance histogram before any count judgment — a flat total decomposes into `relitigation|refuted_remint|new_work|late_discovery`, and rising new-work beside falling relitigation is convergence.
+- KNOB: `--dedup-against`.
+
+[STEP_4]-[SLICE]: `slice --round N` cuts balanced per-lane manifests with stamped ids and a dispatch-ready `lane-<letter>-brief.md` each; `lanes --fill` then emits each lane's corpus data for template fill; files, owning packages with `.api` overlays, substrate `.api`, doctrine roots, unplaced files.
+- WATCH: severity and folder balance across lanes.
+- KNOB: explicit `--lanes`, one per balanced folder slice up to the ceiling — small slices direct freed capacity into capability depth, never early finish.
+
+[STEP_5]-[FIX]: one keeper per lane under `templates/fix.md`, dispatched concurrently from the briefs on either transport, codex mechanics the codex skill's, each writing `<round-dir>/lane-<letter>-report.json`.
+- WATCH: `lanes --spawns` proves each lane's miner passes; a lost report relaunches once, and a second failure is hand-repaired, since every downstream verb refuses a partial lane-report set.
+- KNOB: template wording.
+- Codex lanes run the config-default model and effort unflagged under the full user config; miner spawns need the multi-agent depth row, so deviate only for purely mechanical slices. Each lane returns only its report path — the codex lane's `-o` capture, the claude lane's own final write.
+
+[STEP_6]-[RECONCILE]: `reconcile --round N` exits 0 only when `bijective: true` proves every stamped id carries exactly one verdict; `missing`/`phantom` name the defecting lane, `files`/`strays` name cross-territory writes, and `routing` states the closer drain `{total, drained, verdicts, pending}`.
+- WATCH: verdict-mix honesty — fixed-versus-upgraded inflation, citation-backed push-back share; `report_valid: false` beside a `fault` is a decode failure to repair first.
+
+[STEP_7]-[CLOSERS]: lane-report `routing[]` rows alone arm this stage, so a finding `reconcile` reports dropped or phantom lands as a hand-added routing row before the cut. `slice --closers --round N` cuts the rows into file-disjoint territories (`close-<letter>.json` and brief); closers dispatch concurrently under `templates/close.md`, sized by row weight, each writing `<round-dir>/close-<letter>-report.json` answering by the brief's stamped keys, and `reconcile` re-runs to prove the drain empty.
+- WATCH: honest land-versus-refute — a mined candidate that cannot ground is refuted with its citation, never forced.
+- KNOB: closer sizing.
+
+[STEP_8]-[DISTILL]: `harvest --round N` assembles the feed and memory proposals (`round --harvest` in one verb); dispatch under `templates/harvest.md`.
+- WATCH: diff-sample touched blocks — density rose, integrations weave, additions earned; the `trimmed` self-report verifies against the diff.
+- KNOB: agent-file wording, the single versioned tuning surface.
+
+[STEP_9]-[VERIFY]: `registry --apply --rows <path>` lands only a clean set, append-only, refusing whole and naming each fault; `registry --check --rows <path>` diagnoses the refusal, bare `registry --check` lints the standing yaml. `verify --round N` proves each surface-ledger guard in its surface's own oracle.
+- WATCH: an ineffective row marks failed wording — harden the owner and re-verify before `round`, since the close is one-shot.
+- KNOB: guard wording at its owning surface.
+
+[STEP_10]-[CLOSE]: commit and push the distillation lane, then `round [--harvest] [--defer-routing] --round N` appends the `rounds.jsonl` row and prints the delta; it refuses `routing-undrained` while routing rows lack closer verdicts unless `--defer-routing` records the deferral.
+- WATCH: findings trending down while capability rows rise is the goal line.
+
+[STEP_11]-[NEXT]: grade the round on the [GRADING] axes, then pick the next engine — recurrence judges per engine, counts flattening under one engine rotate the next round to another, and `--focus` aims a round within one; greptile rides early rounds, before the accumulated diff meets its size caps.
+- WATCH: plateau under a hardened config.
+- KNOB: rotation and focus.
+
+[FRAMING]: both framings ride every surface — negative framing kills false-positive classes through do-not-flag guards citing the refuting ruling, positive framing steers toward house demands through hunt axes and hit-shape rosters. Hit-shape rosters land on every surface regardless of what an engine emits, fixer miners execute them.
+
+[GRADING]: REVIEW-THE-REVIEWER grades every round on the round row's typed fields, each naming its oracle, so a between-rounds template edit reads as prompt-change to behavior-change mechanically. CodeRabbit emits no missing-capability findings under any `path_instructions` wording; capability-direction rides Macroscope check-run agents and Greptile structured rules.
+- Round axes and oracles: `fp_share`/`relitigation_share` (pre-prune provenance histogram), `novel_quality` (accepted-verdict share over novel-provenance rows), `hunt_axis_fire` (fixer-stamped improvement axes), `shape_fire` (fixer-stamped ledger `shape`; `LaneStat.shapes` counts each lane's unstamped gap), `wall_spread` (lane wall times; an outlier exceeds twice the median), `prompts` (content hashes of the dispatch templates and the `reviewer-harvest` agent).
+- Finding strength stays a judgment sample, never a computed grade: `anchored` and `actionable` are rail-stamped bits, while discriminating (the claim states why the shape is wrong) and novelty read by operator judgment — a computed stand-in fabricates the grade.
+- Fixer lanes grade on five per-model axes in `grades` beside the raw `by_model` verdict rollup — `depth_of_fix` (`upgraded` over `fixed` + `upgraded`), `scope_clean` (phantom-free lanes), `refute_cited` (evidence-carrying `refuted` rows), `gate_clean`, `bijective` — so the claude-versus-codex comparison is one jq group; upgraded claims surviving diff re-read stay the orchestrator's judgment axis.
+- Prose FP classes live as `corpus: prose` registry rows citing the docgen defect catalog, graded by the same recurrence machinery.
+
+## [03]-[VERBS]
+
+Every round-scoped verb accepts `--round N` and `--dir`, printing one JSON receipt; a refusal exits nonzero carrying `{code, detail}`. `REVIEW_RAIL_BUNDLE` points a relocated copy of the script back at the bundle's `templates/` and registry.
 
 ```bash template
-RAIL="uv run ${CLAUDE_SKILL_DIR}/scripts/review_rail.py"
-$RAIL launch --reviewer <engine> --scope <scope> [--focus <text-or-file>]   # receipt: round N, pgid, watch_cmd
-# run the receipt's watch_cmd through Bash run_in_background; its exit re-invokes the agent
-$RAIL status --follow --round <N>
-$RAIL findings --normalize --round <N> [--dedup-against <M>]
-$RAIL slice --lanes 3 --round <N>
-# fixer lanes run here (orchestrator dispatch); each writes <round-dir>/lane-<letter>-report.json
-$RAIL reconcile --round <N>
-$RAIL harvest --round <N>
+rail() { uv run "${CLAUDE_SKILL_DIR}/scripts/review_rail.py" "$@"; }   # shell state dies per tool call — re-define per shell, or use the literal path
+rail launch --reviewer <engine> --scope <scope> [--focus <text-or-file>] [--follow [--json] [--normalize]]
+rail status --follow --round <N> [--json] [--normalize]
+rail findings --normalize --round <N> [--dedup-against <M>]
+rail findings --digest --round <N>
+rail findings --file '<glob>' --severity <floor> --claim '<regex>' [--in claim|fix|both] --round <N> [--json]
+rail slice [--lanes 3] [--recut] --round <N>
+rail lanes --fill --round <N>
+# fixer lanes dispatch here (orchestrator): each prompt cites its lane-<letter>-brief.md; each lane writes <round-dir>/lane-<letter>-report.json
+rail reconcile --round <N>
+rail lanes --spawns [--lane <name>] --round <N>
+rail slice --closers [--lanes 2] [--recut] --round <N>
+# closers dispatch here: each cites its close-<letter>-brief.md and writes <round-dir>/close-<letter>-report.json
+rail reconcile --round <N>                 # re-run: proves the closer drain empty
+rail harvest --round <N>
 # dispatch the reviewer-harvest agent on the feed; persist its ledger as <round-dir>/surface-ledger.json
-$RAIL verify --round <N>
-$RAIL round --round <N>
+rail registry --apply --rows <path>
+rail verify --round <N>
+rail round [--harvest] [--defer-routing] --round <N>
 ```
 
 ```bash template
-$RAIL launch --reviewer coderabbit --scope uncommitted
-$RAIL launch --reviewer greptile --scope base:<prior-boundary>
-$RAIL launch --reviewer macroscope --scope base:<default-branch>
-$RAIL status --follow --all-live            # run_in_background; exits when every live round is terminal
-$RAIL findings --normalize --round <N>      # once per engine round
-$RAIL gather --all-live                     # union round: fingerprint collapse, corroborators, max severity
-# slice / reconcile / harvest / verify / round then target the gather round
+rail launch --reviewer coderabbit --scope uncommitted
+rail launch --reviewer greptile --scope base:<prior-boundary>
+rail launch --reviewer macroscope --scope base:<default-branch>
+rail status --follow --all-live            # exits when every live round is terminal
+rail findings --normalize --round <N>      # once per engine round
+rail gather --all-live                     # union round: fingerprint collapse, corroborators, max severity
+# slice / reconcile / closers / harvest / verify / round then target the gather round
 ```
 
-Every verb accepts `--round N` and `--dir` and prints one JSON receipt; a refusal exits nonzero carrying `{code, detail}`. `launch` refuses an unsupported engine-scope pair and a live same-engine round loudly; the scope family is `all|committed|uncommitted|base:<ref>|base-commit:<sha>`, and the `--reviewer` selectors on `status`/`kill`/`gather` also take `cr|gt|ms`. `--focus` takes inline text or a file path — greptile rides `--instructions`, coderabbit a round-scoped `-c` instruction file, and macroscope refuses focus loudly because config files are its only steering.
+`launch` refuses an unsupported engine-scope pair and a live same-engine round; the scope family is `all|committed|uncommitted|base:<ref>|base-commit:<sha>`, every `--reviewer` takes the `cr|gt|ms` aliases, and conflicting selectors refuse `bad-flag` on `status`/`kill`. `--focus` takes inline text or a file path — greptile rides `--instructions`, coderabbit a round-scoped `-c` instruction file, and macroscope refuses `--focus` before any preflight side effect.
 
-Engine scope selection; each reference owns its engine's mechanics — base resolution, size gating, language routing, and config surface.
+[CODERABBIT]: sweeps working-tree quality and style at full breadth every run — a retry re-spends quota; canonical round `--scope uncommitted`, full scope family accepted. `launch` resolves and injects a base for every working-tree scope. A hard changed-file cap (300, counted pre-filter) refuses oversized scopes — trim by committing smallest-churn files (`git diff --numstat` ascending) with the lockfile-class churn until under cap, spending review breadth only on substantive diffs.
 
-- [CODERABBIT]: sweeps working-tree quality and style at full breadth every run — a retry re-spends quota; canonical round `--scope uncommitted`, full scope family accepted. `launch` resolves and injects a base for every working-tree scope, refusing with the persist remedy when none resolves, since the engine otherwise fails within a second while exiting 0. `--light` is the cheap post-fix re-review lever, coderabbit-only.
-- [GREPTILE]: hunts cross-file logic over committed commits against a base — uncommitted edits never enter; canonical round `--scope base:<prior-boundary>` after committing the slice, `committed` reviews against the repo default, and `base:`/`base-commit:` refs take any committish. A quota-free client-side preflight refuses an oversized range instantly, so a large campaign lands as slice commits each reviewed at the prior boundary. `--resume` (free continuation of an unfinished review — the stall and kill recovery, never a re-spending relaunch) and `--include` (admit sensitivity-held files) are greptile-only passthroughs.
-- [MACROSCOPE]: streams AST-level correctness in place; canonical round `--scope base:<default-branch>` spanning committed branch work plus uncommitted edits, `uncommitted` for tree-only — an in-place run without a base on a branch reviews almost nothing. Always in place — fixes land in the files the review read — and `launch` preflight-sweeps stray review worktrees. Config files are its only steering channel.
+[GREPTILE]: hunts cross-file logic over committed commits against a base; canonical round `--scope base:<prior-boundary>` after committing the slice, `committed` reviews against the repo default, and `base:`/`base-commit:` refs take any committish.
+- Scope is a base..HEAD range, so a cumulative campaign pins one base — `base-commit:<campaign-boundary>` held across rounds — and the whole accumulated delta reviews as one change regardless of commit count, with cross-round dedup and provenance keeping adjudicated rows out of lanes.
+- A pinned base holds until greptile's client-side size caps refuse, then the campaign falls back to slice commits at the prior boundary.
 
-Waiting is one mechanic: run the launch receipt's `watch_cmd` through Bash `run_in_background` — never foreground, never a per-turn `status` poll. Its loop prints a liveness line about every minute (phase, elapsed, alive, budget, findings seen) and self-exits at the terminal phase. Blind engines — greptile and macroscope — stream nothing between launch and the terminal dump: quiet is healthy, `alive=yes` with a counting-down `budget_s` is the health read, and the deadline is the sole timeout; the keepalive engine, coderabbit, additionally converts heartbeat silence past its grace to `stalled`. Terminal phases are `completed|failed|refused|stalled|timed-out|killed` — a terminal receipt short of `completed` names its fault `signature`, the `remedy`, and the engine `exit_code` — and `status --follow --all-live` exits 0 only when every followed round completed.
+[MACROSCOPE]: streams AST-level correctness in place — fixes land in the files the review read; canonical round `--scope base:<default-branch>` spanning committed branch work and uncommitted edits, `uncommitted` for tree-only — an in-place run without a base on a branch reviews almost nothing.
 
-Bare `status` resolves the single live round, else the highest-numbered on disk; several live rounds refuse `ambiguous` naming them — pass `--round`, `--reviewer`, or `--all-live`. `kill` (same selectors) escalates SIGTERM to SIGKILL over the process group, sweeps detached survivors and macroscope worktrees, and reaps a wedged stalled or timed-out round whose engine still breathes; it refuses only a gather round (`no-process`) and a round whose process group is truly gone (`already-closed`).
+Terminal phases are `completed|failed|refused|stalled|timed-out|killed`; a receipt short of `completed` names its fault `signature`, `remedy`, and engine `exit_code`, and `status --follow --all-live` exits 0 only when every followed round completed. `--json` on any follow streams one `StatusReceipt` JSON line per phase change or minute pulse for a piping orchestrator; the terminal receipt prints either way.
 
-`findings --normalize` gates on terminal phase `completed` and refuses an already-sliced round; cross-round dedup runs by default against the latest prior round carrying lane reports, `--dedup-against N` pins the pool, and dropped fingerprints leave after the provenance histogram (`relitigation|refuted_remint|new_work|late_discovery`, stamped against that prior round's ledger) computes over the full set, so relitigation still surfaces while lanes never re-fix adjudicated rows; `scope_misfire` on the receipt flags zero rows over a dirty scope, and an exit-0 zero-comment envelope over a clean scope is ordinary success. Bare `findings` reprints the summary receipt from disk. `gather` takes exactly one of `--all-live` (every open engine round), `--reviewer cr,gt,ms`, or `--rounds 1,2,3`, and every source must be `completed` and normalized.
+Bare `status` resolves the single live round, else the highest-numbered on disk; several live rounds refuse `ambiguous` naming them — pass `--round`, `--reviewer`, or `--all-live`. `kill` (same selectors, same `no-round`/`ambiguous` selection refusals) escalates SIGTERM to SIGKILL over the process group, sweeps detached engine survivors and macroscope worktrees, and reaps a stalled or timed-out round whose engine still breathes; per round it refuses a gather round (`no-process`) and a round whose process group is gone (`already-closed`).
 
-`slice --lanes N --by folder --balance count|loc` clears stale lane files, stamps round-scoped ids, and emits per-lane manifests carrying the settled-rulings roster. `reconcile` covers all lanes bare (`--all` is the explicit synonym; a named lane plus `--all` refuses). `round` refuses a duplicate close, fails loud on findings without lane reports, and closes a zero-findings round clean. `verify` takes exactly one of `--rule <text> [--path <file>]` (greptile cascade check) or `--round N` (all-surface ledger check).
+`findings --normalize` gates on `completed` and refuses an already-sliced round. Minting strips each engine's constant fix-preamble (one `ENGINE_PREAMBLES` row per preamble) and carries content fields only; the receipt `source` names the store a raw payload re-reads from.
 
-- [KEEPERS]: fix waves ride the `templates/codex-lane.md` form — up to 12 lanes sliced by folder ownership, one keeper each; fable runs the distill and opus the focused closers.
+`scope_misfire` on the receipt flags zero rows over a dirty scope; an exit-0 zero-comment envelope over a clean scope is ordinary success. Normalize refuses `dedup-collapse` when over half of eight or more admitted rows drop as intra-round fingerprint duplicates — engine format drift, never real duplication.
+
+Bare `findings` reprints the admission summary. `--top N` bounds the digest's per-severity rows, and the query filters compose with `--digest` — both print human-scan text, `--json` the typed form. `--in` scopes the `--claim` regex, defaults to `both`, and refuses without `--claim`. `gather` takes exactly one selector, and every source must be `completed` and normalized.
+
+`slice [--lanes N] --balance count|loc` partitions by folder affinity — grouping deepens past common prefixes and splits oversized folders at sub-folder seams until lanes balance, so N lanes over at least N findings always cut N non-degenerate lanes. It clears stale lane artifacts only after the cut proves out, and each manifest carries the corpus-matched settled-rulings roster; a registry row tagged `corpus` slices only into lanes whose file set resolves to that corpus.
+
+`slice --closers` instead keys one row per routed demand as `<lane-letter>:<target_file>`, groups by target file, and greedy-packs whole files into territories; an omitted `--lanes` derives the count, clamped to the distinct-file ceiling, and the cut never rewrites `findings.json`.
+
+`reconcile` covers all lanes bare. `lanes` takes exactly one of `--fill` or `--spawns` with an optional `--lane <name>` filter (a bare letter reads as `lane-<letter>`); its spawn oracle is the codex rollout store — the per-lane events stream records zero spawns by design and is never consulted — and a `fault` of `no-events|no-session|no-rollout` is a per-lane fact, not a refusal.
+
+`round` refuses a duplicate close and fails loud on findings without lane reports. `verify` takes exactly one of `--rule <text> [--path <file>]` (greptile cascade check) or `--round N` (all-surface ledger check). `selftest` proves the rail's pure contracts, exiting nonzero naming each failed proof.
 
 ## [04]-[LANE_CONTRACT]
 
-Fixer-lane doctrine lives in `templates/lane-law.md`; each lane's report is the machine intake `reconcile`, `harvest`, and the reviewer-harvest agent parse, written to `<round-dir>/lane-<letter>-report.json` as the lane's final act:
+Per lane the rail writes `lane-<letter>.json` and `lane-<letter>-brief.md`; dispatch writes `task-<letter>.md`, `lane-<letter>-report.json`, `lane-<letter>-events.jsonl`, and `lane-<letter>-stderr.log`. Each report is the machine intake `reconcile`, `harvest`, and the reviewer-harvest agent parse, written as the lane's final act:
 
 ```json signature
 {
-  "ledger": [{"id": "", "file": "", "severity": "", "verdict": "fixed|upgraded|pushed-back|already_resolved", "note": ""}],
+  "ledger": [{"id": "", "file": "", "severity": "", "verdict": "fixed|upgraded|pushed-back|already_resolved", "note": "", "shape": "substitution|collapse|completion"}],
   "improvements": [{"page": "", "pattern": "", "what": "", "axis": ""}],
   "refuted": [{"claim": "", "evidence": ""}],
   "capability": [],
-  "routing": [],
+  "routing": [{"target_file": "", "needed_change": ""}],
   "uncertain": [],
+  "files": [],
+  "gate_clean": true,
   "model": "",
   "wall_s": 0.0
 }
 ```
 
-`axis` is fixer-stamped hunt-axis metadata, never inferred; `capability`/`routing`/`uncertain` rows are free-shape JSON the harvest feed reprints.
+`axis` and `shape` are fixer-stamped, never inferred; a blank `shape` counts under `unstamped` in `LaneStat.shapes`. `files` is the lane's touched roster, not its assigned set.
+
+A `capability` row carrying a `members`, `roster`, or `symbols` list feeds the `reference_*` memory proposals; `uncertain` alone carries no mined structure, its rows reprinted verbatim by the feed. `model` keys the grade cohorts casefolded at reconcile.
+
+Per territory the rail writes `close-<letter>.json` and `close-<letter>-brief.md`; each closer writes `close-<letter>-report.json`:
+
+```json signature
+{"rows": [{"id": "<lane-letter>:<target_file>", "verdict": "landed|refuted|already-landed|blocked", "note": ""}], "files": []}
+```
+
+`id` echoes the brief's stamped key, and a bare target path in `id` or `file` joins as fallback; the drain counts a row answered under any verdict.
 
 ## [05]-[DISTILL]
 
-Reviewer-harvest owns the distill leg: dispatch it via `Agent(subagent_type: "reviewer-harvest")` under the `templates/harvest-dispatch.md` prompt, and it returns a typed surface ledger. Round dirs sit outside the agent's write territory, so project its landed guards into `<round-dir>/surface-ledger.json` yourself as `[{surface, text, path}]` rows — `surface` an engine name or alias, `text` the guard substring, `path` blank falling to `.coderabbit.yaml` for coderabbit and the repo-wide cascade for greptile, while a macroscope row names its topic file relative to `.macroscope/` — then `verify --round N` proves each row effective in its surface's own oracle.
+Round dirs sit outside reviewer-harvest's write territory, so project its returned surface ledger into `<round-dir>/surface-ledger.json` yourself as `[{surface, text, path}]` rows — `surface` an engine name or alias, `text` the shortest guard substring unique on the surface, `path` blank falling to the engine's own oracle.
 
-- [REGISTRY]: `templates/refuted-classes.yaml` rows compile into the claim classifier, the recurrence detector, and the settled-rulings roster sliced into lane manifests; `harvest` proposes new rows in the feed, and a landed row is edited in the yaml, never in the script.
-- [RAIL_GAPS]: a rail gap a round exposes lands on the rail's own script and data surfaces.
-- [VERIFY]: `verify --round` re-proves each landed guard — a `.coderabbit.yaml` `path_instructions` clause by text, a greptile rule by substring over the resolved `greptile config` output (never by id — org rules re-key to server UUIDs), a macroscope topic file by presence and content.
+Project one row per landed addition and consolidation — `corpus` rows never project, a ruling, index repair, or card proving itself on disk with no engine oracle; a receipt whose `source` is `surface-ledger` marks a malformed row (blank text or an unmapped surface name), never failed wording.
+
+- [REGISTRY]: `harvest` proposes new rows in the feed, `registry --check --rows` proves them (matcher compile, schema, dedup), and a judgment-bearing merge into an existing row is a hand edit re-proved by bare `registry --check`.
+- [RAIL_GAPS]: a rail gap a round exposes hardens the script.
+- [VERIFY]: `verify --round` re-proves each landed guard — a `.coderabbit.yaml` `path_instructions` clause by text, a greptile rule by substring over the resolved `greptile config` output (never by id — org rules re-key to server UUIDs) falling back to full-text over `.greptile/config.json` and `.greptile/rules.md` when the cascade truncates or a scoped rule never resolves at the probe path, the receipt `source` naming the oracle that matched, a macroscope topic file by presence and content, a blank path scanning `.macroscope/**/*.md` whole.
 - [FEED_OUTPUTS]: provenance and corroboration histograms feed review-the-reviewer — a class one engine raises and rounds keep refuting marks that engine's false-positive tendency, and multi-engine corroboration marks high-confidence work.
-- [PROPOSALS]: `memory-proposals/` under the round dir carries candidate memory files the orchestrator curates, never the live memory dir; the feed's `[GUARD_INEFFECTIVE]` section names classes recurring despite landed guards — wording failed, harden the owner, never skip as already-owned.
-
-## [06]-[NON_GOALS]
-
-- Rail territory ends at manifests and feeds — fixer dispatch belongs to the orchestrator, which judges slicing, models, and prompts.
-- Watchers arm per round and die at terminal; no standing watcher, daemon, or per-event hook.
-- Cross-reviewer merge stops at fingerprint dedup and the corroborator record — two engines disagreeing is signal, never noise to reconcile silently.
-- `rounds.jsonl` is the health readout and the row-to-row delta the only progress instrument — jsonl and jq, never a dashboard.
+- [PROPOSALS]: `memory-proposals/` under the round dir carries candidate memory files the orchestrator curates, never the live memory dir — the campaign memory (`project_cr_review_cycle_machine`) is the destination owner, taking verdicts and class calibrations as merged rulings, never narration, and a proposal duplicating a repo-owned fact dies at curation.

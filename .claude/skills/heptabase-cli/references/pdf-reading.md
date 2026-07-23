@@ -36,6 +36,6 @@ heptabase pdf read <pdfCardId> --start-page 1 --end-page 5
 
 ## [04]-[TROUBLESHOOTING]
 
-- `parsedStatus: "processing"`: wait and retry later.
+- `parsedStatus: "processing"`: parsing is in flight.
 - `parsedStatus: "failed"` or `"notSupported"`: parsed Markdown is not available for this PDF.
 - `parsedStatus: null`: this PDF card is not parsed yet. Ask the user to open the PDF in Heptabase and click the Parse button.

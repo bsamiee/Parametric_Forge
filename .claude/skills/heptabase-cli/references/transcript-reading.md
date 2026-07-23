@@ -37,6 +37,6 @@ heptabase video read <videoCardId> --start-seconds 0 --end-seconds 300
 
 ## [04]-[TROUBLESHOOTING]
 
-- `transcriptStatus: "processing"`: wait and retry later.
+- `transcriptStatus: "processing"`: transcription is in flight.
 - `transcriptStatus: "failed"`: parsed transcript content is not available for this media card.
 - `transcriptStatus: null`: this media card has not been transcribed yet. Ask the user to generate a transcript in Heptabase first.

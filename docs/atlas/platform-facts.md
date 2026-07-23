@@ -18,13 +18,13 @@ Per-agent quirks a plist read does not explain live in their owner modules; the 
 |  [02]   | `org.nix-community.home.atuin-daemon`   | `shell-tools/atuin.nix`       | upstream HM label, not estate grammar |
 |  [03]   | `com.github.domt4.homebrew-autoupdate`  | `darwin/homebrew/default.nix` | tap-owned; never rename               |
 |  [04]   | `com.parametric-forge.forge-nix-drift`  | `shell-tools/forge-tools.nix` | calendar-only; no `RunAtLoad`         |
-|  [05]   | `com.parametric-forge.maghz-vps-tunnel` | `shell-tools/ssh.nix`         | row from `vpsTunnels`; gates the MCP  |
+|  [05]   | `com.parametric-forge.maghz-vps-tunnel` | `shell-tools/ssh.nix`         | row from `vpsTunnels`; owns forwards  |
 
 - [01]: `KeepAlive.SuccessfulExit=true` restarts it after `colima stop`; the default exit timeout SIGKILLs VM teardown, so teardown needs the declared `ExitTimeOut`.
 - [02]: upstream HM label, not estate grammar; a `com.parametric-forge.*` label search misses the live agent.
 - [03]: tap-owned upstream job the reconciler regenerates; renaming it to estate grammar breaks the lifecycle the reconciler proves.
 - [04]: calendar-only, no `RunAtLoad` by design so login never races active work; a `RunAtLoad` row reintroduces the race.
-- [05]: row-generated from `vpsTunnels`; a down forward fails the Codex Postgres MCP gate.
+- [05]: row-generated from `vpsTunnels`; receipts classify tunnel health and port ownership.
 
 `Forge Nix Automation.app` is one shared BTM identity for the maintenance, drift, and orphan-sweep jobs; splitting it fragments three scheduled jobs into opaque Login Items rows.
 

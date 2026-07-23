@@ -207,9 +207,6 @@ in {
 
       # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
       export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
-
-      # Universal local-pg endpoint - single-sourced from the Tokens vault (Maghz + any pg/mcp skill)
-      export MAGHZ_MCP__DATABASE_URI="op://Tokens/MAGHZ_MCP__DATABASE_URI/credential"
     '';
   };
 

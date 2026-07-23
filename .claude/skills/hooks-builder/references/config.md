@@ -1,6 +1,6 @@
 # [CONFIG]
 
-Configuration nests three levels: a hook event, a matcher group filtering when it fires, and one or more handlers that run when matched. All matching handlers across all scopes run in parallel; identical handlers deduplicate automatically — command hooks by command string plus `args`, HTTP hooks by URL.
+Configuration nests three levels: a hook event, a matcher group filtering when it fires, and one or more handlers that run when matched. All matching handlers across all scopes run in parallel; identical handlers deduplicate automatically — command hooks by command string and `args`, HTTP hooks by URL.
 
 ```json template
 {
@@ -59,11 +59,13 @@ Command hooks add `command`, `args`, `async`, `asyncRewake`, and `shell`. `args`
 - [EXEC]: With `args`, `command` resolves as an executable and spawns directly with `args` as the argument vector — no shell, no tokenization, path placeholders substitute as plain strings. Required form for any hook referencing a path placeholder, and the form that avoids a shell-profile echo corrupting the JSON channel.
 - [SHELL]: Without `args`, the string passes to a shell (`sh -c` on macOS/Linux; Git Bash on Windows, PowerShell fallback, or `shell: "powershell"` explicitly) with full tokenization, pipes, and globs; placeholders wrap in double quotes.
 
-On Windows, exec form requires a real executable — `.cmd`/`.bat` shims from `node_modules/.bin` spawn via `node` plus the script path instead. `async: true` runs the hook in the background without blocking (command hooks only); `asyncRewake: true` additionally wakes the session on exit 2.
+On Windows, exec form requires a real executable — `.cmd`/`.bat` shims from `node_modules/.bin` spawn via `node` with the script path instead. `async: true` runs the hook in the background without blocking (command hooks only); `asyncRewake: true` additionally wakes the session on exit 2.
 
 ## [05]-[HTTP_AND_MCP_HOOKS]
 
-HTTP hooks take `url`, optional `headers` (env-var interpolation only for names listed in `allowedEnvVars`), and receive the event JSON as the POST body; the managed `allowedHttpHookUrls` setting restricts which URLs they may target. Status codes never block: non-2xx, connection failure, and timeout are all non-blocking errors, and blocking requires a 2xx response whose JSON body carries the decision fields. MCP tool hooks take `server` (the configured server name, or `plugin:<plugin>:<server>` for plugin-bundled servers), `tool`, and optional `input` with `${path}` substitution from the hook input (`"${tool_input.file_path}"`); the tool's text output is treated like command stdout, a disconnected server or `isError: true` is a non-blocking error, and `SessionStart`/`Setup` typically fire before servers connect. Because both degrade silently to a non-blocking error, neither enforces hard security — that is the `command` handler's job.
+HTTP hooks take `url` and optional `headers` (env-var interpolation only for names in `allowedEnvVars`), receive the event JSON as the POST body, and target only URLs the managed `allowedHttpHookUrls` setting admits. Status codes never block — non-2xx, connection failure, and timeout are non-blocking errors; blocking requires a 2xx response whose JSON body carries the decision fields.
+
+MCP tool hooks take `server` (the configured name, or `plugin:<plugin>:<server>` for plugin-bundled servers), `tool`, and optional `input` with `${path}` substitution from the hook input (`"${tool_input.file_path}"`); the tool's text output reads as command stdout, a disconnected server or `isError: true` is a non-blocking error, and `SessionStart`/`Setup` fire before servers connect. Both families degrade silently, so hard security stays the `command` handler's job.
 
 ## [06]-[PROMPT_AND_AGENT_HOOKS]
 
@@ -75,7 +77,7 @@ A prompt or agent handler returns a judged verdict, so it binds only where the e
 
 ## [07]-[JSON_OUTPUT]
 
-JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview plus path. Output envelope keys in camelCase — `hookSpecificOutput.hookEventName`, `updatedInput`, `additionalContext` — even though the stdin payload keys in snake_case (`hook_event_name`).
+JSON output is processed only on exit 0, and stdout must contain only the JSON object — one approach per hook, exit codes alone or exit 0 with JSON, never both. Output strings cap at 10,000 characters; overflow saves to a file and passes a preview and the path. Output envelope keys in camelCase — `hookSpecificOutput.hookEventName`, `updatedInput`, `additionalContext` — even though the stdin payload keys in snake_case (`hook_event_name`).
 
 | [INDEX] | [FIELD]            | [EFFECT]                                                                             |
 | :-----: | :----------------- | :----------------------------------------------------------------------------------- |

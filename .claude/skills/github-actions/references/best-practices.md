@@ -23,24 +23,25 @@
 
 This roster is the permission-scope owner; `common_errors.md` routes here.
 
-| [INDEX] | [SCOPE]               | [LEVELS]            | [COMMON_USE]                       |
-| :-----: | :-------------------- | :------------------ | :--------------------------------- |
-|  [01]   | `actions`             | read / write / none | Manage workflow runs               |
-|  [02]   | `artifact-metadata`   | read / write / none | Artifact metadata queries          |
-|  [03]   | `attestations`        | read / write / none | Build provenance, SBOM attestation |
-|  [04]   | `checks`              | read / write / none | Check runs and suites              |
-|  [05]   | `contents`            | read / write / none | Repo content, commits, releases    |
-|  [06]   | `deployments`         | read / write / none | Create/manage deployments          |
-|  [07]   | `discussions`         | read / write / none | GitHub Discussions                 |
-|  [08]   | `id-token`            | write / none        | OIDC federation (no read level)    |
-|  [09]   | `issues`              | read / write / none | Issues and comments                |
-|  [10]   | `models`              | read / none         | GitHub Models inference API        |
-|  [11]   | `packages`            | read / write / none | Upload/publish packages (GHCR)     |
-|  [12]   | `pages`               | read / write / none | GitHub Pages builds                |
-|  [13]   | `pull-requests`       | read / write / none | PRs, labels, reviews               |
-|  [14]   | `repository-projects` | read / write / none | Classic repository projects        |
-|  [15]   | `security-events`     | read / write / none | Code scanning, SARIF upload        |
-|  [16]   | `statuses`            | read / write / none | Commit statuses                    |
+| [INDEX] | [SCOPE]                | [LEVELS]            | [COMMON_USE]                       |
+| :-----: | :--------------------- | :------------------ | :--------------------------------- |
+|  [01]   | `actions`              | read / write / none | Manage workflow runs               |
+|  [02]   | `artifact-metadata`    | read / write / none | Artifact metadata queries          |
+|  [03]   | `attestations`         | read / write / none | Build provenance, SBOM attestation |
+|  [04]   | `checks`               | read / write / none | Check runs and suites              |
+|  [05]   | `code-quality`         | read / write / none | Code coverage report upload        |
+|  [06]   | `contents`             | read / write / none | Repo content, commits, releases    |
+|  [07]   | `deployments`          | read / write / none | Create/manage deployments          |
+|  [08]   | `discussions`          | read / write / none | GitHub Discussions                 |
+|  [09]   | `id-token`             | write / none        | OIDC federation (no read level)    |
+|  [10]   | `issues`               | read / write / none | Issues and comments                |
+|  [11]   | `models`               | read / none         | GitHub Models inference API        |
+|  [12]   | `packages`             | read / write / none | Upload/publish packages (GHCR)     |
+|  [13]   | `pages`                | read / write / none | GitHub Pages builds                |
+|  [14]   | `pull-requests`        | read / write / none | PRs, labels, reviews               |
+|  [15]   | `security-events`      | read / write / none | Code scanning, SARIF upload        |
+|  [16]   | `statuses`             | read / write / none | Commit statuses                    |
+|  [17]   | `vulnerability-alerts` | read / none         | List Dependabot alerts             |
 
 Shorthand: `permissions: read-all` / `permissions: write-all` / `permissions: {}` (deny-all). `write` implies `read` for all scopes except `id-token`.
 
@@ -114,7 +115,7 @@ Provider matrix, detection rules, and OIDC errors live in `supply_chain.md` [02]
 |  [03]   | Team       |        60         |    5    |
 |  [04]   | Enterprise |        500        |   50    |
 
-Larger runners (Team/Enterprise): up to 1,000 concurrent jobs; 100 GPU max.
+Plan tier bounds concurrent runner capacity.
 
 ### [03.2]-[RUNNERS]
 
