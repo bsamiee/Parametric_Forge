@@ -23,8 +23,7 @@ Parametric_Forge/
 │   └── home/
 │       ├── aliases/               # Shell alias registry
 │       ├── assets/
-│       │   ├── ascii/             # Fetch banner assets
-│       │   └── wallpaper/         # Wallpaper assets
+│       │   └── ascii/             # Fetch banner assets
 │       ├── environments/          # Cross-tool environment projections
 │       ├── programs/
 │       │   ├── apps/

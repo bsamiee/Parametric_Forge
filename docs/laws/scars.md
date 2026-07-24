@@ -77,22 +77,20 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 | :-----: | :--------------------------------------------------------------- | :-------------------------------------------------------------------- |
 |  [01]   | A Brew failure killed HM activation while `nh` printed success   | `forge-redeploy` receipts propagate activation-phase exit status      |
 |  [02]   | Homebrew removed `--no-quarantine`/`--no-binaries`               | Dead arg removed; posture in `HOMEBREW_CASK_OPTS` + session vars      |
-|  [03]   | `AllSpacesAndDisplays` was a phantom wallpaper schema            | Wallpaper rail uses System Events `osascript` + idempotence probe     |
-|  [04]   | `_reap` exited `129` on every signal, stranding workers          | Per-signal traps pass the signal number                               |
-|  [05]   | `nix flake check` passed while the maghz toplevel eval was dead  | Both-OS static gate: darwin build AND the maghz toplevel drv eval     |
-|  [06]   | A darwin-only package interpolation broke the shared home graph  | Darwin-only `pkgs.*` rides `optionalString isDarwin`                  |
-|  [07]   | A dirty-tree build silently packaged without untracked new files | `git add --intent-to-add` every created file before its first build   |
-|  [08]   | A single-path config projection was dead on one host OS          | Tools resolve per-OS config paths; the live probe is truth            |
-|  [09]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
-|  [10]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
-|  [11]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
+|  [03]   | `_reap` exited `129` on every signal, stranding workers          | Per-signal traps pass the signal number                               |
+|  [04]   | `nix flake check` passed while the maghz toplevel eval was dead  | Both-OS static gate: darwin build AND the maghz toplevel drv eval     |
+|  [05]   | A darwin-only package interpolation broke the shared home graph  | Darwin-only `pkgs.*` rides `optionalString isDarwin`                  |
+|  [06]   | A dirty-tree build silently packaged without untracked new files | `git add --intent-to-add` every created file before its first build   |
+|  [07]   | A single-path config projection was dead on one host OS          | Tools resolve per-OS config paths; the live probe is truth            |
+|  [08]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
+|  [09]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
+|  [10]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
 
 - [01]: the killed activation meant font projection never ran.
 - [02]: the Brewfile `cask_args` then killed new cask installs; owner `darwin/homebrew/`.
-- [03]: PlistBuddy `Add` failed under `set -e`; owner `assets/wallpaper/`.
-- [04]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
-- [05]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
-- [06]: a darwin-only `pkgs.*` in a both-host module throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
+- [03]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
+- [04]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
+- [05]: a darwin-only `pkgs.*` in a both-host module throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
 
 ## [08]-[SHELL_KERNELS]
 

@@ -220,7 +220,6 @@
       ["you-should-use" "modules/home/programs/zsh" "env" "-" "gap"]
       ["macos-accent" "modules/darwin/settings" "defaults" "-" "gap"]
       ["mermaid-html-studio" ".claude/skills" "css" "-" "gap"]
-      ["wallpaper" "modules/home/assets/wallpaper" "bitmap" "-" "defer"]
       ["dock-controlcenter" "system-owned" "-" "-" "defer"]
     ];
 

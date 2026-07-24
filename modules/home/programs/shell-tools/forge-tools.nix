@@ -1939,7 +1939,6 @@
       "com.adobe." = ["vendor" "Adobe CC estate; retain-or-prune trust row open"];
       "com.amazon.codewhisperer" = ["residue" "legacy launcher; gui-removal open class"];
       "mega.mac." = ["residue" "MEGA updater poller; gui-removal open class"];
-      "com.lwouis.alt-tab-macos" = ["trust-row-open" "AltTab retain-or-prune adjudication open"];
       "com.logi" = ["vendor" "Logitech manager; recurring nonzero exits are vendor-owned"];
       "org.pqrs." = ["vendor" "Karabiner services"];
       "com.openssh." = ["system" "ssh-agent"];
