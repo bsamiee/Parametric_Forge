@@ -76,6 +76,7 @@ Step order never proves a drain, the owning receipt does: `reconcile` surfaces `
 
 [STEP_10]-[CLOSE]: commit and push the distillation lane, then `round [--harvest] [--defer-routing] --round N` appends the `rounds.jsonl` row and prints the delta; it refuses `routing-undrained` while routing rows lack closer verdicts unless `--defer-routing` records the deferral.
 - WATCH: findings trending down while capability rows rise is the goal line.
+- Campaign close dispatches `/custodian` bare — the clean-tree fallback reviews the just-pushed distillation commit — for one-way touchpoint and ownership custody across the distillation-lane surfaces; its receipt returns to the orchestrator and never feeds the harvest.
 
 [STEP_11]-[NEXT]: grade the round on the [GRADING] axes, then pick the next engine — recurrence judges per engine, counts flattening under one engine rotate the next round to another, and `--focus` aims a round within one; greptile rides early rounds, before the accumulated diff meets its size caps.
 - WATCH: plateau under a hardened config.
@@ -127,11 +128,11 @@ rail gather --all-live                     # union round: fingerprint collapse, 
 
 `launch` refuses an unsupported engine-scope pair and a live same-engine round; the scope family is `all|committed|uncommitted|base:<ref>|base-commit:<sha>`, every `--reviewer` takes the `cr|gt|ms` aliases, and conflicting selectors refuse `bad-flag` on `status`/`kill`. `--focus` takes inline text or a file path — greptile rides `--instructions`, coderabbit a round-scoped `-c` instruction file, and macroscope refuses `--focus` before any preflight side effect.
 
-[CODERABBIT]: sweeps working-tree quality and style at full breadth every run — a retry re-spends quota; canonical round `--scope uncommitted`, full scope family accepted. `launch` resolves and injects a base for every working-tree scope. A hard changed-file cap (300, counted pre-filter) refuses oversized scopes — trim by committing smallest-churn files (`git diff --numstat` ascending) with the lockfile-class churn until under cap, spending review breadth only on substantive diffs.
+[CODERABBIT]: sweeps working-tree quality and style at full breadth every run — a retry re-spends quota; canonical round `--scope uncommitted`, full scope family accepted. `launch` resolves and injects a base for every working-tree scope. One hard changed-file cap (300, counted pre-filter) refuses oversized scopes — trim by committing smallest-churn files (`git diff --numstat` ascending) with the lockfile-class churn until under cap, spending review breadth only on substantive diffs.
 
 [GREPTILE]: hunts cross-file logic over committed commits against a base; canonical round `--scope base:<prior-boundary>` after committing the slice, `committed` reviews against the repo default, and `base:`/`base-commit:` refs take any committish.
 - Scope is a base..HEAD range, so a cumulative campaign pins one base — `base-commit:<campaign-boundary>` held across rounds — and the whole accumulated delta reviews as one change regardless of commit count, with cross-round dedup and provenance keeping adjudicated rows out of lanes.
-- A pinned base holds until greptile's client-side size caps refuse, then the campaign falls back to slice commits at the prior boundary.
+- Each pinned base holds until greptile's client-side size caps refuse, then the campaign falls back to slice commits at the prior boundary.
 
 [MACROSCOPE]: streams AST-level correctness in place — fixes land in the files the review read; canonical round `--scope base:<default-branch>` spanning committed branch work and uncommitted edits, `uncommitted` for tree-only — an in-place run without a base on a branch reviews almost nothing.
 
@@ -174,7 +175,7 @@ Per lane the rail writes `lane-<letter>.json` and `lane-<letter>-brief.md`; disp
 
 `axis` and `shape` are fixer-stamped, never inferred; a blank `shape` counts under `unstamped` in `LaneStat.shapes`. `files` is the lane's touched roster, not its assigned set.
 
-A `capability` row carrying a `members`, `roster`, or `symbols` list feeds the `reference_*` memory proposals; `uncertain` alone carries no mined structure, its rows reprinted verbatim by the feed. `model` keys the grade cohorts casefolded at reconcile.
+Each `capability` row carrying a `members`, `roster`, or `symbols` list feeds the `reference_*` memory proposals; `uncertain` alone carries no mined structure, its rows reprinted verbatim by the feed. `model` keys the grade cohorts casefolded at reconcile.
 
 Per territory the rail writes `close-<letter>.json` and `close-<letter>-brief.md`; each closer writes `close-<letter>-report.json`:
 
@@ -191,7 +192,7 @@ Round dirs sit outside reviewer-harvest's write territory, so project its return
 Project one row per landed addition and consolidation — `corpus` rows never project, a ruling, index repair, or card proving itself on disk with no engine oracle; a receipt whose `source` is `surface-ledger` marks a malformed row (blank text or an unmapped surface name), never failed wording.
 
 - [REGISTRY]: `harvest` proposes new rows in the feed, `registry --check --rows` proves them (matcher compile, schema, dedup), and a judgment-bearing merge into an existing row is a hand edit re-proved by bare `registry --check`.
-- [RAIL_GAPS]: a rail gap a round exposes hardens the script.
+- [RAIL_GAPS]: rail gaps a round exposes harden the script.
 - [VERIFY]: `verify --round` re-proves each landed guard — a `.coderabbit.yaml` `path_instructions` clause by text, a greptile rule by substring over the resolved `greptile config` output (never by id — org rules re-key to server UUIDs) falling back to full-text over `.greptile/config.json` and `.greptile/rules.md` when the cascade truncates or a scoped rule never resolves at the probe path, the receipt `source` naming the oracle that matched, a macroscope topic file by presence and content, a blank path scanning `.macroscope/**/*.md` whole.
 - [FEED_OUTPUTS]: provenance and corroboration histograms feed review-the-reviewer — a class one engine raises and rounds keep refuting marks that engine's false-positive tendency, and multi-engine corroboration marks high-confidence work.
 - [PROPOSALS]: `memory-proposals/` under the round dir carries candidate memory files the orchestrator curates, never the live memory dir — the campaign memory (`project_cr_review_cycle_machine`) is the destination owner, taking verdicts and class calibrations as merged rulings, never narration, and a proposal duplicating a repo-owned fact dies at curation.

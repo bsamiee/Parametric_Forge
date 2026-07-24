@@ -166,20 +166,21 @@ DIVIDER_BODY = re.compile(r"^\[(?P<label>[A-Z][A-Z0-9_]*)\](?P<tail>.*)$")
 DIVIDER_LOOSE = re.compile(r"^\[(?P<raw>[^\]]+)\](?P<tail>.*)$")
 CHECKBOX = re.compile(r"^\[[ xX]\]\s")
 CARD_ROW = re.compile(r"^\s*-\s+`[^`]+`\s+-\s+")
-# A named-surface leader — code span or link, optionally behind marker tokens — is the annotation's subject, so the
-# clause after its dash or colon opens with the owning verb; the definite-article opener is the dead appositive form.
+# Named-surface leaders — code span or link, optionally behind marker tokens — seat the annotation's subject, so the
+# clause after the dash or colon opens with the owning verb; an article opener heads the dead appositive form.
 ARTICLE_ANNOTATION = re.compile(
-    r"^\s*(?:(?:[-+*]|\d+[.)])\s+)?(?:\[[^\]]*\][-\u2013\u2014]?\s*)*(?:`[^`]+`|\[[^\]]+\]\([^)\s]+\))\s*(?:[\u2013\u2014:]|-)\s+[Tt]he\s"
+    r"^\s*(?:(?:[-+*]|\d+[.)])\s+)?(?:\[[^\]]*\][-\u2013\u2014]?\s*)*(?:`[^`]+`|\[[^\]]+\]\([^)\s]+\))\s*(?:[\u2013\u2014:]|-)\s+(?:[Tt]he|[Aa]n?)\s"
 )
 # List entries lead with their owner or owning verb, bare or behind the full marker grammar.
-ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z0-9][A-Z0-9_|]*\](?:-\[[A-Z0-9][A-Z0-9_|]*\])*:\s+)?[Tt]he\s")
-# Sentence boundaries reject article-led voice; colons, semicolons, and leader dashes retain lowercase continuation.
-SENTENCE_ARTICLE = re.compile(r"^\s*[Tt]he\b|[.!?]\s+[Tt]he\b|[:;\u2013\u2014]\s+The\b")
-# One cure, every article site: the article marks a clause whose subject is not the acting owner; the repair is structural, never a determiner edit.
-ARTICLE_CURE = "; find the actor, seat it as subject under a present-active owning verb; deleting the article or swapping it for A/One/This re-heads the same broken clause"
-# Comments obey the same owner-first voice.
-COMMENT_ARTICLE = re.compile(r"^[Tt]he\s")
-# A fence tag names the marker its full-line comments carry, so a fence body answers the comment law its language spells.
+ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z0-9][A-Z0-9_|]*\](?:-\[[A-Z0-9][A-Z0-9_|]*\])*:\s+)?(?:[Tt]he|[Aa]n?)\s")
+# Sentence boundaries reject article-led voice \u2014 `The` in every case, `A`/`An` where capitalization marks a sentence
+# start; colons, semicolons, and leader dashes retain lowercase continuation.
+SENTENCE_ARTICLE = re.compile(r"^\s*(?:[Tt]he\b|An?\s)|[.!?]\s+(?:[Tt]he\b|An?\s)|[:;\u2013\u2014]\s+(?:The\b|An?\s)")
+# One cure, every article site: the article heads a definition whose subject is not the acting owner; the repair is structural, never a determiner edit.
+ARTICLE_CURE = "; find the actor, seat it as subject under a present-active owning verb; deleting the article or swapping determiners re-heads the same broken clause"
+# Comments obey the same owner-first voice; capitalized A/An marks a sentence start, never a wrapped continuation.
+COMMENT_ARTICLE = re.compile(r"^(?:[Tt]he|An?)\s")
+# Fence tags name the marker their full-line comments carry, so a fence body answers the comment law its language spells.
 FENCE_MARKERS: dict[str, str] = (
     dict.fromkeys(("python", "py", "bash", "sh", "shell", "zsh", "nix", "toml", "jq", "yaml", "yml", "ruby"), "#")
     | dict.fromkeys(
@@ -198,12 +199,12 @@ COMMENT_DIRECTIVE = re.compile(
 COMMENT_LABEL_FILL = re.compile(r"^\[?[A-Za-z][A-Za-z0-9_ .]{0,40}\]?\s*-{4,}\s*$")
 COMMENT_ALIGNED = re.compile(r"^\s{2,}|\S\s{3,}\S")
 EXAMPLE_LINE = re.compile(
-    r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)"
+    r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*\[?(?i:Detection|Reject(?:ed)?|Accept(?:ed)?|Near miss|Banned|Survivors|Reason|Reframe)\]?"
     r"(?:\s*\([^)]*\))?:"
 )
 # Quote-labeled fields carry defective prose by design and skip every check; guidance-voice fields (Detection/Reason/Reframe/Accepted)
 # skip the register rosters they must name yet still answer the article-opener check — their voice is the skill's own.
-QUOTE_LINE = re.compile(r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*(?:Reject(?:ed)?|Near miss|Banned|Survivors)(?:\s*\([^)]*\))?:")
+QUOTE_LINE = re.compile(r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*\[?(?i:Reject(?:ed)?|Near miss|Banned|Survivors)\]?(?:\s*\([^)]*\))?:")
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
 FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
 # Mermaid payload-only law: a durable-doc fence carries structure — declaration, nodes, edges, labels, subgraphs, accTitle/accDescr, and
@@ -231,18 +232,18 @@ MERMAID_MUTE = frozenset({"block", "eventmodeling", "ishikawa", "kanban", "mindm
 # Block 2600-27BF covers warning/exclamation/info pictographs; the arrow blocks stay legal for codemap glyphs.
 EMOJI = re.compile(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B50\u2139\uFE0F]")
 PROMPT_LINE = re.compile(r"^\s*(?:\$|\u276F|PS>)\s+\S")
-# A bare group label `[X]:` hugs its list; a table keeps its blank.
+# Bare group labels `[X]:` hug their list; a table keeps its blank.
 GROUP_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]:\s*$")
-# A floating bracketed label — no colon, alone on its line — that introduces a list or table lacks the colon a list label carries.
+# Floating bracketed labels — no colon, alone on the line — introducing a list or table lack the colon a list label carries.
 FLOATING_LABEL = re.compile(r"^\[[A-Z][A-Z0-9_-]*\]\s*$")
 GLYPHS = ("│", "├", "└", "⇄")
 HEADER_CELL = re.compile(r"^\[[A-Z][A-Z0-9_]*\]$")
 HEADING = re.compile(r"^(?P<level>#{1,6})\s+(?P<title>.+?)\s*$")
 LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*)$")
 LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:\.\d+)?(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
-# An invocation-marker leader weights the imperative following it directly — no colon, no dash — per the formatting standard's closed family.
+# Invocation-marker leaders weight the imperative following them directly — no colon, no dash — per the formatting standard's closed family.
 INVOCATION_LEADER = re.compile(r"^\s*[-+*]\s+\[(?:ALWAYS|NEVER|IMPORTANT|CRITICAL)\]\s+\S")
-# A `- Field: value` record field answers to the earned-field law at card altitude; the entry budget binds peer bullets.
+# Record fields `- Field: value` answer to the earned-field law at card altitude; the entry budget binds peer bullets.
 FIELD_LINE = re.compile(r"^[A-Z][A-Za-z-]*(?: [A-Za-z-]+){0,2}: \S")
 # Hard-wrap detection: a flush-left prose line whose predecessor is also flush-left prose; structural leads are excluded.
 PLAIN_EXCLUDED = ("#", "-", "*", "+", ">", "|", "<", "=", "[")
@@ -250,6 +251,9 @@ NUMBERED_LEAD = re.compile(r"^\d+[.)]\s")
 LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?\)")
 NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\](?:-\[[A-Z][A-Z0-9_]*\])*$")
 PLACEHOLDER = re.compile(r"<[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+>")
+# Agent bodies under `.claude/agents/` are dispatched system prompts: whole-line XML spine tags are structure, never
+# unfilled slots, and the second-person demand voice is the register, so bare `you` leaves the hedge scan there.
+AGENT_SPINE = re.compile(r"^</?[a-z][a-z0-9_]*>\s*$")
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
 SETEXT = re.compile(r"^\s*(?:=+|-{3,})\s*$")
 TABLE_SEP = re.compile(r"^\s*\|(?:\s*:?-+:?\s*\|)+\s*$")
@@ -280,7 +284,7 @@ META_PHRASE = re.compile(
 )
 # Quoted user utterances and code spans are trigger material, not voice.
 QUOTED_SPAN = re.compile(r"\"[^\"]*\"|“[^”]*”|`[^`]*`")
-# A cell carrying an internal comma or semicolon is a card wearing a row; the atomic budget is one clause of six words.
+# Cells carrying an internal comma or semicolon are cards wearing a row; the atomic budget is one clause of six words.
 CLAUSE_PUNCT = re.compile(r"[,;]")
 SKILL_NAME_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 SKILL_NAME_RESERVED = re.compile(r"(?:^|-)(?:claude|anthropic)(?:-|$)")
@@ -293,10 +297,10 @@ SELF_COUNT = re.compile(
 )
 # Its lookahead spares dotted-quad network literals; the lookbehind blocks interior re-matches inside them.
 VERSION_ANCHOR = re.compile(r"(?<![\d.])\b(?!(?:\d{1,3}\.){3}\d{1,3}\b)v?\d+\.\d+(?:\.\d+)+\b|(?<![A-Za-z-])\b\d+\.\d+(?:\.\d+)?\+|\bv\d+\.\d+\b")
-# A bare major band anchored to a capitalized product token: the `<Product> NN+` compatibility floor.
+# Bare major bands anchor to a capitalized product token: the `<Product> NN+` compatibility floor.
 # Its lookahead spares `N+M` notation (a digit after `+`) — CNC axis notation like `3+2`, never a version band.
 VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?![+\d])")
-# A standards-clause citation is a domain value, not a release pin: Table 2.3.2 and its kin pass the anchor scan.
+# Standards-clause citations are domain values, never release pins: Table 2.3.2 and its kin pass the anchor scan.
 CITATION_LEAD = re.compile(r"(?:Table|Clause|Section|Annex|Figure|Chapter|Note|Part|§)\s*$")
 # Spaced double or triple hyphens ride prose as an em dash; the spelled character is the only legal interrupter.
 EM_DASH_ASCII = re.compile(r"(?<=\s)-{2,3}(?=\s)")
@@ -342,7 +346,7 @@ COPULA_AVOIDANCE = re.compile(r"\b(?:serves|stands|functions|operates)\s+as\b|\b
 # conjunction; then a precise shorter word where the coinage admits one. Every longer connector costs more characters than the defect.
 # Emphasis casing and quantity sense survive the swap. Hyphen lookarounds spare compound tokens (`delete-plus-create`), read as names.
 FILLER_WORD = re.compile(r"(?<![\w-])plus(?![\w-])", re.IGNORECASE)
-# A label-led paragraph — `[LABEL] — prose` or `[LABEL]: prose` — is measured prose mass, never structure.
+# Label-led paragraphs — `[LABEL] — prose` or `[LABEL]: prose` — are measured prose mass, never structure.
 LABELED_PARAGRAPH = re.compile(r"^\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*(?: [\u2013\u2014] |: )\S")
 
 # --- [CARD_GRAMMAR]
@@ -378,7 +382,7 @@ SPREAD_FLOOR = 6
 SPREAD_SHARE = 0.5
 SPREAD_WORD = re.compile(r"[a-z]{4,}")
 SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
-# A cure clause rides each pattern row: the matched span names the defect, the appended clause names the move that
+# Cure clauses ride each pattern row: the matched span names the defect, the appended clause names the move that
 # clears it at the grain an agent acts on; an empty cure marks a review-adjudicated warn.
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status, str], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail", "; state the settled fact or delete the sentence"),
@@ -645,6 +649,10 @@ def teaching(path: Path) -> bool:
     return bool(TEACHING & parts) and bool({".claude", "skills", "docs"} & parts)
 
 
+def agent_body(path: Path) -> bool:
+    return any(a == ".claude" and b == "agents" for a, b in pairwise(path.parts))
+
+
 def fence_closes(matched: re.Match[str] | None, glyph: str, width: int, margin: int) -> bool:
     # One owner decides fence closure everywhere: same glyph, at least the opening run, bare info, bounded indent.
     return (
@@ -741,7 +749,7 @@ def fenced(
         rows.extend(payload_rows)
     mark = FENCE_MARKERS.get(info.split()[0] if info else "", "")
     if mark and trimmed.startswith(mark) and COMMENT_ARTICLE.match(trimmed.removeprefix(mark).lstrip()):
-        rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"fence comment opens on 'the'{ARTICLE_CURE}"))
+        rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"fence comment opens on an article{ARTICLE_CURE}"))
     return False, state, tuple(rows)
 
 
@@ -877,15 +885,15 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         links.extend(LinkRef(number, link.group(2)) for link in LINK.finditer(re.sub(r"`[^`]*`", "", line)))
         if not template and not EXAMPLE_LINE.match(line):
             if ARTICLE_ANNOTATION.match(line):
-                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"annotation opens on 'the'{ARTICLE_CURE}"))
+                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"annotation opens on an article{ARTICLE_CURE}"))
             elif ARTICLE_FRAGMENT.match(line):
-                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"entry opens on 'the'{ARTICLE_CURE}"))
+                rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"entry opens on an article{ARTICLE_CURE}"))
         if item := LIST_ITEM.match(line):
             if item.group("mark") in "*+":
                 rows.append(row(path, number, Check.LIST_MARKER, "fail", f"bullet marker {item.group('mark')} where - is the only legal marker"))
             cursor = n + 1
             chunks = [item.group("body")]
-            # A nested fence ends the measured entry text; its body is fence material, never entry prose.
+            # Nested fences end the measured entry text; the body is fence material, never entry prose.
             while cursor < len(raw) and raw[cursor].startswith((" ", "\t")) and not LIST_ITEM.match(raw[cursor]) and not FENCE.match(raw[cursor]):
                 chunks.append(raw[cursor].strip())
                 cursor += 1
@@ -944,7 +952,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
 
 
 def prose_column_cell(cell: str) -> bool:
-    # A stub-key column (short atomic decision key) is not prose; only a comma/semicolon or a phrase past the
+    # Stub-key columns (short atomic decision keys) are not prose; only a comma/semicolon or a phrase past the
     # word budget marks a genuine prose column that a link cell must not ride beside.
     bare = QUOTED_SPAN.sub(" ", cell)
     return not LINK.search(bare) and (CLAUSE_PUNCT.search(bare) is not None or len(bare.split()) > CELL_WORD_BUDGET)
@@ -1134,6 +1142,7 @@ def link_rows(doc: Document) -> tuple[Row, ...]:
 
 
 def prose_rows(doc: Document) -> tuple[Row, ...]:
+    agent = agent_body(Path(doc.path))
     rows: list[Row] = []
     for span in doc.prose:
         if EXAMPLE_LINE.match(span.text):
@@ -1143,7 +1152,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
                     for hit in SENTENCE_ARTICLE.finditer(QUOTED_SPAN.sub(" ", span.text))
                 )
             continue
-        if not doc.template:
+        if not doc.template and not (agent and AGENT_SPINE.match(span.text)):
             rows.extend(
                 row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", f"{hit.group(0)} is an unfilled template slot; fill it or delete the line")
                 for hit in PLACEHOLDER.finditer(span.text)
@@ -1162,6 +1171,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
             for check, pattern, status, cure in PATTERNS
             for hit in pattern.finditer(voiced)
             if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
+            and not (agent and check is Check.HEDGE and hit.group(0).lower() == "you")
         )
     return tuple(rows)
 
@@ -1191,7 +1201,12 @@ def list_rows(doc: Document) -> tuple[Row, ...]:
                     f"{entry.text.split(':', 1)[0]} is not a legal leader — [NN]-[TOKEN]:, [TOKEN]:, or [NN]: with UPPERCASE_SNAKE tokens",
                 )
             )
-        if entry.span_share < ROSTER_SPAN_SHARE and not entry.text.startswith("`") and FIELD_LINE.match(entry.text) is None:
+        if (
+            entry.span_share < ROSTER_SPAN_SHARE
+            and not entry.text.startswith("`")
+            and FIELD_LINE.match(entry.text) is None
+            and QUOTE_LINE.match(entry.text) is None
+        ):
             sentences = len(SENTENCE_END.findall(entry.prose))
             if sentences > LIST_SENTENCE_CAP:
                 detail = f"{sentences} sentences > cap {LIST_SENTENCE_CAP}; split distinct decisions into sibling entries, delete restatements"
@@ -1239,7 +1254,10 @@ def spread_rows(doc: Document) -> tuple[Row, ...]:
             f"entry restates line {first.line}; merge to one entry smaller than both — a distinct decision survives as its own entry",
         )
         for first, second in pairwise(doc.lists)
-        if second.line - first.line <= 2 and restated(spread_tokens(first.prose), spread_tokens(second.prose))
+        if second.line - first.line <= 2
+        and QUOTE_LINE.match(first.text) is None
+        and QUOTE_LINE.match(second.text) is None
+        and restated(spread_tokens(first.prose), spread_tokens(second.prose))
     )
     return tuple(rows)
 
@@ -1618,7 +1636,7 @@ def comment_rows(path: Path, text: str) -> tuple[Row, ...]:
             for hit in MARKER_WORDS.finditer(tail)
         )
         if COMMENT_ARTICLE.match(tail):
-            rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"comment opens on 'the'{ARTICLE_CURE}"))
+            rows.append(row(path, number, Check.ARTICLE_OPENER, "fail", f"comment opens on an article{ARTICLE_CURE}"))
         run.append((number, width))
     close()
     return tuple(rows)
@@ -1858,7 +1876,7 @@ def hugged_labels(lines: list[str]) -> tuple[list[str], tuple[Change, ...]]:
             out.append(line)
             index += 1
             continue
-        # A bracketed label hugs its list: a floating label first earns the colon a list label carries; a table keeps the blank the grid demands.
+        # Bracketed labels hug their list: a floating label first earns the colon a list label carries; a table keeps the blank the grid demands.
         floating = bool(FLOATING_LABEL.match(line))
         if floating or GROUP_LABEL.match(line.strip()):
             gap, intro_list, intro_table = label_context(lines[index + 1] if index + 1 < total else "", lines[index + 2] if index + 2 < total else "")
