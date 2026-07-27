@@ -27,7 +27,9 @@
   vpsTunnels = {
     maghz = {
       user = "maghz-agent";
-      hostName = "31.97.131.41";
+      # DNS name over the IPv4 literal: it resolves A + AAAA, so openssh walks to the IPv6 path when a backbone blackhole eats the IPv4 route
+      # (2026-07-27: Cogent nulled the prefix while the VPS stayed healthy). ConnectTimeout on every consumer bounds each address attempt.
+      hostName = "srv1196440.hstgr.cloud";
       mounts = [
         {
           name = "home";
@@ -104,6 +106,7 @@
       HostName = tunnel.hostName;
       IdentitiesOnly = true;
       AddKeysToAgent = "yes";
+      ConnectTimeout = 10;
     })
   vpsTunnels;
 
@@ -116,6 +119,7 @@
       AddKeysToAgent = "yes";
       BatchMode = true;
       Compression = false;
+      ConnectTimeout = 10;
       # ControlPath none: ControlMaster no alone still JOINS an existing mux, whose master then retains the forwards after the supervisor dies —
       # the port-conflict loop. The transport must never touch the estate mux.
       ControlMaster = "no";
@@ -379,7 +383,7 @@
       # External openssh transport: rclone's internal ssh library sends no keepalives, so NAT/idle drops silently kill the warm session and the
       # next statfs rides a doomed handshake — macOS answers with the interrupted-server dialog. ServerAlive keepalives (the tunnel posture) hold
       # the standing connection; auth/known-hosts ride openssh + agent.
-      remote=":sftp,ssh='ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
+      remote=":sftp,ssh='ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
       sub=nfsmount
       [ "$(uname -s)" = "Darwin" ] || sub=mount
       # dir-cache-time pinned to the probe interval so every health probe's READDIR traverses the SFTP backend instead of the VFS cache.
