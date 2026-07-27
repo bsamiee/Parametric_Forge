@@ -5,18 +5,18 @@
 # Path          : modules/home/programs/apps/linearmouse/default.nix
 # ----------------------------------------------------------------------------
 # LinearMouse owner: settings rows render to the XDG config the app hot-reloads, proven against the vendored upstream
-# JSON Schema at build time — an invalid row fails the switch, never lands on disk. Schemes scope to external mice only,
+# JSON Schema at build time; an invalid row fails the switch and never lands on disk. Schemes scope to external mice only,
 # so the trackpad keeps native behavior. Generic mouse row: flat acceleration with speed on the 0-1 rail, side buttons
 # lifted to universal back/forward. MX Master 3S row (Bluetooth 0x046d:0xb034): MagSpeed emits native high-resolution
-# wheel deltas under highResolutionWheel; the vertical wheel rides smoothed scrolling — an enabled smoothed axis puts
-# the hi-res normalizer in passthrough and renormalizes inside the smoothing transformer (units x line step /
-# multiplier), so one detent keeps detent-scale travel. Values are the app's easeInOut slider defaults with speed
-# pinned to 1.0 (native per-detent screen travel) and bouncing=false (synthetic wheel events skip the trackpad
-# rubber-band path). A smoothed axis owns its own speed/acceleration; the plain scrolling.acceleration lane applies
-# only to non-smoothed axes, keeping the thumbwheel's horizontal x3 live. An axis with smoothed absent (or
-# enabled=false — this version filters disabled rows) plus auto distance selects lowResolution normalization.
-# hardwareDPI pins the on-device MX factory default so the tuned pointer.speed feel stays put; raising it demands a
-# proportional speed cut. launchd agent owns start-at-login; the app's SMAppService toggle stays untouched.
+# wheel deltas under highResolutionWheel; both axes ride the Linear smoothed curve. High response removes input lag, zero
+# adaptive gain prevents amplified flicks, and zero inertia selects the shortest Linear tail. Per-click travel scales with
+# the engine's speedBoost = 0.85 + 0.4*speed, so vertical speed 0 is the density floor (~7% under the prior 0.15) — presets
+# are travel-equalized (lower velocityScale pairs with longer decay), so no preset swap cuts density further without
+# changing feel. Horizontal rides above the floor: the MX thumbwheel under-travels at the minimum boost. Smoothed axes
+# own their speed, acceleration, and inertia; plain scrolling acceleration never reaches them. The hi-res normalizer passes
+# smoothed axes through, then the transformer restores detent-scale input from device units and the Logitech multiplier.
+# bouncing=false keeps synthetic momentum but omits app rubber-band phases. hardwareDPI pins the on-device MX factory
+# default so the tuned pointer.speed feel stays put; raising it demands a proportional speed cut. launchd owns login start.
 {pkgs, ...}: let
   settings = {
     "$schema" = "https://schema.linearmouse.app/0.11.4-beta.3";
@@ -36,15 +36,23 @@
         };
         logitech.highResolutionWheel = true;
         pointer.hardwareDPI = 1000;
-        scrolling = {
-          acceleration.horizontal = 3;
-          smoothed.vertical = {
+        scrolling.smoothed = {
+          vertical = {
             enabled = true;
-            preset = "easeInOut";
-            response = 0.68;
-            speed = 1.0;
-            acceleration = 1.1;
-            inertia = 0.74;
+            preset = "linear";
+            response = 1.6;
+            speed = 0;
+            acceleration = 0;
+            inertia = 0;
+            bouncing = false;
+          };
+          horizontal = {
+            enabled = true;
+            preset = "linear";
+            response = 2.0;
+            speed = 0.5;
+            acceleration = 0;
+            inertia = 0;
             bouncing = false;
           };
         };
@@ -67,7 +75,7 @@ in {
     enable = true;
     config = {
       Label = "com.parametric-forge.linearmouse";
-      ProgramArguments = ["/Applications/LinearMouse.app/Contents/MacOS/LinearMouse"];
+      ProgramArguments = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];
       RunAtLoad = true;
       ProcessType = "Interactive";
       LimitLoadToSessionType = "Aqua";
