@@ -29,6 +29,8 @@
     sshBin = "${pkgs.openssh}/bin/ssh";
   });
   launcherRows = builtins.filter (r: r ? launcher) fleet;
+  pnpmRows = builtins.filter (r: (r.launcher.kind or "pnpm") == "pnpm") launcherRows;
+  uvRows = builtins.filter (r: lib.hasPrefix "uv" (r.launcher.kind or "pnpm")) launcherRows;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
   # Shared supervised stdio lane: every launcher binds its server subtree to bidirectional protocol activity, so an abandoned client generation
   # expires under a bounded inactivity lease and converges through process-group reap even when obsolete writers retain stdin.
@@ -113,7 +115,39 @@
         ${superviseStdio ''"$entry"''}
       '';
     };
-  launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) launcherRows;
+  launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) pnpmRows;
+
+  # uv build lane: one ensure body per row serves the wrapper and the activation hook, materializing the pinned spec (PyPI pin or git rev)
+  # into the shared XDG uv tool environment. The tool list is captured, never piped into grep -q: an early-exit grep would SIGPIPE uv under
+  # pipefail and force a spurious reinstall on every launch. The needle proves the exact pin; a git row's needle is its rev-suffixed URL.
+  uvSpec = row:
+    if row.launcher.kind == "uv-git"
+    then "${row.launcher.pkg} @ git+https://github.com/${lib.removePrefix "github:" row.launcher.upstream}@${row.launcher.version}"
+    else "${row.launcher.pkg}==${row.launcher.version}";
+  uvNeedle = row:
+    if row.launcher.kind == "uv-git"
+    then "git+https://github.com/${lib.removePrefix "github:" row.launcher.upstream}@${row.launcher.version}"
+    else "${row.launcher.pkg} v${row.launcher.version} [required: ==${row.launcher.version}]";
+  mkUvEnsure = row: ''
+    export UV_TOOL_DIR="${config.xdg.dataHome}/uv/forge-tools"
+    export UV_TOOL_BIN_DIR="${config.xdg.dataHome}/uv/forge-bin"
+    export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
+    export UV_PYTHON_DOWNLOADS=never
+    export PATH="${pkgs.git}/bin:$PATH" # uv resolves a git spec by shelling out; activation runs without the session PATH
+    mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
+    tool_list="$(${pkgs.uv}/bin/uv tool list --show-version-specifiers 2>/dev/null || true)"
+    if [ ! -x "$UV_TOOL_BIN_DIR/${row.launcher.bin}" ] || [[ "$tool_list" != *"${uvNeedle row}"* ]]; then
+      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" ${lib.escapeShellArg (uvSpec row)} >/dev/null
+    fi
+  '';
+  mkUvLauncher = row: name:
+    pkgs.writeShellScriptBin name ''
+      set -euo pipefail
+      ${mkUvEnsure row}
+      ${lib.concatMapStringsSep "\n" (attr: ''export PATH="${pkgs.${attr}}/bin:$PATH"'') (row.launcher.runtimePath or [])}
+      exec "$UV_TOOL_BIN_DIR/${row.launcher.bin}" "$@"
+    '';
+  uvLaunchers = lib.concatMap (row: map (mkUvLauncher row) row.launcher.names) uvRows;
   # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. Lifecycle gate: the
   # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool (start Rhino, then reconnect). The
   # shared supervised lane ties the router subtree to client liveness through the stdin relay, so a dead, killed, or reconnecting client tears the
@@ -225,10 +259,11 @@
       exit 1
     '';
   };
-  # updateEngine selects the probe set: only npm-registry rows feed the npm-latest check; a manual or other engine row never emits a false pin row.
+  # Pin board: every launcher row joins engine-tagged (pkg|version|engine|upstream). `outdated` probes latest per engine; `advance` rewrites the
+  # owning mcp-fleet.nix version literal behind the build gate.
   pins =
-    builtins.concatStringsSep "\n" (map (r: "${r.launcher.pkg}|${r.launcher.version}")
-      (builtins.filter (r: r.launcher.updateEngine == "npm-registry") launcherRows));
+    builtins.concatStringsSep "\n"
+    (map (r: "${r.launcher.pkg}|${r.launcher.version}|${r.launcher.updateEngine}|${r.launcher.upstream}") launcherRows);
   # Full-parity drift program: fleet rows vs both user-owned registrations; Claude secret fields must be environment references, never literals.
   driftJq = pkgs.writeText "mcp-drift.jq" ''
     def env_ref: "$" + "{\(.)}";
@@ -408,13 +443,13 @@
   '';
   forgeMcp = pkgs.writeShellApplication {
     name = "forge-mcp";
-    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
+    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.git pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
     text = ''
       fleet='${fleetJson}'
       receipt_log="''${FORGE_MCP_RECEIPT_LOG:-$HOME/Library/Logs/forge-mcp.receipts.log}"
       vscode_mcp="$HOME/Library/Application Support/Code/User/mcp.json"
       usage() {
-        echo "usage: forge-mcp outdated [--json] | doctor [--network] [--json] | drift [--json] | reconcile <claude|codex>" >&2
+        echo "usage: forge-mcp outdated [--json] | advance [--json] | doctor [--network] [--json] | drift [--json] | reconcile <claude|codex>" >&2
         echo "       forge-mcp generate <claude|codex|vscode> | roots [--json] | snoop SERVER [-- ARGS...]" >&2
         exit 64
       }
@@ -430,6 +465,33 @@
         append_receipt "$row" || true
       }
 
+      # Engine dispatch: latest version per updateEngine family — npm registry, PyPI JSON, or the upstream git HEAD rev. A probe failure returns
+      # non-zero and the caller reports unknown, never drift.
+      latest_for() { # $1=pkg $2=engine $3=upstream
+        case "$2" in
+          npm-registry) curl -fsS --max-time 20 "https://registry.npmjs.org/$(jq -rn --arg p "$1" '$p|@uri')/latest" | jq -er .version ;;
+          pypi) curl -fsS --max-time 20 "https://pypi.org/pypi/$1/json" | jq -er .info.version ;;
+          git-head) git ls-remote "https://github.com/''${3#github:}" HEAD 2>/dev/null | awk 'NR == 1 {print $1; exit}' | grep . ;;
+          *) return 1 ;;
+        esac
+      }
+
+      # Shared pin sweep: one TSV row per launcher pin (state, pkg, pinned, latest, engine); outdated presents it, advance consumes it.
+      pin_rows() {
+        while IFS="|" read -r pkg version engine upstream; do
+          [ -n "$pkg" ] || continue
+          if latest="$(latest_for "$pkg" "$engine" "$upstream")"; then
+            if [ "$latest" != "$version" ]; then
+              printf 'OUTDATED\t%s\t%s\t%s\t%s\n' "$pkg" "$version" "$latest" "$engine"
+            else
+              printf 'current\t%s\t%s\t%s\t%s\n' "$pkg" "$version" "$latest" "$engine"
+            fi
+          else
+            printf 'unknown\t%s\t%s\t-\t%s\n' "$pkg" "$version" "$engine"
+          fi
+        done < <(printf '%s\n' '${pins}')
+      }
+
       cmd_outdated() {
         as_json=0
         for a in "$@"; do
@@ -438,36 +500,92 @@
             *) usage ;;
           esac
         done
-        rc=0 rows=""
-        while IFS="|" read -r pkg version; do
-          [ -n "$pkg" ] || continue
-          if latest="$(curl -fsS --max-time 20 "https://registry.npmjs.org/$(jq -rn --arg p "$pkg" '$p|@uri')/latest" | jq -er .version)"; then
-            if [ "$latest" != "$version" ]; then
-              rows="$rows"$'\n'"OUTDATED"$'\t'"$pkg"$'\t'"$version"$'\t'"$latest"; rc=1
-            else
-              rows="$rows"$'\n'"current"$'\t'"$pkg"$'\t'"$version"$'\t'"$latest"
-            fi
-          else
-            # Registry/network failure is not drift: report only.
-            rows="$rows"$'\n'"unknown"$'\t'"$pkg"$'\t'"$version"$'\t'"-"
-          fi
-        done < <(printf '%s\n' '${pins}')
-        rows="''${rows#?}"
+        rows="$(pin_rows)"
+        rc=0
+        ! grep -q $'^OUTDATED\t' < <(printf '%s\n' "$rows") || rc=1
         n="$(printf '%s\n' "$rows" | grep -c $'^OUTDATED\t' || true)"
         if [ "$as_json" = 1 ]; then
           jq -Rcs --arg ts "$(iso_now)" --arg rc "$rc" '{
             schema: "forge-mcp/v1", ts: $ts, verb: "outdated",
             result: (if $rc == "0" then "ok" else "outdated" end),
             rows: (split("\n") | map(select(length > 0) | split("\t")
-                   | {state: .[0], pkg: .[1], pin_current: .[2], latest: .[3]}))
+                   | {state: .[0], pkg: .[1], pin_current: .[2], latest: .[3], engine: .[4]}))
           }' < <(printf '%s\n' "$rows")
         else
-          printf '%s\n' "$rows" | while IFS=$'\t' read -r s p v l; do
-            printf '%-9s %s pinned=%s latest=%s\n' "$s" "$p" "$v" "$l"
+          printf '%s\n' "$rows" | while IFS=$'\t' read -r s p v l e; do
+            printf '%-9s %-32s engine=%-12s pinned=%s latest=%s\n' "$s" "$p" "$e" "$v" "$l"
           done
         fi
         receipt outdated "$([ "$rc" = 0 ] && echo ok || echo outdated)" "outdated=$n"
         exit "$rc"
+      }
+
+      # Currency landing rail: rewrite each outdated pin's version literal in the fleet manifest, prove the result through the deploy owner's
+      # build, then auto-commit (the forge-nix-drift adjudication: full automation, no branches, never an unattended switch). An unproven bump
+      # is withdrawn whole, so HEAD's manifest stays last known-good.
+      cmd_advance() {
+        as_json=0
+        for a in "$@"; do
+          case "$a" in
+            --json) as_json=1 ;;
+            *) usage ;;
+          esac
+        done
+        forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
+        rel="modules/home/programs/shell-tools/mcp-fleet.nix"
+        fleet_file="$forge_root/$rel"
+        [ -f "$fleet_file" ] || {
+          receipt advance fail "missing-manifest"
+          echo "forge-mcp advance: missing $fleet_file" >&2
+          exit 1
+        }
+        exec {advance_fd}>"''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp-advance.lock"
+        flock -n "$advance_fd" || {
+          receipt advance skipped "lock-held"
+          echo "forge-mcp advance: another advance run holds the lock; skipped" >&2
+          exit 75
+        }
+        # Bump only an untouched manifest: uncommitted operator edits must never be entangled with an automated pin commit.
+        if [ -n "$(git -C "$forge_root" status --porcelain -- "$rel")" ]; then
+          receipt advance skipped "dirty-manifest"
+          echo "forge-mcp advance: $rel carries uncommitted edits; skipped" >&2
+          exit 75
+        fi
+        moved="" bumped=""
+        while IFS=$'\t' read -r state pkg version latest engine; do
+          [ "$state" = "OUTDATED" ] || continue
+          # pkg-context rewrite: the pkg line arms the substitution and the row's own version line (always next in the launcher block) consumes it.
+          awk -v pkg="$pkg" -v new="$latest" '
+            index($0, "pkg = \"" pkg "\";") {hot = 1}
+            hot && /version = "/ {sub(/version = "[^"]*"/, "version = \"" new "\""); hot = 0}
+            {print}
+          ' "$fleet_file" >"$fleet_file.advance"
+          mv "$fleet_file.advance" "$fleet_file"
+          moved="$moved $pkg:$version->$latest"
+          bumped="''${bumped:+$bumped,}$pkg"
+        done < <(pin_rows)
+        if [ -z "$moved" ]; then
+          receipt advance ok "current"
+          [ "$as_json" = 1 ] && jq -cn --arg ts "$(iso_now)" '{schema: "forge-mcp/v1", ts: $ts, verb: "advance", result: "current", moved: []}' \
+            || echo "forge-mcp advance: every pin current"
+          return 0
+        fi
+        if "${profileBin}/forge-redeploy" --build >&2; then
+          if git -C "$forge_root" -c commit.gpgsign=false commit -m "home: advance mcp pins ($bumped)" -- "$rel" >/dev/null; then
+            receipt advance ok "moved=$bumped"
+            [ "$as_json" = 1 ] && jq -cn --arg ts "$(iso_now)" --arg moved "$moved" \
+              '{schema: "forge-mcp/v1", ts: $ts, verb: "advance", result: "landed", moved: ($moved | split(" ") | map(select(length > 0)))}' \
+              || echo "forge-mcp advance: landed$moved (switch lands it: forge-redeploy --switch)"
+            return 0
+          fi
+          receipt advance fail "commit-failed"
+          echo "forge-mcp advance: bump built but commit failed; $rel left uncommitted" >&2
+          exit 1
+        fi
+        git -C "$forge_root" checkout -- "$rel"
+        receipt advance fail "build-failed moved=$bumped"
+        echo "forge-mcp advance: build failed; bump withdrawn ($bumped)" >&2
+        exit 1
       }
 
       # Side-effect-free health probe: newline-delimited JSON-RPC initialize on stdio (stdin EOF is the shutdown), POST initialize for bearer/http
@@ -1038,6 +1156,7 @@
 
       case "$verb" in
         outdated) cmd_outdated "$@" ;;
+        advance) cmd_advance "$@" ;;
         doctor) cmd_doctor "$@" ;;
         drift) cmd_drift "$@" ;;
         reconcile) cmd_reconcile "$@" ;;
@@ -1053,19 +1172,44 @@
   mcpCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-mcp" ''
     #compdef forge-mcp
     _arguments \
-      '1:verb:(outdated doctor drift reconcile generate roots snoop)' \
+      '1:verb:(outdated advance doctor drift reconcile generate roots snoop)' \
       '--network[probe network-class rows]' \
       '--json[schema=forge-mcp/v1 receipt]'
   '';
 in {
   config = {
-    home.packages = launchers ++ [forgeSuperviseStdio rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
+    home.packages = launchers ++ uvLaunchers ++ [forgeSuperviseStdio rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
 
-    # Each switch on either OS reasserts the host-filtered fleet maps while preserving non-MCP client state; Codex app-private rows remain
-    # presence-owned by ChatGPT.
-    home.activation.forgeMcpReconcile = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      run ${forgeMcp}/bin/forge-mcp reconcile claude
-      run ${forgeMcp}/bin/forge-mcp reconcile codex
-    '';
+    home.activation = {
+      # Warm every uv tool environment at switch so a cold client spawn never pays the install.
+      ensureUvMcpTools = lib.hm.dag.entryAfter ["linkGeneration"] (lib.concatMapStringsSep "\n" mkUvEnsure uvRows);
+
+      # Each switch on either OS reasserts the host-filtered fleet maps while preserving non-MCP client state; Codex app-private rows remain
+      # presence-owned by ChatGPT.
+      forgeMcpReconcile = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        run ${forgeMcp}/bin/forge-mcp reconcile claude
+        run ${forgeMcp}/bin/forge-mcp reconcile codex
+      '';
+    };
+
+    # Daily currency cadence behind the nix-drift slot; the advance verb owns its own lock, dirty-manifest guard, build gate, and auto-commit.
+    # Repo mutation is a Darwin operator-machine concern — the NixOS host holds no working tree.
+    launchd.agents.forge-mcp-advance = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+      enable = true;
+      config = {
+        Label = "com.parametric-forge.forge-mcp-advance";
+        ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "advance"];
+        ProcessType = "Background";
+        StartCalendarInterval = [
+          {
+            Hour = 10;
+            Minute = 30;
+          }
+        ];
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-advance.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-advance.log";
+        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
+      };
+    };
   };
 }

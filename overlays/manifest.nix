@@ -4,33 +4,58 @@
 # License       : MIT
 # Path          : overlays/manifest.nix
 # ----------------------------------------------------------------------------
-# Package-admission row registry: one row owns provenance, version policy, per-platform assets and hashes, license, patch family, cache class,
-# update engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
+# Package-admission policy registry: rows own provenance, version policy, generated pin references, license, patch family, cache class, update
+# engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
 # `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
 let
+  generatedPins = builtins.fromJSON (builtins.readFile ./_sources/generated.json);
+  pinAsset = pin: {
+    inherit pin;
+    inherit (generatedPins.${pin}.src) url;
+    hash = generatedPins.${pin}.src.sha256;
+  };
+  pinFamily = pins: let
+    versions = builtins.map (pin: generatedPins.${pin}.version) (builtins.attrValues pins);
+    version = builtins.head versions;
+  in
+    assert builtins.all (candidate: candidate == version) versions; {
+      inherit version;
+      assets = builtins.mapAttrs (_: pinAsset) pins;
+    };
+  biomePins = pinFamily {
+    aarch64-darwin = "biome-aarch64-darwin";
+    aarch64-linux = "biome-aarch64-linux";
+    x86_64-linux = "biome-x86_64-linux";
+  };
+  duckdbPins = pinFamily {
+    aarch64-darwin = "duckdb-aarch64-darwin";
+    aarch64-linux = "duckdb-aarch64-linux";
+    x86_64-linux = "duckdb-x86_64-linux";
+  };
+  nodePins = pinFamily {
+    aarch64-darwin = "nodejs-bin_26-aarch64-darwin";
+    aarch64-linux = "nodejs-bin_26-aarch64-linux";
+    x86_64-linux = "nodejs-bin_26-x86_64-linux";
+  };
+  sqleanPins = pinFamily {
+    aarch64-darwin = "sqlean-aarch64-darwin";
+    aarch64-linux = "sqlean-aarch64-linux";
+    x86_64-linux = "sqlean-x86_64-linux";
+  };
   v = rec {
-    biome = "2.5.3";
-    duckdb = "1.5.4";
-    nodejs = "26.5.0";
-    pnpm = "11.10.0";
-    sqlean = "0.28.3";
     openstudio = "3.11.0";
     energyplus = "26.1.0";
     gcloud = "575.0.1";
     osBuild = "241b8abb4d";
     epBuild = "6f2e40d102";
-    biomeBase = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40${biome}"; # release tags carry the npm scope; GitHub asset URLs need it percent-encoded
-    duckdbBase = "https://github.com/duckdb/duckdb/releases/download/v${duckdb}";
-    sqleanBase = "https://github.com/nalgeon/sqlean/releases/download/${sqlean}";
   };
 in rec {
   vocabulary = {
     sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "extension-bundle" "nixpkgs" "repo"];
-    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "shebang-retarget" "npm-tool-strip" "source-substitute"];
+    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "npm-tool-strip" "source-substitute"];
     cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported" "intentionally-uncached"];
-    updateEngines = ["nix-update" "nvfetcher" "npins" "manual" "nixpkgs-follows" "npm-registry"];
-    engineVerbs = ["update" "advance" "build"]; # bump revisions | move upstream ref only | prove the locked set builds
+    updateEngines = ["nvfetcher" "manual" "nixpkgs-follows" "npm-registry" "pypi" "git-head"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
     overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
     installModes = ["hm-roster" "ca1" "landed"]; # roster-installed | CA-1 owns installation/projection | owned by a config module
@@ -46,24 +71,10 @@ in rec {
   packages = {
     biome = {
       upstream = "github:biomejs/biome";
-      version = v.biome;
+      inherit (biomePins) version assets;
       versionPolicy = "fast";
       sourceKind = "github-release";
       # Linux rows pin the musl static builds: they run on NixOS with no interpreter or patchelf dependency; glibc assets would need auto-patchelf.
-      assets = {
-        aarch64-darwin = {
-          url = "${v.biomeBase}/biome-darwin-arm64";
-          hash = "sha256-YQ0+HncNNzNo1MzuWhnF4XNbAjUCT8vtauB+sIDTuwk=";
-        };
-        aarch64-linux = {
-          url = "${v.biomeBase}/biome-linux-arm64-musl";
-          hash = "sha256-GmnqTrVbquwL7dfWraOx5ibitDDs/JqPG5A3PKeK63A=";
-        };
-        x86_64-linux = {
-          url = "${v.biomeBase}/biome-linux-x64-musl";
-          hash = "sha256-A88SVyCx15EJPJxovjSHXQhjjDFLPh5j2xpF8rQYsco=";
-        };
-      };
       license = "mit";
       patchFamily = "none";
       cacheClass = "binary-only-local";
@@ -79,23 +90,9 @@ in rec {
 
     duckdb = {
       upstream = "github:duckdb/duckdb";
-      version = v.duckdb;
+      inherit (duckdbPins) version assets;
       versionPolicy = "fast";
       sourceKind = "github-release";
-      assets = {
-        aarch64-darwin = {
-          url = "${v.duckdbBase}/duckdb_cli-osx-universal.zip";
-          hash = "sha256-xdjLYNfVzra7lPzlrkoXzIFtsZwhtrteDSNIs7IkA1k=";
-        };
-        aarch64-linux = {
-          url = "${v.duckdbBase}/duckdb_cli-linux-arm64.zip";
-          hash = "sha256-N38D+58Xq1p48o+CnL/LUzPairPC0HiPJ2lPgd937Sk=";
-        };
-        x86_64-linux = {
-          url = "${v.duckdbBase}/duckdb_cli-linux-amd64.zip";
-          hash = "sha256-Hy+nJPsFSz2+Gpy9E95bdpl9hQ5wh+x2K6iNsE4BgM8=";
-        };
-      };
       license = "mit";
       patchFamily = "none";
       cacheClass = "binary-only-local";
@@ -115,28 +112,28 @@ in rec {
 
     nodejs-bin_26 = {
       upstream = "https://nodejs.org/dist";
-      version = v.nodejs;
+      inherit (nodePins) version;
       versionPolicy = "fast";
       sourceKind = "binary-archive";
       assets = {
-        aarch64-darwin = {
-          url = "https://nodejs.org/dist/v${v.nodejs}/node-v${v.nodejs}-darwin-arm64.tar.xz";
-          hash = "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=";
-          dir = "node-v${v.nodejs}-darwin-arm64";
-        };
-        x86_64-linux = {
-          url = "https://nodejs.org/dist/v${v.nodejs}/node-v${v.nodejs}-linux-x64.tar.xz";
-          hash = "sha256-n2GVKPHbXdxB3M9UIRBm+0IijWmhVnM8acudbMkuNYw=";
-          dir = "node-v${v.nodejs}-linux-x64";
-        };
-        aarch64-linux = {
-          url = "https://nodejs.org/dist/v${v.nodejs}/node-v${v.nodejs}-linux-arm64.tar.xz";
-          hash = "sha256-A23wtJZi67NQ61bxysYDaZsentHiYD7hKf79pHNHkDA=";
-          dir = "node-v${v.nodejs}-linux-arm64";
-        };
+        aarch64-darwin =
+          nodePins.assets.aarch64-darwin
+          // {
+            dir = "node-v${nodePins.version}-darwin-arm64";
+          };
+        aarch64-linux =
+          nodePins.assets.aarch64-linux
+          // {
+            dir = "node-v${nodePins.version}-linux-arm64";
+          };
+        x86_64-linux =
+          nodePins.assets.x86_64-linux
+          // {
+            dir = "node-v${nodePins.version}-linux-x64";
+          };
       };
       license = "mit";
-      patchFamily = "npm-tool-strip"; # pnpm-only rail: npm/npx never reach the installed output (corepack left the Node 26 distribution)
+      patchFamily = "auto-patchelf-npm-tool-strip"; # Linux ELF admission plus pnpm-only npm/npx removal; corepack left the Node 26 distribution
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
       retention = "git-history";
@@ -149,13 +146,10 @@ in rec {
 
     pnpm_11 = {
       upstream = "npm:pnpm";
-      version = v.pnpm;
+      version = generatedPins.pnpm_11.version;
       versionPolicy = "fast";
       sourceKind = "npm-tarball";
-      assets.any = {
-        url = "https://registry.npmjs.org/pnpm/-/pnpm-${v.pnpm}.tgz";
-        hash = "sha512-C3+LmAYAMZBMAX46QesYehbUDuuCm5XE+MsDaBdh/Eq1PdIZEVubRH9NzhoFohR2RGHn03AzkqnzL5URzoyGyA==";
-      };
+      assets.any = pinAsset "pnpm_11";
       license = "mit";
       patchFamily = "shebang-retarget"; # nixpkgs nodejs-slim aborts on a libuv kqueue EINTR assertion at Darwin teardown; Node 26 exits clean
       cacheClass = "forge-cache-hit";
@@ -168,26 +162,9 @@ in rec {
 
     sqlean = {
       upstream = "github:nalgeon/sqlean";
-      version = v.sqlean;
+      inherit (sqleanPins) version assets;
       versionPolicy = "fast";
       sourceKind = "github-release";
-      assets = {
-        aarch64-darwin = {
-          url = "${v.sqleanBase}/sqlean-macos-arm64.zip";
-          fetch = "zip";
-          hash = "sha256-G8qhU4xCuw0qXQhkkJqvV0dbDiuow4BwVXeQsOxaeFo=";
-        };
-        aarch64-linux = {
-          url = "${v.sqleanBase}/sqlean-linux-arm64.zip";
-          fetch = "zip";
-          hash = "sha256-B02nNIeQFSF8oQU3uUf5R/qvta8NgFyrQO63KJVOix8=";
-        };
-        x86_64-linux = {
-          url = "${v.sqleanBase}/sqlean-linux-x64.zip";
-          fetch = "zip";
-          hash = "sha256-vyon1pZ7i+sjrONSq9PkJ7vC2tFHfFNNw8qp0ng0Pdw=";
-        };
-      };
       license = "mit";
       patchFamily = "none";
       cacheClass = "binary-only-local";
@@ -202,6 +179,27 @@ in rec {
       homepage = "https://github.com/nalgeon/sqlean";
     };
 
+    ast-grep-upstream = {
+      upstream = "github:ast-grep/ast-grep";
+      version = generatedPins.ast-grep-upstream.version;
+      sourcePin = "ast-grep-upstream";
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      license = "mit";
+      patchFamily = "none";
+      cacheClass = "source-built-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection = {
+        overlay = "new";
+        package = true;
+      };
+      consumers = ["shell-tools" "grug-far"];
+      description = "Structural code search and rewriting CLI";
+      homepage = "https://ast-grep.github.io/";
+      mainProgram = "ast-grep";
+    };
+
     google-cloud-sdk = {
       upstream = "https://dl.google.com/dl/cloudsdk/channels/rapid";
       version = v.gcloud;
@@ -214,7 +212,7 @@ in rec {
       license = "free"; # ToS-bound vendor SDK; nixpkgs carries the same license class
       patchFamily = "none";
       cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
+      updateEngine = "manual";
       retention = "git-history";
       projection.overlay = "override";
       overlayReason = "nixpkgs lags the rapid channel on aarch64-darwin; other platforms keep the nixpkgs package (consumer policy)";

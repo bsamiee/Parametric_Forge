@@ -66,12 +66,6 @@
           path = "/api/version";
         }
         {
-          port = 5678;
-          service = "n8n";
-          probe = "http";
-          path = "/healthz";
-        }
-        {
           port = 8788;
           service = "atuin";
           probe = "http";
@@ -100,8 +94,9 @@
 
   # Interactive operator hosts: `ssh maghz` opens a plain session. Forwards belong solely to the launchd tunnel agent — an interactive mux that
   # also binds them would hold the loopback ports and starve the durable owner.
+  # The raw hostName joins the alias pattern so bare-DNS consumers (docker ssh://, scp) inherit the same identity and timeout posture.
   interactiveHosts = lib.mapAttrs' (name: tunnel:
-    lib.nameValuePair "${name}-vps ${name}" {
+    lib.nameValuePair "${name}-vps ${name} ${tunnel.hostName}" {
       User = tunnel.user;
       HostName = tunnel.hostName;
       IdentitiesOnly = true;

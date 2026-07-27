@@ -15,10 +15,12 @@
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
 #   probe            "stdio" (probed) | "network" (probed only with --network) | "skip"
-#   launcher         { names, pkg, version, bin, prelude?, upstream, updateEngine, idleSeconds? }
-#                    => Forge-built pnpm wrapper(s); upstream/updateEngine are
-#                    manifest extension-family fields (`forge-mcp outdated` observes); idleSeconds
-#                    overrides the supervised idle lease (default toolTimeoutSec+300) for heavy no-session servers
+#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath?, idleSeconds? }
+#                    => Forge-built wrapper(s); kind selects the build lane — "pnpm" (default, registry install into the launcher cache) or
+#                    "uv" / "uv-git" (uv tool environment, version is a PyPI pin or a git rev). upstream/updateEngine are manifest
+#                    extension-family fields (`forge-mcp outdated` observes, `forge-mcp advance` rewrites: npm-registry | pypi | git-head);
+#                    runtimePath names pkgs attrs front-run onto the wrapper PATH; idleSeconds overrides the supervised idle lease
+#                    (default toolTimeoutSec+300) for heavy no-session servers
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
@@ -211,6 +213,15 @@ in [
       ;
     envKeys = ["GOOGLE_OAUTH_CLIENT_ID" "GOOGLE_OAUTH_CLIENT_SECRET" "WORKSPACE_MCP_CREDENTIALS_DIR"];
     probe = "stdio";
+    launcher = {
+      kind = "uv";
+      names = ["forge-workspace-mcp"];
+      pkg = "workspace-mcp";
+      version = "1.22.0";
+      bin = "workspace-mcp";
+      upstream = "pypi:workspace-mcp";
+      updateEngine = "pypi";
+    };
     codex = {
       required = false;
       startupTimeoutSec = 60;
@@ -261,7 +272,7 @@ in [
   }
   rec {
     # Structural code search: ast-grep's official MCP (dump_syntax_tree, test_match_code_rule, find_code, find_code_by_rule); pure retrieval, so
-    # headless codex may call it. dev-tools.nix owns the git-pinned uv wrapper and front-runs its PATH with the estate ast-grep binary.
+    # headless codex may call it. Upstream publishes no PyPI dist, so the pin is a git rev; runtimePath front-runs the estate ast-grep binary.
     name = "ast-grep";
     transport = "stdio";
     inherit
@@ -276,6 +287,16 @@ in [
     probe = "stdio";
     doctor = {
       execs = ["ast-grep"];
+    };
+    launcher = {
+      kind = "uv-git";
+      names = ["forge-ast-grep-mcp"];
+      pkg = "sg-mcp";
+      version = "732c339c3812a44e9111e6c3aefec64894acd58f";
+      bin = "ast-grep-server";
+      upstream = "github:ast-grep/ast-grep-mcp";
+      updateEngine = "git-head";
+      runtimePath = ["ast-grep-upstream"];
     };
     codex = {
       required = false;
