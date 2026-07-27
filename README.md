@@ -168,6 +168,18 @@ Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with ni
 - Inputs: `nix flake update`; closure diffs review through `nvd`/`nix-diff` before switching.
 - Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor --network`, and `forge-mcp drift` after any fleet or client change.
 
+Currency is rail-automated: each scheduled rail probes upstream, rewrites its pins, proves the result through `forge-redeploy --build`, and auto-commits — an unproven bump is withdrawn whole, and no rail ever switches unattended. `forge-redeploy --switch` lands whatever the rails have committed; `forge-update-board` reads every family's last receipt.
+
+| [INDEX] | [FAMILY]                                          | [RAIL]                            | [CADENCE]   |
+| :-----: | :------------------------------------------------ | :-------------------------------- | :---------- |
+|  [01]   | Flake inputs (nixpkgs, HM, tool flakes)           | `forge-nix-drift`                 | daily 10:00 |
+|  [02]   | MCP launcher pins (npm, PyPI, git-rev engines)    | `forge-mcp advance`               | daily 10:30 |
+|  [03]   | Homebrew formulae and casks                       | `forge-brew-autoupdate`           | scheduled   |
+|  [04]   | nvfetcher pin family (`overlays/_sources`)        | `nvfetcher -o overlays/_sources`  | manual      |
+|  [05]   | HTTP MCP endpoints                                | server-side, nothing to advance   | continuous  |
+
+Manual-engine pins (`updateEngine = "manual"`, hash-pinned binaries) advance only by hand; `forge-mcp outdated` still boards them when they carry launcher metadata.
+
 ## [16]-[LICENSE]
 
 MIT — Bardia Samiee
