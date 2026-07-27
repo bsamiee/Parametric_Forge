@@ -92,14 +92,12 @@ in {
     };
     ".GlobalPreferences" = {
       "com.apple.sound.beep.sound" = mkDefault "/System/Library/Sounds/Tink.aiff";
-      "com.apple.mouse.scaling" = mkDefault 3.0; # 0.0 floors tracking speed; 3.0 is the GUI slider max
     };
     iCal."first day of week" = mkDefault "System Setting";
     # --- [APPLICATION_SPECIFIC_SYSTEM_SETTINGS]
     CustomUserPreferences = {
       NSGlobalDomain = {
         "com.apple.mouse.linear" = mkDefault true; # flat curve; driverless mice inherit the acceleration hump otherwise
-        "com.apple.scrollwheel.scaling" = mkDefault 1.0;
       };
       "com.apple.Terminal" = {
         SecureKeyboardEntry = mkDefault false;

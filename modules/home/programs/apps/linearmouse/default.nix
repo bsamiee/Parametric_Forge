@@ -15,9 +15,8 @@
 # number moves only with a compensating move in the other. Both scroll axes ride the Accelerated lane — smoothed absent
 # selects it, distance stays auto (the only normalizing mode), and the hi-res normalizer re-quantizes MagSpeed device
 # units to detent-scale line-steps while keeping the OS velocity curve. scrolling.acceleration multiplies every delta
-# field per axis, and the transformer skips an axis sitting at 1: vertical 1.0 hands the normalizer's own line-step
-# through at 10pt per slow detent, horizontal 2.5 travels 25pt per thumbwheel line-event and rounds the legacy integer
-# line field to 3. An explicit line/px distance flips the normalizer to passthrough
+# field per axis: vertical 2.5 travels 25pt per slow detent, horizontal 4.0 travels 40pt per thumbwheel line-event, and
+# the legacy integer line field rounds to 3 and 4. An explicit line/px distance flips the normalizer to passthrough
 # and leaks raw multiplied hi-res deltas — never set it on this row. launchd owns login start.
 {pkgs, ...}: let
   settings = {
@@ -42,8 +41,8 @@
           speed = 0.0544;
         };
         scrolling.acceleration = {
-          vertical = 1.0;
-          horizontal = 2.5;
+          vertical = 2.5;
+          horizontal = 4.0;
         };
       }
     ];
