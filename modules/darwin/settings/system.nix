@@ -108,6 +108,7 @@ in {
         showInDock = mkDefault false; # menu-bar-only posture; the launchd agent owns startup
         menuBarBatteryDisplayMode = mkDefault "\"below20\""; # MX battery surfaces at 20% — Codable string, embedded quotes required
         betaChannelOn = mkDefault true; # 0.11.4 betas carry the Bluetooth hardwareDPI fix and Bolt high-resolution wheel
+        autoSwitchToActiveDevice = mkDefault true;
       };
     };
   };

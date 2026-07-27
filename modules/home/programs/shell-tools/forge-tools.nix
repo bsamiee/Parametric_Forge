@@ -656,7 +656,7 @@
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
       mcp-fleet-orphans = ["[.]cache/forge-mcp/" "" 300 "kill"];
-      mcp-uv-orphans = ["(postgres-mcp|workspace-mcp|notebooklm-mcp|nuget-mcp)" "" 300 "kill"];
+      mcp-uv-orphans = ["(ast-grep-server|workspace-mcp|notebooklm-mcp|nuget-mcp)" "" 300 "kill"];
       rhino-router-orphans = ["rhino-mcp-router" "" 300 "kill"];
       lsp-server-orphans = ["(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|roslyn-language-server|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server)" "" 300 "kill"];
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "kill"];
@@ -2074,8 +2074,7 @@
     '';
   };
 
-  # Observation-only update-visibility board: one row per manifest family, projected from existing receipts and local metadata. Mutation stays with
-  # the per-family owners (forge-nix-drift, manifest engine verbs, brew).
+  # Observation-only update-visibility board projected from existing receipts and local metadata.
   forgeUpdateBoard = mkTool {
     name = "forge-update-board";
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
@@ -2106,8 +2105,6 @@
       if command -v uv >/dev/null 2>&1; then
         row uv-tools uv "installed_tools=$(uv tool list 2>/dev/null | grep -c '^[a-z]' || true)"
       fi
-      row manifest overlays/manifest.nix "engine verbs update|advance|build own mutation; board observes"
-
       persist_receipt "$(printf 'ts=%s\tfamilies=%s\tresult=ok' "$ts" "$families")"
     '';
   };

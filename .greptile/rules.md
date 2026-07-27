@@ -10,10 +10,11 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
 - Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
-- Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua) — never restate their law as findings; flag suppressions and bypasses. A shellcheck directive, `noqa`, or `biome-ignore` in a diff demands the ownership justification; suppression-as-fix is the defect.
+- Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua), so findings target suppressions and bypasses. Shellcheck directives, `noqa`, and `biome-ignore` demand ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 - Coupling completeness: docs/laws/topology.md is the edit-coupling map — a diff touching a listed [SURFACE] without its obligated counterparts is incomplete; generalizable lessons land under the docs/laws/README.md admission law, never as ad-hoc doc edits.
 - Doctrine-surface diffs are judged against docs/laws/README.md: hardening beats extending beats minting, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
+- Package updates are owner-checked: generated pins carry moving values, manifest rows reference them, each engine advances its complete pin family, and inherited update scripts target that pin owner.
 
 ## [02]-[UNIVERSAL_BAR]
 
@@ -33,7 +34,7 @@ Code that violates generic best practice on purpose — do not flag:
 - Absent defensive guards inside domain logic reflect admission-once boundaries, not missing error handling.
 - Sparse 1-2 line agent-facing comments are compliance with comment law, not missing documentation.
 - Nix string-interpolated shell bodies with declared runtimeInputs are the packaging idiom, not embedded-script smell.
-- A large file that owns one full concern is sanctioned; never recommend splitting by size.
+- Concern ownership sanctions large files; never recommend splitting by size.
 
 ## [05]-[DURABLE_PROSE_AND_SKILL_DETECTION]
 
@@ -50,11 +51,11 @@ Durable markdown — docs, standards, skills, prompts — is agent-facing law. F
 - Defensive caveats: hedges (`may`, `might`, `generally`, `usually`, `when possible`) softening settled rules; contract qualifiers (`optional`, `if present`, `where supported`, `unless`) survive.
 - Bare abstractions: three or more abstract guidance bullets with no paired rejected/accepted example, template, or gate.
 - Fixed output skeletons: one mandated report shape (summary, findings, recommendations, next steps) regardless of consumer.
-- Mirror sentences: prose a fresh agent regenerates from disk plus the document's stated invariants — restated topology, member rosters, tool inventories — is a stale copy, deleted or demoted to a regenerable fence.
+- Mirror sentences: prose a fresh agent regenerates from disk and the document's stated invariants — restated topology, member rosters, tool inventories — is a stale copy, deleted or demoted to a regenerable fence.
 - Table teardowns: a table converted to cards, lists, or prose when in-place relief (header hoists, lead-sentence relief, row splits) was available; conversion is earned only by rows sharing no comparison question or a type-standard-owned shape.
 - File-kind drift: sibling files of one kind (a bundle's references, atlas pages, templates) diverging in section vocabulary, card field sets, or marker tokens — consistency across the kind outranks local optimization.
 - Skill bundles (.claude/skills/\*\*): first/second-person frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad or keyword-stuffed trigger descriptions; SKILL.md over 500 lines or carrying reference banks inline; references that only route to other references; deterministic multi-step procedures narrated in prose where a bundled script belongs; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification.
 
 ## [06]-[COMMENT_DISCIPLINE]
 
-A comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap. One line is the target; a short comment inlines onto its statement; two lines is the usual ceiling, and three-plus survives only when truly irreplaceable. Flag: what-comments restating the adjacent code, narration and process residue, comments coupling to paths, sessions, or sibling docs, and multi-line blocks whose payload compresses to one line. Every pass that touches a file prunes its stale or drifted comments in the same pass — comment hygiene is a standing obligation, not a separate cleanup.
+Comments carry only in-situ constraints code cannot show — why, invariant, trap. One line is the target; a short comment inlines onto its statement; two lines is the usual ceiling, and three or more survive only when irreplaceable. Flag: what-comments restating adjacent code, narration and process residue, comments coupling to paths, sessions, or sibling docs, and multi-line blocks whose payload compresses to one line. Every pass that touches a file prunes its stale or drifted comments in the same pass — comment hygiene is a standing obligation, not a separate cleanup.

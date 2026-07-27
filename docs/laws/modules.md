@@ -18,8 +18,8 @@ Machine-surface law extending `design.md` onto the Nix module graph: modules, ov
 - Example: `final: prev: { shape = prev.shape.overrideAttrs (old: { postPatch = (old.postPatch or "") + patch; }); }`
 
 [PACKAGE_MANIFEST]:
-- Law: Non-nixpkgs package and extension admission is a manifest row — provenance, version policy, per-platform assets and hashes, license, patch family, cache class, update engine, retention, projection — and overlays, public packages, apps, HM rosters, and extension directories are folds of the rows. Direct-package projection is the default; an overlay-override row names its dependency-graph reason. Nixpkgs-followed admissions carry no frozen version copy — the JSON projection resolves live pins from the package set.
-- Rejected: Version/url/hash triples inside derivation bodies, a second hand-maintained public package list, per-app plugin updater semantics, registry-trust admission of extension corpora, overlay mutation without a named graph reason.
+- Law: Generated pins own moving upstream versions, URLs, source hashes, and dependency locks; manifest rows own admission policy and reference those pins. Every `updateEngine` resolves to executable repository tooling that advances its complete pin family atomically. Folds project manifest rows into overlays, public packages, apps, HM rosters, and extension directories; direct-package projection is the default, override rows name their dependency-graph reason, and nixpkgs-followed admissions resolve live pins.
+- Rejected: Metadata-only engine labels, hand-edited generated values, duplicated version or hash values, partial multi-platform advancement, inherited update scripts targeting a foreign source owner, naïve textual rewriting of the consolidated manifest, a second public package list, registry-trust extension admission, overlay mutation without a named graph reason.
 - Example: `packages = lib.mapAttrs (name: _: forgePkgs.${name}) (lib.filterAttrs (_: row: row.projection.package or false) manifest.packages);`
 
 [UPSTREAM_LAYOUT_GUARDS]:
@@ -28,7 +28,7 @@ Machine-surface law extending `design.md` onto the Nix module graph: modules, ov
 - Example: `[ -x "$runtime/$tool" ] || { echo "patch_drift: $tool missing" >&2; exit 1; }`
 
 [COMPOSITION_ROOT]:
-- Law: The flake composition root admits inputs once, and `perSystem` derives packages, apps, checks, and the formatter from one package set.
+- Law: Flake composition admits inputs once, and `perSystem` derives packages, apps, checks, and the formatter from one package set.
 - Rejected: Duplicated per-system package attrsets, host conditionals outside `perSystem`, ad hoc system strings inside modules.
 - Example: `perSystem = { pkgs, ... }: { packages = lib.genAttrs names (n: pkgs.${n}); };`
 
@@ -48,6 +48,6 @@ Machine-surface law extending `design.md` onto the Nix module graph: modules, ov
 - Example: `pkgs.writeShellApplication { name = "shape"; runtimeInputs = [ pkgs.jq ]; text = script; }`
 
 [BOTH_OS_EVAL]:
-- Law: A module the shared home graph imports evaluates on every host; a platform-only package interpolation gates at eval (`lib.optionalString pkgs.stdenv.hostPlatform.isDarwin`) with a runtime emptiness guard, and an option defined under a platform-gated import is consumed cross-platform only through an `or` default. The static gate is the pair: the darwin system build AND the NixOS toplevel drv eval — `nix flake check` alone proves neither host's toplevel.
+- Law: Shared-home modules evaluate on every host; a platform-only package interpolation gates at eval (`lib.optionalString pkgs.stdenv.hostPlatform.isDarwin`) with a runtime emptiness guard, and an option defined under a platform-gated import is consumed cross-platform only through an `or` default. Static proof pairs the darwin system build with the NixOS toplevel drv eval — `nix flake check` alone proves neither host's toplevel.
 - Rejected: Darwin-only `pkgs.*` interpolated unconditionally in a both-OS module, cross-gate option reads without a default, a switch proven on one host standing in for the other's eval.
 - Example: `tn = lib.optionalString pkgs.stdenv.hostPlatform.isDarwin "${pkgs.terminal-notifier}/bin/terminal-notifier";`

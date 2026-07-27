@@ -1,0 +1,72 @@
+# Pin-source declarations for every nvfetcher-engine manifest row; `nvfetcher -o overlays/_sources` advances the complete family.
+
+[ast-grep-upstream]
+src.github = "ast-grep/ast-grep"
+fetch.github = "ast-grep/ast-grep"
+cargo_lock = ["Cargo.lock"]
+
+[biome-aarch64-darwin]
+src.github = "biomejs/biome"
+src.prefix = "@biomejs/biome@"
+fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-darwin-arm64"
+
+[biome-aarch64-linux]
+src.github = "biomejs/biome"
+src.prefix = "@biomejs/biome@"
+fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-linux-arm64-musl"
+
+[biome-x86_64-linux]
+src.github = "biomejs/biome"
+src.prefix = "@biomejs/biome@"
+fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-linux-x64-musl"
+
+[duckdb-aarch64-darwin]
+src.github = "duckdb/duckdb"
+src.prefix = "v"
+fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-osx-universal.zip"
+
+[duckdb-aarch64-linux]
+src.github = "duckdb/duckdb"
+src.prefix = "v"
+fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-arm64.zip"
+
+[duckdb-x86_64-linux]
+src.github = "duckdb/duckdb"
+src.prefix = "v"
+fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-amd64.zip"
+
+[nodejs-bin_26-aarch64-darwin]
+src.github_tag = "nodejs/node"
+src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
+src.prefix = "v"
+fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-darwin-arm64.tar.xz"
+
+[nodejs-bin_26-aarch64-linux]
+src.github_tag = "nodejs/node"
+src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
+src.prefix = "v"
+fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-arm64.tar.xz"
+
+[nodejs-bin_26-x86_64-linux]
+src.github_tag = "nodejs/node"
+src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
+src.prefix = "v"
+fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-x64.tar.xz"
+
+[pnpm_11]
+src.github_tag = "pnpm/pnpm"
+src.include_regex = "^v11\\.[0-9]+\\.[0-9]+$"
+src.prefix = "v"
+fetch.url = "https://registry.npmjs.org/pnpm/-/pnpm-$ver.tgz"
+
+[sqlean-aarch64-darwin]
+src.github = "nalgeon/sqlean"
+fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-macos-arm64.zip"
+
+[sqlean-aarch64-linux]
+src.github = "nalgeon/sqlean"
+fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-linux-arm64.zip"
+
+[sqlean-x86_64-linux]
+src.github = "nalgeon/sqlean"
+fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-linux-x64.zip"

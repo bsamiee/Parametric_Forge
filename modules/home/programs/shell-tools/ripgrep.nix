@@ -4,84 +4,57 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
-# Fast recursive search configuration
+# Agent-first search defaults: raw `rg` must never silently miss corpus content.
 {
-  config,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) roles;
+  # Miss-prevention only: hidden dotfiles/dirs and symlinked trees (HM configs resolve into the store) are searched by default, with .git/ as the
+  # sole exclusion — everything else stays gitignore-owned. Match semantics, error visibility, engine selection, and presentation keep upstream
+  # defaults; display cosmetics live in the interactive alias, and scripted gates isolate with --no-config.
   ripgrepConfig = [
     # --- [SEARCH_BEHAVIOR]
-    # Output-mutating flags (trim, column truncation) live in the interactive rg alias — the config applies to every invocation and piped
-    # output must stay verbatim; line numbers need no row because rg enables them on TTY output itself.
     "--smart-case"
     "--hidden"
     "--follow"
-    "--no-messages" # Suppress file access error messages
-    "--search-zip" # Search inside compressed archives
-    "--ignore-file-case-insensitive" # macOS case-insensitive filesystem support
-    "--engine=auto" # Use PCRE2 only when needed (lookaround/backreferences)
-    "--hyperlink-format=vscode" # Clickable paths in WezTerm → VSCode
-    "--one-file-system" # Don't cross mount points (Nix store safety)
-
-    # --- [PERFORMANCE]
-    "--dfa-size-limit=1G" # Increase DFA cache for large pattern files
-
-    # --- [VISUAL_FORMATTING]
-    # Truecolor RGB triples from the palette tokens
-    "--colors=path:fg:${roles.accent.primary.csv}"
-    "--colors=path:style:bold"
-    "--colors=line:fg:${roles.text.muted.csv}"
-    "--colors=column:fg:${roles.text.muted.csv}"
-    "--colors=match:fg:${roles.state.success.csv}"
-    "--colors=match:style:bold"
+    "--glob=!.git/"
 
     # --- [TYPE_DEFINITIONS]
-    # Nix ecosystem
+    # Additive vocabulary: inert until a -t/--type selection names it.
     "--type-add=nix:*.nix"
     "--type-add=nix:flake.lock"
 
-    # Documentation files
+    "--type-add=agent:{AGENTS,CLAUDE,SKILL}.md"
+
     "--type-add=docs:*.{md,markdown,rst,txt,adoc,org}"
     "--type-add=docs:README*"
     "--type-add=docs:LICENSE*"
     "--type-add=docs:CHANGELOG*"
     "--type-add=docs:CONTRIBUTING*"
 
-    # Shell scripts (extends built-in sh type)
     "--type-add=shell:*.{sh,bash,zsh,fish}"
     "--type-add=shell:*.{bashrc,zshrc}"
 
-    # Config files (extends built-in config type)
     "--type-add=config:*.{toml,yaml,yml}"
     "--type-add=config:*.{env,env.*}"
     "--type-add=config:.*rc"
     "--type-add=config:Dockerfile*"
     "--type-add=config:docker-compose*.{yml,yaml}"
 
-    # Data formats
     "--type-add=data:*.{json,jsonc,json5,yaml,yml,toml}"
 
-    # Lock files
     "--type-add=lock:*lock.json"
     "--type-add=lock:*lock.yaml"
     "--type-add=lock:Cargo.lock"
     "--type-add=lock:flake.lock"
 
-    # Log files
     "--type-add=log:*.{log,logs}"
 
-    # Build systems
     "--type-add=build:Makefile*"
     "--type-add=build:*.{mk,cmake,bazel,BUILD}"
     "--type-add=proto:*.proto"
     "--type-add=headers:*.{h,hpp,hxx,hh}"
-
-    # --- [GLOBAL_EXCLUSIONS]
-    # Only .git/ — with --hidden it would otherwise flood every search; all other repo noise is gitignore-owned so explicit targets stay honest.
-    "--glob=!.git/"
   ];
 in {
   home.packages = [pkgs.ripgrep];

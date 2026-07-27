@@ -83,7 +83,7 @@ in {
     ++ [
       pkgs._7zz-rar # 7-Zip with RAR support for Yazi archive preview/extraction
       pkgs.actionlint # GitHub Actions workflow linter
-      pkgs.ast-grep # Structural code search and rewrite
+      pkgs.ast-grep-upstream # Structural code search and rewrite
       pkgs.bandwhich # Per-process bandwidth monitor
       pkgs.choose # Human-friendly column extraction
       pkgs.curlie # Curl-compatible HTTP client
@@ -105,6 +105,7 @@ in {
       pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
       pkgs.ratchet # GitHub Actions version pinning
       pkgs.rich-cli # Rich terminal rendering
+      pkgs.ripgrep # Content search with upstream semantics
       (withDefaultFlag pkgs.sd "--across" "-A*|--across|-[!-]*A*") # Structural find and replace; patterns match across the whole input
       pkgs.sshs # Interactive SSH host picker
       pkgs.trash-cli # FreeDesktop trash suite

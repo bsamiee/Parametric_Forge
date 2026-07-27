@@ -53,7 +53,7 @@
   };
 in {
   home.packages = [
-    pkgs.nodejs-bin_26 # Official Node 26 Darwin binary, npm/npx/corepack stripped in-overlay
+    pkgs.nodejs-bin_26 # Official Node 26 binary; Linux ELF admission and npm/npx stripping are owned in-overlay
     pkgs.pnpm_11 # Sole package-manager verb on PATH; major-pinned for store-format stability
     prettier # Code formatter (house-config fallback wrapper)
     biome # TS/JS/JSON/CSS formatter+linter (house-config fallback wrapper)

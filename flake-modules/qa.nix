@@ -23,7 +23,11 @@
           ../flake-modules
           ../hosts
           ../modules
-          ../overlays
+        ]
+        ++ [
+          (fileset.difference
+            (fileset.fileFilter (file: file.hasExt "nix") ../overlays)
+            ../overlays/_sources)
         ]);
     };
     # .jq-only projection checked through the fmt front door: its jq lane owns the compile gate (empty stdin, pre-bound $vars), so one implementation

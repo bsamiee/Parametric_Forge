@@ -41,6 +41,7 @@ _: {
         forgePkgs.nix-output-monitor
         forgePkgs.nix-update
         forgePkgs.nixpkgs-review
+        forgePkgs.nvfetcher
         forgePkgs.nurl
       ];
     };
@@ -64,6 +65,7 @@ _: {
     treefmt = {
       flakeCheck = false;
       projectRootFile = "flake.nix";
+      settings.excludes = ["overlays/_sources/**"];
       # Rows carry the house style (4-space indent, 150 width) explicitly: the sandboxed formatting check cannot see machine-level XDG tool configs.
       programs = {
         alejandra.enable = true;

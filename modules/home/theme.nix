@@ -209,7 +209,6 @@
       ["pik" "${st}/pik.nix" "toml" "roles" "bound"]
       ["trippy" "${st}/trippy.nix" "toml" "roles palette" "bound"]
       ["tlrc" "${st}/tlrc.nix" "toml" "palette" "bound"]
-      ["ripgrep" "${st}/ripgrep.nix" "flags" "roles" "bound"]
       ["browsers" "${st}/browsers.nix" "toml" "roles" "bound"]
       ["posting" "${st}/posting.nix" "yaml" "roles palette" "bound"]
       ["process-compose" "${st}/process-compose.nix" "yaml" "roles palette" "bound"]

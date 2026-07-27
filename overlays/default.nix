@@ -10,6 +10,9 @@
 # here and is forced by the forge-package-manifest build.
 final: prev: let
   manifest = import ./manifest.nix;
+  generatedSources = import ./_sources/generated.nix {
+    inherit (prev) fetchurl fetchgit fetchFromGitHub dockerTools;
+  };
   inherit (prev) lib;
   system = prev.stdenv.hostPlatform.system;
   voc = manifest.vocabulary;
@@ -24,7 +27,11 @@ final: prev: let
     assert lib.assertMsg (!(row.projection ? overlay) || lib.elem row.projection.overlay voc.overlayModes) "${name}: projection.overlay '${row.projection.overlay or ""}' outside vocabulary";
     assert lib.assertMsg (lib.licenses ? ${row.license}) "${name}: license '${row.license}' not a lib.licenses key";
     assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason";
-    assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers"; row;
+    assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers";
+    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind == "source-build") || (row ? sourcePin && generatedSources ? ${row.sourcePin}))
+    "${name}: nvfetcher source-build requires a generated sourcePin";
+    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind != "source-build") || (row ? assets && lib.all (a: a ? pin && generatedSources ? ${a.pin}) (lib.attrValues row.assets)))
+    "${name}: nvfetcher binary assets require generated pins"; row;
 
   checkAdmission = name: row:
     assert lib.assertMsg (lib.elem row.install voc.installModes) "${name}: install '${row.install}' outside vocabulary";
@@ -64,9 +71,11 @@ final: prev: let
   assetOf = name: row:
     row.assets.${system}
     or (throw "${name}: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
-  # Hash origin rides the asset row: fetch="zip" hashes the unpacked NAR (fetchzip), default hashes the flat file (fetchurl).
+  # Generated sources retain nvfetcher's fetch semantics; manual rows select fetchzip for unpacked hashes or fetchurl for flat hashes.
   srcOf = a:
-    if (a.fetch or "url") == "zip"
+    if a ? pin
+    then generatedSources.${a.pin}.src
+    else if (a.fetch or "url") == "zip"
     then
       prev.fetchzip {
         inherit (a) url hash;
@@ -171,6 +180,10 @@ final: prev: let
     nodejs-bin_26 = {a, ...}: {
       pname = "nodejs-bin";
       sourceRoot = a.dir;
+      nativeBuildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [
+        prev.autoPatchelfHook
+        prev.stdenv.cc.cc.lib
+      ];
       # pnpm-only rail: npm/npx never reach the installed output (Node 26 dropped corepack from the distribution). A missing strip target is upstream
       # layout drift (patch_drift); fail the build loudly, never ship a silently fatter output.
       installPhase = let
@@ -196,11 +209,18 @@ final: prev: let
 
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
+  astGrepRow = rowOf "ast-grep-upstream";
+  astGrepSource = generatedSources.${astGrepRow.sourcePin};
 in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
   // {
+    ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
+      inherit (astGrepSource) version src;
+      cargoDeps = prev.rustPlatform.importCargoLock astGrepSource.cargoLock."Cargo.lock";
+      passthru = builtins.removeAttrs (old.passthru or {}) ["updateScript"];
+    });
     carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
       # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
       # the build loudly (patch_drift), never ship an unpatched binary.

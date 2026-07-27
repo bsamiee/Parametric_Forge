@@ -37,6 +37,9 @@
 *.verified.* text eol=lf
 *.verified.txt text eol=lf working-tree-encoding=UTF-8
 
+# Generated Sources
+overlays/_sources/** -whitespace
+
 # Icons
 *.ico -filter -diff -merge -text
 

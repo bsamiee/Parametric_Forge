@@ -15,6 +15,8 @@ readonly _TTY="${_t}"
 unset -v _t
 declare -Ar _CLR=([E]="${_R}" [W]="${_Y}")
 declare -Ar _CTR=([E]=_errs [W]=_warns)
+# Gate reproducibility: bypass ambient RIPGREP_CONFIG_PATH so machine defaults never reshape lint results.
+readonly -a _RG=(rg --no-config)
 
 # --- [TRAPS] ----------------------------------------------------------------------------
 
@@ -112,7 +114,7 @@ _run_rg() {
         ((++_checks))
         meta[${idx}]="${label}${_S}${level}${_S}${msg}"
         # shellcheck disable=SC2086
-        { rg --no-heading -n --glob "*.${ext}" ${flags} -- "${pattern}" "${_PATHS[@]}" \
+        { "${_RG[@]}" --no-heading -n --glob "*.${ext}" ${flags} -- "${pattern}" "${_PATHS[@]}" \
             >"${workdir}/${idx}" 2>/dev/null || :; } &
         ((++idx))
     done
@@ -132,12 +134,12 @@ _run_pairs() {
     for rule in "${_PAIR_RULES[@]}"; do
         IFS="${_S}" read -r label level present absent msg <<<"${rule}"
         ((++_checks))
-        mapfile -t files < <(rg -l "${present}" --glob '*.sql' "${_PATHS[@]}" 2>/dev/null)
+        mapfile -t files < <("${_RG[@]}" -l "${present}" --glob '*.sql' "${_PATHS[@]}" 2>/dev/null)
         [[ ${#files[@]} -eq 0 ]] && continue
-        mapfile -t violations < <(rg --files-without-match "${absent}" "${files[@]}" 2>/dev/null)
+        mapfile -t violations < <("${_RG[@]}" --files-without-match "${absent}" "${files[@]}" 2>/dev/null)
         [[ ${#violations[@]} -eq 0 ]] && continue
         local hits
-        hits=$(rg -H --no-heading -n "${present}" "${violations[@]}" 2>/dev/null) || true
+        hits=$("${_RG[@]}" -H --no-heading -n "${present}" "${violations[@]}" 2>/dev/null) || true
         [[ -n "${hits}" ]] && _tally "${label}" "${level}" "${msg}" "${hits}"
     done
 }
@@ -146,7 +148,7 @@ _check_sprawl() {
     ((++_checks))
     local results
     # shellcheck disable=SC2016
-    results=$(rg --no-filename --glob '*.sql' -ioP \
+    results=$("${_RG[@]}" --no-filename --glob '*.sql' -ioP \
         'CREATE\s+(UNIQUE\s+)?INDEX\s+\w+\s+ON\s+(\w+)\s*\(([^)]+)\)' \
         --replace '$2|$3' "${_PATHS[@]}" 2>/dev/null |
         awk -F'|' '{gsub(/[[:space:]]/,"",$2); if(split($2,c,",")==1)s[$1]++}

@@ -6,9 +6,9 @@ External tool reference: rg, awk, sd, fd, choose, jq, yq, mlr, jnv. Pipeline com
 
 | [INDEX] | [NEED]         | [TOOL]   | [VER] | [WHY]                                                        |
 | :-----: | :------------- | :------- | :---: | :----------------------------------------------------------- |
-|  [01]   | Pattern/filter | `rg`     |  15+  | PCRE2, parallel, .gitignore-aware; no `grep -P` on macOS     |
+|  [01]   | Pattern/filter | `rg`     |  15+  | Parallel, .gitignore-aware; `-P` adds PCRE2 lookaround       |
 |  [02]   | Field/column   | `awk`    | 5.3+  | Replaces `grep\|sed\|cut` chains; `--csv` native CSV (5.3+)  |
-|  [03]   | Find-replace   | `sd`     |  1+   | PCRE2 captures, no escape hell; no `sed -i` portability bug  |
+|  [03]   | Find-replace   | `sd`     |  1+   | Regex captures, no escape hell; no `sed -i` portability bug  |
 |  [04]   | Find files     | `fd`     |  10+  | .gitignore-aware, `--format` templates, `--exec-batch` bulk  |
 |  [05]   | Field select   | `choose` | 1.3+  | 0-indexed ranges; `cut -d` breaks on multi-char delimiters   |
 |  [06]   | JSON           | `jq`     | 1.8+  | Structural parsing; `skip/2`+`limit/2`, `trim/0`, `add/1`    |
@@ -42,7 +42,7 @@ _require_tool fd find && _find() { fd "$@"; } || _find() { find "$@"; }
 
 ## [02]-[REGEX_DIALECTS]
 
-`rg`/`sd` use PCRE2 natively; `grep`/`sed` use BRE; `grep -E`/`awk` use ERE — awareness needed only when reading existing scripts in the older dialects.
+`rg`/`sd` default to Rust regex (finite-automata: no lookaround or backreferences); `rg -P`/`--engine=pcre2` selects PCRE2 for those features; `grep`/`sed` use BRE; `grep -E`/`awk` use ERE — awareness needed only when reading existing scripts in the older dialects.
 
 | [INDEX] | [FEATURE]     | [PCRE2]             | [BRE]     | [ERE]   |
 | :-----: | :------------ | :------------------ | :-------- | :------ |
