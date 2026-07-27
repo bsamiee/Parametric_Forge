@@ -81,27 +81,50 @@
     export DOTNET_ROOT="${dotnet-combined}/share/dotnet"
     exec ${nuget-mcp-server}/tools/net10.0/osx-arm64/NuGet.Mcp.Server "$@"
   '';
-  workspace-mcp-version = "1.22.0";
-  workspace-mcp-package = "workspace-mcp==${workspace-mcp-version}";
-  workspace-mcp-tool-dir = "${config.xdg.dataHome}/uv/forge-tools";
-  workspace-mcp-bin-dir = "${config.xdg.dataHome}/uv/forge-bin";
-  # One ensure body serves the wrapper and the activation hook. The tool list is captured, never piped into grep -q: an early-exit grep would SIGPIPE
-  # uv under pipefail and force a spurious reinstall on every launch.
-  workspace-mcp-ensure = ''
-    export UV_TOOL_DIR="${workspace-mcp-tool-dir}"
-    export UV_TOOL_BIN_DIR="${workspace-mcp-bin-dir}"
+  # uv-tool MCP family: one ensure owner serves every wrapper and activation hook. A row pins a spec (PyPI pin or git rev) plus the
+  # `uv tool list --show-version-specifiers` needle proving that exact pin — a git row's needle is its rev-suffixed URL. The tool list is
+  # captured, never piped into grep -q: an early-exit grep would SIGPIPE uv under pipefail and force a spurious reinstall on every launch.
+  uv-tool-bin-dir = "${config.xdg.dataHome}/uv/forge-bin";
+  mkUvEnsure = {
+    spec,
+    bin,
+    needle,
+  }: ''
+    export UV_TOOL_DIR="${config.xdg.dataHome}/uv/forge-tools"
+    export UV_TOOL_BIN_DIR="${uv-tool-bin-dir}"
     export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
     export UV_PYTHON_DOWNLOADS=never
+    export PATH="${pkgs.git}/bin:$PATH" # uv resolves a git spec by shelling out; activation runs without the session PATH
     mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
     tool_list="$(${pkgs.uv}/bin/uv tool list --show-version-specifiers 2>/dev/null || true)"
-    if [ ! -x "$UV_TOOL_BIN_DIR/workspace-mcp" ] || [[ "$tool_list" != *"workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]"* ]]; then
-      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" "${workspace-mcp-package}" >/dev/null
+    if [ ! -x "$UV_TOOL_BIN_DIR/${bin}" ] || [[ "$tool_list" != *"${needle}"* ]]; then
+      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" ${lib.escapeShellArg spec} >/dev/null
     fi
   '';
+  workspace-mcp-version = "1.22.0";
+  workspace-mcp-ensure = mkUvEnsure {
+    spec = "workspace-mcp==${workspace-mcp-version}";
+    bin = "workspace-mcp";
+    needle = "workspace-mcp v${workspace-mcp-version} [required: ==${workspace-mcp-version}]";
+  };
   forge-workspace-mcp = pkgs.writeShellScriptBin "forge-workspace-mcp" ''
     set -euo pipefail
     ${workspace-mcp-ensure}
     exec "$UV_TOOL_BIN_DIR/workspace-mcp" "$@"
+  '';
+  # ast-grep official MCP: upstream publishes no PyPI dist, so the pin is a git rev. PATH front-runs the estate ast-grep so the server always
+  # shapes against the Forge-pinned binary, wherever the client spawned it from.
+  ast-grep-mcp-rev = "732c339c3812a44e9111e6c3aefec64894acd58f";
+  ast-grep-mcp-ensure = mkUvEnsure {
+    spec = "sg-mcp @ git+https://github.com/ast-grep/ast-grep-mcp@${ast-grep-mcp-rev}";
+    bin = "ast-grep-server";
+    needle = "git+https://github.com/ast-grep/ast-grep-mcp@${ast-grep-mcp-rev}";
+  };
+  forge-ast-grep-mcp = pkgs.writeShellScriptBin "forge-ast-grep-mcp" ''
+    set -euo pipefail
+    ${ast-grep-mcp-ensure}
+    export PATH="${pkgs.ast-grep-upstream}/bin:$PATH"
+    exec "$UV_TOOL_BIN_DIR/ast-grep-server" "$@"
   '';
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
   forge-install-antigravity-cli = pkgs.writeShellApplication {
@@ -237,6 +260,8 @@ in {
     activation = {
       ensureWorkspaceMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] workspace-mcp-ensure;
 
+      ensureAstGrepMcpTool = lib.hm.dag.entryAfter ["linkGeneration"] ast-grep-mcp-ensure;
+
       ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
         ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli
       '';
@@ -287,6 +312,7 @@ in {
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
         gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
         forge-workspace-mcp # Google Workspace MCP wrapper pinned to a Python 3.13 uv tool environment
+        forge-ast-grep-mcp # ast-grep MCP wrapper pinned to an upstream git rev in the same uv tool environment
         pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
       ]
       ++ dataRoster

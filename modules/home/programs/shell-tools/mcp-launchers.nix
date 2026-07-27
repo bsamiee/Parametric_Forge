@@ -17,11 +17,17 @@
   stateHome = config.xdg.stateHome;
   # Shared owner: the dual-receipt emit fold (receipts.nix) that forge-mcp folds for its schema=forge-mcp/v1 receipt surface.
   receiptsFold = import ./receipts.nix;
-  fleet = import ./mcp-fleet.nix {
+  # Host-OS row admission: launchers, projections, probes, and drift all fold the same filtered fleet, so a Linux switch never builds, registers,
+  # or expects a Darwin-only server.
+  hostOs =
+    if pkgs.stdenv.hostPlatform.isDarwin
+    then "darwin"
+    else "linux";
+  fleet = builtins.filter (row: builtins.elem hostOs (row.platforms or ["darwin" "linux"])) (import ./mcp-fleet.nix {
     inherit profileBin;
     homeDir = config.home.homeDirectory;
     sshBin = "${pkgs.openssh}/bin/ssh";
-  };
+  });
   launcherRows = builtins.filter (r: r ? launcher) fleet;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
   # Shared supervised stdio lane: every launcher binds its server subtree to bidirectional protocol activity, so an abandoned client generation
@@ -1055,10 +1061,11 @@ in {
   config = {
     home.packages = launchers ++ [forgeSuperviseStdio rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
 
-    # Each Darwin switch reasserts the fleet maps while preserving non-MCP client state; Codex app-private rows remain presence-owned by ChatGPT.
-    home.activation.forgeMcpReconcile = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
+    # Each switch on either OS reasserts the host-filtered fleet maps while preserving non-MCP client state; Codex app-private rows remain
+    # presence-owned by ChatGPT.
+    home.activation.forgeMcpReconcile = lib.hm.dag.entryAfter ["writeBoundary"] ''
       run ${forgeMcp}/bin/forge-mcp reconcile claude
       run ${forgeMcp}/bin/forge-mcp reconcile codex
-    '');
+    '';
   };
 }

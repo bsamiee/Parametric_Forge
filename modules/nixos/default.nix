@@ -127,7 +127,8 @@
   };
 
   # --- [ROOT_VISIBLE_TOOLING]
-  # Flake operations and remote activation need git at the system layer; the full CLI estate is Home Manager-owned per user. doppler serves the
-  # maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only token is the VPS runtime secret consumer.
-  environment.systemPackages = [pkgs.git pkgs.doppler];
+  # Flake operations and remote activation need git at the system layer; the full CLI estate is Home Manager-owned per user. doppler and ast-grep
+  # serve the maghz-agent service user (no HM graph): the /srv/maghz-scoped read-only token is the VPS runtime secret consumer, and structural
+  # code search covers agent shell work in the /srv/maghz workroot.
+  environment.systemPackages = [pkgs.git pkgs.doppler pkgs.ast-grep-upstream];
 }

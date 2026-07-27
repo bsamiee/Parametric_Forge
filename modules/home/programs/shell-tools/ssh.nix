@@ -382,7 +382,8 @@
       remote=":sftp,ssh='ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -l $user $addr',idle_timeout=0:$rpath"
       sub=nfsmount
       [ "$(uname -s)" = "Darwin" ] || sub=mount
-      flags=(--config "" --volname "$volname" --vfs-cache-mode "$cache")
+      # dir-cache-time pinned to the probe interval so every health probe's READDIR traverses the SFTP backend instead of the VFS cache.
+      flags=(--config "" --volname "$volname" --vfs-cache-mode "$cache" --dir-cache-time "''${probe_interval}s")
       [ "$ro" != "true" ] || flags+=(--read-only)
 
       # Traps precede the spawn; drain emits `down` only after a landed mount (pre-mount failures carry their own states). ExitTimeOut (45s) on
@@ -419,8 +420,10 @@
       mounted_once=1
       emit mounted "detail=$mountpoint ro=$ro cache=$cache"
 
-      # Health loop: process, device, then statfs through the mount reaching the SFTP backend via the NFS server, and timeout bounds an NFS stall.
-      # Consecutive failures get tunnel-style hysteresis; eject and exit drain immediately, and every exit relaunches under KeepAlive/Restart=always.
+      # Health loop: process, device, then a READDIR through the mount — statfs is a false-green verdict (rclone's VFS answers it from fallback
+      # values with the SFTP backend dead), while a dir listing past the probe-pinned cache must traverse the backend and hangs or errors when it
+      # is gone. Consecutive failures get tunnel-style hysteresis; eject and exit drain immediately, and every exit relaunches under
+      # KeepAlive/Restart=always.
       probe_fails=0
       while :; do
         # Backgrounded sleep keeps the interval interruptible by TERM/INT.
@@ -437,7 +440,7 @@
           drain ejected
           exit 1
         fi
-        if timeout 10 stat -f -c %b "$mountpoint" >/dev/null 2>&1; then
+        if timeout 10 ls "$mountpoint" >/dev/null 2>&1; then
           probe_fails=0
         else
           probe_fails=$((probe_fails + 1))

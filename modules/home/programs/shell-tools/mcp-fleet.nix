@@ -23,6 +23,8 @@
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
 #   clients          registration expectation, default [ "claude" "codex" ]
+#   platforms        host-OS admission, default [ "darwin" "linux" ]; mcp-launchers.nix filters rows to the running host, so every launcher
+#                    build, projection, probe, and drift lane sees only spawnable rows
 #   assertLevel      "full" (default) | "presence" for host-private rows
 #   doctor           named probe-family checks beyond initialize: the Forge
 #                    launcher name IS the probe row. Field: execs (companion
@@ -123,6 +125,7 @@ in [
     # Maghz VPS read-only secret lens: the scoped service token resolves only inside the remote host/container boundary.
     name = "doppler-remote";
     transport = "stdio";
+    platforms = ["darwin"]; # the Mac-side lens INTO the VPS; on the VPS itself the row is self-referential
     inherit
       (mkSupervised {
         cmd = sshBin;
@@ -146,6 +149,7 @@ in [
   {
     name = "playwright";
     transport = "stdio";
+    platforms = ["darwin"]; # pnpm-fetched browser binaries never run on NixOS; a linux row lands with a store-built browser wiring
     command = "${profileBin}/forge-playwright-mcp";
     args = ["--isolated" "--caps=vision,pdf"];
     envKeys = [];
@@ -170,6 +174,7 @@ in [
     # Browser-session backend: probed only on demand.
     name = "notebooklm";
     transport = "stdio";
+    platforms = ["darwin"]; # browser-session backend rides the Mac Chrome estate
     command = "${profileBin}/notebooklm-mcp";
     args = [];
     envKeys = [];
@@ -215,6 +220,7 @@ in [
   rec {
     name = "nuget";
     transport = "stdio";
+    platforms = ["darwin"]; # dev-tools.nix packages the osx-arm64 RID only; a linux RID row widens both gates together
     inherit
       (mkSupervised {
         cmd = "${profileBin}/nuget-mcp";
@@ -253,11 +259,37 @@ in [
       toolsApprovalMode = "approve";
     };
   }
+  rec {
+    # Structural code search: ast-grep's official MCP (dump_syntax_tree, test_match_code_rule, find_code, find_code_by_rule); pure retrieval, so
+    # headless codex may call it. dev-tools.nix owns the git-pinned uv wrapper and front-runs its PATH with the estate ast-grep binary.
+    name = "ast-grep";
+    transport = "stdio";
+    inherit
+      (mkSupervised {
+        cmd = "${profileBin}/forge-ast-grep-mcp";
+        idleSeconds = codex.toolTimeoutSec + 300;
+      })
+      command
+      args
+      ;
+    envKeys = [];
+    probe = "stdio";
+    doctor = {
+      execs = ["ast-grep"];
+    };
+    codex = {
+      required = false;
+      startupTimeoutSec = 60;
+      toolTimeoutSec = 180;
+      toolsApprovalMode = "approve";
+    };
+  }
   {
     # Lifecycle-gated wrapper: the vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool that
     # instructs start-then-reconnect. mcp-launchers.nix owns the gate.
     name = "rhino-mcp-platform";
     transport = "stdio";
+    platforms = ["darwin"];
     command = "${profileBin}/rhino-mcp-router";
     args = ["--default-version" "9"];
     envKeys = [];
@@ -371,6 +403,7 @@ in [
     # ChatGPT.app-private Computer Use bridge: presence asserted, definition owned by the app/plugin projection.
     name = "computer-use";
     transport = "stdio";
+    platforms = ["darwin"];
     command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient";
     args = ["mcp"];
     envKeys = [];
@@ -387,6 +420,7 @@ in [
     # Codex.app-private REPL: presence asserted, definition owned by the app.
     name = "node_repl";
     transport = "stdio";
+    platforms = ["darwin"];
     command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl";
     args = [];
     envKeys = [];
