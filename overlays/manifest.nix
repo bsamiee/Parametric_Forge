@@ -16,7 +16,7 @@ let
     hash = generatedPins.${pin}.src.sha256;
   };
   pinFamily = pins: let
-    versions = builtins.map (pin: generatedPins.${pin}.version) (builtins.attrValues pins);
+    versions = map (pin: generatedPins.${pin}.version) (builtins.attrValues pins);
     version = builtins.head versions;
   in
     assert builtins.all (candidate: candidate == version) versions; {
@@ -43,7 +43,7 @@ let
     aarch64-linux = "sqlean-aarch64-linux";
     x86_64-linux = "sqlean-x86_64-linux";
   };
-  v = rec {
+  v = {
     openstudio = "3.11.0";
     energyplus = "26.1.0";
     gcloud = "575.0.1";

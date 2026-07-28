@@ -219,7 +219,7 @@ in
     ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
       inherit (astGrepSource) version src;
       cargoDeps = prev.rustPlatform.importCargoLock astGrepSource.cargoLock."Cargo.lock";
-      passthru = builtins.removeAttrs (old.passthru or {}) ["updateScript"];
+      passthru = removeAttrs (old.passthru or {}) ["updateScript"];
     });
     carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
       # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
