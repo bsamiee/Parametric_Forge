@@ -25,6 +25,12 @@
     xdgCacheHome = config.xdg.cacheHome;
   };
 
+  # KTX-Software builds portably under plain CMake; nixpkgs still caps meta.platforms at linux, so the lift is
+  # the entire darwin admission. Carries libktx + ktx.h for the pyktx cffi link and the ktx/ktx2check/toktx CLIs.
+  ktxTools = pkgs.ktx-tools.overrideAttrs (prev: {
+    meta = prev.meta // {platforms = lib.platforms.unix;};
+  });
+
   nativeBuildTools = with pkgs; [
     clang
     pkg-config
@@ -75,6 +81,7 @@
     ghostscript
     harfbuzz
     icu # PyICU sdist: pkg-config icu-i18n/icu-uc, dev+out outputs ride the search-path projection
+    ktxTools # pyktx cffi glue links an installed libktx off LIBRARY_PATH
     lcms2
     leptonica
     libheif # HEIF/HEIC input
@@ -132,6 +139,7 @@
 
   scientificRuntimeTools = with pkgs;
     [
+      ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs spawned by both language branches
       onnxruntime
     ]
     ++ aecNativeTools;
@@ -216,6 +224,12 @@
       export ARROW_HOME="${pkgs.arrow-cpp}"
       export OPENBLAS_DIR="${pkgs.openblas}"
       export OpenMP_ROOT="${openmpDev}"
+
+      # pyktx setup.py reads all three: it links libktx by name and refuses to build without a version literal.
+      export LIBKTX_VERSION="${ktxTools.version}"
+      export LIBKTX_INCLUDE_DIR="${ktxTools}/include"
+      export LIBKTX_LIB_DIR="${ktxTools}/lib"
+
       export ONNXRUNTIME_DIR="${pkgs.onnxruntime}"
       for candidate in \
         "${pkgs.onnxruntime}/lib/libonnxruntime${sharedLibExt}.${pkgs.onnxruntime.version}" \
