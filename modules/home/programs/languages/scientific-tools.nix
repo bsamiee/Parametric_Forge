@@ -172,6 +172,77 @@
     exec "$("${pkgs.clang}/bin/clang" -print-prog-name=ld)" "''${args[@]}"
   '';
 
+  # Uncached nixpkgs python modules (manifest row forge-python-overlay-env) bridge into a uv venv through one .pth projection: `build` realizes
+  # the env behind an XDG-state GC root, `link` writes the venv .pth at that stable path (a rebuild moves the symlink, never the .pth), `status`
+  # proves the roster imports inside the venv. NIX_PYTHONPATH/sitecustomize dies inside a venv — the base interpreter's site-packages leaves
+  # sys.path — so the .pth is the one mechanism surviving every invocation with zero env coupling. The Determinate profile prepend mirrors the
+  # forge-tools storePath policy: every nix call resolves the daemon-matched client.
+  pythonOverlayRow = (import ../../../../overlays/manifest.nix).packages.forge-python-overlay-env;
+  pythonOverlayTool = pkgs.writeShellApplication {
+    name = "forge-python-overlay";
+    runtimeInputs = [pkgs.coreutils];
+    text = ''
+      export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+      verb="''${1:-status}"
+      venv="''${2:-}"
+      forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
+      state_root="''${XDG_STATE_HOME:-$HOME/.local/state}/forge"
+      out_link="$state_root/python-overlay"
+      site_rel="lib/python${pkgs.python315.pythonVersion}/site-packages"
+      pth_rel="$site_rel/forge-overlay.pth"
+      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+      receipt() { printf 'ts=%s tool=forge-python-overlay action=%s status=%s %s\n' "$ts" "$verb" "$1" "$2"; }
+      need_venv() {
+        if [ -z "$venv" ] || [ ! -d "$venv/$site_rel" ]; then
+          receipt fail "reason=venv-site-missing venv=''${venv:-unset}"
+          exit 2
+        fi
+      }
+      case "$verb" in
+        build)
+          mkdir -p "$state_root"
+          nix build "$forge_root#forge-python-overlay-env" --out-link "$out_link"
+          receipt ok "env=$(readlink "$out_link") gcroot=$out_link"
+          ;;
+        link)
+          need_venv
+          if [ ! -d "$out_link/$site_rel" ]; then
+            receipt fail "reason=env-unbuilt hint='forge-python-overlay build'"
+            exit 2
+          fi
+          printf '%s\n' "$out_link/$site_rel" >"$venv/$pth_rel"
+          receipt ok "pth=$venv/$pth_rel target=$out_link/$site_rel"
+          ;;
+        unlink)
+          need_venv
+          rm -f "$venv/$pth_rel"
+          receipt ok "pth=$venv/$pth_rel state=removed"
+          ;;
+        status)
+          env_state="unbuilt"
+          if [ -e "$out_link" ]; then env_state="$(readlink "$out_link")"; fi
+          if [ -z "$venv" ]; then
+            receipt ok "env=$env_state"
+          else
+            need_venv
+            pth_state="absent"
+            if [ -f "$venv/$pth_rel" ]; then pth_state="$(cat "$venv/$pth_rel")"; fi
+            if "$venv/bin/python" -c 'import ${lib.concatStringsSep ", " pythonOverlayRow.probeImports}' 2>/dev/null; then
+              receipt ok "env=$env_state pth=$pth_state imports=ok"
+            else
+              receipt warn "env=$env_state pth=$pth_state imports=fail"
+              exit 1
+            fi
+          fi
+          ;;
+        *)
+          receipt fail "reason=unknown-verb usage='build | link <venv> | unlink <venv> | status [<venv>]'"
+          exit 2
+          ;;
+      esac
+    '';
+  };
+
   # One search-path projection per lib set; dev outputs precede out per key.
   mkSearchPaths = libs: {
     pkgconfig = lib.concatStringsSep ":" [
@@ -275,5 +346,6 @@ in {
     ++ scientificRuntimeTools
     ++ [
       forgeScientificEnv
+      pythonOverlayTool
     ];
 }

@@ -291,6 +291,9 @@ in
       };
     };
     forge-provision = final.callPackage ./forge-provision {};
+    # Uncached-by-design (manifest cacheClass): reached only through legacyPackages and built on demand by forge-python-overlay — never by the
+    # system closure or the qa package smoke.
+    forge-python-overlay-env = final.python315.withPackages (ps: map (m: ps.${m}) (rowOf "forge-python-overlay-env").modules);
     google-cloud-sdk =
       if gcloudRow.assets ? ${system}
       then

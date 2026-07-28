@@ -233,6 +233,27 @@ in rec {
       consumers = ["carbon"];
     };
 
+    # Uncached-by-design python-module lane: nixpkgs python modules a uv venv cannot take from PyPI (no cp315 wheel, no sdist). The overlay fold
+    # builds python315.withPackages over `modules`; the forge-python-overlay kernel (scientific-tools.nix) realizes it on demand behind an
+    # XDG-state GC root and projects one .pth into a consumer venv. Never projection.package and never home.packages — the qa build smoke and
+    # every switch would otherwise source-build the whole uncached closure.
+    forge-python-overlay-env = {
+      upstream = "nixpkgs:python315Packages";
+      versionPolicy = "nixpkgs";
+      sourceKind = "nixpkgs";
+      license = "tost"; # openusd; vtk rides bsd3 — the row records the least-permissive member
+      patchFamily = "none";
+      cacheClass = "intentionally-uncached";
+      updateEngine = "nixpkgs-follows";
+      retention = "git-history";
+      projection.overlay = "new";
+      modules = ["vtk" "openusd"]; # python315Packages attrs folded into the env
+      probeImports = ["vtk" "pxr"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
+      consumers = ["scientific-tools"];
+      description = "python315 module env exposed to uv venvs through forge-python-overlay";
+      homepage = "https://nixos.org/";
+    };
+
     openstudio = {
       upstream = "github:NatLabRockies/OpenStudio";
       version = v.openstudio;
