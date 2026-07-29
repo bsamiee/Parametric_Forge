@@ -139,7 +139,7 @@
 
   scientificRuntimeTools = with pkgs;
     [
-      ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs spawned by both language branches
+      ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs spawned by the Rasm C# and python branches; TS consumes the produced bytes
       onnxruntime
     ]
     ++ aecNativeTools;

@@ -249,6 +249,15 @@ in rec {
       projection.overlay = "new";
       modules = ["vtk" "openusd"]; # python315Packages attrs folded into the env
       probeImports = ["vtk" "pxr"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
+      # CPython 3.15 is a beta interpreter, so the whole module set carries two upstream escapes the overlay fold owns once. Upstream suites assert
+      # 3.14-era diagnostics and clocks (parso, exceptiongroup, pure-eval, tornado, time-machine, hypothesis, mypy, zlib-ng all fail their own
+      # checkPhase here); dropping doCheck also drops nativeCheckInputs, pruning the test-only tail out of the uncached closure. PyO3 <= 0.27 refuses
+      # any interpreter past 3.14 outright (pydantic-core, rpds-py) and names the stable-ABI forward-compat escape in its own error text.
+      betaSet = {
+        pythonVersion = "3.15";
+        dropChecks = true;
+        env.PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1";
+      };
       consumers = ["scientific-tools"];
       description = "python315 module env exposed to uv venvs through forge-python-overlay";
       homepage = "https://nixos.org/";

@@ -207,6 +207,23 @@ final: prev: let
     openstudio = optRuntime;
   };
 
+  # Beta-set lane folded from the forge-python-overlay-env row: the escapes ride the two builders, so every package in the beta set inherits them and
+  # a wider module roster never mints a per-package override. Every other interpreter's set passes through untouched, keeping its cache hits.
+  betaSetLane = _pyFinal: pyPrev: let
+    policy = (rowOf "forge-python-overlay-env").betaSet;
+    escapes = policy.env // lib.optionalAttrs policy.dropChecks {doCheck = false;};
+    wrap = build: args:
+      build (
+        if lib.isFunction args
+        then (finalAttrs: args finalAttrs // escapes)
+        else args // escapes
+      );
+  in
+    lib.optionalAttrs (pyPrev.python.pythonVersion == policy.pythonVersion) {
+      buildPythonPackage = wrap pyPrev.buildPythonPackage;
+      buildPythonApplication = wrap pyPrev.buildPythonApplication;
+    };
+
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
   astGrepRow = rowOf "ast-grep-upstream";
@@ -245,6 +262,7 @@ in
         (_pyFinal: pyPrev: {
           duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
         })
+        betaSetLane
       ];
     forge-package-manifest = prev.writeTextFile {
       name = "forge-package-manifest";
