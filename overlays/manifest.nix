@@ -247,8 +247,8 @@ in rec {
       updateEngine = "nixpkgs-follows";
       retention = "git-history";
       projection.overlay = "new";
-      modules = ["vtk" "openusd"]; # python315Packages attrs folded into the env
-      probeImports = ["vtk" "pxr"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
+      modules = ["vtk" "pyvista" "openusd"]; # python315Packages attrs folded into the env
+      probeImports = ["vtk" "pyvista" "pxr"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
       # CPython 3.15 is a beta interpreter, so the whole module set carries two upstream escapes the overlay fold owns once. Upstream suites assert
       # 3.14-era diagnostics and clocks (parso, exceptiongroup, pure-eval, tornado, time-machine, hypothesis, mypy, zlib-ng all fail their own
       # checkPhase here); dropping doCheck also drops nativeCheckInputs, pruning the test-only tail out of the uncached closure. PyO3 <= 0.27 refuses
