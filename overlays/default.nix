@@ -207,22 +207,42 @@ final: prev: let
     openstudio = optRuntime;
   };
 
+  betaPolicy = (rowOf "forge-python-overlay-env").betaSet;
+
+  # Removed-C-API shim for the beta interpreter: the macro expands to an immediately-invoked lambda holding the referent only across the call, which is
+  # exactly the borrowed-reference contract PyWeakref_GetObject carried, and yields Py_None for an expired referent as that call did. It rides a
+  # `-include` ahead of Python.h, so no roster member carries a patched call site and an upstream port to PyWeakref_GetRef retires it silently.
+  betaCApiShim = prev.writeText "python315-capi-shim.h" ''
+    #define PyWeakref_GetObject(ref)                     \
+        ([](PyObject *_shimRef) -> PyObject * {          \
+            PyObject *_shimObj = nullptr;                \
+            (void)PyWeakref_GetRef(_shimRef, &_shimObj); \
+            Py_XDECREF(_shimObj);                        \
+            return _shimObj ? _shimObj : Py_None;        \
+        }((ref)))
+  '';
+
   # Beta-set lane folded from the forge-python-overlay-env row: the escapes ride the two builders, so every package in the beta set inherits them and
-  # a wider module roster never mints a per-package override. Every other interpreter's set passes through untouched, keeping its cache hits.
+  # a wider module roster never mints a per-package override, while the shim rides only its row roster and leaves every other member's hash alone.
+  # Every other interpreter's set passes through untouched, keeping its cache hits.
   betaSetLane = _pyFinal: pyPrev: let
-    policy = (rowOf "forge-python-overlay-env").betaSet;
-    escapes = policy.env // lib.optionalAttrs policy.dropChecks {doCheck = false;};
+    escapes = betaPolicy.env // lib.optionalAttrs betaPolicy.dropChecks {doCheck = false;};
     wrap = build: args:
       build (
         if lib.isFunction args
         then (finalAttrs: args finalAttrs // escapes)
         else args // escapes
       );
+    shim = name:
+      pyPrev.${name}.overrideAttrs (old: {
+        env = (old.env or {}) // {NIX_CFLAGS_COMPILE = "${old.env.NIX_CFLAGS_COMPILE or ""} -include ${betaCApiShim}";};
+      });
   in
-    lib.optionalAttrs (pyPrev.python.pythonVersion == policy.pythonVersion) {
-      buildPythonPackage = wrap pyPrev.buildPythonPackage;
-      buildPythonApplication = wrap pyPrev.buildPythonApplication;
-    };
+    lib.optionalAttrs (pyPrev.python.pythonVersion == betaPolicy.pythonVersion) ({
+        buildPythonPackage = wrap pyPrev.buildPythonPackage;
+        buildPythonApplication = wrap pyPrev.buildPythonApplication;
+      }
+      // lib.genAttrs betaPolicy.capiShimMembers shim);
 
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
@@ -232,6 +252,9 @@ in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
+  # Native members of the beta closure take the row's check-drop policy here: an `.override` instance reached through vtk keeps an overrideAttrs seated
+  # on the top-level attr, which the python-set lane can never reach.
+  // lib.genAttrs betaPolicy.nativeMembers (name: prev.${name}.overrideAttrs (_: {doCheck = false;}))
   // {
     ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
       inherit (astGrepSource) version src;
