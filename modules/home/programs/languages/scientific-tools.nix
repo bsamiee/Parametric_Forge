@@ -79,6 +79,7 @@
     fribidi
     gdk-pixbuf
     ghostscript
+    glib # vips.pc requires glib-2.0; without it pkg-config --exists vips fails and pyvips silently falls to dead ABI mode
     harfbuzz
     icu # PyICU sdist: pkg-config icu-i18n/icu-uc, dev+out outputs ride the search-path projection
     ktxTools # pyktx cffi glue links an installed libktx off LIBRARY_PATH
