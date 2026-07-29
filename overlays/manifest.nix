@@ -257,9 +257,10 @@ in rec {
         pythonVersion = "3.15";
         dropChecks = true;
         env.PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1";
-        # cmake members of the closure reach stdenv.mkDerivation, never the python builders the escapes wrap, so the check-drop policy names them
-        # here. catalyst's ctest suite re-enters cmake against its own installed config, which demands Python3 Development components the resolved
-        # interpreter never carries; 22 of its 40 sub-builds fail and adios2, vtk, and the env cascade behind them.
+        # cmake members of the closure reach stdenv.mkDerivation, never the python builders the escapes wrap, so their escapes name them here. Both
+        # ride one upstream fact: cmake's FindPython3 version list ends at 3.14, so `find_package(Python3 COMPONENTS Development)` — carrying no
+        # Interpreter component to derive a version from — resolves nothing under the beta interpreter. catalyst issues exactly that call in the config
+        # it exports, so its own ctest suite loses 22 of 40 sub-builds and every consumer dies at configure, taking adios2, vtk, and the env with it.
         nativeMembers = ["catalyst"];
         # 3.15 removes PyWeakref_GetObject, deprecated since 3.13. The members below still call it — openusd's tf holds four call sites across
         # pyIdentity.cpp, pyFunction.h, and pyWeakObject.cpp — so a compile-time shim restores the borrowed-reference contract over PyWeakref_GetRef.

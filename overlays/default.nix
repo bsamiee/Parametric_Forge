@@ -222,6 +222,30 @@ final: prev: let
         }((ref)))
   '';
 
+  # Native members of the beta closure take their escapes at the top level: the failing instance is an `.override` descendant reached through vtk, and an
+  # overrideAttrs seated on the top-level attr survives every hop while the python-set lane never reaches it. The exported config pins the interpreter
+  # the member itself built against, which is the only version its consumers can satisfy and the one cmake's own version list ends before; deriving the
+  # pin in the builder keeps every interpreter flavor of the member self-consistent. A member exporting no such call is upstream drift — fail loudly.
+  betaNativeMember = name:
+    prev.${name}.overrideAttrs (old: {
+      doCheck = false;
+      postInstall =
+        (old.postInstall or "")
+        + ''
+          pin=$(python3 -c 'import sys; print("%s.%s" % sys.version_info[:2])' 2>/dev/null || true)
+          if [ -n "$pin" ]; then
+            configs=$(grep -rl 'find_package(Python3 ' "$out/lib/cmake")
+            [ -n "$configs" ] || {
+              echo "${name}: exported cmake config issues no find_package(Python3 …); the version pin has no target" >&2
+              exit 1
+            }
+            for config in $configs; do
+              substituteInPlace "$config" --replace-fail 'find_package(Python3 ' "find_package(Python3 $pin EXACT "
+            done
+          fi
+        '';
+    });
+
   # Beta-set lane folded from the forge-python-overlay-env row: the escapes ride the two builders, so every package in the beta set inherits them and
   # a wider module roster never mints a per-package override, while the shim rides only its row roster and leaves every other member's hash alone.
   # Every other interpreter's set passes through untouched, keeping its cache hits.
@@ -252,9 +276,7 @@ in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
-  # Native members of the beta closure take the row's check-drop policy here: an `.override` instance reached through vtk keeps an overrideAttrs seated
-  # on the top-level attr, which the python-set lane can never reach.
-  // lib.genAttrs betaPolicy.nativeMembers (name: prev.${name}.overrideAttrs (_: {doCheck = false;}))
+  // lib.genAttrs betaPolicy.nativeMembers betaNativeMember
   // {
     ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
       inherit (astGrepSource) version src;
