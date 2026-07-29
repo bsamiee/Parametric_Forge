@@ -58,7 +58,7 @@ in [
     launcher = {
       names = ["forge-perplexity-mcp"];
       pkg = "@perplexity-ai/mcp-server";
-      version = "0.9.0";
+      version = "1.2.0";
       bin = "perplexity-mcp";
       upstream = "npm:@perplexity-ai/mcp-server";
       updateEngine = "npm-registry";
@@ -80,7 +80,7 @@ in [
     launcher = {
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
-      version = "1.23.0";
+      version = "1.25.0";
       bin = "hostinger-api-mcp";
       upstream = "npm:hostinger-api-mcp";
       updateEngine = "npm-registry";
