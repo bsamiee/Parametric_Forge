@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/rule.json
+id: <rule-id>
+language: <language>
+severity: error
+rule:
+    pattern: <anchor capturing $$$ITEMS>
+rewriters:
+    - id: <rewriter-id> # sequence with load-bearing order: per node the first matching rewriter wins
+      rule: {pattern: $ITEM, kind: <kind>}
+      transform:
+        <LOCAL>: <op>($ITEM, <key>=<value>) # sealed scope: vars, transform, utils stay inside this rewriter
+      fix: <per-item template referencing $ITEM and $LOCAL>
+transform:
+    <OUT>:
+        rewrite:
+            source: $$$ITEMS # rewriters apply to the capture's descendants, outer nodes first, never overlapping
+            rewriters: [<rewriter-id>]
+            joinBy: '<sep>' # filters then joins — unmatched members drop; absent, rewritten items splice back in place
+fix: <template referencing $OUT>
+message: <one line naming the violated law>
+note: <the exact repair — the shape to produce>
+---
+id: <deletion-rule-id>
+language: <language>
+severity: error
+rule: <rule>
+fix:
+    template: '' # empty template deletes the matched node
+    expandEnd: {regex: '<separator>'} # consumes exactly one adjacent sibling matching the rule; expandStart mirrors
+message: <law>
+note: <repair>

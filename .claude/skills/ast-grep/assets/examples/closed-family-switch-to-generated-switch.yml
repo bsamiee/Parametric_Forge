@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/csharp_rule.json
+id: closed-family-switch-to-generated-switch
+language: csharp
+severity: error
+rule:
+    all:
+        - pattern:
+            context: 'class C { object M() => $SUBJECT switch { $$$ARMS }; }'
+            selector: switch_expression
+        - has:
+            kind: switch_expression_arm
+            has:
+                kind: declaration_pattern
+        - not: # fires only when every arm is a bare qualified pattern — guards, discards, and
+            has: # list patterns refuse the fix, so no arm semantics can be silently dropped
+                kind: switch_expression_arm
+                any:
+                    - has: {kind: when_clause}
+                    - not:
+                        has:
+                            kind: declaration_pattern
+                            has:
+                                kind: qualified_name
+        - not: # a compound subject — await, cast, binary, conditional — rebinds under member access
+            has:
+                nthChild: 1 # the subject is the first named child; switch_expression exposes no field for it
+                any:
+                    - {kind: await_expression}
+                    - {kind: as_expression}
+                    - {kind: binary_expression}
+                    - {kind: conditional_expression}
+rewriters:
+    - id: arm-to-named-argument
+      rule:
+        pattern:
+            context: 'class C { object M() => s switch { $QUAL.$CASE $BIND => $BODY }; }'
+            selector: switch_expression_arm
+      transform:
+        SLOT:
+            convert: {source: $CASE, toCase: camelCase}
+      fix: '$SLOT: static $BIND => $BODY'
+transform:
+    ARGS:
+        rewrite:
+            rewriters: [arm-to-named-argument]
+            source: $$$ARMS
+            joinBy: ', '
+fix: $SUBJECT.Switch($ARGS)
+message: Language `switch` over a closed generated family forfeits compile-time totality
+note: Dispatch through the generated total `Switch` — each arm becomes its camelCase named argument with a `static` lambda

@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/python_rule.json
+id: guard-ladder-to-conditional-chain
+language: python
+severity: error
+utils:
+    guard-if:
+        all:
+            - pattern: |
+                if $C:
+                    return $R
+            - not: {has: {any: [{kind: elif_clause}, {kind: else_clause}]}} # an if carrying alternatives is no guard — the bare pattern would swallow them
+rule:
+    all:
+        - pattern:
+            context: |
+                def _anchor():
+                    $$$GUARDS
+                    return $FINAL
+            selector: block
+        - has: {kind: if_statement}
+        - not: # totality closure — every statement is a guard-if or a return, so a body carrying
+            has: # any other statement (a bound kernel, an effect) is never flattened
+                not:
+                    any:
+                        - matches: guard-if
+                        - kind: return_statement
+rewriters:
+    - id: rung
+      rule: {matches: guard-if}
+      fix: '($R) if $C else'
+transform:
+    RUNGS:
+        rewrite:
+            rewriters: [rung]
+            source: $$$GUARDS
+            joinBy: ' '
+fix: 'return $RUNGS ($FINAL)' # parentheses hold tuple and starred returns together across the chain
+message: Guard ladder spells one conditional chain as statements
+note: Collapse to one expression — `return (<r1>) if <c1> else (<r2>) if <c2> else (<final>)`

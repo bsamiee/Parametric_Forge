@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/typescript_rule.json
+id: require-declared-fan-out-degree
+language: typescript
+severity: error
+utils:
+    fan-out-call:
+        any:
+            - pattern: Effect.forEach($$$ARGS)
+            - pattern: Effect.all($$$ARGS)
+            - pattern: Stream.mapEffect($$$ARGS)
+    declares-degree:
+        has:
+            field: arguments
+            has: # default neighbor traversal — a degree inside a nested callback never satisfies this call
+                kind: object
+                has:
+                    any:
+                        - kind: pair
+                          has: {field: key, regex: '^concurrency$'}
+                        - kind: shorthand_property_identifier
+                          regex: '^concurrency$'
+rule:
+    all:
+        - matches: fan-out-call
+        - not: {matches: declares-degree}
+message: Fan-out omits its concurrency degree and silently serializes
+note: 'State the degree at this call — add `{ concurrency: <n | "unbounded" | "inherit"> }`; an options identifier or wrapped object cannot be proven, so inline the bare object'

@@ -1,0 +1,5 @@
+id: <rule-id> # binds to the rule by id, never filename; a rule with no test file still passes ast-grep test
+valid:
+    - <conforming snippet> # names the near-miss this fixture pins
+invalid:
+    - <violating snippet> # names the violation shape; snapshots write via ast-grep test -U

@@ -1,0 +1,11 @@
+id: enum-to-vocabulary-table
+valid:
+    - | # the target form
+      const Phase = { Draft: 0, Sealed: 1 } as const;
+      type Phase = (typeof Phase)[keyof typeof Phase];
+    - 'enum Bare { Draft, Sealed }'
+    - 'export enum Pub { Draft = 0 }'
+    - 'declare enum Ambient { P = 1 }'
+    - 'const enum Inline { X = 1 }'
+invalid:
+    - 'enum Phase { Draft = 0, Sealed = 1, Retired = 2 }'

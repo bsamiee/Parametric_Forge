@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/typescript_rule.json
+id: enum-to-vocabulary-table
+language: typescript
+severity: error
+rule:
+    kind: enum_declaration
+    all:
+        - has: {field: name, pattern: $NAME}
+        - has: {field: body, pattern: $BODY}
+        - not: {has: {field: body, has: {kind: property_identifier}}} # ordinal-less member: no synthesizable value, no fix
+        - not: {inside: {kind: export_statement}} # exported surface: hand repair owns the API break
+        - not: {inside: {kind: ambient_declaration}} # declare enum: a const initializer is illegal in ambient context
+        - not: {regex: '^const'} # const enum has no emit — the table would mint a runtime object it never had
+rewriters:
+    - id: enum-row
+      rule:
+        kind: enum_assignment
+        all:
+            - has: {field: name, pattern: $KEY}
+            - has: {field: value, pattern: $VALUE} # field proven by CST — the published schema roster omits value
+      fix: '$KEY: $VALUE'
+transform:
+    ROWS:
+        rewrite:
+            rewriters: [enum-row]
+            source: $BODY
+            joinBy: ', '
+fix: |-
+    const $NAME = { $ROWS } as const;
+    type $NAME = (typeof $NAME)[keyof typeof $NAME];
+message: Enum declares a closed vocabulary through emit-bearing syntax
+note: The vocabulary is one `as const` table with its value union derived — runtime values, key space, and value space survive verbatim

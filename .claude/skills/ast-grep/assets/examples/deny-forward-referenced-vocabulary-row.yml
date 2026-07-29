@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/csharp_rule.json
+id: deny-forward-referenced-vocabulary-row
+language: csharp
+severity: error
+rule:
+    kind: field_declaration
+    all:
+        - has: {kind: modifier, regex: '^static$'}
+        - has:
+            stopBy: end
+            kind: identifier
+            pattern: $ROW # capture unifies with the later declarator — the same name proves the forward edge; only the first argument identifier binds, deeper positions escape
+            inside: {kind: argument, stopBy: end}
+            not: {inside: {kind: lambda_expression, stopBy: end}} # a deferred `static () => Row` column is the legal form
+        - precedes:
+            stopBy: end
+            kind: field_declaration
+            has:
+                stopBy: end
+                kind: variable_declarator
+                has: {field: name, pattern: $ROW}
+message: Static row initializer names a row declared later in the owner
+note: The eager field read captures null before materialization — defer the reference behind `static () => <Row>`

@@ -1,0 +1,38 @@
+id: guard-ladder-to-conditional-chain
+valid:
+    - | # already a chain
+      def flat(ceiling, raw):
+          return Error("<empty>") if raw == "" else Ok(len(raw))
+    - | # statement-bearing body is never flattened
+      def kernel(ceiling, raw):
+          trimmed = raw.strip()
+          if trimmed == "":
+              return Error("<empty>")
+          return Ok(len(trimmed))
+    - | # an elif ladder is no guard set
+      def branched(n):
+          if n < 0:
+              return "neg"
+          elif n == 0:
+              return "zero"
+          return "pos"
+    - | # an else branch is no guard set
+      def forked(n):
+          if n < 0:
+              return "neg"
+          else:
+              return "zero"
+          return "pos"
+invalid:
+    - | # pure guard ladder
+      def gauged(ceiling, raw):
+          if raw == "":
+              return Error("<empty>")
+          if len(raw) > ceiling:
+              return Error("<over>")
+          return Ok(len(raw))
+    - |- # tuple returns survive through the parenthesized chain
+      def paired(n):
+          if n < 0:
+              return 1, 2
+          return 3, 4

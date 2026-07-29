@@ -1,0 +1,31 @@
+id: no-raise-in-railed-function
+valid:
+    - | # bare re-raise propagating cancellation
+      def bounded(step: Callable[[], T], /) -> Result[T, Fault]:
+          try:
+              return Ok(step())
+          except CancelledError:
+              release()
+              raise
+          return Error("<deadline>")
+    - | # unrailed function raises freely
+      def plain(raw: object, /) -> Shape:
+          if not raw:
+              raise ValueError("<empty>")
+          return Shape(raw)
+    - | # raise inside a nested closure belongs to the closure
+      def admit(rows: Roster) -> Result[Roster, Fault]:
+          def claimed() -> Roster:
+              if rows.empty:
+                  raise ValueError("<empty>")
+              return rows
+          return boundary("admit", claimed)
+invalid:
+    - | # railed head raises in its own body
+      def admitted(raw: object, /) -> Result[Shape, Fault]:
+          if not raw:
+              raise ValueError("<empty>")
+          return Ok(Shape(raw))
+    - |- # stringized annotation is still a rail
+      def stringy(raw: object, /) -> "Result[Shape, Fault]":
+          raise ValueError("<empty>")
