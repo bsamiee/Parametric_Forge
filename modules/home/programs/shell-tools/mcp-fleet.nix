@@ -80,7 +80,7 @@ in [
     launcher = {
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
-      version = "1.25.0";
+      version = "1.26.0";
       bin = "hostinger-api-mcp";
       upstream = "npm:hostinger-api-mcp";
       updateEngine = "npm-registry";
