@@ -217,7 +217,7 @@ in [
       kind = "uv";
       names = ["forge-workspace-mcp"];
       pkg = "workspace-mcp";
-      version = "1.22.2";
+      version = "1.23.0";
       bin = "workspace-mcp";
       upstream = "pypi:workspace-mcp";
       updateEngine = "pypi";
