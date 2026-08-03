@@ -80,7 +80,7 @@ in [
     launcher = {
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
-      version = "1.26.0";
+      version = "1.27.0";
       bin = "hostinger-api-mcp";
       upstream = "npm:hostinger-api-mcp";
       updateEngine = "npm-registry";
@@ -217,7 +217,7 @@ in [
       kind = "uv";
       names = ["forge-workspace-mcp"];
       pkg = "workspace-mcp";
-      version = "1.23.0";
+      version = "1.23.1";
       bin = "workspace-mcp";
       upstream = "pypi:workspace-mcp";
       updateEngine = "pypi";
