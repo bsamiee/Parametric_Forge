@@ -276,7 +276,6 @@ final: prev: let
 
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
-  rdkafkaRow = rowOf "rdkafka";
   astGrepRow = rowOf "ast-grep-upstream";
   astGrepSource = generatedSources.${astGrepRow.sourcePin};
 in
@@ -397,20 +396,6 @@ in
             sed -i "1s|^#!.*/node$|#!${final.nodejs-bin_26}/bin/node|" "$entry"
           done
         '';
-    });
-    # patchFamily none: the row advances sourceVersion and hash only, so the nixpkgs cpython recipe still owns the build. An upstream nixpkgs
-    # advance past the row version retires it silently.
-    python315 = let
-      row = rowOf "python315";
-      sv = row.sourceVersion;
-    in
-      assert lib.assertMsg (row.version == "${sv.major}.${sv.minor}.${sv.patch}${sv.suffix}") "python315: version and sourceVersion disagree";
-        prev.python315.override {inherit (row) sourceVersion hash;};
-    # patchFamily none: the row advances version and source only, so the nixpkgs recipe (cmake flags, output split, darwin test carve) still owns
-    # the build. An upstream nixpkgs advance past the row version retires it silently.
-    rdkafka = prev.rdkafka.overrideAttrs (_old: {
-      inherit (rdkafkaRow) version;
-      src = srcOf rdkafkaRow.assets.any;
     });
     # `rust-bin` arrives from the rust-overlay extension the flake composes ahead of this fold; an unpinnable version fails eval at the channel
     # manifest, and the profile row selects the component set.

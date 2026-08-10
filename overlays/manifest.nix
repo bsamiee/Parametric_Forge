@@ -47,10 +47,8 @@ let
     openstudio = "3.11.0";
     energyplus = "26.1.0";
     gcloud = "575.0.1";
-    rdkafka = "2.15.0";
     ruff = "0.16.2";
     rust = "1.97.1";
-    python = "3.15.0rc1";
     osBuild = "241b8abb4d";
     epBuild = "6f2e40d102";
   };
@@ -229,31 +227,6 @@ in rec {
       mainProgram = "gcloud";
     };
 
-    rdkafka = {
-      upstream = "github:confluentinc/librdkafka";
-      version = v.rdkafka;
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      # Source tarball, not a release binary: the asset carries the unpacked hash and strips the archive's version directory,
-      # matching the fetchFromGitHub tree the nixpkgs recipe builds from.
-      assets.any = {
-        url = "https://github.com/confluentinc/librdkafka/archive/refs/tags/v${v.rdkafka}.tar.gz";
-        hash = "sha256-WW64fwh0xR4lEVwmrv00tP9mo6b49aCNgLLH/P0YS8k=";
-        fetch = "zip";
-        stripRoot = true;
-      };
-      license = "bsd2";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "override";
-      overlayReason = "confluent-kafka links a system librdkafka and its sources refuse to compile below MIN_RD_KAFKA_VERSION 0x020f00ff; the pinned nixpkgs sits under that floor, so the attr override raises every consumer of the scientific native closure";
-      consumers = ["scientific-tools"];
-      description = "Apache Kafka C/C++ client library";
-      homepage = "https://github.com/confluentinc/librdkafka";
-    };
-
     ruff = {
       upstream = "github:astral-sh/ruff";
       version = v.ruff;
@@ -321,33 +294,6 @@ in rec {
       description = "Terminal-driven source-code image renderer";
       homepage = "https://github.com/mixn/carbon-now-cli";
       mainProgram = "carbon-now";
-    };
-
-    # CPython prerelease advance over the pinned nixpkgs recipe: the row swaps sourceVersion and hash only. The b3 interpreter's pre-rc C ABI
-    # segfaults current cp315 extension wheels (numpy 2.5.2 dies on `import numpy.random`), so the lane tracks the newest upstream 3.15.
-    python315 = {
-      upstream = "https://www.python.org/ftp/python";
-      version = v.python;
-      sourceVersion = {
-        major = "3";
-        minor = "15";
-        patch = "0";
-        suffix = "rc1";
-      };
-      hash = "sha256-+E2taAqyFHQX0nOTVcJnjw+az/5K6O93iV3hRUs4Swc=";
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      license = "psfl";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "override";
-      overlayReason = "the pinned nixpkgs interpreter sits at 3.15.0b3, whose pre-rc C ABI segfaults current cp315 extension wheels; the attr override advances the scientific venv lane, python-tools, and forge-python-overlay-env as one";
-      consumers = ["scientific-tools" "python-tools" "forge-python-overlay-env"];
-      description = "CPython 3.15 prerelease interpreter for the scientific venv lane";
-      homepage = "https://www.python.org/";
-      mainProgram = "python3.15";
     };
 
     # Uncached-by-design python-module lane: nixpkgs python modules a uv venv cannot take from PyPI (no cp315 wheel, no sdist). The overlay fold

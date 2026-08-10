@@ -6,8 +6,11 @@
 # ----------------------------------------------------------------------------
 # Media tool inventory; imports carry real configuration only.
 {pkgs, ...}: let
-  # nixpkgs lcevcdec fails to link on Darwin; keep FFmpeg otherwise full.
-  ffmpegForge = pkgs.ffmpeg-full.override {withLcevcdec = false;};
+  # nixpkgs lcevcdec fails to link on Darwin, and frei0r-plugins pulls libdrm (linux-only); keep FFmpeg otherwise full.
+  ffmpegForge = pkgs.ffmpeg-full.override {
+    withLcevcdec = false;
+    withFrei0r = false;
+  };
 in {
   imports = [
     ./glow.nix
