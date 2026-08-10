@@ -8,16 +8,16 @@
 {
   ast-grep-upstream = {
     pname = "ast-grep-upstream";
-    version = "0.45.0";
+    version = "0.45.1";
     src = fetchFromGitHub {
       owner = "ast-grep";
       repo = "ast-grep";
-      rev = "0.45.0";
+      rev = "0.45.1";
       fetchSubmodules = false;
-      sha256 = "sha256-njMkegbthIvJAI0tlSVg1G+/wRwSqWwXu4ZjM216Lys=";
+      sha256 = "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=";
     };
     cargoLock."Cargo.lock" = {
-      lockFile = ./. + "/sha256-njMkegbthIvJAI0tlSVg1G+_wRwSqWwXu4ZjM216Lys=/Cargo.lock";
+      lockFile = ./. + "/sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=/Cargo.lock";
       outputHashes = {
         
       };
@@ -25,26 +25,26 @@
   };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.5.5";
+    version = "2.5.7";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-darwin-arm64";
-      sha256 = "sha256-YHLWjTpPr3TCgCwQZlSQTyBS+FZ1o9FjIhPdl3pLZLs=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-darwin-arm64";
+      sha256 = "sha256-9x/oCQnS9w8eBRMg9bqd/VU7xe87rO9c3uGwDulqKFw=";
     };
   };
   biome-aarch64-linux = {
     pname = "biome-aarch64-linux";
-    version = "2.5.5";
+    version = "2.5.7";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-linux-arm64-musl";
-      sha256 = "sha256-D0h8KOyiyH4Ot5tzrYTJ/Au6tqbPNRP1/tvHTvLKLQs=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-arm64-musl";
+      sha256 = "sha256-GfCV2hc/puJ0206rp83P9hveMq02j3VLMYXJ6rzWcgI=";
     };
   };
   biome-x86_64-linux = {
     pname = "biome-x86_64-linux";
-    version = "2.5.5";
+    version = "2.5.7";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-linux-x64-musl";
-      sha256 = "sha256-VJ/qJ8dCEqrrLHNzRgKPrLzKepP2bPSqFFOI3YsY17w=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-x64-musl";
+      sha256 = "sha256-RgmkkwaNeoTGHQHV7V7IyvuAW8xSBIa+Y/CjiLvjyCc=";
     };
   };
   duckdb-aarch64-darwin = {
@@ -73,34 +73,34 @@
   };
   nodejs-bin_26-aarch64-darwin = {
     pname = "nodejs-bin_26-aarch64-darwin";
-    version = "26.5.0";
+    version = "26.7.0";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-darwin-arm64.tar.xz";
-      sha256 = "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=";
+      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-darwin-arm64.tar.xz";
+      sha256 = "sha256-WV0vk04IG4KWHRpf1BxtvQxalS2ei+W0Vmq3VEJpaNI=";
     };
   };
   nodejs-bin_26-aarch64-linux = {
     pname = "nodejs-bin_26-aarch64-linux";
-    version = "26.5.0";
+    version = "26.7.0";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-arm64.tar.xz";
-      sha256 = "sha256-A23wtJZi67NQ61bxysYDaZsentHiYD7hKf79pHNHkDA=";
+      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-arm64.tar.xz";
+      sha256 = "sha256-r8egBAGEhQkqyJhbgXsNVoRHK9lHLgtX0quIc35QCQ0=";
     };
   };
   nodejs-bin_26-x86_64-linux = {
     pname = "nodejs-bin_26-x86_64-linux";
-    version = "26.5.0";
+    version = "26.7.0";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-x64.tar.xz";
-      sha256 = "sha256-n2GVKPHbXdxB3M9UIRBm+0IijWmhVnM8acudbMkuNYw=";
+      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-x64.tar.xz";
+      sha256 = "sha256-mCqiTdi+TIicaoqzN93/OwiWZFsg9COTVugFUsFid+4=";
     };
   };
   pnpm_11 = {
     pname = "pnpm_11";
-    version = "11.17.0";
+    version = "11.21.0";
     src = fetchurl {
-      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.17.0.tgz";
-      sha256 = "sha256-ZE61B5ZU6H2uWaB+YtfwmBYrnOWPBgdzKLXd78ochUE=";
+      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.21.0.tgz";
+      sha256 = "sha256-hyN9N+rbedxiagV26zpS0j1wQiwyOuXgD8BckfQyN4A=";
     };
   };
   sqlean-aarch64-darwin = {

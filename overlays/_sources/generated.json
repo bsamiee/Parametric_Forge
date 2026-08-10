@@ -2,7 +2,7 @@
     "ast-grep-upstream": {
         "cargoLock": {
             "Cargo.lock": [
-                "sha256-njMkegbthIvJAI0tlSVg1G+_wRwSqWwXu4ZjM216Lys=/Cargo.lock",
+                "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=/Cargo.lock",
                 {}
             ]
         },
@@ -18,12 +18,12 @@
             "name": null,
             "owner": "ast-grep",
             "repo": "ast-grep",
-            "rev": "0.45.0",
-            "sha256": "sha256-njMkegbthIvJAI0tlSVg1G+/wRwSqWwXu4ZjM216Lys=",
+            "rev": "0.45.1",
+            "sha256": "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "0.45.0"
+        "version": "0.45.1"
     },
     "biome-aarch64-darwin": {
         "cargoLock": null,
@@ -34,11 +34,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-YHLWjTpPr3TCgCwQZlSQTyBS+FZ1o9FjIhPdl3pLZLs=",
+            "sha256": "sha256-9x/oCQnS9w8eBRMg9bqd/VU7xe87rO9c3uGwDulqKFw=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-darwin-arm64"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-darwin-arm64"
         },
-        "version": "2.5.5"
+        "version": "2.5.7"
     },
     "biome-aarch64-linux": {
         "cargoLock": null,
@@ -49,11 +49,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-D0h8KOyiyH4Ot5tzrYTJ/Au6tqbPNRP1/tvHTvLKLQs=",
+            "sha256": "sha256-GfCV2hc/puJ0206rp83P9hveMq02j3VLMYXJ6rzWcgI=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-linux-arm64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-arm64-musl"
         },
-        "version": "2.5.5"
+        "version": "2.5.7"
     },
     "biome-x86_64-linux": {
         "cargoLock": null,
@@ -64,11 +64,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-VJ/qJ8dCEqrrLHNzRgKPrLzKepP2bPSqFFOI3YsY17w=",
+            "sha256": "sha256-RgmkkwaNeoTGHQHV7V7IyvuAW8xSBIa+Y/CjiLvjyCc=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.5/biome-linux-x64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-x64-musl"
         },
-        "version": "2.5.5"
+        "version": "2.5.7"
     },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
@@ -124,11 +124,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-SCMdYgTspr4T5sUYTf3/odZK2IiANkzCz7GY+HLLKxM=",
+            "sha256": "sha256-WV0vk04IG4KWHRpf1BxtvQxalS2ei+W0Vmq3VEJpaNI=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.5.0/node-v26.5.0-darwin-arm64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-darwin-arm64.tar.xz"
         },
-        "version": "26.5.0"
+        "version": "26.7.0"
     },
     "nodejs-bin_26-aarch64-linux": {
         "cargoLock": null,
@@ -139,11 +139,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-A23wtJZi67NQ61bxysYDaZsentHiYD7hKf79pHNHkDA=",
+            "sha256": "sha256-r8egBAGEhQkqyJhbgXsNVoRHK9lHLgtX0quIc35QCQ0=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-arm64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-arm64.tar.xz"
         },
-        "version": "26.5.0"
+        "version": "26.7.0"
     },
     "nodejs-bin_26-x86_64-linux": {
         "cargoLock": null,
@@ -154,11 +154,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-n2GVKPHbXdxB3M9UIRBm+0IijWmhVnM8acudbMkuNYw=",
+            "sha256": "sha256-mCqiTdi+TIicaoqzN93/OwiWZFsg9COTVugFUsFid+4=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.5.0/node-v26.5.0-linux-x64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-x64.tar.xz"
         },
-        "version": "26.5.0"
+        "version": "26.7.0"
     },
     "pnpm_11": {
         "cargoLock": null,
@@ -169,11 +169,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-ZE61B5ZU6H2uWaB+YtfwmBYrnOWPBgdzKLXd78ochUE=",
+            "sha256": "sha256-hyN9N+rbedxiagV26zpS0j1wQiwyOuXgD8BckfQyN4A=",
             "type": "url",
-            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.17.0.tgz"
+            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.21.0.tgz"
         },
-        "version": "11.17.0"
+        "version": "11.21.0"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
