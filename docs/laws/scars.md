@@ -22,7 +22,7 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 
 | [INDEX] | [TRAP]                                                             | [RULE_NOW]                                          |
 | :-----: | :----------------------------------------------------------------- | :-------------------------------------------------- |
-|  [01]   | MCP `--read-only` is cosmetic relative to token scope              | The scoped service token is the auth boundary       |
+|  [01]   | MCP `--read-only` is cosmetic relative to token scope              | The token's scope is the auth boundary              |
 |  [02]   | A pruner reaping every non-dotfile wiped a repointed cache dir     | Prune only owned snapshot families                  |
 |  [03]   | `forge-mcp drift` crashed on absent/empty/malformed client configs | A parse failure is a drift finding, not a raw crash |
 
@@ -42,16 +42,12 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 |  [02]   | `mcpServers.<name>.env` carried a literal token                   | Carry no literal token env; the wrapper resolves the live token  |
 |  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init    |
 |  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted     |
-|  [05]   | Retained stdio writers kept abandoned fleet generations live      | Forge-owned stdio rows ride an activity lease and group reap     |
-|  [06]   | An unauthenticated HTTP `401` rendered a false-green health row   | Declared OAuth joins Codex credential state with endpoint health |
-|  [07]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store  |
+|  [05]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store  |
 
 - [02]: the literal token overrode wrapper token-file resolution.
 - [03]: tunnel health, env, and wrapper are separate axes.
 - [04]: the plugin cache is materialized with `claude plugin update`.
-- [05]: `supervise-stdio.nix` owns the bidirectional relay, inactivity lease, and process-group reap; `mcp-fleet.nix` routes every Forge-owned stdio registration through that owner.
-- [06]: `mcp-fleet.nix` declares `auth = "oauth"`; `forge-mcp doctor --network` requires Codex `o_auth` before an unauthenticated reachability probe can pass.
-- [07]: `mcp_oauth_credentials_store = "keyring"` prevents backend drift; concurrent lanes omit `heptabase-mcp` unless they call it.
+- [05]: `mcp_oauth_credentials_store = "keyring"` prevents backend drift; concurrent lanes omit `heptabase-mcp` unless they call it.
 
 ## [06]-[ZELLIJ_TERMINAL]
 

@@ -106,28 +106,19 @@
       # Polymorphic OS dispatch: one deploy rail, per-OS execution. Darwin builds/switches locally; NixOS check is eval-only (no Linux builder
       # assumed), build proves a closure, switch activates locally on a NixOS host or remotely through nixos-rebuild-ng --target-host.
       mode="check"
-      gen=""
       # Default --os keys on the running kernel: a NixOS host must never ride the darwin rail by default; FORGE_OS and --os stay explicit overrides.
       os="''${FORGE_OS:-$(case "$(uname -s)" in Linux) echo nixos ;; *) echo darwin ;; esac)}"
       host="''${FORGE_HOST:-}"
       target_host="''${FORGE_TARGET_HOST:-}"
       usage() {
         printf 'Usage: forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH]\n'
-        printf '                      [--check-only|--build|--switch|--rollback [gen]|--generations]\n'
+        printf '                      [--check-only|--build|--switch]\n'
       }
       while [ "$#" -gt 0 ]; do
         case "$1" in
           --check-only) mode="check" ;;
           --build) mode="build" ;;
           --switch) mode="switch" ;;
-          --rollback)
-            mode="rollback"
-            if [[ "''${2:-}" =~ ^[0-9]+$ ]]; then
-              gen="$2"
-              shift
-            fi
-            ;;
-          --generations) mode="generations" ;;
           --os)
             os="''${2:?forge-redeploy: --os requires darwin|nixos}"
             shift
@@ -161,10 +152,6 @@
       if [ -z "$host" ]; then
         if [ "$os" = "darwin" ]; then host="macbook"; else host="maghz"; fi
       fi
-      if [ "$os" = "nixos" ] && { [ "$mode" = "generations" ] || [ "$mode" = "rollback" ]; }; then
-        printf 'forge-redeploy: %s is Darwin-local; NixOS generations live on the target (nixos-rebuild-ng list-generations / --rollback over ssh)\n' "$mode" >&2
-        exit 2
-      fi
 
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
       cache="''${CACHIX_CACHE:-bsamiee}"
@@ -173,18 +160,8 @@
       custom_conf="/etc/nix/nix.custom.conf"
       profile="/nix/var/nix/profiles/system"
       nix_env="/nix/var/nix/profiles/default/bin/nix-env"
-      rebuild="/run/current-system/sw/bin/darwin-rebuild"
 
-      # Generation listing is a pure read; no lock, no receipt, no flake needed.
-      if [ "$mode" = "generations" ]; then
-        sudo -n "$rebuild" --list-generations || {
-          printf 'forge-redeploy: listing denied; run once: sudo %s --list-generations\n' "$rebuild" >&2
-          exit 1
-        }
-        exit 0
-      fi
-
-      # One flock serializes deploys, rollbacks, and the maintenance agent.
+      # One flock serializes deploys and the maintenance agent.
       mkdir -p "$(dirname "$lock_file")"
       exec {lock_fd}>"$lock_file"
       flock -n "$lock_fd" || {
@@ -266,7 +243,7 @@
         run_kickstart
       }
 
-      # Activation's /etc collision guard exits 2 on an installer-written real file; one adoption owner covers both switch and rollback activations.
+      # Activation's /etc collision guard exits 2 on an installer-written real file; one adoption owner serves the switch activation.
       adopt_custom_conf() {
         { [ -f "$custom_conf" ] && [ ! -L "$custom_conf" ]; } || return 0
         sudo -n /bin/mv "$custom_conf" "$custom_conf.before-determinate-module" || {
@@ -275,25 +252,6 @@
           exit 1
         }
       }
-
-      # Rollback reactivates a prior generation; no flake, no build, no push.
-      if [ "$mode" = "rollback" ]; then
-        adopt_custom_conf
-        verb=(--rollback)
-        [ -z "$gen" ] || verb=(--switch-generation "$gen")
-        t0=$EPOCHSECONDS
-        sudo -n "$rebuild" "''${verb[@]}" || {
-          activate_s=$((EPOCHSECONDS - t0))
-          printf 'forge-redeploy: rollback failed; if sudo denied, run once: sudo %s %s\n' "$rebuild" "''${verb[*]}" >&2
-          exit 1
-        }
-        activate_s=$((EPOCHSECONDS - t0))
-        system_path="$(readlink /run/current-system)"
-        assert_live "$(<"$profile/systemConfig")" "rolled-back profile"
-        result="ok"
-        printf 'forge-redeploy: rollback ok system=%s\n' "$system_path"
-        exit 0
-      fi
 
       [ -f "$forge_root/flake.nix" ] || {
         printf 'forge-redeploy: missing flake root: %s\n' "$forge_root" >&2
@@ -465,15 +423,15 @@
       }
       lock="ok"
 
-      # System generations: keep the newest five for the rollback window; the NOPASSWD row pins these exact args, so a denial signals policy drift.
+      # System generations: current-only policy; the NOPASSWD row pins these exact args, so a denial signals policy drift.
       trim="ok"
-      sudo -n "$nix_env" -p /nix/var/nix/profiles/system --delete-generations +5 || {
+      sudo -n "$nix_env" -p /nix/var/nix/profiles/system --delete-generations old || {
         trim="denied"
         printf 'forge-nix-maintenance: WARNING system generation trim denied; rerun after a switch lands the sudoers row\n' >&2
       }
-      # User profiles: drop stale generations and collect what they unpinned; continuous free-space GC stays determinate-nixd-owned.
+      # User profiles: drop every non-current generation and collect; continuous free-space GC stays determinate-nixd-owned.
       t0=$EPOCHSECONDS
-      nix-collect-garbage --delete-older-than 14d
+      nix-collect-garbage -d
       gc="ok" gc_s=$((EPOCHSECONDS - t0))
       t0=$EPOCHSECONDS
       nix store optimise
@@ -590,7 +548,7 @@
     };
     # Agent-root retention: material younger than the window is never a candidate, so a live session's working files stay untouchable.
     age = {
-      claude-backups-retention = [".claude/backups" 14 ""];
+      claude-backups-retention = [".claude/backups" 0 ""];
       claude-file-history-retention = [".claude/file-history" 30 ""];
       claude-session-env-retention = [".claude/session-env" 14 ""];
       claude-tasks-retention = [".claude/tasks" 30 ""];
@@ -655,9 +613,6 @@
     orphan = {
       biome-lsp-proxy-orphans = ["biome lsp-proxy" "" 300 "kill"];
       biome-daemon-orphans = ["biome __run_server" "" 300 "kill"];
-      mcp-fleet-orphans = ["[.]cache/forge-mcp/" "" 300 "kill"];
-      mcp-uv-orphans = ["(ast-grep-server|workspace-mcp|notebooklm-mcp|nuget-mcp)" "" 300 "kill"];
-      rhino-router-orphans = ["rhino-mcp-router" "" 300 "kill"];
       lsp-server-orphans = ["(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|roslyn-language-server|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server)" "" 300 "kill"];
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "kill"];
       forge-edit-nvim-orphans = ["nvim.*(forge-edit|forge-accept)" "" 1800 "kill"];
@@ -1211,162 +1166,6 @@
     '';
   };
 
-  # Daily currency rail: flake-input bump plus declared-vs-deployed detection. Builds run through forge-redeploy --build, so receipts, flock, and
-  # cache push stay single-owner; a landed bump auto-commits (operator ruling: full automation, no branches) and never switches unattended.
-  forgeNixDrift = mkTool {
-    name = "forge-nix-drift";
-    storePath = true;
-    inputs = [pkgs.coreutils pkgs.git pkgs.jq pkgs.gnugrep pkgs.gawk pkgs.flock forgeRedeploy];
-    text = ''
-      case "''${1:-}" in
-        "") mode="manual" ;;
-        --scheduled) mode="scheduled" ;;
-        *)
-          printf 'Usage: forge-nix-drift [--scheduled]\n' >&2
-          exit 2
-          ;;
-      esac
-      if [ "$#" -gt 1 ]; then
-        printf 'forge-nix-drift: unexpected arguments after %s\n' "$1" >&2
-        exit 2
-      fi
-
-      forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
-      lock_file="''${FORGE_NIX_DRIFT_LOCK:-$HOME/.cache/forge-nix-drift.lock}"
-
-      # One typed receipt per run; the EXIT trap emits it even when a phase aborts, so failed bumps and builds stay visible (result=fail).
-      power="-" lock="-" worktree="-" inputs="-" bump="-"
-      build="-" commit="-" deployed="-" nixd="-"
-      result="fail"
-      emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tpower=%s\tlock=%s\tworktree=%s\tinputs=%s\tbump=%s\tbuild=%s\tcommit=%s\tdeployed=%s\tnixd=%s\tresult=%s' \
-          "$ts" "$mode" "$power" "$lock" "$worktree" "$inputs" "$bump" \
-          "$build" "$commit" "$deployed" "$nixd" "$result")"
-      }
-      trap emit_receipt EXIT
-
-      ${acGateFold}
-      # Own lock serializes drift runs; the deploy flock stays redeploy-owned, so an in-flight deploy
-      # surfaces as build=deploy-in-flight, not deadlock.
-      mkdir -p "$(dirname "$lock_file")"
-      exec {lock_fd}>"$lock_file"
-      flock "''${flock_args[@]}" "$lock_fd" || {
-        lock="held" result="skipped"
-        printf 'forge-nix-drift: another drift run holds %s; skipped\n' "$lock_file" >&2
-        exit 75
-      }
-      lock="ok"
-
-      [ -f "$forge_root/flake.nix" ] || {
-        printf 'forge-nix-drift: missing flake root: %s\n' "$forge_root" >&2
-        exit 1
-      }
-      cd "$forge_root"
-
-      tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-nix-drift.XXXXXX")"
-      trap 'emit_receipt; rm -rf "$tmpdir"' EXIT
-      trap 'exit 143' TERM
-      trap 'exit 130' INT
-
-      # Installed daemon vs pinned artifact: Determinate version drift is a separate object from flake-input drift; it surfaces in the receipt only.
-      pinned="$(jq -r '[.nodes | to_entries[] | select(.key | startswith("determinate-nixd-")) | .value.locked.url // ""] | first // ""' flake.lock | grep -o 'v[0-9.]*' || true)"
-      installed="$(/usr/local/bin/determinate-nixd version 2>/dev/null | awk '/daemon version:/ {print "v" $NF; exit}' || true)"
-      nixd="''${installed:--}:''${pinned:--}"
-
-      # Root-input identity snapshot; the pre/post join names moved inputs.
-      snap() {
-        jq -r '. as $l | $l.nodes.root.inputs | to_entries[]
-          | .key + "\t" + ($l.nodes[.value].locked.rev // $l.nodes[.value].locked.url // "-")' flake.lock | sort
-      }
-
-      dirty_total="$(git status --porcelain | wc -l | tr -d ' ')"
-      if [ "$dirty_total" = 0 ]; then worktree="clean"; else worktree="dirty-$dirty_total"; fi
-
-      # Bump only when the flake pair is untouched: uncommitted operator or thread edits to flake.nix/flake.lock must never be entangled. The mutation
-      # window rides the DEPLOY lock so a redeploy evaluating mid-update never reads a half-written
-      # flake.lock; the window closes before the build, which re-takes that lock itself.
-      deploy_lock="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
-      mkdir -p "''${deploy_lock%/*}"
-      if [ -n "$(git status --porcelain -- flake.nix flake.lock)" ]; then
-        bump="skipped-dirty"
-      else
-        exec {deploy_fd}>"$deploy_lock"
-        if ! flock -w 600 "$deploy_fd"; then
-          bump="skipped-deploy-in-flight"
-        else
-          snap >"$tmpdir/pre"
-          # A failed update (network/registry) is withdrawn; a partially written lock must never wedge later runs into skipped-dirty.
-          if ! nix flake update; then
-            git checkout -- flake.lock
-            bump="fail"
-            exit 1
-          fi
-          if [ -z "$(git status --porcelain -- flake.lock)" ]; then
-            bump="current"
-          else
-            bump="moved"
-            snap >"$tmpdir/post"
-            # Full outer join: an added or removed root input is drift too.
-            inputs="$(join -t "$(printf '\t')" -a1 -a2 -e - -o 0,1.2,2.2 "$tmpdir/pre" "$tmpdir/post" \
-              | awk -F '\t' '$2 != $3 {print $1}' | paste -sd, -)"
-            [ -n "$inputs" ] || inputs="transitive"
-          fi
-        fi
-        exec {deploy_fd}>&-
-      fi
-
-      # Receipt-proved build through the deploy owner; --build also owns the cache push, so drift keeps one cache-publication rail (no dual paths).
-      if forge-redeploy --build >"$tmpdir/redeploy" 2>&1; then
-        build="ok"
-      else
-        rc=$?
-        if [ "$rc" = 75 ]; then build="deploy-in-flight"; else build="fail"; fi
-      fi
-      cat "$tmpdir/redeploy"
-
-      # Post-build adjudication under the deploy lock: an unproven bump is withdrawn (HEAD's lock stays last known-good), a proven bump commits.
-      if [ "$bump" = "moved" ]; then
-        exec {deploy_fd}>"$deploy_lock"
-        flock -w 600 "$deploy_fd" || true
-        if [ "$build" != "ok" ]; then
-          git checkout -- flake.lock
-          bump="reverted"
-        elif git -c commit.gpgsign=false commit -m "nix: bump flake inputs ($inputs)" -- flake.lock >/dev/null; then
-          commit="ok"
-        else
-          commit="failed"
-          printf 'forge-nix-drift: WARNING lock bump built but commit failed; flake.lock left uncommitted\n' >&2
-        fi
-        exec {deploy_fd}>&-
-      fi
-
-      if [ "$build" = "ok" ]; then
-        # The typed receipt row is the contract; human stdout wording is not.
-        redeploy_receipts="''${FORGE_REDEPLOY_RECEIPT_LOG:-$HOME/Library/Logs/forge-redeploy.receipts.log}"
-        # tail of an absent receipt log is expected non-zero, railed.
-        system_path="$({ tail -1 "$redeploy_receipts" 2>/dev/null || true; } | awk -F '\t' '
-          {for (i = 1; i <= NF; i++) if ($i ~ /^system=/) {sub(/^system=/, "", $i); print $i; exit}}')"
-        [ "$system_path" != "-" ] || system_path=""
-        if [ -n "$system_path" ] && [ -e /run/current-system ]; then
-          if [ "$(readlink /run/current-system)" = "$system_path" ]; then deployed="match"; else deployed="drift"; fi
-        fi
-      fi
-
-      case "$build" in
-        ok)
-          result="ok"
-          if [ "$commit" = "failed" ]; then result="partial"; fi
-          ;;
-        deploy-in-flight)
-          result="skipped"
-          ;;
-        *)
-          exit 1
-          ;;
-      esac
-    '';
-  };
-
   # Sweep rows: HM-managed roots where a stale root-owned store hardlink from a prior generation blocks the user-mode backup/relink during activation;
   # exempt basenames are root-owned by design (daemon state), never in-the-way.
   sweepRows = pkgs.writeText "forge-activation-sweep-rows.json" (builtins.toJSON (lib.mapAttrsToList
@@ -1679,9 +1478,9 @@
           return 0
         }
         local out rc=0 drc=0
-        out="$(forge-mcp doctor --network 2>&1)" || rc=$?
+        out="$(forge-mcp doctor 2>&1)" || rc=$?
         if [ "$rc" = 0 ]; then
-          row PASS fleet-doctor "all probed fleet rows green"
+          row PASS fleet-doctor "all fleet wrappers resolve"
         else
           row FAIL fleet-doctor "failing rows: $(printf '%s\n' "$out" | { grep '^\[FAIL\]' || true; } | awk '{print $2}' | paste -sd' ' -)"
         fi
@@ -2074,7 +1873,7 @@
   # Observation-only update-visibility board projected from existing receipts and local metadata.
   forgeUpdateBoard = mkTool {
     name = "forge-update-board";
-    inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
+    inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq];
     text = ''
       ${statusFold}
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
@@ -2090,7 +1889,13 @@
         if [ -f "$1" ]; then tail -1 "$1"; else echo "no-receipt"; fi
       }
 
-      row flake-inputs forge-nix-drift "$(tail_receipt "$logs/forge-nix-drift.receipts.log")"
+      flake_lock="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}/flake.lock"
+      if [ -f "$flake_lock" ]; then
+        oldest="$(jq -r '. as $l | [$l.nodes.root.inputs[] | $l.nodes[.].locked.lastModified? // empty] | min' "$flake_lock")"
+        row flake-inputs flake-lock "oldest_input_age_days=$(( (EPOCHSECONDS - oldest) / 86400 ))"
+      else
+        row flake-inputs flake-lock "state=absent"
+      fi
       row deploy forge-redeploy "$(tail_receipt "$logs/forge-redeploy.receipts.log")"
       if [ -x "$brew_bin" ]; then
         formulae="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --quiet 2>/dev/null | wc -l | tr -d ' ')"
@@ -2125,7 +1930,6 @@ in {
     forgeRedeploy
     forgeNixMaintenance
     forgeCleanup
-    forgeNixDrift
     forgeActivationSweep
     forgeAccept
     forgePathDoctor
@@ -2135,7 +1939,7 @@ in {
   ];
 
   # Shared identity bundle for the scheduled agents (bundle-apps.nix): Login Items & Extensions shows one "Forge Nix Automation" row — one toggle
-  # governs drift, maintenance, and the orphan sweep.
+  # governs maintenance and the orphan sweep.
   forge.bundleApps.forge-nix-automation = "Forge Nix Automation";
 
   launchd.agents = {
@@ -2153,15 +1957,5 @@ in {
     # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated reaping of agent-lane litter — ppid-1 orphans plus scope-any
     # session-child wedge residue; kill classes are allowlisted rows, everything ambiguous stays receipt-only.
     forge-orphan-sweep = mkAgent "forge-orphan-sweep" {StartCalendarInterval = [{Minute = 0;}];} ["${forgeCleanup}/bin/forge-cleanup" "sweep"];
-
-    # Daily 10:00 currency cadence (operator ruling); calendar-only, no RunAtLoad: login must never race live agent work with a lock bump.
-    forge-nix-drift = mkAgent "forge-nix-drift" {
-      StartCalendarInterval = [
-        {
-          Hour = 10;
-          Minute = 0;
-        }
-      ];
-    } ["${forgeNixDrift}/bin/forge-nix-drift" "--scheduled"];
   };
 }

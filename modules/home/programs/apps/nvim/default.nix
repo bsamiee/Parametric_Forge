@@ -299,12 +299,6 @@
       argv = ["tail" "-n" "40" "${home}/Library/Logs/forge-redeploy.receipts.log"];
       mode = "scratch";
     }
-    {
-      id = "receipts-drift";
-      label = "Nix drift receipts (tail)";
-      argv = ["tail" "-n" "40" "${home}/Library/Logs/forge-nix-drift.receipts.log"];
-      mode = "scratch";
-    }
   ];
 
   toolFacts = {

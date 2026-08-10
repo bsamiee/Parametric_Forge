@@ -67,8 +67,7 @@ declare -ra DOPPLER_SOURCES=(
     'parametric-forge:dev_machine:forge-machine.json:DOPPLER_TOKEN_FORGE_MACHINE'
     'maghz:prd_host:maghz-host.json:DOPPLER_TOKEN_MAGHZ_HOST'
 )
-# Non-hook snapshots that live in the doppler cache dir (fleet-owned rows).
-declare -ra SNAPSHOT_KEEP=('doppler-mcp.json')
+declare -ra SNAPSHOT_KEEP=()
 declare -ra _ENV_KEYS=(
     EXA_API_KEY PERPLEXITY_API_KEY TAVILY_API_KEY
     CONTEXT7_API_KEY GREPTILE_API_KEY CODERABBIT_API_KEY

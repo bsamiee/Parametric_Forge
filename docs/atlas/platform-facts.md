@@ -17,16 +17,14 @@ Per-agent quirks a plist read does not explain live in their owner modules; the 
 |  [01]   | `org.nix-community.home.colima-default` | `environments/containers.nix` | restart-on-stop; needs `ExitTimeOut`  |
 |  [02]   | `org.nix-community.home.atuin-daemon`   | `shell-tools/atuin.nix`       | upstream HM label, not estate grammar |
 |  [03]   | `com.github.domt4.homebrew-autoupdate`  | `darwin/homebrew/default.nix` | tap-owned; never rename               |
-|  [04]   | `com.parametric-forge.forge-nix-drift`  | `shell-tools/forge-tools.nix` | calendar-only; no `RunAtLoad`         |
-|  [05]   | `com.parametric-forge.maghz-vps-tunnel` | `shell-tools/ssh.nix`         | row from `vpsTunnels`; owns forwards  |
+|  [04]   | `com.parametric-forge.maghz-vps-tunnel` | `shell-tools/ssh.nix`         | row from `vpsTunnels`; owns forwards  |
 
 - [01]: `KeepAlive.SuccessfulExit=true` restarts it after `colima stop`; the default exit timeout SIGKILLs VM teardown, so teardown needs the declared `ExitTimeOut`.
 - [02]: upstream HM label, not estate grammar; a `com.parametric-forge.*` label search misses the live agent.
 - [03]: tap-owned upstream job the reconciler regenerates; renaming it to estate grammar breaks the lifecycle the reconciler proves.
-- [04]: calendar-only, no `RunAtLoad` by design so login never races active work; a `RunAtLoad` row reintroduces the race.
-- [05]: row-generated from `vpsTunnels`; receipts classify tunnel health and port ownership.
+- [04]: row-generated from `vpsTunnels`; receipts classify tunnel health and port ownership.
 
-`Forge Nix Automation.app` is one shared BTM identity for the maintenance, drift, and orphan-sweep jobs; splitting it fragments three scheduled jobs into opaque Login Items rows.
+`Forge Nix Automation.app` is one shared BTM identity for the maintenance and orphan-sweep jobs; splitting it fragments the scheduled jobs into opaque Login Items rows.
 
 ## [03]-[TCC_SUDO]
 
@@ -46,6 +44,6 @@ Colima owns the Docker runtime: `services.colima` with home under XDG data, the 
 
 ## [06]-[DEPLOY_LOCKS_ACTIVATION]
 
-`forge-redeploy` is the only sanctioned activation path, and the deploy/rollback/maintenance jobs serialize through one shared lock, `${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}` — an agent using any other lock path fails to serialize with the live rail. `forge-nix-drift` holds its own `${FORGE_NIX_DRIFT_LOCK:-...}`. Darwin generation listing delegates to `darwin-rebuild --list-generations`; NixOS `--rollback`/`--generations` are rejected as Darwin-local. After activation, `forge-redeploy` asserts `/run/current-system` equals the built store path — a profile update without a matching live system is fatal.
+`forge-redeploy` is the only sanctioned activation path, and the deploy/maintenance jobs serialize through one shared lock, `${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}` — an agent using any other lock path fails to serialize with the live rail. After activation, `forge-redeploy` asserts `/run/current-system` equals the built store path — a profile update without a matching live system is fatal.
 
 Two activation traps have owned recovery rails. A real `/etc/nix/nix.custom.conf` blocks Determinate activation; the deploy rail moves it aside through an exact sudoers row. Stale root-owned Home Manager store hardlinks under `.config`, `.local/share`, `.local/state`, `.hammerspoon`, and `Library/LaunchAgents` block user-mode backup/relink; `forge-activation-sweep [--clear]` detects the topmost root-owned entries with `find -uid 0 -prune` and clears them in one sudo batch. `forge-provision` runs a parallel generation model — `gen-<epoch>-<srandom>` ids, a `.staging-<id>` dir, and an atomic `current` symlink publish that refuses a non-symlink `current`.

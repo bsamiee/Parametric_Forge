@@ -5,8 +5,8 @@
 # Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
 # Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the MCP observability surface — `forge-mcp` emitting
-# schema=forge-mcp/v1 receipts across outdated/doctor/drift/reconcile/generate/roots/snoop, the shared supervised-stdio lane binding each server
-# subtree to client liveness, and the Rhino router gate. Launcher code never touches providers or credentials.
+# schema=forge-mcp/v1 receipts across outdated/doctor/drift/reconcile/generate/roots/snoop. Launchers exec their pinned servers directly under
+# the client's stdio pipe. Launcher code never touches providers or credentials.
 {
   config,
   lib,
@@ -17,49 +17,17 @@
   stateHome = config.xdg.stateHome;
   # Shared owner: the dual-receipt emit fold (receipts.nix) that forge-mcp folds for its schema=forge-mcp/v1 receipt surface.
   receiptsFold = import ./receipts.nix;
-  # Host-OS row admission: launchers, projections, probes, and drift all fold the same filtered fleet, so a Linux switch never builds, registers,
+  # Host-OS row admission: launchers, projections, and drift all fold the same filtered fleet, so a Linux switch never builds, registers,
   # or expects a Darwin-only server.
   hostOs =
     if pkgs.stdenv.hostPlatform.isDarwin
     then "darwin"
     else "linux";
-  fleet = builtins.filter (row: builtins.elem hostOs (row.platforms or ["darwin" "linux"])) (import ./mcp-fleet.nix {
-    inherit profileBin;
-    homeDir = config.home.homeDirectory;
-    sshBin = "${pkgs.openssh}/bin/ssh";
-  });
+  fleet = builtins.filter (row: builtins.elem hostOs (row.platforms or ["darwin" "linux"])) (import ./mcp-fleet.nix {inherit profileBin;});
   launcherRows = builtins.filter (r: r ? launcher) fleet;
   pnpmRows = builtins.filter (r: (r.launcher.kind or "pnpm") == "pnpm") launcherRows;
   uvRows = builtins.filter (r: lib.hasPrefix "uv" (r.launcher.kind or "pnpm")) launcherRows;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
-  # Shared supervised stdio lane: every launcher binds its server subtree to bidirectional protocol activity, so an abandoned client generation
-  # expires under a bounded inactivity lease and converges through process-group reap even when obsolete writers retain stdin.
-  superviseStdio = import ./supervise-stdio.nix;
-  forgeSuperviseStdio = pkgs.writeShellApplication {
-    name = "forge-supervise-stdio";
-    runtimeInputs = [pkgs.coreutils];
-    text = ''
-      if [ "''${1:-}" = "--idle-seconds" ]; then
-        idle_seconds="''${2:-}"
-        if [[ ! "$idle_seconds" =~ ^[1-9][0-9]*$ ]]; then
-          printf 'forge-supervise-stdio: --idle-seconds requires a positive integer, got: %s\n' "''${idle_seconds:-<missing>}" >&2
-          exit 64
-        fi
-        export FORGE_STDIO_IDLE_SECONDS="$idle_seconds"
-        shift 2
-      fi
-      if [ "''${1:-}" = "--" ]; then
-        shift
-      fi
-      if [ "$#" -eq 0 ]; then
-        printf 'usage: forge-supervise-stdio [--idle-seconds N] [--] COMMAND [ARGS...]\n' >&2
-        exit 64
-      fi
-      cmd="$1"
-      shift
-      ${superviseStdio ''"$cmd"''}
-    '';
-  };
 
   # Traffic-capture policy rows (annex-gated): capture is unreachable without the opt-in env, frames log metadata only, and files age out.
   snoopPolicy = {
@@ -111,8 +79,7 @@
             exit 69
           fi
         fi
-        export FORGE_STDIO_IDLE_SECONDS=${toString (row.launcher.idleSeconds or (row.codex.toolTimeoutSec + 300))}
-        ${superviseStdio ''"$entry"''}
+        exec "$entry" "$@"
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) pnpmRows;
@@ -148,10 +115,9 @@
       exec "$UV_TOOL_BIN_DIR/${row.launcher.bin}" "$@"
     '';
   uvLaunchers = lib.concatMap (row: map (mkUvLauncher row) row.launcher.names) uvRows;
-  # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. The vendor router
-  # runs under the shared supervised lane regardless of Rhino state, owning host spawn-on-demand and adoption of a user-started session through its
-  # own slot lifecycle; client liveness alone governs the subtree, so a dead, killed, or reconnecting client tears it down while no session exit
-  # strands a router and the vendor binary exposes no idle-exit.
+  # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. The router
+  # runs directly under the client's stdio pipe — it spawns a Rhino host on demand, adopts a user-started session through its own slot
+  # lifecycle, and exits with client stdin EOF. No supervisor, lease, or reaper governs it.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
     runtimeInputs = [pkgs.coreutils];
@@ -162,10 +128,10 @@
         echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
         exit 69
       fi
-      ${superviseStdio ''"$entry"''}
+      exec "$entry" "$@"
     '';
   };
-  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up so the always-live vendor router adopts it through slot lifecycle; the
+  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up so the vendor router adopts it through slot lifecycle; the
   # MCP platform listener autostarts with the app. `open -a` passes -nosplash only on a fresh launch, so the pgrep guard keeps it honest.
   rhinoUp = pkgs.writeShellApplication {
     name = "forge-rhino-up";
@@ -380,7 +346,7 @@
       receipt_log="''${FORGE_MCP_RECEIPT_LOG:-$HOME/Library/Logs/forge-mcp.receipts.log}"
       vscode_mcp="$HOME/Library/Application Support/Code/User/mcp.json"
       usage() {
-        echo "usage: forge-mcp outdated [--json] | advance [--json] | doctor [--network] [--json] | drift [--json] | reconcile <claude|codex>" >&2
+        echo "usage: forge-mcp outdated [--json] | advance [--json] | doctor [--json] | drift [--json] | reconcile <claude|codex>" >&2
         echo "       forge-mcp generate <claude|codex|vscode> | roots [--json] | snoop SERVER [-- ARGS...]" >&2
         exit 64
       }
@@ -452,7 +418,7 @@
       }
 
       # Currency landing rail: rewrite each outdated pin's version literal in the fleet manifest, prove the result through the deploy owner's
-      # build, then auto-commit (the forge-nix-drift adjudication: full automation, no branches, never an unattended switch). An unproven bump
+      # build, then auto-commit (full automation, no branches, never an unattended switch). An unproven bump
       # is withdrawn whole, so HEAD's manifest stays last known-good.
       cmd_advance() {
         as_json=0
@@ -519,171 +485,7 @@
         exit 1
       }
 
-      # Side-effect-free health probe: newline-delimited JSON-RPC initialize on stdio (stdin EOF is the shutdown), POST initialize for bearer/http
-      # rows, and Codex app-server inventory for OAuth rows so its credential store performs the authenticated initialize plus tools/list. Values never
-      # print. Each probe emits one typed row (STATUS<TAB>name<TAB>detail); presentation is the doctor's, so human and --json share the same rows.
-      req='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}'
-      stop_owned_process() { # process-group leader
-        local pid="$1"
-        kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
-        for _ in 1 2 3 4 5 6 7 8 9 10; do
-          { kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null; } || break
-          sleep 0.1
-        done
-        if kill -0 -- "-$pid" 2>/dev/null || kill -0 "$pid" 2>/dev/null; then
-          kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
-        fi
-        wait "$pid" 2>/dev/null || true
-      }
-      codex_oauth_inventory() { # $1=workdir $2=result-file
-        local work="$1" result="$2" oauth_home="$1/codex-oauth-home" fifo="$1/codex-oauth.in" raw="$1/codex-oauth.raw"
-        local pid input_fd success=0
-        printf '{"ok":false,"reason":"app-server-unavailable","rows":[]}\n' >"$result"
-        command -v codex >/dev/null 2>&1 || return 1
-        mkdir -p "$oauth_home"
-        jq -f '${codexProjectionJq}' "$fleet" \
-          | jq '{mcp_oauth_credentials_store: "keyring",
-                 mcp_servers: (.mcp_servers | with_entries(select(.value.auth == "oauth")))}' \
-          | yq -p json -o toml '.' >"$oauth_home/config.toml"
-        if [ "$(yq -p toml -o json '.mcp_servers | length' "$oauth_home/config.toml")" = 0 ]; then
-          printf '{"ok":true,"reason":"no-oauth-rows","rows":[]}\n' >"$result"
-          return 0
-        fi
-
-        mkfifo "$fifo"
-        : >"$raw"
-        set -m
-        CODEX_HOME="$oauth_home" codex app-server --strict-config --stdio <"$fifo" >"$raw" 2>"$work/codex-oauth.err" &
-        pid=$!
-        set +m
-        if ! exec {input_fd}>"$fifo"; then
-          stop_owned_process "$pid"
-          return 1
-        fi
-        response_ready() { # $1=id $2=50ms-attempts
-          local id="$1" limit="$2" attempt
-          for ((attempt = 0; attempt < limit; attempt++)); do
-            jq -e --argjson id "$id" 'select(.id == $id)' "$raw" >/dev/null 2>&1 && return 0
-            kill -0 "$pid" 2>/dev/null || return 1
-            sleep 0.05
-          done
-          return 1
-        }
-        if printf '%s\n' \
-          '{"id":1,"method":"initialize","params":{"clientInfo":{"name":"forge-mcp-doctor","version":"1.0.0"}}}' >&"$input_fd" \
-          && response_ready 1 100 \
-          && printf '%s\n' '{"method":"initialized"}' \
-            '{"id":2,"method":"mcpServerStatus/list","params":{"detail":"toolsAndAuthOnly"}}' >&"$input_fd" \
-          && response_ready 2 600; then
-          success=1
-        fi
-        exec {input_fd}>&-
-        stop_owned_process "$pid"
-        if [ "$success" = 1 ] && jq -ce '
-          select(.id == 2 and (.result.data | type == "array"))
-          | {ok: true, reason: "verified", rows: [.result.data[] | {
-              name, authStatus,
-              toolsListed: (.tools | type == "object"),
-              toolCount: (.tools | if type == "object" then length else 0 end),
-              serverInfoName: (.serverInfo.name // "")
-            }]}
-        ' "$raw" >"$result"; then
-          return 0
-        fi
-        printf '{"ok":false,"reason":"authenticated-probe-failed","rows":[]}\n' >"$result"
-        return 1
-      }
-
-      probe_row() {
-        row="$1" network="$2" out="$3" codex_auth="$4" codex_oauth="$5"
-        # One jq projection owns the row header; the unit-separator join survives empty fields where tab-IFS reads would collapse them.
-        IFS=$'\x1f' read -r name probe transport t cmdpath url bearer auth < <(jq -r \
-          '[.name, .probe, .transport, (.codex.startupTimeoutSec // 20 | tostring),
-            (.command // ""), (.url // ""), (.codex.bearerEnvVar // ""), (.codex.auth // "")] | join("\u001f")' < <(printf '%s\n' "$row"))
-        missing="$(printf '%s\n' "$row" | jq -r '(.envKeys // [])[]' | while IFS= read -r k; do
-          [ -n "''${!k:-}" ] || printf '%s ' "$k"
-        done)"
-        envnote=""; [ -z "$missing" ] || envnote=" env-missing: $missing"
-        emit() { printf '%s\t%s\t%s\n' "$1" "$name" "$2" >"$out"; }
-        if [ "$probe" = "skip" ]; then
-          emit SKIP "host-private row"; return 0
-        fi
-        if [ "$probe" = "network" ] && [ "$network" != 1 ]; then
-          emit SKIP "network class (probe with --network)$envnote"; return 0
-        fi
-        if [ "$auth" = "oauth" ]; then
-          auth_status="$(jq -r --arg name "$name" '[.[] | select(.name == $name) | .auth_status][0] // "unavailable"' "$codex_auth" 2>/dev/null || echo unavailable)"
-          if [ "$auth_status" != "o_auth" ]; then
-            emit FAIL "Codex OAuth is not usable (status=$auth_status)"; return 0
-          fi
-          if [ "$(jq -r '.ok // false' "$codex_oauth" 2>/dev/null || echo false)" != true ]; then
-            emit FAIL "Codex authenticated MCP probe unavailable"; return 0
-          fi
-          IFS=$'\x1f' read -r verified_auth tools_listed tool_count server_info < <(jq -r --arg name "$name" '
-            [.rows[] | select(.name == $name)
-             | [.authStatus, (.toolsListed | tostring), (.toolCount | tostring), .serverInfoName] | join("\u001f")][0] // ""
-          ' "$codex_oauth")
-          if [ "$verified_auth" != "oAuth" ] || [ "$tools_listed" != true ] || [ -z "$server_info" ]; then
-            emit FAIL "Codex authenticated initialize/tools inventory failed"; return 0
-          fi
-          emit OK "$server_info authenticated, tools=$tool_count"; return 0
-        fi
-        if [ "$transport" = "stdio" ]; then
-          if [ ! -x "$cmdpath" ]; then
-            emit FAIL "command not executable: $cmdpath"; return 0
-          fi
-          mapfile -t argv < <(printf '%s\n' "$row" | jq -r '(.args // [])[]')
-          # FIFO stdin: hold the write end open until the response lands, then close it — stdin EOF is the shutdown, so no probe outlives its answer
-          # (a sleep-holder would strand every server for the full timeout after doctor returns); timeout backstops mute servers.
-          mkfifo "$out.fifo"
-          line=""
-          exec {rfd}< <(timeout -k 2 "$((t + 2))" "$cmdpath" ''${argv[0]+"''${argv[@]}"} <"$out.fifo" 2>/dev/null || true)
-          probe_pid=$!
-          exec {wfd}>"$out.fifo"
-          printf '%s\n' "$req" >&"$wfd"
-          IFS= read -r -t "$t" line <&"$rfd" || true
-          exec {wfd}>&-
-          exec {rfd}<&-
-          wait "$probe_pid" 2>/dev/null || true
-          rm -f "$out.fifo"
-          if info="$(printf '%s\n' "$line" | jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' 2>/dev/null)"; then
-            emit OK "$info$envnote"
-          else
-            emit FAIL "no initialize response within ''${t}s$envnote"
-          fi
-        else
-          declare -a hdr=()
-          if [ -n "$bearer" ]; then
-            [ -n "''${!bearer:-}" ] || { emit SKIP "credential env absent: $bearer"; return 0; }
-            hdr+=(-H "Authorization: Bearer ''${!bearer}")
-          fi
-          while IFS=$'\t' read -r h v; do
-            [ -n "$h" ] || continue
-            [ -n "''${!v:-}" ] || { emit SKIP "credential env absent: $v"; return 0; }
-            hdr+=(-H "$h: ''${!v}")
-          done < <(printf '%s\n' "$row" | jq -r '(.codex.headerEnv // {}) | to_entries[] | "\(.key)\t\(.value)"')
-          # Body temp lives beside the row outfile inside the doctor's trapped tmpdir, so an aborted probe leaves no $TMPDIR litter.
-          body="$out.body"
-          # curl -w still emits its code line on transport failure; a second echo would corrupt status, so failures fall through to the 000 default.
-          code="$(curl -sS --max-time "$t" -o "$body" -w '%{http_code}' -X POST "$url" \
-            -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' \
-            -H 'MCP-Protocol-Version: 2025-06-18' ''${hdr[0]+"''${hdr[@]}"} --data "$req" 2>/dev/null || true)"
-          [ -n "$code" ] || code=000
-          if [ "$code" = 200 ]; then
-            payload="$(grep -m1 '^data:' "$body" | cut -c6- || true)"
-            [ -n "$payload" ] || payload="$(cat "$body")"
-            info="$(printf '%s\n' "$payload" | jq -er '.result.serverInfo | "\(.name) \(.version // "?")"' 2>/dev/null || echo "initialize accepted")"
-            emit OK "$info$envnote"
-          elif [ "$code" = 401 ] && [ ''${#hdr[@]} -eq 0 ]; then
-            emit FAIL "HTTP 401 with no declared credential mechanism$envnote"
-          else
-            emit FAIL "HTTP $code from initialize$envnote"
-          fi
-          rm -f "$body"
-        fi
-      }
-
-      # Named probe families: launcher rows declaring `doctor` get local checks beyond initialize — the Forge launcher name IS the probe row.
+      # Named check families: launcher rows declaring `doctor` get local companion checks — the Forge launcher name IS the row.
       family_rows() { # $1=outfile
         local out="$1"
         while IFS= read -r row; do
@@ -702,57 +504,26 @@
 
       cmd_doctor() {
         if [ -z "''${_FORGE_MCP_DOCTOR_DEADLINE:-}" ]; then
-          _FORGE_MCP_DOCTOR_DEADLINE=1 exec timeout -k 5 300 "$0" doctor "$@"
+          _FORGE_MCP_DOCTOR_DEADLINE=1 exec timeout -k 5 60 "$0" doctor "$@"
         fi
-        network=0 as_json=0
+        as_json=0
         for a in "$@"; do
           case "$a" in
-            --network) network=1 ;;
             --json) as_json=1 ;;
             *) usage ;;
           esac
         done
         tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-        codex_auth="$tmp/codex-auth.json"
-        if command -v codex >/dev/null 2>&1 && timeout -k 2 30 codex mcp list --json >"$codex_auth" 2>/dev/null; then
-          :
-        else
-          printf '[]\n' >"$codex_auth"
-        fi
-        codex_oauth="$tmp/codex-oauth.json"
-        if [ "$network" = 1 ] && jq -e 'any(.[]; .codex.auth == "oauth")' "$fleet" >/dev/null; then
-          codex_oauth_inventory "$tmp" "$codex_oauth" || true
-        else
-          printf '{"ok":false,"reason":"network-probe-disabled","rows":[]}\n' >"$codex_oauth"
-        fi
-        # Wrapper roll-call: every declared fleet wrapper must exist on PATH.
+        rows="$tmp/rows"; : >"$rows"
+        # Wrapper roll-call: every declared fleet wrapper resolves on PATH; stateless clients own protocol health.
         while IFS= read -r w; do
-          if ! command -v "$w" >/dev/null 2>&1; then
-            printf 'FAIL\t%s\twrapper absent from PATH\n' "$w" >>"$tmp/wrappers"
+          if command -v "$w" >/dev/null 2>&1; then
+            printf 'OK\t%s\twrapper resolves\n' "$w" >>"$rows"
+          else
+            printf 'FAIL\t%s\twrapper absent from PATH\n' "$w" >>"$rows"
           fi
         done < <(jq -r '.[] | (.launcher.names // [])[]' "$fleet")
-        family_rows "$tmp/families"
-        i=0
-        batch_count=0
-        declare -a probe_pids=()
-        while IFS= read -r row; do
-          probe_row "$row" "$network" "$tmp/row.$i" "$codex_auth" "$codex_oauth" &
-          probe_pids+=("$!")
-          i=$((i + 1))
-          batch_count=$((batch_count + 1))
-          if [ "$batch_count" -eq 4 ]; then
-            for probe_pid in "''${probe_pids[@]}"; do wait "$probe_pid" 2>/dev/null || true; done
-            probe_pids=()
-            batch_count=0
-          fi
-        done < <(jq -c '.[]' "$fleet")
-        for probe_pid in "''${probe_pids[@]}"; do wait "$probe_pid" 2>/dev/null || true; done
-        rows="$tmp/rows"
-        {
-          [ ! -f "$tmp/wrappers" ] || cat "$tmp/wrappers"
-          for ((f = 0; f < i; f++)); do cat "$tmp/row.$f"; done
-          [ ! -f "$tmp/families" ] || cat "$tmp/families"
-        } >"$rows"
+        family_rows "$rows"
         # Direct file grep: grep -q on the read end of a pipe SIGPIPEs the writer under pipefail, and the negation would swallow real FAILs.
         rc=0
         ! grep -q $'^FAIL\t' "$rows" || rc=1
@@ -1104,12 +875,11 @@
     #compdef forge-mcp
     _arguments \
       '1:verb:(outdated advance doctor drift reconcile generate roots snoop)' \
-      '--network[probe network-class rows]' \
       '--json[schema=forge-mcp/v1 receipt]'
   '';
 in {
   config = {
-    home.packages = launchers ++ uvLaunchers ++ [forgeSuperviseStdio rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
+    home.packages = launchers ++ uvLaunchers ++ [rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
 
     home.activation = {
       # Warm every uv tool environment at switch so a cold client spawn never pays the install.
@@ -1123,7 +893,7 @@ in {
       '';
     };
 
-    # Daily currency cadence behind the nix-drift slot; the advance verb owns its own lock, dirty-manifest guard, build gate, and auto-commit.
+    # Daily currency cadence; the advance verb owns its own lock, dirty-manifest guard, build gate, and auto-commit.
     # Repo mutation is a Darwin operator-machine concern — the NixOS host holds no working tree.
     launchd.agents.forge-mcp-advance = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
       enable = true;

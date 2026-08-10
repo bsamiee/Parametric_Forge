@@ -10,8 +10,6 @@
     ["drs" "forge-redeploy --switch" "Check, build, diff, switch"]
     ["drb" "forge-redeploy --build" "Check and build"]
     ["drc" "forge-redeploy --check-only" "Check config and build proof"]
-    ["drr" "forge-redeploy --rollback" "Reactivate previous generation" "destructive"]
-    ["drg" "forge-redeploy --generations" "List system generations"]
     ["ngc" "forge-nix-maintenance" "Generation trim + GC + optimise" "destructive"]
   ];
   flake = [

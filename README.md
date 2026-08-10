@@ -94,7 +94,7 @@ Doppler is the sole secret backend for projects and agents; 1Password is operato
 
 ## [07]-[MCP_FLEET]
 
-`modules/home/programs/shell-tools/mcp-fleet.nix` is the single fleet manifest: one row declares transport, spawn line or endpoint, env key names, probe class, launcher pin, auth mode, approval posture, clients, and host-OS admission. Every switch on either host reconciles the host-filtered rows into Claude and Codex, replacing only manifest-owned MCP maps. `forge-mcp doctor --network` joins endpoint health to declared credentials, `drift` proves the live projections, `outdated` surfaces stale pins across every engine (npm, PyPI, git HEAD), and the daily `advance` agent rewrites outdated pins, proves the build, and auto-commits — the next switch lands them. Add or extend a server as one manifest row.
+`modules/home/programs/shell-tools/mcp-fleet.nix` is the single fleet manifest: one row declares transport, spawn line or endpoint, env key names, launcher pin, auth mode, approval posture, clients, and host-OS admission. Every switch on either host reconciles the host-filtered rows into Claude and Codex, replacing only manifest-owned MCP maps. Launchers exec their pinned servers directly under the client's stdio pipe; `forge-mcp doctor` asserts every declared wrapper resolves on PATH, `drift` proves the live projections, `outdated` surfaces stale pins across every engine (npm, PyPI, git HEAD), and the daily `advance` agent rewrites outdated pins, proves the build, and auto-commits — the next switch lands them. Add or extend a server as one manifest row.
 
 ## [08]-[SSH_ESTATE]
 
@@ -102,9 +102,9 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
-`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch|--rollback [gen]|--generations` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH, and NixOS generations live on the target. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable step pipeline from preflight through fleet, lane, and maghz probes to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
+`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable step pipeline from preflight through fleet, lane, and maghz probes to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
 
-Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. The scheduled nix rails double as manual commands — `forge-nix-maintenance` (GC/store), `forge-nix-drift` (input currency), `forge-cleanup plan|apply` (declared-row litter sweep), `forge-activation-sweep [--clear]` (activation residue) — every rail appends receipts under `~/Library/Logs/forge-<name>.receipts.log`, and the receipt is read before a failed rail reruns. Ad-hoc background processes are a defect; a new job is a new agent declaration.
+Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. The scheduled nix rails double as manual commands — `forge-nix-maintenance` (GC/store), `forge-cleanup plan|apply` (declared-row litter sweep), `forge-activation-sweep [--clear]` (activation residue) — every rail appends receipts under `~/Library/Logs/forge-<name>.receipts.log`, and the receipt is read before a failed rail reruns. Ad-hoc background processes are a defect; a new job is a new agent declaration.
 
 ## [10]-[TOOLCHAINS]
 
@@ -165,18 +165,10 @@ Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with ni
 - Format: `nix fmt -- --check` — full proof: `nix flake check`.
 - Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
-- Inputs: `nix flake update`; closure diffs review through `nvd`/`nix-diff` before switching.
-- Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor --network`, and `forge-mcp drift` after any fleet or client change.
+- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[08]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
+- Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor`, and `forge-mcp drift` after any fleet or client change.
 
-Currency is rail-automated: each scheduled rail probes upstream, rewrites its pins, proves the result through `forge-redeploy --build`, and auto-commits — an unproven bump is withdrawn whole, and no rail ever switches unattended. `forge-redeploy --switch` lands whatever the rails have committed; `forge-update-board` reads every family's last receipt.
-
-| [INDEX] | [FAMILY]                                          | [RAIL]                            | [CADENCE]   |
-| :-----: | :------------------------------------------------ | :-------------------------------- | :---------- |
-|  [01]   | Flake inputs (nixpkgs, HM, tool flakes)           | `forge-nix-drift`                 | daily 10:00 |
-|  [02]   | MCP launcher pins (npm, PyPI, git-rev engines)    | `forge-mcp advance`               | daily 10:30 |
-|  [03]   | Homebrew formulae and casks                       | `forge-brew-autoupdate`           | scheduled   |
-|  [04]   | nvfetcher pin family (`overlays/_sources`)        | `nvfetcher -o overlays/_sources`  | manual      |
-|  [05]   | HTTP MCP endpoints                                | server-side, nothing to advance   | continuous  |
+Automated currency is `forge-mcp advance` (daily, MCP launcher pins) and the Homebrew autoupdate agent; each proves its result through its own gate and never switches unattended. Every other family — flake inputs, nvfetcher pins, python venv, store — moves through the ordered update sequence on demand. `forge-update-board` reads every family's last receipt plus the flake-lock input age.
 
 Manual-engine pins (`updateEngine = "manual"`, hash-pinned binaries) advance only by hand; `forge-mcp outdated` still boards them when they carry launcher metadata.
 

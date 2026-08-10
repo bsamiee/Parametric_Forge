@@ -5,8 +5,8 @@
 # Path          : modules/home/programs/shell-tools/mcp-fleet.nix
 # ----------------------------------------------------------------------------
 # Declarative MCP fleet manifest: one row is the whole definition of a fleet member. mcp-launchers.nix builds wrappers from `launcher` rows;
-# `forge-mcp doctor` probes rows by `probe` class under `codex.startupTimeoutSec`; `forge-mcp drift` validates both client registrations against
-# rows, reconciles only the owned MCP maps into the user/tool-owned client files, and reports drift without touching unrelated client state.
+# `forge-mcp doctor` asserts every declared wrapper resolves on PATH; `forge-mcp drift` validates both client registrations against rows,
+# reconciles only the owned MCP maps into the user/tool-owned client files, and reports drift without touching unrelated client state.
 # Row schema (env/header material is key NAMES only, never values):
 #   name             registration key in both clients
 #   transport        "stdio" | "http"
@@ -14,47 +14,26 @@
 #   url/headerNames  http endpoint + Claude header-name set
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
-#   probe            "stdio" (probed) | "network" (probed only with --network) | "skip"
-#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath?, idleSeconds? }
+#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath? }
 #                    => Forge-built wrapper(s); kind selects the build lane — "pnpm" (default, registry install into the launcher cache) or
 #                    "uv" / "uv-git" (uv tool environment, version is a PyPI pin or a git rev). upstream/updateEngine are manifest
 #                    extension-family fields (`forge-mcp outdated` observes, `forge-mcp advance` rewrites: npm-registry | pypi | git-head);
-#                    runtimePath names pkgs attrs front-run onto the wrapper PATH; idleSeconds overrides the supervised idle lease
-#                    (default toolTimeoutSec+300) for heavy no-session servers
+#                    runtimePath names pkgs attrs front-run onto the wrapper PATH
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
 #   clients          registration expectation, default [ "claude" "codex" ]
 #   platforms        host-OS admission, default [ "darwin" "linux" ]; mcp-launchers.nix filters rows to the running host, so every launcher
-#                    build, projection, probe, and drift lane sees only spawnable rows
+#                    build, projection, and drift lane sees only spawnable rows
 #   assertLevel      "full" (default) | "presence" for host-private rows
-#   doctor           named probe-family checks beyond initialize: the Forge
-#                    launcher name IS the probe row. Field: execs (companion
-#                    binaries that must resolve on PATH)
-{
-  profileBin,
-  homeDir,
-  sshBin,
-}: let
-  # The supervisor counts protocol BYTES as activity and a live client renews the lease, so idleSeconds bounds only abandoned generations;
-  # every row binds it explicitly (lease = codex.toolTimeoutSec + 300 via rec, matching the launcher-wrapper default) and the script's
-  # generic fallback never governs a fleet row.
-  mkSupervised = {
-    cmd,
-    args ? [],
-    idleSeconds,
-  }: {
-    command = "${profileBin}/forge-supervise-stdio";
-    args = ["--idle-seconds" (toString idleSeconds) cmd] ++ args;
-  };
-in [
+#   doctor           named companion checks: the Forge launcher name IS the row. Field: execs (companion binaries that must resolve on PATH)
+{profileBin}: [
   {
     name = "perplexity";
     transport = "stdio";
     command = "${profileBin}/forge-perplexity-mcp";
     args = [];
     envKeys = ["PERPLEXITY_API_KEY"];
-    probe = "stdio";
     launcher = {
       names = ["forge-perplexity-mcp"];
       pkg = "@perplexity-ai/mcp-server";
@@ -76,7 +55,6 @@ in [
     command = "${profileBin}/forge-hostinger-mcp";
     args = [];
     envKeys = ["HOSTINGER_API_TOKEN"];
-    probe = "stdio";
     launcher = {
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
@@ -92,56 +70,24 @@ in [
     };
   }
   {
-    # Registration is the doppler-run indirection: agent-runtime/dev injects DOPPLER_MCP_AGENT_TOKEN, so no ambient env key is consumed.
+    # One local lens over every Doppler scope: the ambient personal CLI token authenticates, every tool addresses project/config per call,
+    # and --read-only filters the exposed toolset to GET endpoints — token scope remains the API-side boundary.
     name = "doppler";
     transport = "stdio";
-    command = "${profileBin}/doppler";
-    args = [
-      "run"
-      "--project"
-      "agent-runtime"
-      "--config"
-      "dev"
-      "--fallback"
-      "${homeDir}/.cache/doppler/doppler-mcp.json"
-      "--command"
-      "DOPPLER_TOKEN=$DOPPLER_MCP_AGENT_TOKEN exec ${profileBin}/forge-doppler-mcp --read-only --project agent-runtime --config dev"
-    ];
+    command = "${profileBin}/forge-doppler-mcp";
+    args = ["--read-only"];
     envKeys = [];
-    probe = "network";
     launcher = {
       names = ["forge-doppler-mcp"];
       pkg = "@dopplerhq/mcp-server";
       version = "1.0.5";
       bin = "doppler-mcp";
+      prelude = ''
+        export DOPPLER_TOKEN="''${DOPPLER_TOKEN:-$(${profileBin}/doppler configure get token --plain --scope /)}"
+      '';
       upstream = "npm:@dopplerhq/mcp-server";
       updateEngine = "npm-registry";
     };
-    codex = {
-      required = false;
-      startupTimeoutSec = 30;
-      toolTimeoutSec = 180;
-    };
-  }
-  rec {
-    # Maghz VPS read-only secret lens: the scoped service token resolves only inside the remote host/container boundary.
-    name = "doppler-remote";
-    transport = "stdio";
-    platforms = ["darwin"]; # the Mac-side lens INTO the VPS; on the VPS itself the row is self-referential
-    inherit
-      (mkSupervised {
-        cmd = sshBin;
-        args = [
-          "maghz"
-          ''DOPPLER_TOKEN="$(doppler configure get token --plain --scope /srv/maghz)" docker exec -i -e DOPPLER_TOKEN maghz-mcp /opt/mcp/bin/doppler-mcp --read-only --project maghz --config prd_host''
-        ];
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
-    envKeys = [];
-    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 30;
@@ -155,7 +101,6 @@ in [
     command = "${profileBin}/forge-playwright-mcp";
     args = ["--isolated" "--caps=vision,pdf"];
     envKeys = [];
-    probe = "stdio";
     launcher = {
       names = ["forge-playwright-mcp"];
       pkg = "@playwright/mcp";
@@ -163,7 +108,6 @@ in [
       bin = "playwright-mcp";
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";
-      idleSeconds = 180; # heavy chromium subtree reaps fast once its client generation is abandoned, no persistent session to preserve
     };
     codex = {
       required = false;
@@ -173,14 +117,12 @@ in [
   }
   {
     # Registrations and the Maghz fleet spell the bare name; forge-notebooklm-mcp is the canonical fleet wrapper.
-    # Browser-session backend: probed only on demand.
     name = "notebooklm";
     transport = "stdio";
     platforms = ["darwin"]; # browser-session backend rides the Mac Chrome estate
     command = "${profileBin}/notebooklm-mcp";
     args = [];
     envKeys = [];
-    probe = "network";
     launcher = {
       names = ["notebooklm-mcp" "forge-notebooklm-mcp"];
       pkg = "notebooklm-mcp";
@@ -199,20 +141,12 @@ in [
       toolTimeoutSec = 600;
     };
   }
-  rec {
+  {
     name = "google-workspace";
     transport = "stdio";
-    inherit
-      (mkSupervised {
-        cmd = "${profileBin}/forge-workspace-mcp";
-        args = ["--tool-tier" "extended"];
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
+    command = "${profileBin}/forge-workspace-mcp";
+    args = ["--tool-tier" "extended"];
     envKeys = ["GOOGLE_OAUTH_CLIENT_ID" "GOOGLE_OAUTH_CLIENT_SECRET" "WORKSPACE_MCP_CREDENTIALS_DIR"];
-    probe = "stdio";
     launcher = {
       kind = "uv";
       names = ["forge-workspace-mcp"];
@@ -228,41 +162,27 @@ in [
       toolTimeoutSec = 180;
     };
   }
-  rec {
+  {
     name = "nuget";
     transport = "stdio";
     platforms = ["darwin"]; # dev-tools.nix packages the osx-arm64 RID only; a linux RID row widens both gates together
-    inherit
-      (mkSupervised {
-        cmd = "${profileBin}/nuget-mcp";
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
+    command = "${profileBin}/nuget-mcp";
+    args = [];
     envKeys = [];
-    probe = "stdio";
     codex = {
       required = false;
       startupTimeoutSec = 60;
       toolTimeoutSec = 180;
     };
   }
-  rec {
+  {
     # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals;
     # pure retrieval, so headless codex may call it. Binary is the nixpkgs mcp-nixos package installed by mcp-launchers.nix.
     name = "nixos";
     transport = "stdio";
-    inherit
-      (mkSupervised {
-        cmd = "${profileBin}/mcp-nixos";
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
+    command = "${profileBin}/mcp-nixos";
+    args = [];
     envKeys = [];
-    probe = "stdio";
     codex = {
       required = false;
       startupTimeoutSec = 30;
@@ -270,21 +190,14 @@ in [
       toolsApprovalMode = "approve";
     };
   }
-  rec {
+  {
     # Structural code search: ast-grep's official MCP (dump_syntax_tree, test_match_code_rule, find_code, find_code_by_rule); pure retrieval, so
     # headless codex may call it. Upstream publishes no PyPI dist, so the pin is a git rev; runtimePath front-runs the estate ast-grep binary.
     name = "ast-grep";
     transport = "stdio";
-    inherit
-      (mkSupervised {
-        cmd = "${profileBin}/forge-ast-grep-mcp";
-        idleSeconds = codex.toolTimeoutSec + 300;
-      })
-      command
-      args
-      ;
+    command = "${profileBin}/forge-ast-grep-mcp";
+    args = [];
     envKeys = [];
-    probe = "stdio";
     doctor = {
       execs = ["ast-grep"];
     };
@@ -306,15 +219,14 @@ in [
     };
   }
   {
-    # The vendor router runs persistently under the supervised stdio lane regardless of Rhino state, owning host spawn and adoption through its
-    # own slot lifecycle. mcp-launchers.nix builds the wrapper.
+    # The vendor router runs directly under the client's stdio pipe — it spawns a Rhino host on demand, adopts a user-started session through
+    # its own slot lifecycle, and exits with client stdin EOF. mcp-launchers.nix builds the wrapper.
     name = "rhino-mcp-platform";
     transport = "stdio";
     platforms = ["darwin"];
     command = "${profileBin}/rhino-mcp-router";
     args = ["--default-version" "9"];
     envKeys = [];
-    probe = "stdio";
     doctor = {
       execs = ["forge-rhino-up"];
     };
@@ -330,7 +242,6 @@ in [
     url = "https://api.githubcopilot.com/mcp/";
     headerNames = ["Authorization"];
     envKeys = ["GH_PROJECTS_TOKEN"];
-    probe = "network";
     codex = {
       required = true;
       startupTimeoutSec = 25;
@@ -344,7 +255,6 @@ in [
     url = "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_tools";
     headerNames = ["x-api-key"];
     envKeys = ["EXA_API_KEY"];
-    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 20;
@@ -358,7 +268,6 @@ in [
     url = "https://mcp.context7.com/mcp";
     headerNames = ["Authorization"];
     envKeys = ["CONTEXT7_API_KEY"];
-    probe = "network";
     codex = {
       required = true;
       startupTimeoutSec = 20;
@@ -372,7 +281,6 @@ in [
     url = "https://api.greptile.com/mcp";
     headerNames = ["Authorization"];
     envKeys = ["GREPTILE_API_KEY"];
-    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 20;
@@ -386,7 +294,6 @@ in [
     url = "https://api.heptabase.com/mcp";
     headerNames = [];
     envKeys = [];
-    probe = "network";
     codex = {
       auth = "oauth";
       required = false;
@@ -400,7 +307,6 @@ in [
     url = "https://developers.openai.com/mcp";
     headerNames = [];
     envKeys = [];
-    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 20;
@@ -413,7 +319,6 @@ in [
     url = "https://code.claude.com/docs/mcp";
     headerNames = [];
     envKeys = [];
-    probe = "network";
     codex = {
       required = false;
       startupTimeoutSec = 20;
@@ -428,7 +333,6 @@ in [
     command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient";
     args = ["mcp"];
     envKeys = [];
-    probe = "skip";
     clients = ["codex"];
     assertLevel = "presence";
     codex = {
@@ -445,7 +349,6 @@ in [
     command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl";
     args = [];
     envKeys = [];
-    probe = "skip";
     clients = ["codex"];
     assertLevel = "presence";
     codex = {

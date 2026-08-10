@@ -72,14 +72,13 @@ in {
       %admin ALL=(root) NOPASSWD: /bin/launchctl *
       %admin ALL=(root) NOPASSWD: /usr/bin/osascript *
 
-      # Deploy rail: regex rows pin every argv exactly (arg globs match spaces and slashes, regex rows do not) — lifecycle verbs on the installed
-      # darwin-rebuild, exact-closure activation, profile registration
-      %admin ALL=(root) NOPASSWD: /run/current-system/sw/bin/darwin-rebuild ^(--list-generations|--rollback|--switch-generation [0-9]+)$
+      # Deploy rail: regex rows pin every argv exactly (arg globs match spaces and slashes, regex rows do not) — exact-closure activation,
+      # profile registration
       %admin ALL=(root) NOPASSWD: ^/nix/store/[a-z0-9]{32}-darwin-system-[^/]+/sw/bin/darwin-rebuild$ activate
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env ^-p /nix/var/nix/profiles/system --set /nix/store/[a-z0-9]{32}-darwin-system-[^[:space:]/]+$
 
-      # Maintenance rail: bounded system-generation retention (exact args)
-      %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations +5
+      # Maintenance rail: current-only system-generation policy (exact args)
+      %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations old
 
       # Determinate custom-config adoption: move the installer-written real file aside so activation's /etc collision guard passes (module owns the symlink)
       %admin ALL=(root) NOPASSWD: /bin/mv /etc/nix/nix.custom.conf /etc/nix/nix.custom.conf.before-determinate-module
