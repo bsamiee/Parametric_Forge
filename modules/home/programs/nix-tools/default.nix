@@ -17,6 +17,7 @@
 
   home.packages = [
     pkgs.alejandra # Uncompromising Nix code formatter
+    pkgs.cachix # Official Cachix CLI; authenticates from ambient CACHIX_AUTH_TOKEN, never `cachix authtoken` (a literal-token config file)
     pkgs.deadnix # Dead Nix code detector
     pkgs.flake-checker # Flake input health checks
     pkgs.nh # Nix build/switch/clean helper

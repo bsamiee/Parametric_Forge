@@ -29,27 +29,6 @@
 #   doctor           named companion checks: the Forge launcher name IS the row. Field: execs (companion binaries that must resolve on PATH)
 {profileBin}: [
   {
-    name = "perplexity";
-    transport = "stdio";
-    command = "${profileBin}/forge-perplexity-mcp";
-    args = [];
-    envKeys = ["PERPLEXITY_API_KEY"];
-    launcher = {
-      names = ["forge-perplexity-mcp"];
-      pkg = "@perplexity-ai/mcp-server";
-      version = "1.2.0";
-      bin = "perplexity-mcp";
-      upstream = "npm:@perplexity-ai/mcp-server";
-      updateEngine = "npm-registry";
-    };
-    codex = {
-      required = false;
-      startupTimeoutSec = 20;
-      toolTimeoutSec = 600;
-      toolsApprovalMode = "approve";
-    };
-  }
-  {
     name = "hostinger";
     transport = "stdio";
     command = "${profileBin}/forge-hostinger-mcp";
@@ -113,32 +92,6 @@
       required = false;
       startupTimeoutSec = 30;
       toolTimeoutSec = 180;
-    };
-  }
-  {
-    # Registrations and the Maghz fleet spell the bare name; forge-notebooklm-mcp is the canonical fleet wrapper.
-    name = "notebooklm";
-    transport = "stdio";
-    platforms = ["darwin"]; # browser-session backend rides the Mac Chrome estate
-    command = "${profileBin}/notebooklm-mcp";
-    args = [];
-    envKeys = [];
-    launcher = {
-      names = ["notebooklm-mcp" "forge-notebooklm-mcp"];
-      pkg = "notebooklm-mcp";
-      version = "2.0.0";
-      bin = "notebooklm-mcp";
-      upstream = "npm:notebooklm-mcp";
-      updateEngine = "npm-registry";
-      prelude = ''
-        export NOTEBOOKLM_AI_MARKER="''${NOTEBOOKLM_AI_MARKER:-false}"
-        export SESSION_TIMEOUT="''${SESSION_TIMEOUT:-3600}"
-      '';
-    };
-    codex = {
-      required = false;
-      startupTimeoutSec = 30;
-      toolTimeoutSec = 600;
     };
   }
   {
