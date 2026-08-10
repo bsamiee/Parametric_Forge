@@ -60,11 +60,7 @@
   # DuckDB read_json `columns` clause from the same vector: a declared schema, never inference — an all-null column otherwise infers JSON downstream.
   spineColumnsSql = builtins.concatStringsSep ", " (map (c: "${c}: 'VARCHAR'") spineColumns);
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
-  fleet = import ./mcp-fleet.nix {
-    inherit profileBin;
-    homeDir = config.home.homeDirectory;
-    sshBin = "${pkgs.openssh}/bin/ssh";
-  };
+  fleet = import ./mcp-fleet.nix {inherit profileBin;};
 
   # --- [NAME_POLICY_ROWS]
   # One repo/workroot identity per row — [source slug consumers previous?]; display derives from slug; slug claims (current + retired `previous`,
@@ -106,7 +102,7 @@
   };
   receiptSources =
     map (r: {grain = "kv";} // r)
-    (map kvSource ["redeploy" "maintenance|nix-maintenance" "drift|nix-drift" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
+    (map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
@@ -143,7 +139,7 @@
     else keys // builtins.intersectAttrs keys v;
   mcpRegister =
     map (r: {
-      inherit (r) name transport probe;
+      inherit (r) name transport;
       endpoint = r.url or (baseNameOf r.command);
       envKeys = r.envKeys or [];
       clients = r.clients or ["claude" "codex"];
@@ -175,7 +171,7 @@
       // lib.optionalAttrs (lib.length t > 2) {binds = lib.elemAt t 2;}) {
       aliases = [''.[] | [.alias, .category, .risk, .expansion, .desc] | @tsv'' "shell alias register"];
       chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
-      mcp = [''.[] | [.name, .transport, (.launcher.version // "-"), .probe] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
+      mcp = [''.[] | [.name, .transport, (.launcher.version // "-"), .assertLevel] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
       naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];
     }
     // {
