@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
-# ruff: noqa: DOC201
+# ruff:file-ignore[docstring-missing-returns]
 """Inject context from a data-driven nudge table decoded from nudges.json, never a code literal.
 
 Each nudge row keys on a target field with match and exclude regex arrays and a priority, so a new nudge is a

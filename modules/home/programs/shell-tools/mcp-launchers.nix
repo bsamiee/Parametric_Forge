@@ -148,94 +148,25 @@
       exec "$UV_TOOL_BIN_DIR/${row.launcher.bin}" "$@"
     '';
   uvLaunchers = lib.concatMap (row: map (mkUvLauncher row) row.launcher.names) uvRows;
-  # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. Lifecycle gate: the
-  # heavy vendor router spawns only while Rhino 9 WIP runs; otherwise a stdio shim serves one rhino_status tool (start Rhino, then reconnect). The
-  # shared supervised lane ties the router subtree to client liveness through the stdin relay, so a dead, killed, or reconnecting client tears the
-  # subtree down; no session exit strands a router, and the vendor binary exposes no idle-exit.
+  # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. The vendor router
+  # runs under the shared supervised lane regardless of Rhino state, owning host spawn-on-demand and adoption of a user-started session through its
+  # own slot lifecycle; client liveness alone governs the subtree, so a dead, killed, or reconnecting client tears it down while no session exit
+  # strands a router and the vendor binary exposes no idle-exit.
   rhinoRouter = pkgs.writeShellApplication {
     name = "rhino-mcp-router";
-    runtimeInputs = [pkgs.coreutils pkgs.jq];
+    runtimeInputs = [pkgs.coreutils];
     text = ''
-      rhino_bin="''${RHINO_MCP_HOST_BINARY:-/Applications/RhinoWIP.app/Contents/MacOS/Rhinoceros}"
-
-      if /usr/bin/pgrep -qf "$rhino_bin"; then
-        base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
-        entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
-        if [ ! -x "$entry" ]; then
-          echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
-          exit 69
-        fi
-        # Host-liveness watchdog: Rhino exit TERMs this wrapper (never Rhino itself), so the supervised router generation reaps within a poll of
-        # the app closing. The lstart identity pin makes the TERM target exact — a recycled PID mismatches and the watchdog exits instead.
-        guard=$$
-        guard_start="$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)"
-        (
-          while /usr/bin/pgrep -qf "$rhino_bin"; do
-            [ "$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)" = "$guard_start" ] || exit 0
-            sleep 3
-          done
-          [ "$(/bin/ps -o lstart= -p "$guard" 2>/dev/null || true)" = "$guard_start" ] && kill -TERM "$guard" 2>/dev/null || true
-        ) &
-        ${superviseStdio ''"$entry"''}
+      base="$HOME/Library/Application Support/McNeel/Rhinoceros/packages/9.0/Rhino-MCP-Platform"
+      entry="$(printf '%s\n' "$base"/*/router/osx-arm64/rhino-mcp-router | sort -V | tail -1)"
+      if [ ! -x "$entry" ]; then
+        echo "rhino-mcp-router: no Rhino-MCP-Platform package under $base" >&2
+        exit 69
       fi
-
-      # Rhino-down entry: any live vendor router is a stray from a dead generation. The liveness recheck pins the sweep to a still-down Rhino,
-      # so a router another session just spawned against a freshly opened app is never collateral.
-      /usr/bin/pgrep -qf "$rhino_bin" || /usr/bin/pkill -f "Rhino-MCP-Platform/.*/router/osx-arm64/rhino-mcp-router" 2>/dev/null || true
-
-      # Thin responder: newline-delimited JSON-RPC over stdio at near-zero cost. Its blocking read carries a long idle lease directly, so retained
-      # inherited pipe writers cannot strand an app-server generation and the Rhino-down path needs no supervisor helper processes.
-      rhino_gate() {
-        status_text() {
-          if /usr/bin/pgrep -qf "$rhino_bin"; then
-            printf 'Rhino is running but this MCP connection predates it. Reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to spawn the router and load the full toolset.'
-          else
-            printf 'Rhino 9 WIP is not running; the rhino-mcp-platform router spawns only against a live Rhino. Run forge-rhino-up (idempotent, splash-free), wait for the app to finish loading, then reconnect the rhino-mcp-platform server (/mcp -> reconnect, or restart the session) to load the full toolset.'
-          fi
-        }
-        local tools_json line method id pv gate_idle_seconds="''${RHINO_MCP_GATE_IDLE_SECONDS:-480}"
-        [[ "$gate_idle_seconds" =~ ^[1-9][0-9]*$ ]] || gate_idle_seconds=480
-        tools_json='{"tools":[{"name":"rhino_status","description":"Reports the Rhino MCP gate: the full rhino-mcp-platform toolset loads only while Rhino 9 WIP runs. Call this to learn how to bring the toolset up.","inputSchema":{"type":"object","properties":{}}}]}'
-        # Streaming boundary: one jq projection per message; the 0x1f join survives absent fields, and a malformed line skips without output.
-        while IFS= read -r -t "$gate_idle_seconds" line; do
-          [ -n "$line" ] || continue
-          IFS=$'\x1f' read -r method id pv < <(printf '%s\n' "$line" | jq -r '
-            [(.method // ""), (if has("id") then (.id | tojson) else "" end),
-             (.params.protocolVersion // "2025-06-18")] | join("\u001f")' \
-            2>/dev/null) || continue
-          case "$method" in
-            initialize)
-              [ -n "$id" ] || continue
-              jq -cn --argjson id "$id" --arg pv "$pv" \
-                '{jsonrpc: "2.0", id: $id, result: {protocolVersion: $pv, capabilities: {tools: {}}, serverInfo: {name: "rhino-mcp-gate", version: "1.0.0"}}}'
-              ;;
-            tools/list)
-              [ -n "$id" ] || continue
-              jq -cn --argjson id "$id" --argjson t "$tools_json" '{jsonrpc: "2.0", id: $id, result: $t}'
-              ;;
-            tools/call)
-              [ -n "$id" ] || continue
-              jq -cn --argjson id "$id" --arg text "$(status_text)" \
-                '{jsonrpc: "2.0", id: $id, result: {content: [{type: "text", text: $text}], isError: true}}'
-              ;;
-            ping)
-              [ -n "$id" ] || continue
-              jq -cn --argjson id "$id" '{jsonrpc: "2.0", id: $id, result: {}}'
-              ;;
-            notifications/* | "") : ;;
-            *)
-              [ -n "$id" ] || continue
-              jq -cn --argjson id "$id" \
-                '{jsonrpc: "2.0", id: $id, error: {code: -32601, message: "rhino-mcp-gate: method unavailable while Rhino is down; call rhino_status"}}'
-              ;;
-          esac
-        done
-      }
-      rhino_gate
+      ${superviseStdio ''"$entry"''}
     '';
   };
-  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up; the MCP platform listener autostarts with the app, and the router
-  # loads the full toolset on the next server (re)connect. `open -a` passes -nosplash only on a fresh launch, so the pgrep guard keeps it honest.
+  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up so the always-live vendor router adopts it through slot lifecycle; the
+  # MCP platform listener autostarts with the app. `open -a` passes -nosplash only on a fresh launch, so the pgrep guard keeps it honest.
   rhinoUp = pkgs.writeShellApplication {
     name = "forge-rhino-up";
     runtimeInputs = [pkgs.coreutils];
@@ -250,7 +181,7 @@
       /usr/bin/open -a "$app" --args -nosplash
       for _ in $(seq 1 60); do
         if /usr/bin/pgrep -qf "$rhino_bin"; then
-          echo "rhino: launched splash-free (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1)); reconnect rhino-mcp-platform once loading settles"
+          echo "rhino: launched splash-free (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1))"
           exit 0
         fi
         sleep 0.5

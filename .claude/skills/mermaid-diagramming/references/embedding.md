@@ -12,7 +12,7 @@ Durable markdown carries the source lane: the fence itself, one diagram per fenc
 
 ## [02]-[HTML_ARTIFACTS]
 
-Render lane binds on self-containment and CSP, never on the host being HTML: a single-file html-studio deliverable or any strict-CSP page carries the pre-rendered SVG inlined into the document — never a CDN script tag, never a bundled runtime spent on a static picture — while a claude.ai Artifact page renders `mermaid` fences and `<pre class="mermaid">` blocks natively and stays a source-lane host despite its HTML form.
+Render lane binds on self-containment and CSP, never on the host being HTML: any strict-CSP page carries the pre-rendered SVG inlined into the document — never a CDN script tag, never a bundled runtime spent on a static picture — while a claude.ai Artifact page renders `mermaid` fences and `<pre class="mermaid">` blocks natively and stays a source-lane host despite its HTML form.
 
 ```bash template
 uv run scripts/validate_mermaid.py --export <dir> <file.md ...>

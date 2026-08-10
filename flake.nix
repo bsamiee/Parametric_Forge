@@ -48,6 +48,11 @@
       url = "github:1Password/shell-plugins";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -69,7 +74,9 @@
 
       flake =
         {
-          overlays.default = import ./overlays;
+          # rust-overlay lands ahead of the Forge fold so the rust-toolchain row resolves `rust-bin` from its own `prev`; consumers keep taking
+          # one `overlays.default`.
+          overlays.default = inputs.nixpkgs.lib.composeManyExtensions [inputs.rust-overlay.overlays.default (import ./overlays)];
         }
         // import ./hosts {inherit inputs nix-darwin home-manager;};
     };

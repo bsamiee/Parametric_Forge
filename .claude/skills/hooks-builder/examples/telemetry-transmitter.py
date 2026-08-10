@@ -4,7 +4,7 @@
 # dependencies = ["msgspec", "httpx"]
 # ///
 # Boundary-kernel hook seam: a fail-open observer swallows every fault to a guaranteed exit 0, and focused one-line docstrings carry no Returns section.
-# ruff: noqa: BLE001, DOC201, S110
+# ruff:file-ignore[blind-except, docstring-missing-returns, try-except-pass]
 """Forward every hook firing to a sink after the policy hook decides, without ever touching the verdict.
 
 Chained second on the event array and wired async:true, the transmitter is non-blocking by construction: the whole

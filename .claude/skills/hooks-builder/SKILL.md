@@ -21,7 +21,7 @@ Build order: pick the event, pick the handler, write the config into the provide
 - [02]-[CONFIG](references/config.md): placement, scopes, matcher-evaluation law, handler types and fields, exec versus shell, JSON output contract.
 - [03]-[DUAL_PROVIDER](references/dual-provider.md): one canonical body behind thin per-provider adapters; exit-2 portability, dialect divergence.
 - [04]-[SCRIPTING](references/scripting.md): Python hook body: uv single-file packaging, typed payload admission, channel discipline, hot-path budget.
-- [05]-[INTEGRATION](references/integration.md): harness seams — placeholders, context injection, env persistence, async lanes, telemetry.
+- [05]-[INTEGRATION](references/integration.md): harness seams — placeholders, context injection, env persistence, async execution, telemetry.
 - [06]-[SECURITY](references/security.md): owns the threat surface, the enforcement-locus law, disposition by role, and supply-chain trust.
 - [07]-[VERIFICATION](references/verification.md): fixture replay, malformed-payload and timeout cases, red-team harness, diagnostics, symptom index.
 - [08]-[RECIPES](references/recipes.md): catalogs every advanced move with its hinge and the naive form it beats.

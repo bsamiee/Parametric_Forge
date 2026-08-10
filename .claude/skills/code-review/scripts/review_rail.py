@@ -3,7 +3,7 @@
 # requires-python = ">=3.15"
 # dependencies = ["cyclopts>=4", "expression>=5", "msgspec>=0.19", "ruamel.yaml>=0.18"]
 # ///
-# ruff: noqa: T201, D100, D101, D102, D103, DOC201 — command docstrings are cyclopts help text; a Returns section would pollute --help
+# ruff:file-ignore[print, undocumented-public-module, undocumented-public-class, undocumented-public-method, undocumented-public-function, docstring-missing-returns] — command docstrings are cyclopts help text; a Returns section would pollute --help
 
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ from fnmatch import fnmatch
 from functools import reduce
 import hashlib
 import io
-from itertools import accumulate, groupby, islice
+from itertools import accumulate, groupby, islice, zip_longest
 import json
 from operator import itemgetter
 import os
@@ -91,10 +91,15 @@ type FaultCode = Literal[
     "no-matchers",
     "unknown-key",
     "duplicate-class",
+    "unmapped-surface",
+    "no-surface",
+    "unprobed",
+    "unguarded",
+    "unmirrored",
     "dedup-collapse",
     "no-findings",
-    "no-lanes",
-    "bad-lane",
+    "no-shards",
+    "bad-shard",
     "no-report",
     "store-missing",
     "no-payload",
@@ -112,9 +117,9 @@ DIGEST_FOLDS: Final = 8
 DIGEST_TOP: Final = 3
 HEADLINE: Final = 160
 JSON_SCAN_CAP: Final = 64
-LANE_ALPHABET: Final = string.ascii_lowercase
-LANE_LOAD: Final = 12  # findings per lane the auto cut targets when --lanes is omitted
-LANES_CAP: Final = 14  # operational lane ceiling; LANE_ALPHABET carries the structural headroom above it
+SHARD_ALPHABET: Final = string.ascii_lowercase
+SHARD_LOAD: Final = 12  # findings per shard the auto cut targets when --shards is omitted
+SHARDS_CAP: Final = 14  # operational shard ceiling; SHARD_ALPHABET carries the structural headroom above it
 PROSE_ROOTS: Final[frozenset[str]] = frozenset({".claude", "docs"})
 PROSE_SUFFIXES: Final[frozenset[str]] = frozenset({".md", ".mdx", ".markdown"})
 KILL_ESCALATE_S: Final = 3.0
@@ -152,10 +157,16 @@ PROMPT_TEMPLATES: Final[tuple[str, ...]] = ("fix.md", "close.md", "harvest.md")
 AGENT_DEFINITION: Final = ".claude/agents/reviewer-harvest.md"
 PROMPT_PRINT_WIDTH: Final = 12
 SPAWN_TOOL: Final = "spawn_agent"
-WALL_OUTLIER_FACTOR: Final = 2.0  # a lane is a wall-time outlier above this multiple of the lane median
+WALL_OUTLIER_FACTOR: Final = 2.0  # a shard is a wall-time outlier above this multiple of the shard median
 CR_META_NAMES: Final = frozenset({"git.json", "internalState.json", "diff.json", "incrementalDiff.json"})
 GT_ORACLE_FILES: Final[tuple[str, ...]] = (".greptile/config.json", ".greptile/rules.md")
 MS_HOME: Final = ".macroscope"
+# Path prefix -> owning engine, longest prefix first: a registry row's landed surface resolves its oracle here, and an unmatched path carries no guard the rail can prove.
+ENGINE_SURFACE_ROWS: Final[tuple[tuple[str, Reviewer], ...]] = (
+    (".coderabbit.yaml", "coderabbit"),
+    (".greptile", "greptile"),
+    (MS_HOME, "macroscope"),
+)
 ROSTER_KEYS: Final = ("members", "roster", "symbols")
 SEVERITIES: Final[tuple[Severity, ...]] = ("critical", "major", "minor", "trivial", "info")
 RANK: Final[Mapping[Severity, int]] = MappingProxyType({level: rank for rank, level in enumerate(SEVERITIES)})
@@ -219,6 +230,14 @@ ANSI_RE: Final = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 EXIT_LINE_RE: Final = re.compile(rf"^{EXIT_MARK}(\d+)\s*$")
 ISSUE_AT_RE: Final = re.compile(r"issue_event\s*=\s*")
 STEM_RE: Final = re.compile(r"\W+")
+# Twin proof: templates/harvest.md [02] and the agent definition spell one law twice. The comparison strips the three spellings the two surfaces legitimately
+# differ in — identifier fencing (backticks against the codex block's quotes), each surface's own naming of its counterpart, and the path a preloaded skill
+# supplies to the agent yet the codex block spells — so any remaining divergence is one surface edited alone.
+HARVEST_LAW_RE: Final = re.compile(r"## \[02\]-\[LAW\]\s*\n+```markdown template\n(.*?)\n```", re.DOTALL)
+TWIN_OBLIGATION_RE: Final = re.compile(r"[^ ]*(?: \[\d+\])? is this law's \w+ twin;[^.]*\.")
+TWIN_PATH_GLOSS_RE: Final = re.compile(r"\s*\((?:[a-z]+ )*[\w./-]+\.(?:md|py|json|yaml|toml)\)")
+TWIN_FENCING: Final[tuple[str, ...]] = ("`", '"')
+TWIN_LAW_OPEN: Final = "<role>"
 
 # --- [MODELS] ---------------------------------------------------------------------------
 
@@ -298,8 +317,8 @@ class SurfaceGuard(msgspec.Struct, frozen=True):
     path: str = ""
 
 
-class LaneManifest(msgspec.Struct, frozen=True):
-    lane: str
+class ShardManifest(msgspec.Struct, frozen=True):
+    shard: str
     files: tuple[str, ...]
     count: int
     criticals: int
@@ -307,8 +326,8 @@ class LaneManifest(msgspec.Struct, frozen=True):
     brief: str = ""
 
 
-class LaneSlice(msgspec.Struct, frozen=True):
-    manifest: LaneManifest
+class ShardSlice(msgspec.Struct, frozen=True):
+    manifest: ShardManifest
     settled_rulings: tuple[str, ...]
     findings: tuple[Finding, ...]
 
@@ -334,14 +353,14 @@ class Refutation(msgspec.Struct, frozen=True):
     evidence: str = ""
 
 
-class LaneReport(msgspec.Struct, frozen=True):
+class ShardReport(msgspec.Struct, frozen=True):
     ledger: tuple[LedgerRow, ...] = ()
     improvements: tuple[Improvement, ...] = ()
     refuted: tuple[Refutation, ...] = ()
     capability: tuple[msgspec.Raw, ...] = ()
     routing: tuple[msgspec.Raw, ...] = ()
     uncertain: tuple[msgspec.Raw, ...] = ()
-    files: tuple[str, ...] = ()  # files the lane actually edited, fixer-reported; the manifest carries the assigned set
+    files: tuple[str, ...] = ()  # files the shard actually edited, fixer-reported; the manifest carries the assigned set
     gate_clean: bool | None = None
     model: str = ""
     wall_s: float = 0.0
@@ -354,14 +373,14 @@ class CloserReport(msgspec.Struct, frozen=True):
 
 
 class RoutingRow(msgspec.Struct, frozen=True):
-    lane: str
+    shard: str
     target_file: str
     needed_change: str
-    key: str  # "<lane-letter>:<target_file>" — the id spelling closer verdict rows answer with
+    key: str  # "<shard-letter>:<target_file>" — the id spelling closer verdict rows answer with
 
 
 class RoutingDrain(msgspec.Struct, frozen=True):
-    # Oracle: lane-report routing[] rows matched against close-*-report.json verdict rows by key or bare target_file.
+    # Oracle: shard-report routing[] rows matched against close-*-report.json verdict rows by key or bare target_file.
     total: int = 0
     drained: int = 0
     deferred: bool = False
@@ -370,7 +389,7 @@ class RoutingDrain(msgspec.Struct, frozen=True):
 
 
 class WallSpread(msgspec.Struct, frozen=True):
-    # Oracle: LaneStat.wall_s; an outlier lane exceeds WALL_OUTLIER_FACTOR x median.
+    # Oracle: ShardStat.wall_s; an outlier shard exceeds WALL_OUTLIER_FACTOR x median.
     median_s: float = 0.0
     max_s: float = 0.0
     outliers: tuple[str, ...] = ()
@@ -382,6 +401,7 @@ class RefutedClass(msgspec.Struct, frozen=True):
     matchers: tuple[str, ...] = ()
     refuting_citation: str = ""
     landed_surfaces: tuple[str, ...] = ()
+    guard_probe: str = ""
     recurrences: int = 0
 
 
@@ -440,8 +460,8 @@ class MsIssue(msgspec.Struct, frozen=True):
     body: str = ""
 
 
-class LaneStat(msgspec.Struct, frozen=True):
-    lane: str
+class ShardStat(msgspec.Struct, frozen=True):
+    shard: str
     model: str
     findings: int
     verdicts: dict[str, int]
@@ -452,11 +472,11 @@ class LaneStat(msgspec.Struct, frozen=True):
     gate_clean: bool | None = None
     fault: str = ""
     files: tuple[str, ...] = ()  # fixer-reported touched files
-    strays: tuple[str, ...] = ()  # reported files outside the lane manifest — the cross-lane-write signal
+    strays: tuple[str, ...] = ()  # reported files outside the shard manifest — the cross-shard-write signal
     shapes: dict[str, int] = msgspec.field(default_factory=dict)  # fixer-stamped shape histogram; blank stamps count as "unstamped"
 
 
-class LaneGrade(msgspec.Struct, frozen=True):
+class ShardGrade(msgspec.Struct, frozen=True):
     depth_of_fix: float
     scope_clean: float
     refute_cited: float
@@ -471,7 +491,7 @@ class RoundRow(msgspec.Struct, frozen=True):
     scope: str
     counts_by_severity: dict[str, int]
     total: int
-    lanes: tuple[LaneStat, ...]
+    shards: tuple[ShardStat, ...]
     recurred_classes: tuple[str, ...]
     new_classes: int
     routed: int
@@ -486,7 +506,7 @@ class RoundRow(msgspec.Struct, frozen=True):
     novel_quality: float = 0.0
     hunt_axis_fire: dict[str, int] = msgspec.field(default_factory=dict)
     by_model: dict[str, dict[str, int]] = msgspec.field(default_factory=dict)
-    grades: dict[str, LaneGrade] = msgspec.field(default_factory=dict)
+    grades: dict[str, ShardGrade] = msgspec.field(default_factory=dict)
     shape_fire: dict[str, int] = msgspec.field(default_factory=dict)  # fixer-stamped LedgerRow.shape counts, stamped rows only
     routing: RoutingDrain = msgspec.field(default_factory=RoutingDrain)
     wall_spread: WallSpread = msgspec.field(default_factory=WallSpread)
@@ -619,7 +639,7 @@ class GatherReceipt(msgspec.Struct, frozen=True):
 
 class SliceReceipt(msgspec.Struct, frozen=True):
     round: int
-    lanes: tuple[LaneManifest, ...]
+    shards: tuple[ShardManifest, ...]
     stamped: int
     settled_rulings: int
     cleared: int
@@ -630,18 +650,18 @@ class PackageTier(msgspec.Struct, frozen=True):
     api: str = ""  # blank when the package ships no .api overlay
 
 
-class LaneFill(msgspec.Struct, frozen=True):
-    lane: str
+class ShardFill(msgspec.Struct, frozen=True):
+    shard: str
     files: tuple[str, ...]
     packages: tuple[PackageTier, ...] = ()
     substrate: tuple[str, ...] = ()  # language-root .api tiers beside the package overlays
-    doctrine: tuple[str, ...] = ()  # docs/stacks/<language> roots owning the lane's files
+    doctrine: tuple[str, ...] = ()  # docs/stacks/<language> roots owning the shard's files
     unplaced: tuple[str, ...] = ()  # files outside every tiered root — no package, no .api, no stack doctrine
 
 
 class FillReceipt(msgspec.Struct, frozen=True):
     round: int
-    lanes: tuple[LaneFill, ...]
+    shards: tuple[ShardFill, ...]
 
 
 class EventHead(msgspec.Struct, frozen=True):
@@ -661,23 +681,23 @@ class RolloutLine(msgspec.Struct, frozen=True):
 
 
 class SpawnRow(msgspec.Struct, frozen=True):
-    lane: str
+    shard: str
     session: str = ""
     rollout: str = ""
     spawns: int = 0
     agents: tuple[str, ...] = ()
-    fault: str = ""  # no-events | no-session | no-rollout — a per-lane fact, never a refusal
+    fault: str = ""  # no-events | no-session | no-rollout — a per-shard fact, never a refusal
 
 
 class SpawnReceipt(msgspec.Struct, frozen=True):
     round: int
-    oracle: str  # the rollout store queried; the per-lane events stream false-negatives spawns and is never consulted
-    lanes: tuple[SpawnRow, ...]
+    oracle: str  # the rollout store queried; the per-shard events stream false-negatives spawns and is never consulted
+    shards: tuple[SpawnRow, ...]
 
 
 class ReconcileReceipt(msgspec.Struct, frozen=True):
     round: int
-    lanes: tuple[LaneStat, ...]
+    shards: tuple[ShardStat, ...]
     bijective: bool  # proves id bijection alone; routing states the closer drain
     routing: RoutingDrain = msgspec.field(default_factory=RoutingDrain)
 
@@ -745,7 +765,7 @@ class Fault(msgspec.Struct, frozen=True):
 
 APP: Final = App(
     help=(
-        "One verb rail over CodeRabbit, Greptile, and Macroscope: launch, status, kill, findings, slice, reconcile, lanes, harvest, gather,"
+        "One verb rail over CodeRabbit, Greptile, and Macroscope: launch, status, kill, findings, slice, reconcile, shards, harvest, gather,"
         " round, registry, verify, selftest."
     )
 )
@@ -974,7 +994,8 @@ def round_context(repo: Path, round_no: int | None, /) -> Result[Context, Fault]
     if found is None:
         wanted = f"round {round_no}" if round_no is not None else "any round-*"
         return Error(Fault(code="no-round", detail=f"{wanted} not under {repo / STATE_DIR}; launch first"))
-    return run_loaded(found).map(lambda run: Context(repo=repo, round_dir=found, run=run))
+    active = found
+    return run_loaded(active).map(lambda run: Context(repo=repo, round_dir=active, run=run))
 
 
 def context_resolved(directory: Path | None, round_no: int | None, /) -> Result[Context, Fault]:
@@ -1468,14 +1489,15 @@ def prior_pool(repo: Path, current: int, dedup_against: int | None, /) -> Result
             Fault(code="bad-flag", detail=f"--dedup-against {dedup_against} must name a round before {current}; a self-dedup empties the round")
         )
     candidates = tuple(
-        d for d in round_dirs(repo) if round_number(d) < current and (d / FINDINGS_NAME).is_file() and tuple(d.glob("lane-?-report.json"))
+        d for d in round_dirs(repo) if round_number(d) < current and (d / FINDINGS_NAME).is_file() and tuple(d.glob("shard-?-report.json"))
     )
     found = repo / STATE_DIR / f"round-{dedup_against:03d}" if dedup_against is not None else (candidates[-1] if candidates else None)
     if found is None:
         return Ok(Nothing)
-    held = found / FINDINGS_NAME
+    pool = found
+    held = pool / FINDINGS_NAME
     # A prior round that qualifies must decode loudly: a swallowed decode fault here is a silently empty provenance histogram downstream.
-    return read_bytes(held).bind(lambda payload: decoded(payload, tuple[Finding, ...], str(held))).map(lambda rows: Some((found, rows)))
+    return read_bytes(held).bind(lambda payload: decoded(payload, tuple[Finding, ...], str(held))).map(lambda rows: Some((pool, rows)))
 
 
 def provenanced(rows: tuple[Finding, ...], prior: Option[tuple[Path, tuple[Finding, ...]]], /) -> tuple[Finding, ...]:
@@ -1484,7 +1506,7 @@ def provenanced(rows: tuple[Finding, ...], prior: Option[tuple[Path, tuple[Findi
             pass
         case _:
             return rows
-    ledger = tuple(row for report in lane_reports(prior_dir) for row in report.ledger)
+    ledger = tuple(row for report in shard_reports(prior_dir) for row in report.ledger)
     by_id = {row.id: row.fingerprint for row in prior_rows if row.id}
     verdicts = {fp: entry.verdict for entry in ledger if (fp := by_id.get(entry.id))}
     touched = frozenset(entry.file for entry in ledger if entry.verdict in {"fixed", "upgraded"})
@@ -1848,23 +1870,23 @@ def seam_split(bundle: Bundle, weigh: Weigh, /) -> tuple[Bundle, ...]:
     return ()
 
 
-def partitioned(rows: tuple[Finding, ...], lanes: int, weigh: Weigh, /) -> tuple[Bundle, ...]:
+def partitioned(rows: tuple[Finding, ...], shards: int, weigh: Weigh, /) -> tuple[Bundle, ...]:
     if not rows:
         return ()
     seed = bundled(corpus_label(tuple(sorted({row.file for row in rows}))), rows, weigh)
-    target = seed.weight / max(lanes, 1)
+    target = seed.weight / max(shards, 1)
     bundles: tuple[Bundle, ...] = (seed,)
     while True:  # bounded: every pass splits one multi-row bundle, so passes cannot exceed len(rows)
         splittable = tuple(held for held in bundles if len(held.rows) > 1)
-        pool = tuple(held for held in splittable if held.weight > target) or (splittable if len(bundles) < lanes else ())
+        pool = tuple(held for held in splittable if held.weight > target) or (splittable if len(bundles) < shards else ())
         if not pool:
             return bundles
         victim = max(pool, key=lambda held: held.weight)
         bundles = (*(held for held in bundles if held is not victim), *seam_split(victim, weigh))
 
 
-def auto_lanes(total: int, /) -> int:
-    return min(LANES_CAP, max(1, -(-total // LANE_LOAD)))
+def auto_shards(total: int, /) -> int:
+    return min(SHARDS_CAP, max(1, -(-total // SHARD_LOAD)))
 
 
 def corpus_of(files: tuple[str, ...], /) -> str:
@@ -1882,31 +1904,31 @@ def rulings_of(registry: Registry, corpus: str, /) -> tuple[str, ...]:
     return tuple(f"{row.class_id}: {row.refuting_citation}".rstrip(": ") for row in registry.classes if not row.corpus or row.corpus == corpus)
 
 
-def packed_into(bundles: tuple[Bundle, ...], lanes: int, /) -> tuple[tuple[Bundle, ...], ...]:
+def packed_into(bundles: tuple[Bundle, ...], shards: int, /) -> tuple[tuple[Bundle, ...], ...]:
     def packed(acc: tuple[tuple[float, tuple[Bundle, ...]], ...], entry: Bundle, /) -> tuple[tuple[float, tuple[Bundle, ...]], ...]:
         slot = min(range(len(acc)), key=lambda at: acc[at][0])
         weight, held = acc[slot]
         return (*acc[:slot], (weight + entry.weight, (*held, entry)), *acc[slot + 1 :])
 
-    seeds: tuple[tuple[float, tuple[Bundle, ...]], ...] = tuple((0.0, ()) for _ in range(lanes))
+    seeds: tuple[tuple[float, tuple[Bundle, ...]], ...] = tuple((0.0, ()) for _ in range(shards))
     ordered = sorted(bundles, key=lambda held: held.weight, reverse=True)
     return tuple(held for _weight, held in reduce(packed, ordered, seeds))
 
 
-def sliced(rows: tuple[Finding, ...], lanes: int, balance: Balance, repo: Path, round_no: int, registry: Registry, /) -> tuple[LaneSlice, ...]:
+def sliced(rows: tuple[Finding, ...], shards: int, balance: Balance, repo: Path, round_no: int, registry: Registry, /) -> tuple[ShardSlice, ...]:
     weigh = row_weigher(balance, repo, rows)
-    packs = packed_into(partitioned(rows, min(lanes, LANES_CAP), weigh), min(lanes, LANES_CAP))
+    packs = packed_into(partitioned(rows, min(shards, SHARDS_CAP), weigh), min(shards, SHARDS_CAP))
 
-    def lane_carved(at: int, pack: tuple[Bundle, ...], /) -> LaneSlice:
-        letter = LANE_ALPHABET[at]
+    def shard_carved(at: int, pack: tuple[Bundle, ...], /) -> ShardSlice:
+        letter = SHARD_ALPHABET[at]
         labels = tuple(sorted(dict.fromkeys(held.label for held in pack)))
         picked_rows = sorted((row for held in pack for row in held.rows), key=finding_order)
         stamped = tuple(replace(row, id=f"r{round_no}{letter}-{index + 1:02d}") for index, row in enumerate(picked_rows))
         criticals = sum(1 for row in stamped if row.severity == "critical")
         files = tuple(sorted({row.file for row in stamped}))
-        return LaneSlice(
-            manifest=LaneManifest(
-                lane=f"lane-{letter}",
+        return ShardSlice(
+            manifest=ShardManifest(
+                shard=f"shard-{letter}",
                 files=files,
                 count=len(stamped),
                 criticals=criticals,
@@ -1916,10 +1938,10 @@ def sliced(rows: tuple[Finding, ...], lanes: int, balance: Balance, repo: Path, 
             findings=stamped,
         )
 
-    return tuple(lane_carved(at, pack) for at, pack in enumerate(packs) if pack)
+    return tuple(shard_carved(at, pack) for at, pack in enumerate(packs) if pack)
 
 
-def closer_sliced(rows: tuple[RoutingRow, ...], lanes: int, reviewer: Reviewer, /) -> tuple[LaneSlice, ...]:
+def closer_sliced(rows: tuple[RoutingRow, ...], shards: int, reviewer: Reviewer, /) -> tuple[ShardSlice, ...]:
     # One bundle per target file keeps closer territories file-disjoint by construction — concurrent closers never share a write target.
     def fabricated(row: RoutingRow, /) -> Finding:
         return Finding(
@@ -1930,7 +1952,7 @@ def closer_sliced(rows: tuple[RoutingRow, ...], lanes: int, reviewer: Reviewer, 
             range=Range(),
             severity="major",
             claim=row.needed_change,
-            fix_instructions=f"grep lane-{row.lane}-report.json routing[] for this target's full demand before editing",
+            fix_instructions=f"grep shard-{row.shard}-report.json routing[] for this target's full demand before editing",
             class_match="",
         )
 
@@ -1938,14 +1960,14 @@ def closer_sliced(rows: tuple[RoutingRow, ...], lanes: int, reviewer: Reviewer, 
     bundles = tuple(
         bundled(file, tuple(fabricated(row) for row in bunch), lambda _row: 1.0) for file, bunch in groupby(ordered, key=lambda row: row.target_file)
     )
-    packs = packed_into(bundles, max(1, min(lanes, len(bundles), LANES_CAP)))
+    packs = packed_into(bundles, max(1, min(shards, len(bundles), SHARDS_CAP)))
 
-    def carved(at: int, pack: tuple[Bundle, ...], /) -> LaneSlice:
+    def carved(at: int, pack: tuple[Bundle, ...], /) -> ShardSlice:
         picked = sorted((row for held in pack for row in held.rows), key=finding_order)
         files = tuple(sorted({row.file for row in picked}))
-        return LaneSlice(
-            manifest=LaneManifest(
-                lane=f"close-{LANE_ALPHABET[at]}",
+        return ShardSlice(
+            manifest=ShardManifest(
+                shard=f"close-{SHARD_ALPHABET[at]}",
                 files=files,
                 count=len(picked),
                 criticals=0,
@@ -1962,7 +1984,7 @@ def span_of(span: Range, /) -> str:
     return f"{span.start}" if span.end in {0, span.start} else f"{span.start}-{span.end}"
 
 
-def brief_rendered(pack: LaneSlice, round_no: int, /) -> str:
+def brief_rendered(pack: ShardSlice, round_no: int, /) -> str:
     manifest = pack.manifest
     ordered = sorted(pack.findings, key=lambda row: (row.file, row.range.start))
     tally = Counter(row.file for row in ordered)
@@ -1976,7 +1998,7 @@ def brief_rendered(pack: LaneSlice, round_no: int, /) -> str:
         )
 
     sections = (
-        f"# [LANE_BRIEF] round {round_no} — {manifest.lane} — {manifest.suggested_scope_line}",
+        f"# [SHARD_BRIEF] round {round_no} — {manifest.shard} — {manifest.suggested_scope_line}",
         "",
         "## [FILES]",
         *(f"- {file} ({count})" for file, count in sorted(tally.items())),
@@ -2086,39 +2108,39 @@ def query_rendered(receipt: QueryReceipt, /) -> str:
 # --- [RECONCILE]
 
 
-def lane_slices(round_dir: Path, /) -> tuple[tuple[Path, LaneSlice], ...]:
-    return tuple(Block.of_seq(sorted(round_dir.glob("lane-?.json"))).choose(lambda path: shaped(path, LaneSlice).map(lambda held: (path, held))))
+def shard_slices(round_dir: Path, /) -> tuple[tuple[Path, ShardSlice], ...]:
+    return tuple(Block.of_seq(sorted(round_dir.glob("shard-?.json"))).choose(lambda path: shaped(path, ShardSlice).map(lambda held: (path, held))))
 
 
-def report_pairs(round_dir: Path, /) -> tuple[tuple[str, LaneReport], ...]:
+def report_pairs(round_dir: Path, /) -> tuple[tuple[str, ShardReport], ...]:
     return tuple(
-        Block.of_seq(sorted(round_dir.glob("lane-?-report.json"))).choose(
-            lambda path: report_shaped(path, LaneReport).to_option().map(lambda held: (path.name.removesuffix("-report.json"), held))
+        Block.of_seq(sorted(round_dir.glob("shard-?-report.json"))).choose(
+            lambda path: report_shaped(path, ShardReport).to_option().map(lambda held: (path.name.removesuffix("-report.json"), held))
         )
     )
 
 
-def lane_reports(round_dir: Path, /) -> tuple[LaneReport, ...]:
-    return tuple(report for _lane, report in report_pairs(round_dir))
+def shard_reports(round_dir: Path, /) -> tuple[ShardReport, ...]:
+    return tuple(report for _shard, report in report_pairs(round_dir))
 
 
 def closer_reports(round_dir: Path, /) -> tuple[CloserReport, ...]:
     return tuple(Block.of_seq(sorted(round_dir.glob("close-*-report.json"))).choose(lambda path: report_shaped(path, CloserReport).to_option()))
 
 
-def routing_mined(pairs: tuple[tuple[str, LaneReport], ...], /) -> tuple[RoutingRow, ...]:
-    def mined(lane: str, raw: msgspec.Raw, /) -> Option[RoutingRow]:
+def routing_mined(pairs: tuple[tuple[str, ShardReport], ...], /) -> tuple[RoutingRow, ...]:
+    def mined(shard: str, raw: msgspec.Raw, /) -> Option[RoutingRow]:
         body = json_value(bytes(raw), "routing-row").map(stringly).default_with(lambda _f: {})
         target = str(body.get("target_file", ""))
-        letter = lane.removeprefix("lane-")
+        letter = shard.removeprefix("shard-")
         change = headline(str(body.get("needed_change", "")))
-        return Some(RoutingRow(lane=letter, target_file=target, needed_change=change, key=f"{letter}:{target}")) if target else Nothing
+        return Some(RoutingRow(shard=letter, target_file=target, needed_change=change, key=f"{letter}:{target}")) if target else Nothing
 
-    return tuple(Block.of_seq(tuple((lane, raw) for lane, report in pairs for raw in report.routing)).choose(lambda pair: mined(*pair)))
+    return tuple(Block.of_seq(tuple((shard, raw) for shard, report in pairs for raw in report.routing)).choose(lambda pair: mined(*pair)))
 
 
 def routing_drained(rows: tuple[RoutingRow, ...], closers: tuple[CloserReport, ...], /) -> RoutingDrain:
-    # A verdict row answers by the stamped "<lane-letter>:<target_file>" key, a bare target path in id, or its file field.
+    # A verdict row answers by the stamped "<shard-letter>:<target_file>" key, a bare target path in id, or its file field.
     answered = frozenset(name for report in closers for row in report.rows for name in (row.id, row.file) if name)
     pending = tuple(row for row in rows if row.key not in answered and row.target_file not in answered)
     return RoutingDrain(
@@ -2133,28 +2155,28 @@ def round_drain(round_dir: Path, /) -> RoutingDrain:
     return routing_drained(routing_mined(report_pairs(round_dir)), closer_reports(round_dir))
 
 
-def reports_complete(round_dir: Path, /) -> Result[tuple[LaneReport, ...], Fault]:
+def reports_complete(round_dir: Path, /) -> Result[tuple[ShardReport, ...], Fault]:
     # An undecodable or absent report must refuse, never shrink the pool — a partial harvest poisons the class census and grades irreversibly.
-    slices = lane_slices(round_dir)
+    slices = shard_slices(round_dir)
     decodable = frozenset(
-        path.name.removesuffix("-report.json") for path in round_dir.glob("lane-?-report.json") if report_shaped(path, LaneReport).is_ok()
+        path.name.removesuffix("-report.json") for path in round_dir.glob("shard-?-report.json") if report_shaped(path, ShardReport).is_ok()
     )
-    missing = tuple(sorted(slice_.manifest.lane for _path, slice_ in slices if slice_.manifest.lane not in decodable))
+    missing = tuple(sorted(slice_.manifest.shard for _path, slice_ in slices if slice_.manifest.shard not in decodable))
     if missing:
         return Error(
-            Fault(code="no-report", detail=f"lanes without a decodable report: {', '.join(missing)}; repair or re-emit before harvest/round")
+            Fault(code="no-report", detail=f"shards without a decodable report: {', '.join(missing)}; repair or re-emit before harvest/round")
         )
-    return Ok(lane_reports(round_dir))
+    return Ok(shard_reports(round_dir))
 
 
-def lane_stat(lane_path: Path, slice_: LaneSlice, round_dir: Path, /) -> LaneStat:
-    report_path = round_dir / f"{slice_.manifest.lane}-report.json"
-    outcome = report_shaped(report_path, LaneReport)
+def shard_stat(shard_path: Path, slice_: ShardSlice, round_dir: Path, /) -> ShardStat:
+    report_path = round_dir / f"{slice_.manifest.shard}-report.json"
+    outcome = report_shaped(report_path, ShardReport)
     report = outcome.to_option()
     ids = {row.id for row in slice_.findings}
     ledger_ids = tuple(row.id for row in report.map(lambda held: held.ledger).default_value(()))
     touched = report.map(lambda held: held.files).default_value(())
-    sliced_at = catch(exception=OSError)(lane_path.stat)().map(lambda held: held.st_mtime).default_with(lambda _f: 0.0)
+    sliced_at = catch(exception=OSError)(shard_path.stat)().map(lambda held: held.st_mtime).default_with(lambda _f: 0.0)
     reported_at = catch(exception=OSError)(report_path.stat)().map(lambda held: held.st_mtime).default_with(lambda _f: sliced_at)
     wall = report.bind(lambda held: Some(held.wall_s) if held.wall_s > 0 else Nothing).default_with(lambda: reported_at - sliced_at)
     match report:
@@ -2162,8 +2184,8 @@ def lane_stat(lane_path: Path, slice_: LaneSlice, round_dir: Path, /) -> LaneSta
             gate: bool | None = held.gate_clean
         case _:
             gate = None
-    return LaneStat(
-        lane=slice_.manifest.lane,
+    return ShardStat(
+        shard=slice_.manifest.shard,
         model=report.map(lambda held: held.model.strip().casefold()).default_value(""),  # agent-written; case drift must not fork grade cohorts
         findings=slice_.manifest.count,
         verdicts=report.map(lambda held: dict(Counter(row.verdict or "<blank>" for row in held.ledger))).default_value({}),
@@ -2179,11 +2201,11 @@ def lane_stat(lane_path: Path, slice_: LaneSlice, round_dir: Path, /) -> LaneSta
     )
 
 
-def reconciled(round_dir: Path, /) -> Result[tuple[LaneStat, ...], Fault]:
-    slices = lane_slices(round_dir)
+def reconciled(round_dir: Path, /) -> Result[tuple[ShardStat, ...], Fault]:
+    slices = shard_slices(round_dir)
     if not slices:
-        return Error(Fault(code="no-lanes", detail=f"no lane-?.json under {round_dir}; slice first"))
-    return Ok(tuple(lane_stat(path, slice_, round_dir) for path, slice_ in slices))
+        return Error(Fault(code="no-shards", detail=f"no shard-?.json under {round_dir}; slice first"))
+    return Ok(tuple(shard_stat(path, slice_, round_dir) for path, slice_ in slices))
 
 
 # --- [SPAWN_AUDIT]
@@ -2202,7 +2224,7 @@ def rollout_of(session: str, /) -> str:
 
 def spawn_scanned(lines: list[bytes], /) -> tuple[int, tuple[str, ...]]:
     # A bare string grep over-matches: the tool name also rides developer-message text and event_msg echoes,
-    # while the per-lane events stream records zero spawns outright — only a rollout response_item function_call is a real dispatch.
+    # while the per-shard events stream records zero spawns outright — only a rollout response_item function_call is a real dispatch.
     def called(line: bytes, /) -> Option[RolloutCall]:
         if SPAWN_TOOL.encode() not in line:
             return Nothing
@@ -2230,39 +2252,39 @@ def spawn_scanned(lines: list[bytes], /) -> tuple[int, tuple[str, ...]]:
 
 
 def spawn_rows(round_dir: Path, /) -> tuple[SpawnRow, ...]:
-    def lane_of(events: Path, /) -> str:
-        # flat layout: lane-<x>-events.jsonl in the round dir; lane-dir layout: lane-<x>-run/events.jsonl from a codex-lane --dir.
+    def shard_of(events: Path, /) -> str:
+        # flat layout: shard-<x>-events.jsonl in the round dir; shard-dir layout: shard-<x>-run/events.jsonl from a codex-shard --dir.
         return events.parent.name.removesuffix("-run") if events.name == "events.jsonl" else events.name.removesuffix("-events.jsonl")
 
     def audited(events: Path, /) -> SpawnRow:
-        lane = lane_of(events)
+        shard = shard_of(events)
         session = session_of(events)
         if not session:
-            return SpawnRow(lane=lane, fault="no-session")
+            return SpawnRow(shard=shard, fault="no-session")
         rollout = rollout_of(session)
         if not rollout:
-            return SpawnRow(lane=lane, session=session, fault="no-rollout")
+            return SpawnRow(shard=shard, session=session, fault="no-rollout")
         spawns, agents = spawn_scanned(read_bytes(Path(rollout)).map(bytes.splitlines).default_with(lambda _f: []))
-        return SpawnRow(lane=lane, session=session, rollout=rollout, spawns=spawns, agents=agents)
+        return SpawnRow(shard=shard, session=session, rollout=rollout, spawns=spawns, agents=agents)
 
     events_files = sorted((
-        *round_dir.glob("lane-?-events.jsonl"),
+        *round_dir.glob("shard-?-events.jsonl"),
         *round_dir.glob("close-*-events.jsonl"),
         *round_dir.glob("harvest-events.jsonl"),
-        *round_dir.glob("lane-?-run/events.jsonl"),
+        *round_dir.glob("shard-?-run/events.jsonl"),
         *round_dir.glob("close-*-run/events.jsonl"),
         *round_dir.glob("harvest-run/events.jsonl"),
     ))
-    named = {lane_of(path) for path in events_files}
+    named = {shard_of(path) for path in events_files}
     silent = tuple(
-        SpawnRow(lane=slice_.manifest.lane, fault="no-events")
-        for _path, slice_ in lane_slices(round_dir)
-        if slice_.manifest.lane not in named  # a claude-transport lane writes no events stream; its spawn story is a per-lane fact, not a refusal
+        SpawnRow(shard=slice_.manifest.shard, fault="no-events")
+        for _path, slice_ in shard_slices(round_dir)
+        if slice_.manifest.shard not in named  # a claude-transport shard writes no events stream; its spawn story is a per-shard fact, not a refusal
     )
-    return tuple(sorted((*map(audited, events_files), *silent), key=lambda row: row.lane))
+    return tuple(sorted((*map(audited, events_files), *silent), key=lambda row: row.shard))
 
 
-# --- [LANE_FILL]
+# --- [SHARD_FILL]
 
 LANGS: Final[frozenset[str]] = frozenset({"csharp", "python", "typescript"})
 
@@ -2280,14 +2302,14 @@ def tiers_of(file: str, /) -> tuple[str, str, str]:
             return ("", "", "")
 
 
-def lane_filled(repo: Path, manifest: LaneManifest, /) -> LaneFill:
+def shard_filled(repo: Path, manifest: ShardManifest, /) -> ShardFill:
     placed = tuple((file, *tiers_of(file)) for file in manifest.files)
     packages = tuple(
         PackageTier(root=root, api=f"{root}/.api" if (repo / root / ".api").is_dir() else "")
         for root in dict.fromkeys(root for _file, root, _sub, _doc in placed if root)
     )
-    return LaneFill(
-        lane=manifest.lane,
+    return ShardFill(
+        shard=manifest.shard,
         files=manifest.files,
         packages=packages,
         substrate=tuple(dict.fromkeys(sub for _file, _root, sub, _doc in placed if sub and (repo / sub).is_dir())),
@@ -2300,7 +2322,7 @@ def lane_filled(repo: Path, manifest: LaneManifest, /) -> LaneFill:
 
 
 def recurrence(
-    registry: Registry, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], /
+    registry: Registry, rows: tuple[Finding, ...], reports: tuple[ShardReport, ...], /
 ) -> tuple[tuple[tuple[str, tuple[str, ...]], ...], tuple[Refutation, ...]]:
     matchers = compiled(registry)
     flagged = tuple((row.class_match, f"{row.id or row.fingerprint}: {row.claim}") for row in rows if row.class_match)
@@ -2340,7 +2362,7 @@ def proposal_block(fresh: tuple[Refutation, ...], /) -> tuple[str, ...]:
     return ("```yaml proposed-registry-rows", sink.getvalue().rstrip("\n"), "```")
 
 
-def improvement_lines(reports: tuple[LaneReport, ...], /) -> tuple[str, ...]:
+def improvement_lines(reports: tuple[ShardReport, ...], /) -> tuple[str, ...]:
     rows = tuple((row.axis, f"- {row.page} — {row.pattern} — {row.what}") for report in reports for row in report.improvements)
     if all(not axis for axis, _line in rows):
         return tuple(line for _axis, line in rows)
@@ -2355,7 +2377,12 @@ def ineffective_of(registry: Registry, recurred_ids: frozenset[str], /) -> tuple
 
 
 def feed_rendered(
-    run: Run, recurred: tuple[tuple[str, tuple[str, ...]], ...], fresh: tuple[Refutation, ...], reports: tuple[LaneReport, ...], registry: Registry, /
+    run: Run,
+    recurred: tuple[tuple[str, tuple[str, ...]], ...],
+    fresh: tuple[Refutation, ...],
+    reports: tuple[ShardReport, ...],
+    registry: Registry,
+    /,
 ) -> str:
     citations = {row.class_id: row.refuting_citation for row in registry.classes}
     recurred_ids = frozenset(class_id for class_id, _ in recurred)
@@ -2449,7 +2476,7 @@ def feedback_stub(row: RefutedClass, /) -> str:
 
 
 def proposals_written(
-    context: Context, recurred_ids: frozenset[str], reports: tuple[LaneReport, ...], registry: Registry, /
+    context: Context, recurred_ids: frozenset[str], reports: tuple[ShardReport, ...], registry: Registry, /
 ) -> Result[tuple[str, ...], Fault]:
     refs = tuple(Block.of_seq(tuple(row for report in reports for row in report.capability)).choose(roster_row))
     feds = tuple(row for row in registry.classes if row.recurrences >= 2 and row.landed_surfaces and row.class_id in recurred_ids)
@@ -2485,19 +2512,19 @@ def corroboration_hist(repo: Path, rows: tuple[Finding, ...], /) -> dict[str, in
     return dict(Counter(str(len(index.get(row.fingerprint, frozenset({row.reviewer})))) for row in rows))
 
 
-def lane_graded(lanes: tuple[LaneStat, ...], refuted: tuple[Refutation, ...], /) -> LaneGrade:
-    verdicts = sum((Counter(stat.verdicts) for stat in lanes), Counter())
+def shard_graded(shards: tuple[ShardStat, ...], refuted: tuple[Refutation, ...], /) -> ShardGrade:
+    verdicts = sum((Counter(stat.verdicts) for stat in shards), Counter())
     fixed, upgraded = verdicts.get("fixed", 0), verdicts.get("upgraded", 0)
 
     def share(kept: int, /) -> float:
-        return round(kept / len(lanes), 3)
+        return round(kept / len(shards), 3)
 
-    return LaneGrade(
+    return ShardGrade(
         depth_of_fix=round(upgraded / (fixed + upgraded), 3) if fixed + upgraded else 0.0,
-        scope_clean=share(sum(1 for stat in lanes if not stat.phantom)),
+        scope_clean=share(sum(1 for stat in shards if not stat.phantom)),
         refute_cited=round(sum(1 for entry in refuted if entry.evidence) / len(refuted), 3) if refuted else 1.0,
-        gate_clean=share(sum(1 for stat in lanes if stat.gate_clean is True)),
-        bijective=share(sum(1 for stat in lanes if stat.report_valid and not stat.missing and not stat.phantom)),
+        gate_clean=share(sum(1 for stat in shards if stat.gate_clean is True)),
+        bijective=share(sum(1 for stat in shards if stat.report_valid and not stat.missing and not stat.phantom)),
     )
 
 
@@ -2519,7 +2546,7 @@ def prompt_prints(repo: Path, /) -> dict[str, str]:
     }
 
 
-def wall_spread_of(stats: tuple[LaneStat, ...], /) -> WallSpread:
+def wall_spread_of(stats: tuple[ShardStat, ...], /) -> WallSpread:
     walls = tuple(stat.wall_s for stat in stats if stat.wall_s > 0)
     if not walls:
         return WallSpread()
@@ -2527,24 +2554,24 @@ def wall_spread_of(stats: tuple[LaneStat, ...], /) -> WallSpread:
     return WallSpread(
         median_s=round(mid, 1),
         max_s=round(max(walls), 1),
-        outliers=tuple(stat.lane for stat in stats if mid > 0 and stat.wall_s > WALL_OUTLIER_FACTOR * mid),
+        outliers=tuple(stat.shard for stat in stats if mid > 0 and stat.wall_s > WALL_OUTLIER_FACTOR * mid),
     )
 
 
-def graded(stats: tuple[LaneStat, ...], reports: tuple[LaneReport, ...], /) -> dict[str, LaneGrade]:
+def graded(stats: tuple[ShardStat, ...], reports: tuple[ShardReport, ...], /) -> dict[str, ShardGrade]:
     grouped = groupby(sorted((stat for stat in stats if stat.model), key=lambda stat: stat.model), key=lambda stat: stat.model)
-    lanes_by_model = {model: tuple(bunch) for model, bunch in grouped}
+    shards_by_model = {model: tuple(bunch) for model, bunch in grouped}
     return {
-        model: lane_graded(lanes, tuple(entry for report in reports if report.model.strip().casefold() == model for entry in report.refuted))
-        for model, lanes in lanes_by_model.items()
+        model: shard_graded(shards, tuple(entry for report in reports if report.model.strip().casefold() == model for entry in report.refuted))
+        for model, shards in shards_by_model.items()
     }
 
 
 def row_built(
     context: Context,
     rows: tuple[Finding, ...],
-    stats: tuple[LaneStat, ...],
-    reports: tuple[LaneReport, ...],
+    stats: tuple[ShardStat, ...],
+    reports: tuple[ShardReport, ...],
     registry: Registry,
     drain: RoutingDrain,
     /,
@@ -2565,7 +2592,7 @@ def row_built(
         scope=context.run.scope.line,
         counts_by_severity=counted(rows),
         total=len(rows),
-        lanes=stats,
+        shards=stats,
         recurred_classes=tuple(class_id for class_id, _ in recurred),
         new_classes=len(fresh),
         routed=sum(len(report.routing) + len(report.uncertain) for report in reports),
@@ -2709,6 +2736,72 @@ def round_verified(context: Context, /) -> Result[tuple[VerifyReceipt, ...], Fau
 # --- [REGISTRY_GUARD]
 
 ROW_FIELDS: Final[frozenset[str]] = frozenset(RefutedClass.__struct_fields__)
+ENGINE_SURFACES: Final[frozenset[Reviewer]] = frozenset(engine for _prefix, engine in ENGINE_SURFACE_ROWS)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SurfaceProbe:
+    # The standing registry proves the whole mirror; a proposal's guards land after its row, so an incoming roster stays admissible while empty.
+    repo: Path
+    mirrored: bool
+
+
+def engine_of(surface: str, /) -> Reviewer | None:
+    held = PurePosixPath(surface).parts[:1]
+    return next((engine for prefix, engine in ENGINE_SURFACE_ROWS if held == (prefix,)), None)
+
+
+def guard_carried(repo: Path, surface: str, needle: str, /) -> bool:
+    # The guard is prose in each engine's own grain, so the probe is a verbatim span the row's author lifted from it.
+    return (
+        read_bytes(repo / surface)
+        .map(lambda payload: needle.casefold() in payload.decode("utf-8", "replace").casefold())
+        .default_with(lambda _f: False)
+    )
+
+
+def surface_faults(row: RefutedClass, probe: SurfaceProbe, /) -> tuple[Fault, ...]:
+    # landed_surfaces claims a guard carries the class on that surface. Path resolution alone proves nothing — a row naming three real files
+    # while none carries a guard is the exact drift unmirrored exists to catch — so a claim earns admission by a guard_probe found in every
+    # surface it names, and covers every engine, since an unguarded engine re-mints the class the guarded ones refuse.
+    resolved = tuple((surface, engine_of(surface)) for surface in row.landed_surfaces)
+    missing = sorted(ENGINE_SURFACES - {engine for _surface, engine in resolved if engine})
+    landed = tuple(surface for surface, engine in resolved if engine and (probe.repo / surface).is_file())
+    return (
+        *(
+            Fault(code="unmapped-surface", detail=f"{row.class_id}: {surface} maps to no engine oracle, so no verb can prove its guard")
+            for surface, engine in resolved
+            if engine is None
+        ),
+        *(
+            Fault(code="no-surface", detail=f"{row.class_id}: {surface} carries no guard — the path does not resolve under {probe.repo}")
+            for surface, engine in resolved
+            if engine and not (probe.repo / surface).is_file()
+        ),
+        *(
+            (
+                Fault(
+                    code="unprobed",
+                    detail=f"{row.class_id}: names {len(landed)} landed surface(s) with no guard_probe — the claim asserts a guard nothing reads",
+                ),
+            )
+            if landed and not row.guard_probe
+            else ()
+        ),
+        *(
+            Fault(
+                code="unguarded",
+                detail=f"{row.class_id}: {surface} resolves but carries no span matching guard_probe — the row claims a guard that is absent",
+            )
+            for surface in landed
+            if row.guard_probe and not guard_carried(probe.repo, surface, row.guard_probe)
+        ),
+        *(
+            (Fault(code="unmirrored", detail=f"{row.class_id}: no landed guard on {', '.join(missing)} — an unguarded engine re-mints the class"),)
+            if probe.mirrored and missing
+            else ()
+        ),
+    )
 
 
 def class_entries(parsed: object, origin: str, /) -> Result[tuple[object, ...], Fault]:
@@ -2747,7 +2840,7 @@ def matcher_faults(row: RefutedClass, /) -> tuple[Fault, ...]:
     )
 
 
-def row_checked(at: int, entry: object, taken: frozenset[str], /) -> RowVerdict:
+def row_checked(at: int, entry: object, taken: frozenset[str], /, *, probe: SurfaceProbe | None = None) -> RowVerdict:
     if not isinstance(entry, dict):
         return RowVerdict(at=at, class_id="", faults=(Fault(code="malformed", detail=f"row {at}: not a class mapping"),))
     try:
@@ -2768,40 +2861,45 @@ def row_checked(at: int, entry: object, taken: frozenset[str], /) -> RowVerdict:
                 if row.class_id and row.class_id in taken
                 else ()
             ),
+            *(surface_faults(row, probe) if probe else ()),
         ),
     )
 
 
-def rows_checked(entries: tuple[object, ...], standing: frozenset[str], /) -> tuple[RowVerdict, ...]:
+def rows_checked(entries: tuple[object, ...], standing: frozenset[str], /, *, probe: SurfaceProbe | None = None) -> tuple[RowVerdict, ...]:
     def stepped(acc: tuple[frozenset[str], tuple[RowVerdict, ...]], pair: tuple[int, object], /) -> tuple[frozenset[str], tuple[RowVerdict, ...]]:
         taken, verdicts = acc
-        verdict = row_checked(pair[0], pair[1], taken)
+        verdict = row_checked(pair[0], pair[1], taken, probe=probe)
         return taken | ({verdict.class_id} if verdict.class_id else set()), (*verdicts, verdict)
 
     seed: tuple[frozenset[str], tuple[RowVerdict, ...]] = (standing, ())
     return reduce(stepped, tuple(enumerate(entries, start=1)), seed)[1]
 
 
-def check_built(path: Path, standing: frozenset[str], entries: tuple[object, ...], /) -> RegistryCheckReceipt:
-    verdicts = rows_checked(entries, standing)
+def check_built(path: Path, standing: frozenset[str], entries: tuple[object, ...], probe: SurfaceProbe, /) -> RegistryCheckReceipt:
+    verdicts = rows_checked(entries, standing, probe=probe)
     faulted = tuple(verdict for verdict in verdicts if verdict.faults)
     return RegistryCheckReceipt(path=str(path), standing=len(standing), rows=len(entries), clean=len(verdicts) - len(faulted), faulted=faulted)
 
 
-def registry_checked(rows_spec: str, /) -> Result[RegistryCheckReceipt, Fault]:
+def registry_checked(rows_spec: str, repo: Path, /) -> Result[RegistryCheckReceipt, Fault]:
     if not rows_spec:
+        standing = SurfaceProbe(repo=repo, mirrored=True)
         if not REGISTRY_PATH.is_file():
-            return Ok(check_built(REGISTRY_PATH, frozenset(), ()))
-        return entries_of(REGISTRY_PATH).map(lambda entries: check_built(REGISTRY_PATH, frozenset(), entries))
+            return Ok(check_built(REGISTRY_PATH, frozenset(), (), standing))
+        return entries_of(REGISTRY_PATH).map(lambda entries: check_built(REGISTRY_PATH, frozenset(), entries, standing))
     path = Path(rows_spec)
+    probe = SurfaceProbe(repo=repo, mirrored=False)
     return registry_loaded().bind(
-        lambda registry: proposed_entries(path).map(lambda entries: check_built(path, frozenset(row.class_id for row in registry.classes), entries))
+        lambda registry: proposed_entries(path).map(
+            lambda entries: check_built(path, frozenset(row.class_id for row in registry.classes), entries, probe)
+        )
     )
 
 
-def registry_applied(rows_path: Path, /) -> Result[RegistryApplyReceipt, Fault]:
+def registry_applied(rows_path: Path, repo: Path, /) -> Result[RegistryApplyReceipt, Fault]:
     def admitted(entries: tuple[object, ...], registry: Registry, /) -> Result[tuple[RefutedClass, ...], Fault]:
-        verdicts = rows_checked(entries, frozenset(row.class_id for row in registry.classes))
+        verdicts = rows_checked(entries, frozenset(row.class_id for row in registry.classes), probe=SurfaceProbe(repo=repo, mirrored=False))
         faulted = tuple(verdict for verdict in verdicts if verdict.faults)
         if faulted:
             roster = "; ".join(
@@ -2841,7 +2939,7 @@ def registry_applied(rows_path: Path, /) -> Result[RegistryApplyReceipt, Fault]:
 
 
 def selftest_fixture() -> tuple[bytes, bytes]:
-    # Maximal-shape lane report: every field populated at the richest spelling the templates/fix.md output contract admits, the null variant derived from it —
+    # Maximal-shape shard report: every field populated at the richest spelling the templates/fix.md output contract admits, the null variant derived from it —
     # one primary, so a contract change edits one site and both variants follow.
     primary: dict[str, object] = {
         "ledger": [
@@ -2891,7 +2989,20 @@ def registry_proofs() -> tuple[tuple[str, bool], ...]:
         {**template, "class_id": "<standing-a>"},
         "<not-a-mapping>",
     )
+    surfaced: tuple[object, ...] = (
+        {**template, "class_id": "<class-d>", "landed_surfaces": []},
+        {**template, "class_id": "<class-e>", "landed_surfaces": ["docs/<file-a>.md"]},
+    )
+    unfound = Path("<no-repo>")
     fired = tuple(tuple(fault.code for fault in verdict.faults) for verdict in rows_checked(entries, frozenset({"<standing-a>"})))
+    proposed = tuple(
+        tuple(fault.code for fault in verdict.faults)
+        for verdict in rows_checked(surfaced, frozenset(), probe=SurfaceProbe(repo=unfound, mirrored=False))
+    )
+    standing = tuple(
+        tuple(fault.code for fault in verdict.faults)
+        for verdict in rows_checked((template,), frozenset(), probe=SurfaceProbe(repo=unfound, mirrored=True))
+    )
     return (
         ("registry-clean-row-passes", fired[0] == ()),
         ("registry-bad-matcher-loud", fired[1] == ("bad-matcher",)),
@@ -2899,6 +3010,9 @@ def registry_proofs() -> tuple[tuple[str, bool], ...]:
         ("registry-unknown-key-loud", fired[3] == ("unknown-key",)),
         ("registry-standing-duplicate-loud", fired[4] == ("duplicate-class",)),
         ("registry-shape-drift-loud", fired[5] == ("malformed",)),
+        ("registry-proposal-empty-roster-passes", proposed[0] == ()),
+        ("registry-unmapped-surface-loud", proposed[1] == ("unmapped-surface",)),
+        ("registry-absent-surface-and-mirror-gap-loud", standing[0] == ("no-surface", "unmirrored")),
     )
 
 
@@ -2972,8 +3086,8 @@ def stream_proofs() -> tuple[tuple[str, bool], ...]:
 
 def routing_proofs() -> tuple[tuple[str, bool], ...]:
     pairs = (
-        ("lane-a", LaneReport(routing=(msgspec.Raw(b'{"target_file": "libs/<file-c>.py", "needed_change": "<change-a>"}'),))),
-        ("lane-b", LaneReport(routing=(msgspec.Raw(b'{"target_file": "docs/<file-d>.md", "needed_change": "<change-b>"}'),))),
+        ("shard-a", ShardReport(routing=(msgspec.Raw(b'{"target_file": "libs/<file-c>.py", "needed_change": "<change-a>"}'),))),
+        ("shard-b", ShardReport(routing=(msgspec.Raw(b'{"target_file": "docs/<file-d>.md", "needed_change": "<change-b>"}'),))),
     )
     rows = routing_mined(pairs)
     closers = (CloserReport(rows=(LedgerRow(id="a:libs/<file-c>.py", verdict="landed"),), files=("libs/<file-c>.py",)),)
@@ -3020,14 +3134,14 @@ def fill_proofs() -> tuple[tuple[str, bool], ...]:
 
 
 def rollup_proofs() -> tuple[tuple[str, bool], ...]:
-    def stat_of(lane: str, wall: float, /) -> LaneStat:
-        return LaneStat(lane=lane, model="<model-a>", findings=1, verdicts={}, missing=(), phantom=(), wall_s=wall, report_valid=True)
+    def stat_of(shard: str, wall: float, /) -> ShardStat:
+        return ShardStat(shard=shard, model="<model-a>", findings=1, verdicts={}, missing=(), phantom=(), wall_s=wall, report_valid=True)
 
-    spread = wall_spread_of((stat_of("lane-a", 10.0), stat_of("lane-b", 12.0), stat_of("lane-c", 40.0)))
+    spread = wall_spread_of((stat_of("shard-a", 10.0), stat_of("shard-b", 12.0), stat_of("shard-c", 40.0)))
     prints = prompt_prints(Path("<no-repo>"))
     hex_digits = set("0123456789abcdef")
     return (
-        ("wall-spread-outlier-rule", spread == WallSpread(median_s=12.0, max_s=40.0, outliers=("lane-c",))),
+        ("wall-spread-outlier-rule", spread == WallSpread(median_s=12.0, max_s=40.0, outliers=("shard-c",))),
         ("wall-spread-empty-total", wall_spread_of(()) == WallSpread()),
         ("prompt-prints-keyed", set(prints) == {*PROMPT_TEMPLATES, PurePosixPath(AGENT_DEFINITION).name}),
         ("prompt-prints-hash-or-absent", all(v == "absent" or (len(v) == PROMPT_PRINT_WIDTH and set(v) <= hex_digits) for v in prints.values())),
@@ -3035,35 +3149,61 @@ def rollup_proofs() -> tuple[tuple[str, bool], ...]:
     )
 
 
+def twin_law(text: str, /) -> tuple[str, ...]:
+    fenceless = reduce(lambda held, mark: held.replace(mark, ""), TWIN_FENCING, text)
+    return tuple(" ".join(line.split()) for line in TWIN_PATH_GLOSS_RE.sub("", TWIN_OBLIGATION_RE.sub("", fenceless)).splitlines() if line.strip())
+
+
+def twin_bodies(repo: Path, /) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    def texted(path: Path, /) -> str:
+        return read_bytes(path).map(lambda raw: raw.decode(errors="replace")).default_with(lambda _fault: "")
+
+    fenced = HARVEST_LAW_RE.search(texted(BUNDLE / "templates" / "harvest.md"))
+    agent = texted(repo / AGENT_DEFINITION)
+    at = agent.find(TWIN_LAW_OPEN)
+    return (twin_law(fenced.group(1)) if fenced else ()), (twin_law(agent[at:]) if at >= 0 else ())
+
+
+def twin_proofs(repo: Path, /) -> tuple[tuple[str, bool], ...]:
+    # The sync obligation both surfaces state is mechanical here: one law edited on one surface diverges a law line, and the failing proof names it.
+    codex, agent = twin_bodies(repo)
+    divergence = next((at for at, pair in enumerate(zip_longest(codex, agent, fillvalue=""), start=1) if pair[0] != pair[1]), 0)
+    return (
+        ("twin-codex-law-extracted", bool(codex)),
+        ("twin-agent-law-extracted", bool(agent)),
+        (f"twin-law-bodies-identical{f' (first divergence: law line {divergence})' if divergence else ''}", bool(codex) and not divergence),
+    )
+
+
 def grade_proofs() -> tuple[tuple[str, bool], ...]:
-    def stat_of(lane: str, verdicts: dict[str, int], phantom: tuple[str, ...], /, *, gate: bool) -> LaneStat:
-        return LaneStat(
-            lane=lane, model="<model-a>", findings=2, verdicts=verdicts, missing=(), phantom=phantom, wall_s=1.0, report_valid=True, gate_clean=gate
+    def stat_of(shard: str, verdicts: dict[str, int], phantom: tuple[str, ...], /, *, gate: bool) -> ShardStat:
+        return ShardStat(
+            shard=shard, model="<model-a>", findings=2, verdicts=verdicts, missing=(), phantom=phantom, wall_s=1.0, report_valid=True, gate_clean=gate
         )
 
     stats = (
-        stat_of("lane-a", {"fixed": 1, "upgraded": 1}, (), gate=True),
-        stat_of("lane-b", {"fixed": 1, "pushed-back": 1}, ("r9b-09",), gate=False),
+        stat_of("shard-a", {"fixed": 1, "upgraded": 1}, (), gate=True),
+        stat_of("shard-b", {"fixed": 1, "pushed-back": 1}, ("r9b-09",), gate=False),
     )
-    reports = (LaneReport(refuted=(Refutation(claim="<claim-a>", evidence="<citation-a>"), Refutation(claim="<claim-b>")), model="<model-a>"),)
+    reports = (ShardReport(refuted=(Refutation(claim="<claim-a>", evidence="<citation-a>"), Refutation(claim="<claim-b>")), model="<model-a>"),)
     held = graded(stats, reports).get("<model-a>")
-    expected = LaneGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=0.5, gate_clean=0.5, bijective=0.5)
-    vacuous = LaneGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=1.0, gate_clean=0.5, bijective=0.5)
+    expected = ShardGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=0.5, gate_clean=0.5, bijective=0.5)
+    vacuous = ShardGrade(depth_of_fix=0.333, scope_clean=0.5, refute_cited=1.0, gate_clean=0.5, bijective=0.5)
     return (
         ("grades-five-axes-computed", held == expected),
-        ("grades-vacuous-refute-full-marks", lane_graded(stats, ()) == vacuous),
-        ("auto-lanes-clamps", (auto_lanes(1), auto_lanes(LANE_LOAD), auto_lanes(LANE_LOAD + 1), auto_lanes(10_000)) == (1, 1, 2, LANES_CAP)),
+        ("grades-vacuous-refute-full-marks", shard_graded(stats, ()) == vacuous),
+        ("auto-shards-clamps", (auto_shards(1), auto_shards(SHARD_LOAD), auto_shards(SHARD_LOAD + 1), auto_shards(10_000)) == (1, 1, 2, SHARDS_CAP)),
         ("convergence-shares-read-histogram", convergence_shares({"relitigation": 30, "refuted_remint": 10, "new_work": 60}, 60, 5) == (0.15, 0.3)),
     )
 
 
-def selftest_proofs() -> tuple[tuple[str, bool], ...]:
+def selftest_proofs(repo: Path, /) -> tuple[tuple[str, bool], ...]:
     primary, nulled = selftest_fixture()
-    full = report_decoded(primary, LaneReport, "<selftest-primary>")
-    empty = report_decoded(nulled, LaneReport, "<selftest-null>")
-    broken = report_decoded(b'{"ledger": 7}', LaneReport, "<selftest-broken>")
+    full = report_decoded(primary, ShardReport, "<selftest-primary>")
+    empty = report_decoded(nulled, ShardReport, "<selftest-null>")
+    broken = report_decoded(b'{"ledger": 7}', ShardReport, "<selftest-broken>")
 
-    def full_proofs(report: LaneReport, /) -> tuple[tuple[str, bool], ...]:
+    def full_proofs(report: ShardReport, /) -> tuple[tuple[str, bool], ...]:
         rosters = tuple(Block.of_seq(report.capability).choose(roster_row))
         recurred, fresh = recurrence(Registry(), (), (report,))
         lines = improvement_lines((report,))
@@ -3086,7 +3226,7 @@ def selftest_proofs() -> tuple[tuple[str, bool], ...]:
             ("improvements-group-by-axis", any(line.startswith("### [hunt-axis:") for line in lines) and "### [general]" in lines),
         )
 
-    def empty_proofs(report: LaneReport, /) -> tuple[tuple[str, bool], ...]:
+    def empty_proofs(report: ShardReport, /) -> tuple[tuple[str, bool], ...]:
         drained = (report.ledger, report.improvements, report.refuted, report.capability, report.routing, report.uncertain, report.files)
         return (("null-collections-default-empty", not any(drained)), ("null-gate-clean-none", report.gate_clean is None))
 
@@ -3105,6 +3245,7 @@ def selftest_proofs() -> tuple[tuple[str, bool], ...]:
         *spawn_proofs(),
         *fill_proofs(),
         *rollup_proofs(),
+        *twin_proofs(repo),
         *grade_proofs(),
     )
 
@@ -3237,7 +3378,7 @@ GT_SIGS: Final[tuple[FaultSig, ...]] = (
         signature="oversized",
         remedy=(
             "client-side caps — 500 changed files, 50 config files, 3000000 payload bytes (U3 patches + paths + commit messages + config +"
-            " instructions); slice commits and review each vs the prior boundary"
+            " instructions); re-aim -b at a nearer boundary over the same commits"
         ),
     ),
     FaultSig(
@@ -3772,11 +3913,11 @@ def findings_normalized(context: Context, dedup_against: int | None, /, *, parti
     adapter = ADAPTERS[context.run.reviewer]
     if context.run.kind == "gather":
         return Error(Fault(code="no-process", detail=f"round {context.run.round} is a gather round; its findings.json lands normalized at gather"))
-    if tuple(context.round_dir.glob("lane-?.json")):
+    if tuple(context.round_dir.glob("shard-?.json")):
         return Error(
             Fault(
                 code="already-sliced",
-                detail=f"{context.round_dir} carries lane slices; a re-normalize would orphan the stamped ids — re-cut with `slice`, read with `findings --digest`",
+                detail=f"{context.round_dir} carries shard slices; a re-normalize would orphan the stamped ids — re-cut with `slice`, read with `findings --digest`",
             )
         )
     terminal = observed(context)
@@ -3794,7 +3935,7 @@ def findings_normalized(context: Context, dedup_against: int | None, /, *, parti
         rows: tuple[Finding, ...], kept: tuple[Finding, ...], collapse: float, prior: Option[tuple[Path, tuple[Finding, ...]]], /
     ) -> Result[FindingsReceipt, Fault]:
         tagged = provenanced(kept, prior)
-        # Histogram over the full tagged set before the cross-round prune, so relitigation surfaces even though its rows never reach lanes.
+        # Histogram over the full tagged set before the cross-round prune, so relitigation surfaces even though its rows never reach shards.
         histogram = provenance_hist(tagged)
         prior_rows: tuple[Finding, ...] = prior.map(itemgetter(1)).default_value(())
         pruned, dropped = pruned_against(prior_rows, tagged)
@@ -3920,34 +4061,34 @@ def findings(
 @APP.command(name="slice")
 def slice_cmd(
     *,
-    lanes: Annotated[int | None, Parameter(name="--lanes")] = None,
+    shards: Annotated[int | None, Parameter(name="--shards")] = None,
     balance: Balance = "count",
     recut: bool = False,
     closers: bool = False,
     round_no: _RoundNo = None,
     directory: _Dir = None,
 ) -> int:
-    """Cut normalized findings into balanced per-lane manifests and briefs (--lanes omitted derives the count); --closers instead cuts the lane reports' routing rows into file-disjoint closer territories."""
+    """Cut normalized findings into balanced per-shard manifests and briefs (--shards omitted derives the count); --closers instead cuts the shard reports' routing rows into file-disjoint closer territories."""
 
     def carved_round(context: Context, /) -> Result[SliceReceipt, Fault]:
-        if lanes is not None and not 1 <= lanes <= LANES_CAP:
-            return Error(Fault(code="bad-lane", detail=f"lanes must be 1..{LANES_CAP}, got {lanes}"))
-        reports = tuple(context.round_dir.glob("lane-?-report.json"))
+        if shards is not None and not 1 <= shards <= SHARDS_CAP:
+            return Error(Fault(code="bad-shard", detail=f"shards must be 1..{SHARDS_CAP}, got {shards}"))
+        reports = tuple(context.round_dir.glob("shard-?-report.json"))
         if reports and not recut:
             return Error(
                 Fault(
                     code="already-sliced",
-                    detail=f"{len(reports)} lane report(s) exist under {context.round_dir}; a re-cut destroys fixer output — pass --recut to proceed",
+                    detail=f"{len(reports)} shard report(s) exist under {context.round_dir}; a re-cut destroys fixer output — pass --recut to proceed",
                 )
             )
-        stale = (*context.round_dir.glob("lane-?.json"), *reports, *context.round_dir.glob("lane-?-brief.md"))
-        # Registry, findings, and the cut all prove out BEFORE the stale set unlinks, so a refused re-slice leaves the prior lanes intact.
+        stale = (*context.round_dir.glob("shard-?.json"), *reports, *context.round_dir.glob("shard-?-brief.md"))
+        # Registry, findings, and the cut all prove out BEFORE the stale set unlinks, so a refused re-slice leaves the prior shards intact.
         return registry_loaded().bind(
             lambda registry: findings_read(context).bind(
                 lambda rows: unlinked(stale).bind(
                     lambda cleared: slices_written(
                         context,
-                        sliced(rows, auto_lanes(len(rows)) if lanes is None else lanes, balance, context.repo, context.run.round, registry),
+                        sliced(rows, auto_shards(len(rows)) if shards is None else shards, balance, context.repo, context.run.round, registry),
                         cleared,
                         restamped=True,
                     )
@@ -3956,8 +4097,8 @@ def slice_cmd(
         )
 
     def carved_closers(context: Context, /) -> Result[SliceReceipt, Fault]:
-        if lanes is not None and not 1 <= lanes <= LANES_CAP:
-            return Error(Fault(code="bad-lane", detail=f"lanes must be 1..{LANES_CAP}, got {lanes}"))
+        if shards is not None and not 1 <= shards <= SHARDS_CAP:
+            return Error(Fault(code="bad-shard", detail=f"shards must be 1..{SHARDS_CAP}, got {shards}"))
         landed = tuple(context.round_dir.glob("close-*-report.json"))
         if landed and not recut:
             return Error(
@@ -3970,12 +4111,12 @@ def slice_cmd(
         stale = (*context.round_dir.glob("close-?.json"), *landed, *context.round_dir.glob("close-?-brief.md"))
         return reports_complete(context.round_dir).bind(
             lambda _reports: (
-                Error(Fault(code="no-findings", detail=f"round {context.run.round} lane reports carry zero routing rows; nothing to close"))
+                Error(Fault(code="no-findings", detail=f"round {context.run.round} shard reports carry zero routing rows; nothing to close"))
                 if not rows
                 else unlinked(stale).bind(
                     lambda cleared: slices_written(
                         context,
-                        closer_sliced(rows, auto_lanes(len(rows)) if lanes is None else lanes, context.run.reviewer),
+                        closer_sliced(rows, auto_shards(len(rows)) if shards is None else shards, context.run.reviewer),
                         cleared,
                         restamped=False,
                     )
@@ -3983,15 +4124,15 @@ def slice_cmd(
             )
         )
 
-    def slices_written(context: Context, packs: tuple[LaneSlice, ...], cleared: int, /, *, restamped: bool) -> Result[SliceReceipt, Fault]:
+    def slices_written(context: Context, packs: tuple[ShardSlice, ...], cleared: int, /, *, restamped: bool) -> Result[SliceReceipt, Fault]:
         if not packs:
             return Error(Fault(code="no-findings", detail=f"round {context.run.round} has zero findings to slice; close it with `round` and rotate"))
         briefed = tuple(
-            replace(pack, manifest=replace(pack.manifest, brief=str(context.round_dir / f"{pack.manifest.lane}-brief.md"))) for pack in packs
+            replace(pack, manifest=replace(pack.manifest, brief=str(context.round_dir / f"{pack.manifest.shard}-brief.md"))) for pack in packs
         )
         stamped = tuple(row for pack in briefed for row in pack.findings)
         writes = (
-            *((context.round_dir / f"{pack.manifest.lane}.json", ENCODER.encode(pack)) for pack in briefed),
+            *((context.round_dir / f"{pack.manifest.shard}.json", ENCODER.encode(pack)) for pack in briefed),
             *((Path(pack.manifest.brief), brief_rendered(pack, context.run.round).encode()) for pack in briefed),
             *(((context.round_dir / FINDINGS_NAME, ENCODER.encode(stamped)),) if restamped else ()),  # closer cuts never rewrite the finding ids
         )
@@ -3999,7 +4140,7 @@ def slice_cmd(
         return outcome.map(
             lambda _last: SliceReceipt(
                 round=context.run.round,
-                lanes=tuple(pack.manifest for pack in briefed),
+                shards=tuple(pack.manifest for pack in briefed),
                 stamped=len(stamped),
                 settled_rulings=len({ruling for pack in briefed for ruling in pack.settled_rulings}),
                 cleared=cleared,
@@ -4011,22 +4152,22 @@ def slice_cmd(
 
 @APP.command
 def reconcile(
-    lane: str = "", /, *, all_lanes: Annotated[bool, Parameter(name="--all")] = False, round_no: _RoundNo = None, directory: _Dir = None
+    shard: str = "", /, *, all_shards: Annotated[bool, Parameter(name="--all")] = False, round_no: _RoundNo = None, directory: _Dir = None
 ) -> int:
-    """Prove per-lane id bijection against the lane reports and surface the routing drain; exit 0 only when every covered lane is bijective."""
+    """Prove per-shard id bijection against the shard reports and surface the routing drain; exit 0 only when every covered shard is bijective."""
 
     def resolved(context: Context, /) -> Result[ReconcileReceipt, Fault]:
-        if all_lanes and lane:
-            return Error(Fault(code="bad-lane", detail=f"--all excludes a named lane; drop {lane!r} or the flag"))
-        wanted = lane.removeprefix("lane-")
+        if all_shards and shard:
+            return Error(Fault(code="bad-shard", detail=f"--all excludes a named shard; drop {shard!r} or the flag"))
+        wanted = shard.removeprefix("shard-")
         return reconciled(context.round_dir).bind(
             lambda stats: (
-                Error(Fault(code="bad-lane", detail=f"lane-{wanted} not among {tuple(stat.lane for stat in stats)}"))
-                if wanted and not any(stat.lane == f"lane-{wanted}" for stat in stats)
+                Error(Fault(code="bad-shard", detail=f"shard-{wanted} not among {tuple(stat.shard for stat in stats)}"))
+                if wanted and not any(stat.shard == f"shard-{wanted}" for stat in stats)
                 else Ok(
                     ReconcileReceipt(
                         round=context.run.round,
-                        lanes=(kept := tuple(stat for stat in stats if not wanted or stat.lane == f"lane-{wanted}")),
+                        shards=(kept := tuple(stat for stat in stats if not wanted or stat.shard == f"shard-{wanted}")),
                         bijective=all(stat.report_valid and not stat.missing and not stat.phantom for stat in kept),
                         routing=round_drain(context.round_dir),
                     )
@@ -4040,34 +4181,34 @@ def reconcile(
 
 
 @APP.command
-def lanes(*, fill: bool = False, spawns: bool = False, lane: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
-    """Read per-lane facts: --fill emits each lane's resolved territory tiers (owning packages, .api overlays, substrate, doctrine roots); --spawns audits the codex rollouts for real spawn_agent dispatches."""
+def shards(*, fill: bool = False, spawns: bool = False, shard: str = "", round_no: _RoundNo = None, directory: _Dir = None) -> int:
+    """Read per-shard facts: --fill emits each shard's resolved territory tiers (owning packages, .api overlays, substrate, doctrine roots); --spawns audits the codex rollouts for real spawn_agent dispatches."""
     if fill == spawns:
         return refused(Fault(code="bad-flag", detail="pass exactly one of --fill (territory tier data) or --spawns (rollout spawn audit)"))
-    wanted = f"lane-{lane}" if len(lane) == 1 else lane
+    wanted = f"shard-{shard}" if len(shard) == 1 else shard
 
     def empty(round_dir: Path, /) -> Fault:
         named = f" matching {wanted!r}" if wanted else ""
-        return Fault(code="no-lanes", detail=f"no lanes{named} under {round_dir}; slice and dispatch first")
+        return Fault(code="no-shards", detail=f"no shards{named} under {round_dir}; slice and dispatch first")
 
     def filled(context: Context, /) -> Result[object, Fault]:
         rows = tuple(
-            lane_filled(context.repo, slice_.manifest)
-            for _path, slice_ in lane_slices(context.round_dir)
-            if not wanted or slice_.manifest.lane == wanted
+            shard_filled(context.repo, slice_.manifest)
+            for _path, slice_ in shard_slices(context.round_dir)
+            if not wanted or slice_.manifest.shard == wanted
         )
-        return Ok(FillReceipt(round=context.run.round, lanes=rows)) if rows else Error(empty(context.round_dir))
+        return Ok(FillReceipt(round=context.run.round, shards=rows)) if rows else Error(empty(context.round_dir))
 
     def audited(context: Context, /) -> Result[object, Fault]:
-        rows = tuple(row for row in spawn_rows(context.round_dir) if not wanted or row.lane == wanted)
+        rows = tuple(row for row in spawn_rows(context.round_dir) if not wanted or row.shard == wanted)
         oracle = f"{CODEX_SESSIONS} rollout response_item function_call name={SPAWN_TOOL}"
-        return Ok(SpawnReceipt(round=context.run.round, oracle=oracle, lanes=rows)) if rows else Error(empty(context.round_dir))
+        return Ok(SpawnReceipt(round=context.run.round, oracle=oracle, shards=rows)) if rows else Error(empty(context.round_dir))
 
     return delivered(context_resolved(directory, round_no).bind(filled if fill else audited))
 
 
 def harvest_built(context: Context, /) -> Result[HarvestReceipt, Fault]:
-    def fed(registry: Registry, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], /) -> Result[HarvestReceipt, Fault]:
+    def fed(registry: Registry, rows: tuple[Finding, ...], reports: tuple[ShardReport, ...], /) -> Result[HarvestReceipt, Fault]:
         recurred, fresh = recurrence(registry, rows, reports)
         recurred_ids = frozenset(class_id for class_id, _ in recurred)
         feed = feed_rendered(context.run, recurred, fresh, reports, registry)
@@ -4089,7 +4230,7 @@ def harvest_built(context: Context, /) -> Result[HarvestReceipt, Fault]:
 
     return reports_complete(context.round_dir).bind(
         lambda reports: (
-            Error(Fault(code="no-report", detail=f"no lane-?-report.json under {context.round_dir}; fixer lanes write reports first"))
+            Error(Fault(code="no-report", detail=f"no shard-?-report.json under {context.round_dir}; fixer shards write reports first"))
             if not reports
             else registry_loaded().bind(lambda registry: findings_read(context).bind(lambda rows: fed(registry, rows, reports)))
         )
@@ -4098,7 +4239,7 @@ def harvest_built(context: Context, /) -> Result[HarvestReceipt, Fault]:
 
 @APP.command
 def harvest(*, round_no: _RoundNo = None, directory: _Dir = None) -> int:
-    """Assemble the round's harvest feed and memory proposals from the complete lane-report set."""
+    """Assemble the round's harvest feed and memory proposals from the complete shard-report set."""
     return delivered(context_resolved(directory, round_no).bind(harvest_built))
 
 
@@ -4122,16 +4263,16 @@ def round_cmd(
             return appended(context, row_built(context, rows, (), (), registry, RoutingDrain()))
         return reports_complete(context.round_dir).bind(
             lambda reports: (
-                Error(Fault(code="no-report", detail=f"round {context.run.round} has findings but no lane-?-report.json; fix lanes before closing"))
+                Error(Fault(code="no-report", detail=f"round {context.run.round} has findings but no shard-?-report.json; fix shards before closing"))
                 if not reports
                 else drain_gated(context, rows, reports, registry)
             )
         )
 
     def drain_gated(
-        context: Context, rows: tuple[Finding, ...], reports: tuple[LaneReport, ...], registry: Registry, /
+        context: Context, rows: tuple[Finding, ...], reports: tuple[ShardReport, ...], registry: Registry, /
     ) -> Result[RoundReceipt, Fault]:
-        # Drain computes only over the proven-complete report set, so a missing lane report never shrinks the routing pool the gate reads.
+        # Drain computes only over the proven-complete report set, so a missing shard report never shrinks the routing pool the gate reads.
         drain = round_drain(context.round_dir)
         if drain.pending and not defer_routing:
             roster = ", ".join(row.key for row in drain.pending[:8]) + (" ..." if len(drain.pending) > 8 else "")
@@ -4172,11 +4313,11 @@ def round_cmd(
 
 
 @APP.command
-def registry(*, check: bool = False, apply: bool = False, rows: str = "") -> int:
-    """Prove proposed refuted-class rows (--check; bare lints the standing yaml) or land a fully clean set append-only (--apply)."""
+def registry(*, check: bool = False, apply: bool = False, rows: str = "", directory: _Dir = None) -> int:
+    """Prove proposed refuted-class rows (--check; bare lints the standing yaml and its landed guards) or land a fully clean set append-only (--apply)."""
     match check, apply, bool(rows):
         case (True, False, _):
-            match registry_checked(rows):
+            match repo_root(directory).bind(lambda repo: registry_checked(rows, repo)):
                 case Result(tag="ok", ok=receipt):
                     emitted(receipt)
                     return 0 if not receipt.faulted else 1
@@ -4185,7 +4326,7 @@ def registry(*, check: bool = False, apply: bool = False, rows: str = "") -> int
                 case _:
                     return 1
         case (False, True, True):
-            return delivered(registry_applied(Path(rows)))
+            return delivered(repo_root(directory).bind(lambda repo: registry_applied(Path(rows), repo)))
         case (False, True, False):
             return refused(Fault(code="bad-flag", detail="--apply requires --rows <path> naming the proposed classes: rows"))
         case _:
@@ -4221,9 +4362,9 @@ def verify(*, rule: str = "", path: str = "", round_no: _RoundNo = None, directo
 
 
 @APP.command
-def selftest() -> int:
-    """Prove the rail's pure contracts and exit nonzero naming each failed proof."""
-    rows = selftest_proofs()
+def selftest(*, directory: _Dir = None) -> int:
+    """Prove the rail's contracts — pure shapes plus the twin law bodies on disk — and exit nonzero naming each failed proof."""
+    rows = selftest_proofs(repo_root(directory).default_with(lambda _fault: BUNDLE.parents[2]))
     failures = tuple(name for name, held in rows if not held)
     emitted(SelftestReceipt(proofs=len(rows), passed=len(rows) - len(failures), failures=failures))
     return 0 if not failures else 1

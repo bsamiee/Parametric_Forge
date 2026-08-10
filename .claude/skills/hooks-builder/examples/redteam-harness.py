@@ -4,7 +4,7 @@
 # dependencies = ["msgspec", "anyio"]
 # ///
 # Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
-# ruff: noqa: DOC201
+# ruff:file-ignore[docstring-missing-returns]
 """Audit any hook against a paired fixture corpus, asserting its exit code, before the hook is trusted.
 
 Two modes share one entry: spawned subprocesses for real fidelity, an in-process callable for a fast inner loop,

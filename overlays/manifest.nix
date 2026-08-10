@@ -47,6 +47,10 @@ let
     openstudio = "3.11.0";
     energyplus = "26.1.0";
     gcloud = "575.0.1";
+    rdkafka = "2.15.0";
+    ruff = "0.16.2";
+    rust = "1.97.1";
+    python = "3.15.0rc1";
     osBuild = "241b8abb4d";
     epBuild = "6f2e40d102";
   };
@@ -158,6 +162,9 @@ in rec {
       projection.overlay = "override";
       overlayReason = "the `pnpm` attr routes every consumer through the 11 line riding nodejs-bin_26";
       consumers = ["node-tools" "mcp-launchers"];
+      description = "Fast, disk-space-efficient Node package manager";
+      homepage = "https://pnpm.io/";
+      mainProgram = "pnpm";
     };
 
     sqlean = {
@@ -217,6 +224,86 @@ in rec {
       projection.overlay = "override";
       overlayReason = "nixpkgs lags the rapid channel on aarch64-darwin; other platforms keep the nixpkgs package (consumer policy)";
       consumers = ["dev-tools" "gws"];
+      description = "Google Cloud SDK command line tools";
+      homepage = "https://cloud.google.com/sdk";
+      mainProgram = "gcloud";
+    };
+
+    rdkafka = {
+      upstream = "github:confluentinc/librdkafka";
+      version = v.rdkafka;
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      # Source tarball, not a release binary: the asset carries the unpacked hash and strips the archive's version directory,
+      # matching the fetchFromGitHub tree the nixpkgs recipe builds from.
+      assets.any = {
+        url = "https://github.com/confluentinc/librdkafka/archive/refs/tags/v${v.rdkafka}.tar.gz";
+        hash = "sha256-WW64fwh0xR4lEVwmrv00tP9mo6b49aCNgLLH/P0YS8k=";
+        fetch = "zip";
+        stripRoot = true;
+      };
+      license = "bsd2";
+      patchFamily = "none";
+      cacheClass = "source-built-local";
+      updateEngine = "manual";
+      retention = "git-history";
+      projection.overlay = "override";
+      overlayReason = "confluent-kafka links a system librdkafka and its sources refuse to compile below MIN_RD_KAFKA_VERSION 0x020f00ff; the pinned nixpkgs sits under that floor, so the attr override raises every consumer of the scientific native closure";
+      consumers = ["scientific-tools"];
+      description = "Apache Kafka C/C++ client library";
+      homepage = "https://github.com/confluentinc/librdkafka";
+    };
+
+    ruff = {
+      upstream = "github:astral-sh/ruff";
+      version = v.ruff;
+      versionPolicy = "fast";
+      sourceKind = "github-release";
+      # Each release tarball unpacks to a ruff-<triple>/ directory holding the single binary, so the asset hash covers the stripped tree.
+      assets = let
+        asset = triple: hash: {
+          url = "https://github.com/astral-sh/ruff/releases/download/${v.ruff}/ruff-${triple}.tar.gz";
+          fetch = "zip";
+          stripRoot = true;
+          inherit hash;
+        };
+      in {
+        aarch64-darwin = asset "aarch64-apple-darwin" "sha256-77f0LSuIoxz+9CMAy9V1FRNc036iLT1e97T37ZiGCZc=";
+        aarch64-linux = asset "aarch64-unknown-linux-musl" "sha256-UFKzCSYepL9vpYN9IsIW3SjJ1xdH0pwKEyR4bOm2yqs=";
+        x86_64-linux = asset "x86_64-unknown-linux-musl" "sha256-0USNs/z1hbOePY/H+EyFduSKYoEc2P2Nz0sQ+a8Scwc=";
+      };
+      license = "mit";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "manual";
+      retention = "git-history";
+      projection.overlay = "override";
+      overlayReason = "every estate pyproject asserts a ruff required-version floor and refuses to run below it; the pinned nixpkgs ruff sits under that floor, so the attr override raises the treefmt row, the fmt router, the nvim diagnostic lane, and the installed profile as one; pythonPackagesExtensions pins the python ruff distribution back to the nixpkgs source-built lineage the release tree cannot patch";
+      consumers = ["python-tools" "fmt" "tooling" "nvim" "pythonPackages.ruff"];
+      description = "Ruff Python linter and formatter";
+      homepage = "https://docs.astral.sh/ruff/";
+      mainProgram = "ruff";
+    };
+
+    # A new attr, never an override of `rustc`/`cargo`: those re-key rustPlatform and source-rebuild every rust package in the set. rust-overlay
+    # owns the per-platform asset set and its hashes from upstream's channel manifests; the row owns the pinned channel version, which the
+    # scientific lane needs above the nixpkgs toolchain — current sdists declare `rust-version` floors that toolchain sits under.
+    rust-toolchain = {
+      upstream = "https://static.rust-lang.org/dist";
+      version = v.rust;
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "asl20"; # dual MIT/Apache-2.0 upstream; the row records the least-permissive member
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "manual";
+      retention = "git-history";
+      projection.overlay = "new";
+      profile = "minimal"; # rustc, cargo, rust-std — the sdist lane compiles and links, it never lints or formats
+      consumers = ["scientific-tools"];
+      description = "Pinned stable Rust toolchain for the native Python build lane";
+      homepage = "https://www.rust-lang.org/";
+      mainProgram = "rustc";
     };
 
     carbon-now-cli = {
@@ -231,6 +318,36 @@ in rec {
       projection.overlay = "override";
       overlayReason = "patch-only override of the nixpkgs package; update-notifier configstore state is disabled at admission (CA-9 residue policy)";
       consumers = ["carbon"];
+      description = "Terminal-driven source-code image renderer";
+      homepage = "https://github.com/mixn/carbon-now-cli";
+      mainProgram = "carbon-now";
+    };
+
+    # CPython prerelease advance over the pinned nixpkgs recipe: the row swaps sourceVersion and hash only. The b3 interpreter's pre-rc C ABI
+    # segfaults current cp315 extension wheels (numpy 2.5.2 dies on `import numpy.random`), so the lane tracks the newest upstream 3.15.
+    python315 = {
+      upstream = "https://www.python.org/ftp/python";
+      version = v.python;
+      sourceVersion = {
+        major = "3";
+        minor = "15";
+        patch = "0";
+        suffix = "rc1";
+      };
+      hash = "sha256-+E2taAqyFHQX0nOTVcJnjw+az/5K6O93iV3hRUs4Swc=";
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      license = "psfl";
+      patchFamily = "none";
+      cacheClass = "source-built-local";
+      updateEngine = "manual";
+      retention = "git-history";
+      projection.overlay = "override";
+      overlayReason = "the pinned nixpkgs interpreter sits at 3.15.0b3, whose pre-rc C ABI segfaults current cp315 extension wheels; the attr override advances the scientific venv lane, python-tools, and forge-python-overlay-env as one";
+      consumers = ["scientific-tools" "python-tools" "forge-python-overlay-env"];
+      description = "CPython 3.15 prerelease interpreter for the scientific venv lane";
+      homepage = "https://www.python.org/";
+      mainProgram = "python3.15";
     };
 
     # Uncached-by-design python-module lane: nixpkgs python modules a uv venv cannot take from PyPI (no cp315 wheel, no sdist). The overlay fold
@@ -374,6 +491,9 @@ in rec {
       };
       kernel = true;
       consumers = ["scripts" "nvim" "Rasm tools/assay"];
+      description = "Local PostgreSQL provisioning rail for the estate";
+      homepage = "https://github.com/bardiasamiee/Parametric_Forge";
+      mainProgram = "forge-provision";
     };
 
     sqlite-forge = {
@@ -400,6 +520,9 @@ in rec {
         };
       };
       consumers = ["db-tools" "forge-provision"];
+      description = "SQLite shell kernel preloading the SQLean module profiles";
+      homepage = "https://github.com/bardiasamiee/Parametric_Forge";
+      mainProgram = "sqlite-forge";
     };
   };
 

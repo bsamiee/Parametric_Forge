@@ -5,7 +5,7 @@
 # ///
 """Validate Mermaid fences through typed source analysis, SVG render proof, rendered-geometry legibility, and browserless raster proof."""
 
-# ruff: noqa: T201, D101, D103
+# ruff:file-ignore[print, undocumented-public-class, undocumented-public-function]
 
 # --- [RUNTIME_PRELUDE] ------------------------------------------------------------------
 
@@ -148,7 +148,7 @@ def _browser_path() -> str | None:
     env = os.environ.get("PUPPETEER_EXECUTABLE_PATH", "")
     if env and ".app/" not in env and Path(env).is_file():
         return env
-    by_revision = lambda p: [int(n) for n in re.findall(r"\d+", p.parts[-3])]  # noqa: E731
+    by_revision = lambda p: [int(n) for n in re.findall(r"\d+", p.parts[-3])]  # ruff:ignore[lambda-assignment]
     shells = sorted(
         Path.home().glob(".cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell"), key=by_revision
     ) or sorted(

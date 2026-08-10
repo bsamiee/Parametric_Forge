@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Boundary-kernel hook seam: fail-closed broad-except, focused one-line docstrings, and POLICY danger-root literals, never temp-file creation.
-# ruff: noqa: BLE001, DOC201, S108
+# ruff:file-ignore[blind-except, docstring-missing-returns, hardcoded-temp-file]
 """Gate a PreToolUse call: admit once, decompose each command to leaves, dispatch per argv[0] on a semantic table, fail closed by construction.
 
 Wire: PreToolUse matcher "Bash|Edit|Write|NotebookEdit" (Codex "Bash|apply_patch"). The POLICY tables are the edit surface.
@@ -96,7 +96,7 @@ def _sandbox(cwd: str, /) -> Roots:
 
 def _canonical(target: str, roots: Roots, /) -> PurePosixPath:
     """Resolve ~/.. against project and home roots without touching the filesystem."""
-    raw = target.replace("$HOME", str(HOME)).replace("${HOME}", str(HOME))  # noqa: RUF027 — literal shell tokens, not f-strings
+    raw = target.replace("$HOME", str(HOME)).replace("${HOME}", str(HOME))  # ruff:ignore[missing-f-string-syntax] — literal shell tokens, not f-strings
     expanded = str(HOME) if raw in {"~", "~/"} else (str(HOME) + raw[1:] if raw.startswith("~/") else raw)  # bare ~ -> HOME
     path = PurePosixPath(expanded) if expanded.startswith("/") else roots.pure / expanded
     stack: list[str] = []

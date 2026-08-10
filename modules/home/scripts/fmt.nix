@@ -175,7 +175,7 @@
           ["sql/SQLite-probe.sql"]="" ["sql/duck.sql"]=sql
           [".claude/workflows/estate.js"]=workflow
           ["repo/.claude/skills/workflow-creator/assets/templates/loop.template.js"]=workflow
-          [".claude/skills/applescript/assets/examples/probe.js"]=web
+          [".claude/skills/coding-applescript/assets/examples/probe.js"]=web
         )
         local path got
         for path in "''${!probes[@]}"; do
@@ -368,7 +368,8 @@
             ((wrap && (crc == 124 || crc == 137))) && break
           fi
         done
-        printf '%d' "$((BASH_MONOSECONDS - t0))" >"$tmp/secs.$lane"
+        # Newline-terminated so the emit's `read` returns 0; a bare `printf '%d'` leaves an EOF-without-newline file.
+        printf '%d\n' "$((BASH_MONOSECONDS - t0))" >"$tmp/secs.$lane"
         return "$rc"
       }
 
@@ -418,7 +419,9 @@
           esac
           secs=null
           if [[ -s "$tmp/secs.$lane" ]]; then
-            read -r secs <"$tmp/secs.$lane"
+            # A killed lane can leave a partial line, so read still returns 1 at EOF; unguarded under errexit inside this
+            # pipeline that kills the emit subshell and every lane object with it. The regex below is the real gate.
+            read -r secs <"$tmp/secs.$lane" || true
             [[ "$secs" =~ ^[0-9]+$ ]] || secs=null
           fi
           jq -nc --arg lane "$lane" --arg tool "''${lrow[0]}" \

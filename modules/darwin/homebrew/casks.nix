@@ -40,7 +40,6 @@ _: {
 
     # --- [DEVELOPMENT]
     "visual-studio-code"
-    "iconjar"
     "typeface" # Font management
     "sf-symbols" # Apple's symbol library
 
@@ -72,8 +71,6 @@ _: {
     "zxpinstaller"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
-    "grammarly-desktop"
-    "rize" # Time tracking
     "hammerspoon" # Lua automation
     "karabiner-elements" # Keyboard remapping
   ];

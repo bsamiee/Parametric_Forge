@@ -1,6 +1,6 @@
 # [CLOSE]
 
-Universal closer template for routed-row closure after all fix lanes land; closers run concurrently over disjoint territories, and both transports consume the identical filled prompt — codex takes it as developer instructions with a one-line go directive on the user prompt; claude takes it whole as one Agent-call message. Sizing follows row weight, never model: a small closer closes single-file mechanical rows — consumer re-spells, one-case additions; a full-arming closer closes family, design, or capability work — multi-file moves, owner mints, miner-roster judgment. Keep the named spec blocks in this order — `<output_contract>` last. Fill: `<working-root>`, `<work-product>`, the sized arming ladder, the routed-rows contract, `<truth-rail-command>`, `<format-gate-command>`, and the proof-surface clause.
+Universal closer template for routed-row closure after all fix shards land; closers run concurrently over disjoint territories, and both transports consume the identical filled prompt — codex takes it as developer instructions with a one-line go directive on the user prompt; claude takes it whole as one Agent-call message. Sizing follows row weight, never model: a small closer closes single-file mechanical rows — consumer re-spells, one-case additions; a full-arming closer closes family, design, or capability work — multi-file moves, owner mints, miner-roster judgment. Keep the named spec blocks in this order — `<output_contract>` last. Fill: `<working-root>`, `<work-product>`, the sized arming ladder, the routed-rows contract, `<truth-rail-command>`, `<format-gate-command>`, and the proof-surface clause.
 
 ```markdown template
 <role>
@@ -14,7 +14,7 @@ Done is exactly one verdict row per routed demand, each proven by its re-read la
 <context_gathering>
 Read fully, in order, before the first edit:
 1. <arming-ladder: sized to row weight — a small closer reads the 2-3 docs/stacks/<language>/ pages owning the row's concern; a full-arming closer reads the full stack root set, the ARCHITECTURE strata map when rows cross folders, and the RULINGS.md registries on the rows' tier chain as settled law>.
-2. Your routed rows: <routed-rows: each row's COMPLETE text inlined, or a pointer to the <round-dir>/lane-*-report.json .routing[] arrays with the instruction to grep them per target file before editing — a paraphrase drops constraints>.
+2. Your routed rows: <routed-rows: each row's COMPLETE text inlined, or a pointer to the <round-dir>/shard-*-report.json .routing[] arrays with the instruction to grep them per target file before editing — a paraphrase drops constraints>.
 3. Each target page, in full, from current disk before its edit.
 </context_gathering>
 
@@ -38,6 +38,6 @@ A landed row fixes at the root, then exceeds where the owner admits; extensions 
 <output_contract>
 Your final message is JSON only — no prose outside it, no code fences:
 {"rows": [{"id": "<stamped-key>", "verdict": "landed"|"refuted"|"already-landed"|"blocked", "note": ""}], "files": ["<path>"]}
-One row per routed demand; "id" echoes the stamped key its brief row carries (`<lane-letter>:<target-file>`) so the routing-drain join resolves — a bare target path joins as fallback, an invented id strands the row undrained. Charter-refused and already-canonical return "refuted", already-realized returns "already-landed", each with its citation in the note.
+One row per routed demand; "id" echoes the stamped key its brief row carries (`<shard-letter>:<target-file>`) so the routing-drain join resolves — a bare target path joins as fallback, an invented id strands the row undrained. Charter-refused and already-canonical return "refuted", already-realized returns "already-landed", each with its citation in the note.
 </output_contract>
 ```

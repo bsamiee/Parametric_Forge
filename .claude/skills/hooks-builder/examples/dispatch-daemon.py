@@ -4,7 +4,7 @@
 # dependencies = ["msgspec", "anyio"]
 # ///
 # Boundary-kernel hook seam: focused one-line docstrings, a nested command scan, a boundary-admission try, fail-open telemetry, and runtime-resolved msgspec annotations are admitted.
-# ruff: noqa: DOC201, PLR1702, PLW0717, S110, TC002
+# ruff:file-ignore[docstring-missing-returns, too-many-nested-blocks, too-many-statements-in-try-clause, try-except-pass, typing-only-third-party-import]
 """Route every hook event through a priority-banded handler registry, optionally behind a resident daemon.
 
 Two run modes share one body: a resident daemon (`--serve`) holds the registry, its structs, and its handler

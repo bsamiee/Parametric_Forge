@@ -13,15 +13,15 @@ version = "0.1.0"
 requires-python = ">=3.15"
 dependencies = [
     # --- [LAW_CORE]
-    "anyio",                  # structured concurrency substrate
-    "beartype",               # runtime boundary contracts
-    "expression",             # Result/Option rails and composition
-    "msgspec",                # wire codecs
-    "numpy",                  # array numerics
-    "pydantic",               # admission models
-    "pydantic-settings",      # validated environment boundary
-    "stamina",                # retry policy
-    "structlog",              # structured logging
+    "anyio",             # structured concurrency substrate
+    "beartype",          # runtime boundary contracts
+    "expression",        # Result/Option rails and composition
+    "msgspec",           # wire codecs
+    "numpy",             # array numerics
+    "pydantic",          # admission models
+    "pydantic-settings", # validated environment boundary
+    "stamina",           # retry policy
+    "structlog",         # structured logging
     # --- [SCRIPT_SURFACES]
     "coloraide",              # oklch palette math (theme tooling)
     "cyclopts",               # CLI dispatch for skill scripts
@@ -40,10 +40,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "defusedxml", # defusedxml through svgelements: mirrored skill scripts import them; the env resolves every skill import for ty
+    "defusedxml",       # defusedxml through svgelements: mirrored skill scripts import them; the env resolves every skill import for ty
     "lxml",
     "mypy",
-    "ruff>=0.15.20,<0.16", # preview rule set moves per minor; the band holds the vetted gate stable
+    "ruff>=0.16.2",
     "sqlfluff",
     "svgelements",
     "ty",
@@ -150,7 +150,7 @@ tab_space_size = 4
 cache-dir = ".cache/ruff"
 preview = true
 line-length = 150
-required-version = ">=0.15.20,<0.16"
+required-version = ">=0.16.2"
 target-version = "py315"
 extend-exclude = [
     "**/.archive/**",
@@ -168,7 +168,7 @@ extend-exclude = [
 ]
 
 [tool.ruff.format]
-exclude = ["*.md"] # Markdown fences: the linter skips *.md natively; fence layout is design-doc law, so the formatter skips them too.
+exclude = ["*.md"]               # Markdown fences: the linter skips *.md natively; fence layout is design-doc law, so the formatter skips them too.
 line-ending = "lf"
 docstring-code-format = true
 skip-magic-trailing-comma = true
@@ -177,84 +177,56 @@ skip-magic-trailing-comma = true
 select = ["ALL"]
 ignore = [
     # --- [FORMATTER]
-    "COM812", # ruff format owns trailing commas
-    "ISC001", # ruff format owns implicit string concatenation
+    "missing-trailing-comma",                    # ruff format owns trailing commas
+    "single-line-implicit-string-concatenation", # ruff format owns implicit string concatenation
     # --- [MATCH_DISPATCH]
-    "RET504", # named intermediates keep flow pipelines readable
-    "RET505", # explicit match dispatch keeps exhaustive arms visible
-    "RET506", # explicit error branches keep ROP rails visible
-    "SIM108", # match/case owns dispatch, not ternaries
-    "SIM114", # match/case owns dispatch, not merged if arms
+    "unnecessary-assign",              # named intermediates keep flow pipelines readable
+    "superfluous-else-return",         # explicit match dispatch keeps exhaustive arms visible
+    "superfluous-else-raise",          # explicit error branches keep ROP rails visible
+    "if-else-block-instead-of-if-exp", # match/case owns dispatch, not ternaries
+    "if-with-same-arms",               # match/case owns dispatch, not merged if arms
     # --- [DENSITY]
-    "PLR0912", # one dispatch surface owns every branch; a branch cap pressures arm extraction
-    "PLR0914", # dense dispatch surfaces own their locals; a variable cap pressures fragmentation
-    "PLR0915", # one surface owns every arm; a statement cap never justifies splitting a closed union
-    "PLR0916", # dense dispatch predicates stay on the owning surface; a boolean-expression cap pressures fragmentation
+    "too-many-branches",            # one dispatch surface owns every branch; a branch cap pressures arm extraction
+    "too-many-locals",              # dense dispatch surfaces own their locals; a variable cap pressures fragmentation
+    "too-many-statements",          # one surface owns every arm; a statement cap never justifies splitting a closed union
+    "too-many-boolean-expressions", # dense dispatch predicates stay on the owning surface; a boolean-expression cap pressures fragmentation
     # --- [ERROR_RAILS]
-    "EM101",  # frozen errors carry inline messages
-    "EM102",  # error constructors carry formatted context
-    "TRY003", # domain errors carry descriptive messages
-    "TRY301", # `@safe` ROP boundaries may raise inside the guarded call
-    "TRY400", # structlog `.error()` is valid outside exception handlers
+    "raw-string-in-exception",    # frozen errors carry inline messages
+    "f-string-in-exception",      # error constructors carry formatted context
+    "raise-vanilla-args",         # domain errors carry descriptive messages
+    "raise-within-try",           # `@safe` ROP boundaries may raise inside the guarded call
+    "error-instead-of-exception", # structlog `.error()` is valid outside exception handlers
     # --- [DOCSTRINGS]
-    "DOC502", # Raises sections may document propagated helper exceptions; DOC501 still requires direct raises
+    "docstring-extraneous-exception", # Raises sections may document propagated helper exceptions; DOC501 still requires direct raises
     # --- [SEMANTIC_ORDER]
-    "RUF022", # semantic public-surface order beats alphabetical `__all__`
-    "RUF023", # semantic slot order beats alphabetical `__slots__`
+    "unsorted-dunder-all",   # semantic public-surface order beats alphabetical `__all__`
+    "unsorted-dunder-slots", # semantic slot order beats alphabetical `__slots__`
     # --- [WORKFLOW]
-    "TD003",  # TODO links are not required for local maintenance notes
-    "FIX002", # TODO comments are accepted source markers
-    "INP001", # monorepo packages may be implicit namespaces
-    "CPY001", # top-level LICENSE owns copyright notice
+    "missing-todo-link",          # TODO links are not required for local maintenance notes
+    "line-contains-todo",         # TODO comments are accepted source markers
+    "implicit-namespace-package", # monorepo packages may be implicit namespaces
+    "missing-copyright-notice",   # top-level LICENSE owns copyright notice
     # --- [SECTION_DIVIDERS]
-    "ERA001", # compact `# --- [LABEL]` subsection dividers are source structure
+    "commented-out-code", # compact `# --- [LABEL]` subsection dividers are source structure
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
 "**/.claude/**" = [
-    "TC003",
-    "ANN001",
-    "ANN401",
-    "B905",
-    "C901",
-    "E501",
-    "ERA001",
-    "EXE001",
-    "FBT001",
-    "PLC0415",
-    "PLC2701",
-    "PLC3002",
-    "PLR0911",
-    "PLR6201",
-    "PLW1510",
-    "PTH109",
-    "S105",
-    "S310",
-    "S404",
-    "S603",
-    "S607",
-    "TID251",
-    "TRY300",
+    "banned-api",
+    "boolean-type-hint-positional-argument",
+    "complex-structure",
+    "hardcoded-password-string",
+    "line-too-long",
+    "literal-membership",
+    "os-getcwd",
+    "shebang-not-executable",
+    "start-process-with-partial-path",
+    "subprocess-without-shell-equals-true",
+    "suspicious-subprocess-import",
+    "too-many-return-statements",
+    "typing-only-standard-library-import",
 ]
-"tests/**" = [
-    "S101",
-    "PT018",
-    "PLR2004",
-    "PLR0913",
-    "ARG001",
-    "ARG002",
-    "ANN201",
-    "ANN401",
-    "D101",
-    "D102",
-    "D103",
-    "SLF001",
-    "PLC2701",
-] # PLC2701: specs import the private-by-design _testkit package
-"**/adapters/**" = ["ANN401"]
-"**/conftest.py" = ["E402", "F401", "ARG001"]
-"tests/python/_testkit/runtime.py" = ["E402"] # Hypothesis environment gates must precede imports
+
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = false

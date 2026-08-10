@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # SessionStart hook: persist session credentials + tool PATH for sub-agents.
-# Canonical across all repos, owned by Parametric_Forge. Two lanes keep the
-# network out of the hook budget: a session with a warm cache REPLAYS it into
-# CLAUDE_ENV_FILE instantly and dispatches a detached `--refresh`; the refresh
-# lane (or a cold first boot, inline) resolves Doppler and rewrites the cache
-# for the next session. Doppler-first: each DOPPLER_SOURCES row resolves
+# Two paths keep the network out of the hook budget: a session with a warm
+# cache REPLAYS it into CLAUDE_ENV_FILE instantly and dispatches a detached
+# `--refresh`; the refresh path (or a cold first boot, inline) resolves Doppler
+# and rewrites the cache for the next session.
+# Doppler-first: each DOPPLER_SOURCES row resolves
 # independently — live fetch refreshes its encrypted snapshot under the
 # doppler cache; a failed fetch serves the snapshot; a dead row is loud and
 # names the keys it owes (names only, never values).
@@ -158,8 +158,8 @@ _resolve_source() {
     if [[ "${auth}" == "token" && "${outcome}" != "live" ]]; then
         # Resilient rail: a degraded token attempt retries ambient CLI auth once into a side file, so a failed retry never clobbers served material.
         # Offline too — fallback decryption is passphrase-bound to the fetching auth, so only the ambient retry reads a CLI-written snapshot.
-        # Blame lands on the token only when ambient disproves it: a live retry, or ambient material where the token lane died (Doppler never
-        # serves fallback on 401/403/404, so a dead token lane IS auth). Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
+        # Blame lands on the token only when ambient disproves it: a live retry, or ambient material where the token path died (Doppler never
+        # serves fallback on 401/403/404, so a dead token path IS auth). Snapshot-for-snapshot keeps auth=token — the snapshot alert covers it.
         local rc2=0 retry
         pre="${post}"
         _fetch "${project}" "${config}" "${snap}" "" "${out}.retry" || rc2=$?
@@ -409,7 +409,7 @@ trap '_reap 1' HUP
 trap '_reap 2' INT
 trap '_reap 15' TERM
 
-# Refresh lane: detached network resolve rewriting the cache for the NEXT session. Single-flight via lock dir; a stale lock (>3 min) is taken over.
+# Refresh path: detached network resolve rewriting the cache for the NEXT session. Single-flight via lock dir; a stale lock (>3 min) is taken over.
 if [[ "${1:-}" == "--refresh" ]]; then
     mkdir -p "${SESSION_CACHE_DIR}"
     chmod 700 "${SESSION_CACHE_DIR}"
@@ -429,7 +429,7 @@ ENV_DIR="$(dirname -- "${CLAUDE_ENV_FILE}")"
 readonly ENV_DIR
 [[ -d "${ENV_DIR}" && -w "${ENV_DIR}" && ! -d "${CLAUDE_ENV_FILE}" ]] || exit 0
 
-# Warm lane: replay the cache into the env file instantly — no network inside the hook budget — and dispatch the
+# Warm path: replay the cache into the env file instantly — no network inside the hook budget — and dispatch the
 # detached refresh (PATH-resolved nohup: /usr/bin is a Darwin fact and this hook runs on every host).
 _replay_cache() {
     local env_tmp
@@ -455,7 +455,7 @@ if [[ -s "${SESSION_CACHE}" ]]; then
     exit 0
 fi
 
-# Cold lane (first boot, no cache): resolve inline so the first session still receives keys. Concurrent cold sessions single-flight through the
+# Cold path (first boot, no cache): resolve inline so the first session still receives keys. Concurrent cold sessions single-flight through the
 # refresh lock: the loser polls for the winner's cache and replays it, resolving inline unlocked only when no cache lands inside the wait budget.
 mkdir -p "${SESSION_CACHE_DIR}"
 chmod 700 "${SESSION_CACHE_DIR}"

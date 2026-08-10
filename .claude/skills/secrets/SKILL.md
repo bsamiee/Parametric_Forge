@@ -65,7 +65,7 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 
 ## [05]-[PULL_RAIL]
 
-SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail, canonical in Parametric_Forge and byte-identical in every repo copy. A warm session replays its cache into `CLAUDE_ENV_FILE` and dispatches a detached refresh; a cold boot resolves Doppler inline. `op inject` resolves the vaults into the mode-600 op cache (`~/.config/hm-op-session.sh`) on every `forge-redeploy --switch` — the bootstrap baseline a fresh machine emits from before any Doppler token exists — and the Doppler session cache overlays that baseline with fresher per-key values.
+SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail. A warm session replays its cache into `CLAUDE_ENV_FILE` and dispatches a detached refresh; a cold boot resolves Doppler inline. `op inject` resolves the vaults into the mode-600 op cache (`~/.config/hm-op-session.sh`) on every `forge-redeploy --switch` — the bootstrap baseline a fresh machine emits from before any Doppler token exists — and the Doppler session cache overlays that baseline with fresher per-key values.
 
 - `DOPPLER_SOURCES` rows carry the shape `project:config:snapshot[:TOKEN_ENV_VAR]`; each resolves independently and in parallel.
 - `TOKEN_ENV_VAR` names an op-served config-scoped service token; an empty or unset segment falls back to ambient CLI auth, and a degraded token retries ambient once and blames the token in the receipt.

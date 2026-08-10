@@ -59,9 +59,9 @@ Before every risky deploy — migrations, major version bumps — two safety net
 
 Failed-deploy recovery, smallest hammer first: restore the previous compose or image version (`git checkout HEAD~1 -- docker-compose.yaml` or the previous tag), `docker compose up -d`, restore the DB dump when a migration proved incompatible, then re-verify. A full snapshot restore via the API is the nuclear option — it overwrites the entire VM.
 
-## [06]-[LANE_SPLIT]
+## [06]-[TRANSPORT_SPLIT]
 
-| [INDEX] | [OPERATION]                       | [LANE]                     |
+| [INDEX] | [OPERATION]                       | [TRANSPORT]                |
 | :-----: | :-------------------------------- | :------------------------- |
 |  [01]   | Deploy or update the app          | SSH                        |
 |  [02]   | Migrations, logs, container shell | SSH                        |

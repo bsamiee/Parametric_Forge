@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Boundary-kernel hook seam: focused one-line docstrings, and POLICY temp-root classification literals, never temp-file creation.
-# ruff: noqa: DOC201, S108
+# ruff:file-ignore[docstring-missing-returns, hardcoded-temp-file]
 """Own SessionStart: inject only dynamic state a gated probe produces, capture the routing row, persist a scalar cache.
 
 Capture the session_id->{tty,pane} routing row a shared-worktree estate needs. Wire: SessionStart matcher "startup|resume|clear|compact". Inject nothing silent.

@@ -19,7 +19,7 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 - Fan-out lanes isolate each supervised process and never refan with Ultra.
 - User-facing surfaces require taste ≥ 7. Plan and implementation reviews use fable-5 or opus-4.8, with Terra or Sol as the independent Codex lineage.
 - Delegated agents inherit this table at every depth under the agent-dispatch placement law, never self-escalating beyond the brief.
-- Claude models run through the Agent/Workflow `model` parameter at effort `high`; Codex runs through the codex skill's supervised CLI lane. [NEVER]: Haiku.
+- Claude models run through the Agent/Workflow `model` parameter at effort `high`; Codex runs through the delegate-codex skill's supervised CLI lane. [NEVER]: Haiku.
 - A workflow codex leg is a thin wrapper labeled with the real worker (`terra:`/`sol:`/`luna:`/`gemini:`) running one blocking supervised CLI lane; the workflow-creator codex-lanes reference owns the wrapper and receipt contract.
 
 ## [02]-[ESTATE_LAW]
@@ -42,7 +42,7 @@ Density target: ~300 LOC per file, measured with `loc`, never bytes. Approaching
 
 Before adding any code: nixpkgs already solves it? the existing pattern extends? needed now, not "later"? Any "no" means the code does not land. Vocabulary row tables use positional constructors or delimited tuples — the formatter explodes multi-key attrset rows ~2.4x, and density that dies at the fmt lane never lands. Modification is surgical and in-place — read the entire file, understand its patterns, extend the existing surface; a parallel "improved" version is a defect.
 
-Option and package truth is probed, never recalled. The `nixos` MCP's unified `nix` tool answers the pre-add questions: `action=search` (`type=packages|options|programs`, `channel=unstable`) proves whether nixpkgs already solves it; `action=info|browse` with `source=darwin|home-manager|nixos` proves an option's existence, type, and default before any module row lands — `browse` walks a prefix such as `system.defaults.dock`; `nix_versions` dates a package across releases; `action=flake-inputs|store` reads locked inputs and store paths without shell plumbing. Division of labor: the `nixos` MCP for option and package lookup, `context7-search` for manual narrative and worked examples, the locked module source for final write semantics — value mappings, ByHost domains, activation behavior — because the MCP indexes current upstream manuals, never this flake's lock; `nix-locate`/`comma` for file-to-package resolution.
+Option and package truth is probed, never recalled. The `nixos` MCP's unified `nix` tool answers the pre-add questions: `action=search` (`type=packages|options|programs`, `channel=unstable`) proves whether nixpkgs already solves it; `action=info|browse` with `source=darwin|home-manager|nixos` proves an option's existence, type, and default before any module row lands — `browse` walks a prefix such as `system.defaults.dock`; `nix_versions` dates a package across releases; `action=flake-inputs|store` reads locked inputs and store paths without shell plumbing. Division of labor: the `nixos` MCP for option and package lookup, `search-context7` for manual narrative and worked examples, the locked module source for final write semantics — value mappings, ByHost domains, activation behavior — because the MCP indexes current upstream manuals, never this flake's lock; `nix-locate`/`comma` for file-to-package resolution.
 
 ```nix accepted
 # YES: dense, multi-capable — one owner absorbs every modality

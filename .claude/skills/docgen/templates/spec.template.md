@@ -1,6 +1,6 @@
 # [<pkg-token>_<page-token>]
 
-<page-telos-lead-one-paragraph: the owner's charter in owning voice — the capability it owns, the piece it plays in the unit's system, and the boundary it holds; never the doc-set, realization status, or a sibling recap.>
+<page-charter-lead-one-paragraph: the owner's charter in owning voice — the capability it owns, the piece it plays in the unit's system, and the boundary it holds; never the doc-set, realization status, or a sibling recap.>
 
 <page-composition-lead-one-paragraph: the settled facts a rebuild composes without re-derivation — reused axes and their owning pages, seam obligations and frozen wire names, admission and receipt rails, modality and policy rows the page binds; present only when the page carries them, never process narration or restated higher law.>
 
@@ -43,7 +43,7 @@ class ShapeFold:
 
 ## [04]-[RESEARCH]
 
-<!-- source-only: research row template:
+<!-- source-only: research row template; every landed row opens on the list dash this placeholder omits, the census reading `^- [TOKEN]-[STATUS]:` alone:
 [TOKEN]-[OPEN|BLOCKED]: <exact question>; <verification route>.
 [SPLIT_MEMBER]-[OPEN]: does `shape-core` expose `split_all`; verify against the member rail.
 -->

@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Focused one-line docstrings carry no Returns section at the boundary-kernel hook seam.
-# ruff: noqa: DOC201
+# ruff:file-ignore[docstring-missing-returns]
 """Run a slow check off the hot path; wake the session only on findings not in the baseline receipt.
 
 A pre-existing failure never re-wakes every turn. Wire: PostToolUse (or Stop) with "async": true, "asyncRewake": true.

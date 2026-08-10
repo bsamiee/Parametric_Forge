@@ -16,6 +16,9 @@
   darwinMinVersion = pkgs.stdenv.hostPlatform.darwinMinVersion or "14.0";
   sharedLibExt = pkgs.stdenv.hostPlatform.extensions.sharedLibrary;
   llvmTools = pkgs.llvmPackages.llvm;
+  # llvmlite's ffi CMake runs find_package(LLVM CONFIG) and hard-fails unless LLVM_VERSION_MAJOR equals the single
+  # major it pins, so the lane carries that major beside the default toolchain LLVM instead of following it.
+  llvmliteLlvm = pkgs.llvmPackages_22.llvm;
   openmp = pkgs.llvmPackages.openmp;
   openmpDev = lib.getDev openmp;
   openmpLib = lib.getLib openmp;
@@ -37,8 +40,7 @@
     cmake
     ninja
     meson
-    rustc
-    cargo
+    rust-toolchain # manifest-pinned stable rustc/cargo; the nixpkgs toolchain sits under the `rust-version` floors current sdists declare
     maturin
   ];
 
@@ -58,6 +60,7 @@
     eigen
     flint
     gmp
+    libffi # LLVM's FindFFI runs under every find_package(LLVM CONFIG) consumer and otherwise answers from the SDK
     libiconv
     mpfr
     openmpDev
@@ -73,8 +76,17 @@
     crc32c
   ];
 
+  # confluent-kafka's sdist links the broker client by name off LIBRARY_PATH and vendors nothing; the overlay row raises the
+  # version past the floor its sources compile against.
+  messagingNativeLibs = with pkgs; [
+    rdkafka
+  ];
+  rdkafkaDev = lib.getDev pkgs.rdkafka;
+
   artifactNativeLibs = with pkgs; [
     cairo
+    file # libmagic + its compiled database; python-magic dlopens it at runtime
+    fontconfig # weasyprint dlopens libfontconfig beside pango/gobject
     freetype
     fribidi
     gdk-pixbuf
@@ -117,6 +129,7 @@
     geoNativeLibs
     ++ numericNativeLibs
     ++ columnarNativeLibs
+    ++ messagingNativeLibs
     ++ artifactNativeLibs
     ++ pointCloudNativeLibs;
 
@@ -244,7 +257,9 @@
     '';
   };
 
-  # One search-path projection per lib set; dev outputs precede out per key.
+  # One search-path projection per lib set; dev outputs precede out per key. The cmake key must carry dev too: a
+  # multi-output lib's headers live only there, and a find_path that misses them falls through to the Command Line
+  # Tools SDK root, which then rides an imported target as a -I ahead of libc++ and breaks its <stdlib.h> interposition.
   mkSearchPaths = libs: {
     pkgconfig = lib.concatStringsSep ":" [
       (lib.makeSearchPathOutput "dev" "lib/pkgconfig" libs)
@@ -252,7 +267,7 @@
       (lib.makeSearchPathOutput "dev" "share/pkgconfig" libs)
       (lib.makeSearchPathOutput "out" "share/pkgconfig" libs)
     ];
-    cmake = lib.concatStringsSep ":" (map toString libs);
+    cmake = lib.concatStringsSep ":" (map (l: toString (lib.getDev l)) libs ++ map toString libs);
     library = lib.makeLibraryPath libs;
   };
   scientificPaths = mkSearchPaths scientificNativeLibs;
@@ -293,6 +308,10 @@
       export CRC32C_INSTALL_PREFIX="${pkgs.crc32c}"
       export CRC32C_PURE_PYTHON="0"
 
+      # LLVM_DIR is the config-mode search key CMake reads from the environment: it aims llvmlite's probe at the
+      # pinned major alone, where a CMAKE_PREFIX_PATH entry would offer that LLVM to every other build in the lane.
+      export LLVM_DIR="${lib.getDev llvmliteLlvm}/lib/cmake/llvm"
+
       export ARROW_HOME="${pkgs.arrow-cpp}"
       export OPENBLAS_DIR="${pkgs.openblas}"
       export OpenMP_ROOT="${openmpDev}"
@@ -321,9 +340,14 @@
       export PKG_CONFIG_PATH="${scientificPaths.pkgconfig}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
       export CMAKE_PREFIX_PATH="${scientificPaths.cmake}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
       export LIBRARY_PATH="${scientificPaths.library}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
-      export CFLAGS="-D_DARWIN_C_SOURCE''${CFLAGS:+ $CFLAGS}"
-      export CXXFLAGS="-D_DARWIN_C_SOURCE''${CXXFLAGS:+ $CXXFLAGS}"
-      export CPPFLAGS="-I${openmpDev}/include''${CPPFLAGS:+ $CPPFLAGS}"
+      # CFLAGS/CXXFLAGS are the one compile-flag carrier: distutils appends them, meson and cargo cc read them, and CMake initializes
+      # CMAKE_<lang>_FLAGS from them at configure — reaching try_compile probes too. The OpenMP header rides here because FindOpenMP's
+      # predefine below is include-blind and the flag values must stay space-free for naive CMAKE_ARGS splitters.
+      export CFLAGS="-D_DARWIN_C_SOURCE -I${openmpDev}/include''${CFLAGS:+ $CFLAGS}"
+      export CXXFLAGS="-D_DARWIN_C_SOURCE -I${openmpDev}/include''${CXXFLAGS:+ $CXXFLAGS}"
+      # setuptools reads neither PKG_CONFIG_PATH nor CMAKE_PREFIX_PATH, so a dev-output header a distutils Extension includes by
+      # path (confluent-kafka: <librdkafka/rdkafka.h>) arrives only as an explicit -I.
+      export CPPFLAGS="-I${openmpDev}/include -I${rdkafkaDev}/include''${CPPFLAGS:+ $CPPFLAGS}"
       export LDFLAGS="-L${openmpLib}/lib''${LDFLAGS:+ $LDFLAGS}"
       ${lib.optionalString isDarwin ''
         # rhino3dm: route links through the ld group-filter shim; grpcio: vendored c-ares needs arpa/nameser.h,
@@ -333,12 +357,25 @@
           export CPPFLAGS="$CPPFLAGS -idirafter $sdk_path/usr/include"
         fi
       ''}
-      export CMAKE_ARGS="-DCMAKE_C_FLAGS=-D_DARWIN_C_SOURCE -DCMAKE_CXX_FLAGS=-D_DARWIN_C_SOURCE -DOpenMP_C_FLAGS=-fopenmp -DOpenMP_CXX_FLAGS=-fopenmp -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=${openmpLib}/lib/libomp${sharedLibExt}''${CMAKE_ARGS:+ $CMAKE_ARGS}"
+      # No -DCMAKE_<lang>_FLAGS here: an explicit -D would shadow the env CFLAGS/CXXFLAGS carrier above for every CMake build.
+      export CMAKE_ARGS="-DOpenMP_C_FLAGS=-fopenmp -DOpenMP_CXX_FLAGS=-fopenmp -DOpenMP_C_LIB_NAMES=omp -DOpenMP_CXX_LIB_NAMES=omp -DOpenMP_omp_LIBRARY=${openmpLib}/lib/libomp${sharedLibExt}''${CMAKE_ARGS:+ $CMAKE_ARGS}"
 
       exec "$@"
     '';
   };
+  # ctypes/dlopen consumers (weasyprint's gobject/pango/harfbuzz/fontconfig chain, python-magic's libmagic) resolve their
+  # dylibs by bare name at runtime, outside any build env. One linked lib tree behind DYLD_FALLBACK_LIBRARY_PATH serves them;
+  # dyld consults the fallback only after every standard location, so system libraries keep precedence.
+  # getLib pins each member's lib output: multi-output members otherwise contribute their default output, which for glib and
+  # pango carries no dylibs at all.
+  runtimeDylibEnv = pkgs.buildEnv {
+    name = "forge-runtime-dylibs";
+    paths = map lib.getLib (with pkgs; [file fontconfig glib harfbuzz pango]);
+    pathsToLink = ["/lib"];
+  };
 in {
+  home.sessionVariables.DYLD_FALLBACK_LIBRARY_PATH = "${runtimeDylibEnv}/lib";
+
   home.packages =
     [
       gfortranTool

@@ -185,6 +185,10 @@ in {
     '';
     # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs; only the wrapper above may reference this file.
     "taplo/taplo.toml".text = ''
+      # Estate law: every pyproject.toml carries hand-aligned comment columns across its dependency arrays; no formatter
+      # route touches it. Vendored trees stay out of any repo-wide sweep.
+      exclude = ["**/pyproject.toml", "**/node_modules/**"]
+
       [formatting]
       indent_string = "${style.indentString}"
       column_width = ${toString style.width}

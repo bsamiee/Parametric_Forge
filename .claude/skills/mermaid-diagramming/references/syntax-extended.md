@@ -472,8 +472,6 @@ title TCP Header
 
 ```mermaid
 timeline
-  accTitle: Skill evolution
-  accDescr: Two phases of the diagram skill from question-first method through the validation gates, each carrying its landed changes.
   title Skill Evolution
   section Foundation
     Method : One question : Staged growth

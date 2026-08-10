@@ -1,7 +1,7 @@
 ---
 name: hostinger
 description: >-
-    Owns Hostinger account work and the lane that carries it — `hostinger` MCP tools, REST under
+    Owns Hostinger account work and the transport that carries it — `hostinger` MCP tools, REST under
     `HOSTINGER_API_TOKEN`, or SSH on the box — with the safety law over irreversible acts: snapshot
     first, firewall sync, async polling, hPanel-only escapes. Reaches domains, DNS zones, WHOIS; VPS
     lifecycle, firewalls, SSH keys, recovery; Docker Compose deploy and rollback; shared hosting,
@@ -12,11 +12,11 @@ description: >-
 
 # [HOSTINGER]
 
-Hostinger's estate is one API surface with three entry lanes, and the work's shape chooses the lane, never habit. Maghz — the durable second brain — runs on the Hostinger VPS, so VPS mutations are production operations: snapshot before destructive work, and route lifecycle through the sanctioned lanes below.
+Hostinger's estate is one API surface with three entry transports, and the work's shape chooses the transport, never habit. Maghz — the durable second brain — runs on the Hostinger VPS, so VPS mutations are production operations: snapshot before destructive work, and route lifecycle through the sanctioned transports below.
 
-| [INDEX] | [LANE]          | [SURFACE]                                                     | [WHEN]                                          |
+| [INDEX] | [TRANSPORT]     | [SURFACE]                                                     | [WHEN]                                          |
 | :-----: | :-------------- | :------------------------------------------------------------ | :---------------------------------------------- |
-|  [01]   | `hostinger` MCP | `domains` `DNS` `VPS` `hosting` `ecommerce` `reach` `billing` | Interactive agent operations — the default lane |
+|  [01]   | `hostinger` MCP | `domains` `DNS` `VPS` `hosting` `ecommerce` `reach` `billing` | Interactive agent operations — the default      |
 |  [02]   | REST API        | `https://developers.hostinger.com` with `HOSTINGER_API_TOKEN` | Scripts, CI, bulk loops, SDK-driven automation  |
 |  [03]   | SSH             | Universal key in `~/.ssh/config`                              | On-box work: deploys, logs, compose, migrations |
 
@@ -69,7 +69,7 @@ curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345
 
 ## [04]-[DOCKER_MANAGER]
 
-Docker Manager deploys Compose projects through the API from inline content, a GitHub repo URL (auto-resolves `docker-compose.yaml` on the master branch), or any URL returning raw compose content. Deploying under an existing project name replaces that project — the zero-config redeploy path. Hostinger marks these endpoints subject to change; a production deployment with an existing compose file takes the SSH lane instead.
+Docker Manager deploys Compose projects through the API from inline content, a GitHub repo URL (auto-resolves `docker-compose.yaml` on the master branch), or any URL returning raw compose content. Deploying under an existing project name replaces that project — the zero-config redeploy path. Hostinger marks these endpoints subject to change; a production deployment with an existing compose file takes the SSH transport instead.
 
 ```bash copy-safe
 curl -X POST "https://developers.hostinger.com/api/vps/v1/virtual-machines/12345/docker" \

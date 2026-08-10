@@ -176,7 +176,7 @@ ARTICLE_FRAGMENT = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+(?:\[[A-Z0-9][A-Z0-9_|]*
 # Sentence boundaries reject article-led voice \u2014 `The` in every case, `A`/`An` where capitalization marks a sentence
 # start; colons, semicolons, and leader dashes retain lowercase continuation.
 SENTENCE_ARTICLE = re.compile(r"^\s*(?:[Tt]he\b|An?\s)|[.!?]\s+(?:[Tt]he\b|An?\s)|[:;\u2013\u2014]\s+(?:The\b|An?\s)")
-# One cure, every article site: the article heads a definition whose subject is not the acting owner; the repair is structural, never a determiner edit.
+# One repair, every article site: the article heads a definition whose subject is not the acting owner; the repair is structural, never a determiner edit.
 ARTICLE_CURE = "; find the actor, seat it as subject under a present-active owning verb; deleting the article or swapping determiners re-heads the same broken clause"
 # Comments obey the same owner-first voice; capitalized A/An marks a sentence start, never a wrapped continuation.
 COMMENT_ARTICLE = re.compile(r"^(?:[Tt]he|An?)\s")
@@ -203,7 +203,7 @@ EXAMPLE_LINE = re.compile(
     r"(?:\s*\([^)]*\))?:"
 )
 # Quote-labeled fields carry defective prose by design and skip every check; guidance-voice fields (Detection/Reason/Reframe/Accepted)
-# skip the register rosters they must name yet still answer the article-opener check — their voice is the skill's own.
+# skip the voice rosters they must name yet still answer the article-opener check — their voice is the skill's own.
 QUOTE_LINE = re.compile(r"^\s*(?:>\s*)?(?:[-+*]|\d+[.)])?\s*\[?(?i:Reject(?:ed)?|Near miss|Banned|Survivors)\]?(?:\s*\([^)]*\))?:")
 # Any-indent fences: list-nested fences open at the item's content column; close indent is bounded at the check site.
 FENCE = re.compile(r"^(?P<indent>[ \t]*)(?P<marker>`{3,}|~{3,})(?P<info>.*)$")
@@ -243,7 +243,7 @@ LIST_ITEM = re.compile(r"^(?P<indent>\s*)(?P<mark>[-+*]|\d+[.)])\s+(?P<body>\S.*
 LIST_LEADER = re.compile(r"^\s*(?:[-+*]|\d+[.)])\s+\[(?:\d{2}(?:\.\d+)?(?:-[A-Z0-9_]+)?|[A-Z0-9_]+|[OX!~ ])\](?:\s+[—-]|[-:]\s*|:)")
 # Invocation-marker leaders weight the imperative following them directly — no colon, no dash — per the formatting standard's closed family.
 INVOCATION_LEADER = re.compile(r"^\s*[-+*]\s+\[(?:ALWAYS|NEVER|IMPORTANT|CRITICAL)\]\s+\S")
-# Record fields `- Field: value` answer to the earned-field law at card altitude; the entry budget binds peer bullets.
+# Record fields `- Field: value` answer to the earned-field law at card tier; the entry budget binds peer bullets.
 FIELD_LINE = re.compile(r"^[A-Z][A-Za-z-]*(?: [A-Za-z-]+){0,2}: \S")
 # Hard-wrap detection: a flush-left prose line whose predecessor is also flush-left prose; structural leads are excluded.
 PLAIN_EXCLUDED = ("#", "-", "*", "+", ">", "|", "<", "=", "[")
@@ -252,7 +252,7 @@ LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\
 NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\](?:-\[[A-Z][A-Z0-9_]*\])*$")
 PLACEHOLDER = re.compile(r"<[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+>")
 # Agent bodies under `.claude/agents/` are dispatched system prompts: whole-line XML spine tags are structure, never
-# unfilled slots, and the second-person demand voice is the register, so bare `you` leaves the hedge scan there.
+# unfilled slots, and the second-person demand voice is the voice law, so bare `you` leaves the hedge scan there.
 AGENT_SPINE = re.compile(r"^</?[a-z][a-z0-9_]*>\s*$")
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
 SETEXT = re.compile(r"^\s*(?:=+|-{3,})\s*$")
@@ -304,14 +304,19 @@ VERSION_BAND = re.compile(r"\b[A-Z][A-Za-z]*\s+\d{1,3}\+(?![+\d])")
 CITATION_LEAD = re.compile(r"(?:Table|Clause|Section|Annex|Figure|Chapter|Note|Part|§)\s*$")
 # Spaced double or triple hyphens ride prose as an em dash; the spelled character is the only legal interrupter.
 EM_DASH_ASCII = re.compile(r"(?<=\s)-{2,3}(?=\s)")
-# Section-anchored pointers couple prose to a sibling's interior; a bare owner mention stays the legal one-line pointer form.
+# Interior-anchored pointers couple prose to a sibling's internals, and two shapes qualify: a file pointer whose
+# `.md` extension pins a physical path a move invalidates, and a path pointer whose anchor is not an
+# UPPERCASE_SNAKE section token, reaching for a code symbol or a slug the target renumbers away. Extensionless
+# `<path>/<page>#SECTION_TOKEN` names a public section header, the one cross-owner form, so it stays legal beside a bare owner mention.
 STRATA_ROW_KEY = re.compile(r"^- S\d+(?:\u2013S?\d+)?\s")
-POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#[A-Z][A-Z0-9_]+\b")
+POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#(?![A-Z][A-Z0-9_]*(?![\w-]))[\w.-]+\b")
 # Deictic freshness and permission verbs warn: both admit context-legal uses review adjudicates.
-FRESHNESS_DEICTIC = re.compile(r"\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b", re.IGNORECASE)
+# Hyphen lookarounds spare compound terms — `least-recently-touched` names an eviction policy, not freshness.
+FRESHNESS_DEICTIC = re.compile(r"(?<!-)\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b(?!-)", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
 # Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the estate, so review adjudicates each.
-SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|etc)\b", re.IGNORECASE)
+# `etc` holds case: the discourse hedge is lowercase, while all-caps spells a domain acronym (the ETC texture-compression family).
+SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|(?-i:etc|Etc))\b", re.IGNORECASE)
 # Grade and intensity words fail: each grades a fact the fact already carries, and deleting one costs no law. Roster admits
 # only the unambiguous — a domain term the corpus owns (`robust` predicates, `optimal` collapse, `ideal` in the algebraic
 # sense, `perfect` forwarding/hashing), estate vocabulary (`first-class`, `rich`, `advanced`), and a contrastive `merely`
@@ -324,10 +329,10 @@ NO_OP_WORD = re.compile(
     r"|blazing|lightning-fast|battle-tested|production-ready|enterprise-grade|next-generation|revolutionary|innovative)\b",
     re.IGNORECASE,
 )
-# Sentence-initial `So` is filler glue delaying the subject; its cure is a recast, never a comma swap. The causal `, so …`
+# Sentence-initial `So` is filler glue delaying the subject; its repair is a recast, never a comma swap. The causal `, so …`
 # join states real consequence law and is the corpus's canonical connector, so only the lead-in form answers here.
 SENTENCE_SO = re.compile(r"(?:^|[.!?]\s+)So\b")
-# AI-register lexemes fail: puffery, significance theater, transition filler, summary tails, and abstract nouns carry zero
+# AI-prose lexemes fail: puffery, significance theater, transition filler, summary tails, and abstract nouns carry zero
 # domain load; each hit is delete-or-reframe. Estate terms `leverage`, `overall`, `therefore`, `thus`, `likewise`, and
 # `backbone` retain concrete stacking, grading, ordering, or spine semantics, so the roster excludes them.
 AI_LEXICON = re.compile(
@@ -341,13 +346,23 @@ AI_LEXICON = re.compile(
 )
 # Copula avoidance warns: an identity claim states is/are/has; a serves-as apposition re-labels the surface without owning its concern.
 COPULA_AVOIDANCE = re.compile(r"\b(?:serves|stands|functions|operates)\s+as\b|\bboasts\b", re.IGNORECASE)
-# Additive filler fails: `plus` pads a clause it never joins. Cure runs shortest-first — delete the word with its comma, folding the tail
+# Additive filler fails: `plus` pads a clause it never joins. Repair runs shortest-first — delete the word with its comma, folding the tail
 # into the clause or a serial list; then `with`, which carries accompaniment; then FANBOYS `and` where a compound subject needs the
 # conjunction; then a precise shorter word where the coinage admits one. Every longer connector costs more characters than the defect.
 # Emphasis casing and quantity sense survive the swap. Hyphen lookarounds spare compound tokens (`delete-plus-create`), read as names.
 FILLER_WORD = re.compile(r"(?<![\w-])plus(?![\w-])", re.IGNORECASE)
 # Label-led paragraphs — `[LABEL] — prose` or `[LABEL]: prose` — are measured prose mass, never structure.
 LABELED_PARAGRAPH = re.compile(r"^\[[A-Z][A-Z0-9_]*\](?:-\[[A-Z][A-Z0-9_]*\])*(?: [\u2013\u2014] |: )\S")
+# Wrap evidence for a labeled paragraph, the one line shape that reads both as a record carrying its own body and
+# as a wrapped clause. Bare prose needs none \u2014 a blank line separates paragraphs, so adjacency alone proves the
+# break. The tail closes over the function words and dangling punctuation no clause ends on; the head over a
+# lowercase opener, a paragraph of its own opening on a capital, a code span, or a label.
+CONTINUATION_TAIL = re.compile(
+    r"(?:[,;]|\s[-\u2013\u2014]|\b(?:an?|the|and|or|nor|but|so|yet|for|of|to|in|on|at|by|with|from|into|onto|over|under"
+    r"|through|per|than|then|that|which|while|where|when|as|is|are|was|were|be|been|its|their|our|your|every|each))\s*$",
+    re.IGNORECASE,
+)
+CONTINUATION_HEAD = re.compile(r"[a-z]")
 
 # --- [CARD_GRAMMAR]
 # IDEAS/TASKLOG card files, design-page [RESEARCH] sections, and RULINGS.md registries census against the
@@ -382,8 +397,8 @@ SPREAD_FLOOR = 6
 SPREAD_SHARE = 0.5
 SPREAD_WORD = re.compile(r"[a-z]{4,}")
 SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
-# Cure clauses ride each pattern row: the matched span names the defect, the appended clause names the move that
-# clears it at the grain an agent acts on; an empty cure marks a review-adjudicated warn.
+# Repair clauses ride each pattern row: the matched span names the defect, the appended clause names the move that
+# clears it at the grain an agent acts on; an empty repair marks a review-adjudicated warn.
 PATTERNS: tuple[tuple[Check, re.Pattern[str], Status, str], ...] = (
     (Check.HEDGE, HEDGE_WORDS, "fail", "; state the settled fact or delete the sentence"),
     (Check.HEDGE, MARKER_WORDS, "fail", "; open work is a tracked card, never prose"),
@@ -412,6 +427,14 @@ class Front(StrEnum):
     PENDING = "pending"
     OPEN = "open"
     CLOSED = "closed"
+
+
+class Flow(StrEnum):
+    # What the preceding line leaves behind: CLOSED ends its logical unit, OPEN carries one the next prose line
+    # continues, PROBE reads complete yet sits in the labeled shape a wrap also takes, so its successor decides.
+    CLOSED = "closed"
+    OPEN = "open"
+    PROBE = "probe"
 
 
 class Repair(StrEnum):
@@ -765,7 +788,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
     fence: tuple[str, int, int, str, int] | None = None
     diagram = PLAIN_FENCE
     payload_scope = "templates" not in path.parts and not teaching(path)
-    plain_run = False
+    flow = Flow.CLOSED
     last_rubric = ""
     template = "templates" in path.parts
     pointered = path.name not in ROUTING_FILES and not template and not teaching(path)
@@ -775,12 +798,12 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         if line.endswith((" ", "\t")):
             rows.append(row(path, number, Check.TRAILING_WHITESPACE, "fail", "line ends with space or tab; strip the trailing run"))
         if number <= skip_until:
-            plain_run = False
+            flow = Flow.CLOSED
             n += 1
             continue
         matched = FENCE.match(line)
         if fence is None and matched:
-            plain_run = False
+            flow = Flow.CLOSED
             marker, info = matched.group("marker"), matched.group("info").strip()
             tokens = info.lower().split()
             if not info:
@@ -810,7 +833,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
             n += 1
             continue
         if fence is not None:
-            plain_run = False
+            flow = Flow.CLOSED
             closed, diagram, fenced_rows = fenced(path, line, number, fence, diagram, payload_scope, cap)
             rows.extend(fenced_rows)
             if closed:
@@ -877,7 +900,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                 body.append(split_cells(raw[cursor]))
                 cursor += 1
             tables.append(Table(number, cursor, indent, headers, aligns, tuple(body)))
-            plain_run = False
+            flow = Flow.CLOSED
             n = cursor
             continue
         if line.lstrip().startswith("|"):
@@ -925,9 +948,10 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
         plain = (
             bool(stripped) and not line.startswith((" ", "\t")) and not stripped.startswith(PLAIN_EXCLUDED) and NUMBERED_LEAD.match(stripped) is None
         )
-        if plain and plain_run:
+        labeled = LABELED_PARAGRAPH.match(stripped) is not None
+        if plain and (flow is Flow.OPEN or (flow is Flow.PROBE and CONTINUATION_HEAD.match(stripped) is not None)):
             rows.append(row(path, number, Check.PROSE_WRAP, "fail", "hard-wrapped paragraph; write the paragraph as one logical line"))
-        if not template and (plain or LABELED_PARAGRAPH.match(stripped)):
+        if not template and (plain or labeled):
             sentence_count = len(SENTENCE_END.findall(" ".join(span.text for span in prose_spans(stripped, number))))
             if len(stripped) > PROSE_CHAR_CAP or sentence_count > PROSE_SENTENCE_CAP:
                 rows.append(
@@ -937,10 +961,10 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                         Check.PROSE_BLOAT,
                         "warn",
                         f"paragraph {len(stripped)} chars / {sentence_count} sentences past caps {PROSE_CHAR_CAP}/{PROSE_SENTENCE_CAP};"
-                        " cut 20-30% — kill sediment, tighten phrasing, split only where two concerns separate",
+                        " cut 20-30% — kill restatements, tighten phrasing, split only where two concerns separate",
                     )
                 )
-        plain_run = plain
+        flow = Flow.OPEN if plain or (labeled and CONTINUATION_TAIL.search(stripped) is not None) else Flow.PROBE if labeled else Flow.CLOSED
         n += 1
     if fence is not None:
         rows.append(row(path, fence[2], Check.FENCE_UNCLOSED, "fail", "opening fence never closes; close it with a matching marker run"))
@@ -1167,8 +1191,8 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
         )
         voiced = QUOTED_SPAN.sub(" ", span.text)
         rows.extend(
-            row(doc.path, span.line, check, status, f"{hit.group(0).lstrip('.!?:; ')}{cure}")
-            for check, pattern, status, cure in PATTERNS
+            row(doc.path, span.line, check, status, f"{hit.group(0).lstrip('.!?:; ')}{repair}")
+            for check, pattern, status, repair in PATTERNS
             for hit in pattern.finditer(voiced)
             if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
             and not (agent and check is Check.HEDGE and hit.group(0).lower() == "you")

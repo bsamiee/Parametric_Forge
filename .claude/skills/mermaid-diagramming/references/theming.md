@@ -22,13 +22,13 @@ Optional appearance system, loaded only when a deliverable explicitly wants a th
 
 Comment `#6272A4` is the muted-line and annotation ink; Selection `#44475A` is the node-fill shade. `themeVariables` take hex only — the theming engine rejects named colors there, and a themed corpus carries palette hexes on every styling surface.
 
-Lavender is Purple lifted two lightness steps at the same hue — OKLCH `0.84 0.089 304` against Purple's `0.74 0.149 302` — so a container boundary reads as the ownership hue with the luminance a 1px dashed line needs on the dark canvas (8.4:1 against Background, versus Purple's 5.9:1). One hue family carries all ownership; lightness alone separates the node border from the container boundary. Lavender projects into the html-studio system as the `--boundary` token, so both skills draw containment in one color.
+Lavender is Purple lifted two lightness steps at the same hue — OKLCH `0.84 0.089 304` against Purple's `0.74 0.149 302` — so a container boundary reads as the ownership hue with the luminance a 1px dashed line needs on the dark canvas (8.4:1 against Background, versus Purple's 5.9:1). One hue family carries all ownership; lightness alone separates the node border from the container boundary.
 
 Yellow sits at OKLCH `0.89 0.139 90` — true gold, clear of the green-adjacent lemon zone above hue 105 and below near-white lightness, so a payload chip holds shape instead of bleaching. Gold at hue 90 is near-complementary to the violet ground near hue 277, and it stays 24 OKLCH degrees from Orange's 67, so payload and data never blur.
 
 ## [02]-[ROLE_MAP]
 
-Every token carries its role on two surfaces: the `themeVariables` that spend it diagram-wide and the `classDef` or `linkStyle` rail that spends it per node and per edge — a token with no rail is unspendable, so every token names both. Same meaning, same token, corpus-wide; a role outside this set composes from the nearest listed role, never a new hex. Rank, tier, and altitude are not color roles: a tiered structure encodes rank by Y-position and subgraph membership, and the ordinal-palette families — `pie*`, `cScale*`, `fillType*`, `git*` — sequence hues as arbitrary category identity only.
+Every token carries its role on two surfaces: the `themeVariables` that spend it diagram-wide and the `classDef` or `linkStyle` rail that spends it per node and per edge — a token with no rail is unspendable, so every token names both. Same meaning, same token, corpus-wide; a role outside this set composes from the nearest listed role, never a new hex. Rank and tier are not color roles: a tiered structure encodes rank by Y-position and subgraph membership, and the ordinal-palette families — `pie*`, `cScale*`, `fillType*`, `git*` — sequence hues as arbitrary category identity only.
 
 [BACKGROUND]:
 - Role: canvas + bright-fill text
@@ -68,7 +68,7 @@ Every token carries its role on two surfaces: the `themeVariables` that spend it
 [LAVENDER]:
 - Role: container boundary + container title ink
 - Theme carriers: `clusterBorder`, `compositeBorder`, `titleColor`, `labelBoxBorderColor`, `archGroupBorderColor`
-- Class or rail: the 1px dashed container border and its title, every container family, both skills
+- Class or rail: the 1px dashed container border and its title, every container family
 
 [ORANGE]:
 - Role: data store / durable fact
@@ -465,10 +465,10 @@ gantt:     ".sectionTitle{font-size:13.5px;font-weight:700;fill:#D6BCFA}.taskTex
 
 ## [06]-[BORDER_CANON]
 
-One border system for both skills — every stroke around a themed shape resolves here, and no border anywhere carries a gradient or a shadow.
+One border system — every stroke around a themed shape resolves here, and no border anywhere carries a gradient or a shadow.
 
 - Node borders are solid `1.5px` at 100% opacity: Purple on neutral and boundary nodes, the accent hue on translucent accent fills, Comment on recessed and annotation nodes. A callout or emphasis node steps to `2px`. Weight and opacity never vary past these two steps.
-- Container borders — flowchart subgraph, state composite and region, class namespace, architecture group, sequence loop/alt frame — are dashed `1px` Lavender `#D6BCFA` at the `5 4` rhythm: half the standing edge weight, brightness carrying what the thinness gives up at 8.4:1 against the canvas. Container title inks the same Lavender, and html-studio spends the color as its `--boundary` token on every SVG zone border — one containment language across both skills.
+- Container borders — flowchart subgraph, state composite and region, class namespace, architecture group, sequence loop/alt frame — are dashed `1px` Lavender `#D6BCFA` at the `5 4` rhythm: half the standing edge weight, brightness carrying what the thinness gives up at 8.4:1 against the canvas. Container title inks the same Lavender.
 - Gradients never render: `useGradient: false` disables the gradient definition and drops the engine's neo stroke back to `nodeBorder`, and `look: classic` keeps the neo selectors from matching at all. No themed fence, string, or export references a gradient.
 - Shadows never render: `dropShadow: "none"` empties the halo variable, and the `filter:none!important` belt in every node-bearing `themeCSS` string overrides the halo rule even on a host that forces `look: neo` at initialize, because user styles land after the look rules and inline-`!important` class styles never carry filters. Engine's halo — a full-opacity light-gray drop shadow that stacks where nodes crowd — never survives this lock.
 - `look` selects `classic`, `handDrawn`, or `neo`, with `handDrawnSeed` pinning hand-drawn jitter; neo stamps `data-look="neo"` on nodes and clusters with a gradient-URL stroke and full-opacity drop shadow via `useGradient` and `dropShadow` — the halo a neo-default host paints onto an undeclared fence. Frontmatter `look` outranks any host `initialize` look, and a host defeats this lock only by stripping frontmatter entirely.

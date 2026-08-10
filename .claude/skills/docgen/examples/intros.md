@@ -4,9 +4,9 @@ Lead repair re-seats the charter in the opening slot: a doc-set, sibling, audien
 
 ## [01]-[INDEX_LEAD]
 
-An index-doc lead opens with anything but the unit's own charter — the doc-set, the audience, or a tour.
+Index-doc leads open on anything but the unit's own charter — the doc-set, the audience, or a tour.
 
-- Detection: An index lead whose first sentence names siblings, routing, or a reader tour before the unit's owned capability.
+- Detection: Flag an index lead whose first sentence names siblings, routing, or a reader tour before the unit's owned capability.
 - Rejected:
     ```markdown rejected
     This README routes the design pages and registers the packages, and the architecture doc carries the domain map for the six sub-domains.
@@ -15,14 +15,14 @@ An index-doc lead opens with anything but the unit's own charter — the doc-set
     ```markdown accepted
     `<unit>` owns host-free geometry: evidence graduation, scan processing, and the tessellation rail that serves every cross-boundary consumer.
     ```
-- Reason: A charter sentence states what the unit owns and the one boundary it holds; routing and sibling roles belong to the router surface, never the lead.
+- Reason: Charter sentences state what the unit owns and the one boundary it holds; routing and sibling roles belong to the router surface, never the lead.
 - Reframe: Open with the unit's owned capability and one boundary consequence; delete every sentence about siblings or the doc-set.
 
 ## [02]-[SPEC_LEAD]
 
-A spec-page lead restates higher law or re-teaches a sibling instead of naming its own mechanism.
+Spec-page leads restate higher law or re-teach a sibling instead of naming their own mechanism.
 
-- Detection: An implementation-page lead that recaps corpus law or a sibling's mechanics before its own byte-truth.
+- Detection: Flag an implementation-page lead recapping corpus law or a sibling's mechanics before its own byte-truth.
 - Rejected:
     ```markdown rejected
     As the architecture doc explains, geometry is host-free; this page, in this section, describes how the tessellation daemon fits into that.
@@ -31,14 +31,14 @@ A spec-page lead restates higher law or re-teaches a sibling instead of naming i
     ```markdown accepted
     `serve` frames per-element output as append-only positional rows keyed by the content hash.
     ```
-- Reason: A spec page owns byte-truth and flow, composes higher law silently, and names a sibling only at a routing pointer.
+- Reason: Spec pages own byte-truth and flow, compose higher law silently, and name a sibling only at a routing pointer.
 - Reframe: Open on the mechanism this page owns; drop the restated law and the sibling recap.
 
 ## [03]-[TOOL_LEAD]
 
-A tool-doc lead narrates a command tour or mirrors help output instead of stating the tool's contract.
+Tool-doc leads narrate a command tour or mirror help output instead of stating the tool's contract.
 
-- Detection: A tool lead that walks flags or transcribes help text a fresh agent reads from `--help` directly.
+- Detection: Flag a tool lead walking flags or transcribing help text a fresh agent reads from `--help` directly.
 - Rejected:
     ```markdown rejected
     Run the tool with `--input` and `--output`; you can also pass `--json` for machine output, and `--help` lists every flag in detail.
@@ -47,14 +47,14 @@ A tool-doc lead narrates a command tour or mirrors help output instead of statin
     ```markdown accepted
     `<tool>` owns the changed-file static, test, and metadata gates; every verb routes through its own `--help`.
     ```
-- Reason: A tool doc is durable law: it states the contract and points at live help; mirrored flag prose drifts the instant the tool changes.
+- Reason: Tool docs are durable law: state the contract and point at live help; mirrored flag prose drifts the instant the tool changes.
 - Reframe: State the tool's owned contract and route verbs to `--help`; delete the flag tour.
 
 ## [04]-[DOC_SET_NARRATION]
 
-A lead whose grammatical subject is the document or the doc-set states no law of its own.
+Leads whose grammatical subject is the document or the doc-set state no law of their own.
 
-- Detection: A lead whose subject is the artifact itself — its job, its relations, its place in the corpus.
+- Detection: Flag a lead whose subject is the artifact itself — its job, its relations, its place in the corpus.
 - Rejected:
     ```markdown rejected
     This file describes the persistence layer and how it relates to the compute and geometry packages across the monorepo.
@@ -63,14 +63,14 @@ A lead whose grammatical subject is the document or the doc-set states no law of
     ```markdown accepted
     `<layer>` owns the content-addressed artifact index and the decode contract every cross-boundary reader binds.
     ```
-- Reason: A document whose subject is itself carries no invariant; N docs narrating the doc-set is N forks of one fact plus self-description.
+- Reason: Documents whose subject is themselves carry no invariant; N docs narrating the doc-set is N forks of one fact plus self-description.
 - Reframe: Replace the self-referential frame with the layer's owned invariant; the doc-set is stated once at the corpus standard, never per page.
 
 ## [05]-[INVENTORY_JAM]
 
-A lead cramming a member inventory, a sub-domain roster, or wire mechanism behind semicolons and parentheses.
+Leads cram a member inventory, a sub-domain roster, or wire mechanism behind semicolons and parentheses.
 
-- Detection: A lead carrying a parenthetical roster or a mechanism clause that a lower tier owns.
+- Detection: Flag a lead carrying a parenthetical roster or a mechanism clause a lower tier owns.
 - Rejected:
     ```markdown rejected
     This package carries the domain map (ingestion, registration, deviation, reconstruction, analysis, costing), and the daemon streams checksum-framed
@@ -80,14 +80,14 @@ A lead cramming a member inventory, a sub-domain roster, or wire mechanism behin
     ```markdown accepted
     `<unit>` owns host-free geometry capability and the rail that serves every cross-boundary consumer.
     ```
-- Reason: A lead carrying a roster and a wire mechanism holds a lower tier's payload; the sub-domain list lives in the fenced tree and the framing lives at its owner.
+- Reason: Leads carrying a roster and a wire mechanism hold a lower tier's payload; the sub-domain list lives in the fenced tree and the framing lives at its owner.
 - Reframe: Collapse the lead to one charter sentence; demote the inventory to the tree and the mechanism to its owning page.
 
 ## [06]-[REALIZATION_STATUS]
 
-A design-corpus lead narrates the page's distance from code — realized, planned, eventual — instead of stating the owned law.
+Design-corpus leads narrate the page's distance from code — realized, planned, eventual — instead of stating the owned law.
 
-- Detection: A lead whose subject is the corpus's realization state: counts of pages on disk, planned-versus-implemented framing, instructions to treat design as real.
+- Detection: Flag a lead whose subject is the corpus's realization state: counts of pages on disk, planned-versus-implemented framing, instructions to treat design as real.
 - Rejected:
     ```markdown rejected
     Each codemap node is the eventual source file its design page becomes; treat every node as realized code — all fifty-nine pages are on disk.

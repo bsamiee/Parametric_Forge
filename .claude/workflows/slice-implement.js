@@ -885,7 +885,7 @@ const thinReceipt = (f, stage) =>
     '", ok, report, filesTouched (absolute), crossFolderRows/cardsClosed/researchResolved/residuals counts, packagesMissing rows copied ' +
     'verbatim from your receipt document, one-line headline, failure empty.';
 
-const LANE_SCRIPT = REPO + '/.claude/skills/codex/scripts/codex-lane.sh';
+const LANE_SCRIPT = REPO + '/.claude/skills/delegate-codex/scripts/codex-lane.sh';
 const flagsOf = (o) => (o.codexEffort ? ' --effort ' + o.codexEffort : '') + (o.web ? ' --web' : '');
 const probeOf = (v, report) =>
     v.sections

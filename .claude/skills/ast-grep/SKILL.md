@@ -94,7 +94,7 @@ constraints:
 
 ## [04]-[REWRITE]
 
-Rewrite extends a proven [03]-[SEARCH] rule with patching fields — each match replaces exactly one target node's text with the instantiated template. Templates are unparsed text: metavariables land anywhere, an undefined metavariable fails the parse under `scan` and lands empty under `run -r`, a declared-but-unmatched one lands empty in both, and `$VARName` lexes as `$VARN` + `ame` — appended text rides a `replace` transform. Multiline templates re-indent relative to the match's column. `run` carries the pattern-only lane; the full algebra — `fix`, `FixConfig`, `transform`, `rewriters` — rides `scan --inline-rules`.
+Rewrite extends a proven [03]-[SEARCH] rule with patching fields — each match replaces exactly one target node's text with the instantiated template. Templates are unparsed text: metavariables land anywhere, an undefined metavariable fails the parse under `scan` and lands empty under `run -r`, a declared-but-unmatched one lands empty in both, and `$VARName` lexes as `$VARN` + `ame` — appended text rides a `replace` transform. Multiline templates re-indent relative to the match's column. `run` carries the pattern-only path; the full algebra — `fix`, `FixConfig`, `transform`, `rewriters` — rides `scan --inline-rules`.
 
 Every rewrite runs one sequence:
 1. Prove the match set per [03]-[SEARCH] until results are exactly the edit set; `--json` match and file counts bound the blast radius.
@@ -120,7 +120,7 @@ Every rewrite runs one sequence:
 - Optional trailing commas take a second pattern variant under `any:`; `joinBy` absent splices in place, present discards unmatched text.
 - Risk splits into sibling docs: the guarded rule carries `fix`, the residual carries `severity: error` plus `note` for manual action.
 - A capture landing in an operator, member-access, or return position takes parentheses in the template — precedence dies in substitution.
-- `run` exits 1 on zero matches and 0 on a hit — inverted against `scan`; shell chains over the two lanes read opposite ways.
+- `run` exits 1 on zero matches and 0 on a hit — inverted against `scan`; shell chains over the two verbs read opposite ways.
 
 ## [05]-[RULE_CRAFT]
 
@@ -178,7 +178,7 @@ Every rule lands through one sequence:
 3. Author from the owning `assets/templates/` file; develop the rule per [03]-[SEARCH] and the fix per [04]-[REWRITE], proved both ways.
 4. Ship the test file with matching id — conforming cases under `valid:`, violating under `invalid:` — then `ast-grep test -U` writes snapshots.
 5. Land the rule in its owning folder; `ast-grep scan --inspect entity` proves registration, `--filter '<rule-id>'` iterates it alone.
-6. Gate with `ast-grep scan --no-ignore hidden --error=unused-suppression --error=no-suppress-all`; `test` rides the same lane.
+6. Gate with `ast-grep scan --no-ignore hidden --error=unused-suppression --error=no-suppress-all`; `test` rides the same gate.
 
 | [INDEX] | [RULE_CLASS]           | [MECHANISM]                                                                                        |
 | :-----: | :--------------------- | :------------------------------------------------------------------------------------------------- |

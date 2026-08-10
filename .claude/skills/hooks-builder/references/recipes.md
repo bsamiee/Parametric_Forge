@@ -116,7 +116,7 @@ def fired(payload: NudgeInput, rows: tuple[Nudge, ...], /) -> list[str]:  # a ne
 [DETACHED_HARVEST]:
 - Use: the verification is authoritative but slow — a full suite, a CI probe, a deploy smoke test — and blocking the loop for it stalls every turn.
 - Law: the check runs under `asyncRewake`, letting the triggering action proceed and waking the session later only on failure, where exit 2 surfaces stderr as a system reminder; the wake rides exit-2 stderr, never `additionalContext`, and never wires to `SessionStart`, where the wake leaks a prior run's stale output into a fresh conversation.
-- Law: a scan that outlives the command-hook timeout forks — the firing spawns a detached process that writes its result to a session-keyed file and returns immediately, and a later firing wakes only on findings new since the last acknowledged set; this detached lane is also the dual-provider fallback, since Codex parses `async` and skips it, so a portable guardrail runs synchronously or splits its slow leg to the same detached process.
+- Law: a scan that outlives the command-hook timeout forks — the firing spawns a detached process that writes its result to a session-keyed file and returns immediately, and a later firing wakes only on findings new since the last acknowledged set; this detached path is also the dual-provider fallback, since Codex parses `async` and skips it, so a portable guardrail runs synchronously or splits its slow leg to the same detached process.
 - Reject: a synchronous suite on every `PostToolUse`; a fire-and-forget check whose failure never surfaces.
 
 ## [08]-[TELEMETRY_STREAM]

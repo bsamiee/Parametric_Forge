@@ -26,6 +26,7 @@ final: prev: let
     assert lib.assertMsg (lib.elem row.retention voc.retentionPolicies) "${name}: retention '${row.retention}' outside vocabulary";
     assert lib.assertMsg (!(row.projection ? overlay) || lib.elem row.projection.overlay voc.overlayModes) "${name}: projection.overlay '${row.projection.overlay or ""}' outside vocabulary";
     assert lib.assertMsg (lib.licenses ? ${row.license}) "${name}: license '${row.license}' not a lib.licenses key";
+    assert lib.assertMsg (lib.all (f: row ? ${f}) ["description" "homepage"]) "${name}: package row missing description/homepage — every admission identifies what it admits and where it came from";
     assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason";
     assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers";
     assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind == "source-build") || (row ? sourcePin && generatedSources ? ${row.sourcePin}))
@@ -72,6 +73,7 @@ final: prev: let
     row.assets.${system}
     or (throw "${name}: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
   # Generated sources retain nvfetcher's fetch semantics; manual rows select fetchzip for unpacked hashes or fetchurl for flat hashes.
+  # A release archive lays its payload at the root and keeps the default; a source tarball owns its version directory and strips by row fact.
   srcOf = a:
     if a ? pin
     then generatedSources.${a.pin}.src
@@ -79,7 +81,7 @@ final: prev: let
     then
       prev.fetchzip {
         inherit (a) url hash;
-        stripRoot = false;
+        stripRoot = a.stripRoot or false;
       }
     else prev.fetchurl {inherit (a) url hash;};
 
@@ -166,6 +168,14 @@ final: prev: let
       installPhase = ''
         runHook preInstall
         install -Dm755 duckdb "$out/bin/duckdb"
+        runHook postInstall
+      '';
+    };
+    # Stripped release tree: the unpacked directory holds exactly the one binary.
+    ruff = _: {
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 ruff "$out/bin/ruff"
         runHook postInstall
       '';
     };
@@ -270,6 +280,7 @@ final: prev: let
 
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
+  rdkafkaRow = rowOf "rdkafka";
   astGrepRow = rowOf "ast-grep-upstream";
   astGrepSource = generatedSources.${astGrepRow.sourcePin};
 in
@@ -300,12 +311,14 @@ in
           wrapProgram "$out/bin/carbon-now" --set NO_UPDATE_NOTIFIER 1
         '';
     });
-    # Binary duckdb CLI overlay has no source tree or pythonHash; python duckdb (harlequin's engine) keeps the nixpkgs source-built duckdb lineage.
+    # Binary CLI overlays carry a release tree, not the crate/source layout the matching python distributions patch and build from, so each
+    # python package pins back to its nixpkgs source-built lineage: duckdb is harlequin's engine, ruff the wheel the MCP fleet's closure carries.
     pythonPackagesExtensions =
       (prev.pythonPackagesExtensions or [])
       ++ [
         (_pyFinal: pyPrev: {
           duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
+          ruff = pyPrev.ruff.override {inherit (prev) ruff;};
         })
         betaSetLane
       ];
@@ -389,6 +402,26 @@ in
           done
         '';
     });
+    # patchFamily none: the row advances sourceVersion and hash only, so the nixpkgs cpython recipe still owns the build. An upstream nixpkgs
+    # advance past the row version retires it silently.
+    python315 = let
+      row = rowOf "python315";
+      sv = row.sourceVersion;
+    in
+      assert lib.assertMsg (row.version == "${sv.major}.${sv.minor}.${sv.patch}${sv.suffix}") "python315: version and sourceVersion disagree";
+        prev.python315.override {inherit (row) sourceVersion hash;};
+    # patchFamily none: the row advances version and source only, so the nixpkgs recipe (cmake flags, output split, darwin test carve) still owns
+    # the build. An upstream nixpkgs advance past the row version retires it silently.
+    rdkafka = prev.rdkafka.overrideAttrs (_old: {
+      inherit (rdkafkaRow) version;
+      src = srcOf rdkafkaRow.assets.any;
+    });
+    # `rust-bin` arrives from the rust-overlay extension the flake composes ahead of this fold; an unpinnable version fails eval at the channel
+    # manifest, and the profile row selects the component set.
+    rust-toolchain = let
+      row = rowOf "rust-toolchain";
+    in
+      prev.rust-bin.stable.${row.version}.${row.profile};
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-forge = let
       row = rowOf "sqlite-forge";

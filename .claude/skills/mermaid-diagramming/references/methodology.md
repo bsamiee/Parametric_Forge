@@ -41,7 +41,7 @@ Each archetype names the corpus evidence that seeds its inventory; a diagram dra
 
 A committed diagram is grown in rounds, never drawn at final size in one pass; naive size — the first seven boxes that come to mind — is the floor the rounds build past.
 
-1. Orientation: reading order carries the payload — `LR` for walks, flows, and time, `TB` for altitude, hierarchy, and dependency descent; left or top holds the entry, and a diagram whose walk runs against its reading order is re-oriented before it grows.
+1. Orientation: reading order carries the payload — `LR` for walks, flows, and time, `TB` for rank, hierarchy, and dependency descent; left or top holds the entry, and a diagram whose walk runs against its reading order is re-oriented before it grows.
 2. Skeleton: the dominant rail alone at one abstraction level — entry, the load-bearing owners, the terminal. Every later mark subordinates to this rail.
 3. Interrogation rounds: each round asks one named reader question against the skeleton — where does this fault, what stores the fact, who sits outside the boundary, what selects the arm, what returns — and admits only the marks that answer it. A round that adds no mark closes the growth.
 4. Layering round: meaning that earns presence but not a node lands on the secondary vocabulary — edge labels, notes, annotation-classed side nodes on the Comment rail, subgraph membership, dashed traces — so density rises without new primary marks.
@@ -54,7 +54,7 @@ Node-annotation-omission ladder rules every candidate mark:
 - ANNOTATION — a reader decision needs it, but it holds no payload relation: a note, a brace comment, or an `annotation`-classed node on a dashed Comment trace.
 - OMISSION — its removal leaves the answer intact; the owning page's prose carries it, and the diagram does not.
 
-A massive subject grows under hierarchy — composites, subgraphs, summarizing nodes — until a needed legend, a second edge semantic, or density that aggregation cannot cure forces the split, partitioned along the seam the reader already knows: phase, aggregate, package, or gate.
+A massive subject grows under hierarchy — composites, subgraphs, summarizing nodes — until a needed legend, a second edge semantic, or density that aggregation cannot absorb forces the split, partitioned along the seam the reader already knows: phase, aggregate, package, or gate.
 
 ## [04]-[NODE_LAW]
 

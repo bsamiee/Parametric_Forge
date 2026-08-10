@@ -1,8 +1,8 @@
 ---
 name: rhino-mcp
 description: >-
-    Drives a live Rhino session: host bring-up via `forge-rhino-up` and `rhino-mcp-platform`
-    reconnect, slot lifecycle, RhinoCommon scripting in C# and Python, `.3dm` open/save, scene and
+    Drives a live Rhino session: host bring-up via `forge-rhino-up` or on-demand slot spawn,
+    slot lifecycle, RhinoCommon scripting in C# and Python, `.3dm` open/save, scene and
     selection queries, layer materials, camera framing, cost-bounded viewport capture, and
     Grasshopper2 canvas authoring. Use when working within Rhino for code development, or dedicated
     Rhino session work, creating Grasshopper scripts and layouts, or when its MCP tools are absent
@@ -11,9 +11,9 @@ description: >-
 
 # [RHINO_MCP]
 
-`rhino-mcp-platform`, a USER-scope stdio server in `~/.claude.json` running the `rhino-mcp-router` binary, proxies each `mcp__rhino-mcp-platform__*` call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool binds to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block). Its wrapper gates the vendor router behind a live Rhino session: with Rhino down the server serves only `rhino_status` and sweeps stray routers, and a host watchdog reaps the router generation the moment Rhino closes.
+`rhino-mcp-platform`, a USER-scope stdio server in `~/.claude.json` running the `rhino-mcp-router` binary, proxies each `mcp__rhino-mcp-platform__*` call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool binds to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block). Its wrapper runs the vendor router persistently under the supervised stdio lane regardless of Rhino state, so the full toolset is always live; only client disconnect tears the router down, and the router itself spawns a Rhino host on demand and adopts a user-started one through its slot lifecycle.
 
-Step 1 of any Rhino MCP work is `forge-rhino-up` — idempotent, splash-free — then reconnect the `rhino-mcp-platform` server (`/mcp` -> reconnect, or a fresh session) to load the full toolset; a stdio MCP connection never re-spawns on its own.
+`forge-rhino-up` (idempotent, splash-free) brings up a visible Rhino the router adopts.
 
 ## [01]-[SLOT_LIFECYCLE]
 

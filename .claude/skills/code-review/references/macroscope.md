@@ -11,7 +11,7 @@
 |  [03]   | Blocking    | `conclusion: failure` blocks the PR | advisory, inherits the built-in check |
 |  [04]   | Surface     | hosted GitHub Checks only           | hosted and local CLI both             |
 
-Each check-run agent is one cross-cutting lens over the whole diff — boundary integrity, topology closure, a strongest-form adversary — seeing what the file-local correctness pass cannot; agents deliberately never re-litigate mechanical checks the correctness lane owns.
+Each check-run agent is one cross-cutting lens over the whole diff — boundary integrity, topology closure, a strongest-form adversary — seeing what the file-local correctness pass cannot; agents deliberately never re-litigate mechanical checks the correctness shard owns.
 
 ## [02]-[CHECK_RUN_AGENTS]
 
@@ -29,7 +29,7 @@ Each check-run agent is one cross-cutting lens over the whole diff — boundary 
 
 - `.macroscope/correctness/**/*.md`: frontmatter is optional and carries only `include`/`exclude` glob arrays; omitting both applies the file globally.
 - Macroscope walks `correctness/` recursively — subfolders are purely organizational (globs alone decide targeting, never the folder path), only `*.md` is processed, `README.md` is ignored, and every matching file stacks cumulatively onto a changed file.
-- One topic per file with room to grow: `general/` carries only law that bites every language and concern, and a file accumulating a distinct defect family's cluster — or one the sediment law can no longer shrink — spins that cluster into a family-named sibling under the owning subfolder, split at the family grain, never per-rule; the source file keeps its concern-spanning residue, and the sibling's globs carry any targeting the move sharpens.
+- One topic per file with room to grow: `general/` carries only law that bites every language and concern, and a file accumulating a distinct defect family's cluster — or one the restatement-collapse law can no longer shrink — spins that cluster into a family-named sibling under the owning subfolder, split at the family grain, never per-rule; the source file keeps its concern-spanning residue, and the sibling's globs carry any targeting the move sharpens.
 - Body shape: one `# [UPPERCASE_LABEL]` H1 and markdown instructions.
 
 ## [05]-[IGNORE]
@@ -38,7 +38,7 @@ Each check-run agent is one cross-cutting lens over the whole diff — boundary 
 
 ## [06]-[CLI_SEMANTICS]
 
-- Fix-at-root lane: `macroscope codereview --raw --in-place --base <base>` — review and fixes share the real working tree, and `--raw` blocks to completion streaming everything on stderr while stdout stays empty.
+- Fix-at-root shard: `macroscope codereview --raw --in-place --base <base>` — review and fixes share the real working tree, and `--raw` blocks to completion streaming everything on stderr while stdout stays empty.
 - Base semantics: `--in-place` without `--base` diffs against `HEAD` — uncommitted only, so on a branch it reviews almost nothing; `--in-place --base <ref>` spans committed branch work and uncommitted edits.
 - Stream grammar, in emission order: `review_id=<jwt>` once, `issue_event={issue_id, sequence, path, function, line, end_line, severity, category, body}` per finding, terminal `issue_status=completed`. Category and severity vocabularies are open — `REVIEW_TYPE_CORRECTNESS` covers security findings too, `medium` and `critical` sit on the wire — so an adapter passes both through raw and never enum-gates them.
 - Empty-diff terminal: `error: no objects found - check if there are any changes to supported files` on stderr, exit 1, no `issue_status` marker — a clean zero-findings review, never a failure.

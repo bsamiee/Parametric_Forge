@@ -4,9 +4,9 @@ Marker repair lands state in declared tokens: an undeclared spelling, a narrated
 
 ## [01]-[ENTRY_LEADER_LEDGER]
 
-A work-file entry buries its state in a prose sentence instead of a greppable `[<ID>]-[<STATUS>]:` leader.
+Work-file entries bury their state in a prose sentence instead of a greppable `[<ID>]-[<STATUS>]:` leader.
 
-- Detection: An entry whose lifecycle state lives in a sentence an agent must parse, not in a leader token it can filter.
+- Detection: Flag an entry whose lifecycle state lives in a sentence an agent must parse, not in a leader token it can filter.
 - Rejected:
     ```markdown rejected
     - Entry 0042 is currently blocked on the persistence seam and moves once the codec lands.
@@ -18,12 +18,12 @@ A work-file entry buries its state in a prose sentence instead of a greppable `[
         - Anchors: Codec owner and artifact index
         - Tension: Decode contract unresolved
     ```
-- Reason: A leader carries identity and state as one greppable token; an agent filters the ledger on `[BLOCKED]` without parsing bodies.
+- Reason: Leaders carry identity and state as one greppable token; an agent filters the ledger on `[BLOCKED]` without parsing bodies.
 - Reframe: Compose the leader as `[<ID>]-[<STATUS>]:` and advance by editing the token alone — `[0042]-[BLOCKED]:` becomes `[0042]-[ACTIVE]:` — with no prose move narration.
 
 ## [02]-[STATUS_VOCABULARY]
 
-A work-file marks state with ad-hoc words drawn from no declared, closed vocabulary.
+Work-files mark state with ad-hoc words drawn from no declared, closed vocabulary.
 
 - Detection: State tokens that vary across agents and files with no owning declaration.
 - Rejected:
@@ -34,14 +34,14 @@ A work-file marks state with ad-hoc words drawn from no declared, closed vocabul
     ```markdown accepted
     [STATUS]: `[QUEUED]` `[ACTIVE]` `[BLOCKED]` `[COMPLETE]` `[DROPPED]`
     ```
-- Reason: A closed token set with one meaning per token makes the ledger machine-filterable; interchangeable synonyms fork one state across agents.
+- Reason: Closed token sets with one meaning per token make the ledger machine-filterable; interchangeable synonyms fork one state across agents.
 - Reframe: Declare the vocabulary once as an inline token run and let a type standard narrow casing and terminal states, never redefine tokens per instance.
 
 ## [03]-[GROUP_LABEL_VS_LIST]
 
-A closed token set with no per-member content is exploded into a one-per-line list.
+Closed token sets with no per-member content explode into a one-per-line list.
 
-- Detection: A referenced token set rendered as a bullet list where no member carries its own field.
+- Detection: Flag a referenced token set rendered as a bullet list where no member carries its own field.
 - Rejected:
     ```markdown rejected
     - `QUEUED`
@@ -58,14 +58,14 @@ A closed token set with no per-member content is exploded into a one-per-line li
     - `[QUEUED]`: Accepted for the sequence, not yet running
     - `[BLOCKED]`: Held by a dependency
     ```
-- Reason: A referenced token set rides inline after its group label on one line; the list form is earned only where each member carries its own content.
+- Reason: Referenced token sets ride inline after their group label on one line; the list form is earned only where each member carries its own content.
 - Reframe: Inline the bare token run; expand to a per-member list only when a meaning or field attaches to each token.
 
 ## [04]-[COMPACT_GLYPHS]
 
-A dense delta or checklist spells each state as a full word where a declared compact glyph carries it.
+Dense deltas and checklists spell each state as a full word where a declared compact glyph carries it.
 
-- Detection: A delta or checked list widened by full-word status where a globally declared glyph suffices.
+- Detection: Flag a delta or checked list widened by full-word status where a globally declared glyph suffices.
 - Rejected:
     ```markdown rejected
     - pass: codec landing

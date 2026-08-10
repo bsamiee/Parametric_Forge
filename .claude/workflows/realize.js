@@ -311,7 +311,7 @@ const laneLaw = (schema, o) =>
     '- Use null for a value you could not determine and [] for an empty list; never guess.\n</output_contract>';
 // Every realize codex lane is read-only recon (the native executor authors), so the delegate never writes: --out
 // materializes the product and the wrapper relays only the thin receipt.
-const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/codex/scripts/codex-lane.sh';
+const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/delegate-codex/scripts/codex-lane.sh';
 const flagsOf = (o) =>
     [o.codexEffort && '--effort ' + o.codexEffort, o.web && '--web']
         .filter(Boolean)

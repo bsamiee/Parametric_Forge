@@ -345,7 +345,7 @@ const laneLaw = (schema, o) =>
     '- Use null for a value you could not determine and [] for an empty list; never guess.\n</output_contract>';
 // A read-recon lane that WRITES its own dossier: workspace-write so the dossier lands, --out aimed at a separate message
 // file (never the dossier the lane writes itself), and the dossier verified independently with test -s.
-const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/codex/scripts/codex-lane.sh';
+const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/delegate-codex/scripts/codex-lane.sh';
 const flagsOf = (o) =>
     [o.model && '--model ' + o.model, o.codexEffort && '--effort ' + o.codexEffort, o.web && '--web']
         .filter(Boolean)

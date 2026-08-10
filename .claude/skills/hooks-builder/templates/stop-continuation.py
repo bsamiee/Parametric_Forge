@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Boundary-kernel hook seam: focused one-line docstrings, and a tolerant transcript decode that skips one malformed line.
-# ruff: noqa: DOC201, S112
+# ruff:file-ignore[docstring-missing-returns, try-except-continue]
 """Own Stop/SubagentStop: end a run only on a session-scoped completion token bounded by two orthogonal loop bounds.
 
 Reprompt adapts to run state. Wire: Stop and SubagentStop. On Codex the exit-2 block rides decision JSON via codex-adapter.sh.

@@ -506,7 +506,7 @@ const laneLaw = (schema, o) =>
 
 // One core builder for both codex lanes; only step (4) differs — codexPrompt returns a thin receipt, codexInline
 // relays the product JSON verbatim (scout's payload is small orchestration input that fans Research and slices Map).
-const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/codex/scripts/codex-lane.sh';
+const LANE_SCRIPT = '/Users/bardiasamiee/Documents/99.Github/Rasm/.claude/skills/delegate-codex/scripts/codex-lane.sh';
 const codexSteps = (label, task, schema, o, step4) => {
     const base = SCRATCH + '/' + fileTag(label);
     const root = '/Users/bardiasamiee/Documents/99.Github/Rasm';

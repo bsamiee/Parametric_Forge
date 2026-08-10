@@ -11,13 +11,13 @@ An author defends a fixed set of attack shapes, each landing at one event and ca
 |  [01]   | Command obfuscation | `PreToolUse` Bash argument                   | `_leaves` de-obfuscation and quote-aware split in the gate     |
 |  [02]   | Destructive intent  | `PreToolUse` Bash argument                   | per-`argv` semantic dispatch — `rm` path tiers, `git` subtable |
 |  [03]   | Path escape         | `PreToolUse` `Edit`/`Write`                  | the shared canonicalizer plus `is_relative_to` sandbox check   |
-|  [04]   | Secret exfiltration | outbound `PreToolUse`, inbound `PostToolUse` | the JSON scalpel and the `updatedToolOutput` redaction lane    |
+|  [04]   | Secret exfiltration | outbound `PreToolUse`, inbound `PostToolUse` | the JSON scalpel and the `updatedToolOutput` redaction path    |
 |  [05]   | Context injection   | `additionalContext` on any injecting event   | factual-statement phrasing, never an out-of-band imperative    |
 |  [06]   | Untrusted hook      | the hook file itself                         | the red-team harness audit before the hook is trusted          |
 
 `_leaves` decomposition of [01] de-obfuscates `$IFS`, treats an unquoted newline as `;`, strips a leading `NAME=value` prefix and wrappers, and descends command substitutions, backticks, and clustered-flag one-liners before any classify; [02]'s dispatch denies an opaque interpreter one-liner fail-closed, never through a keyword denylist.
 
-Tactics [01]-[03] are the `pretooluse-gate` template and the command-decomposition recipe; [04] is the value-rewrite recipe and the `posttooluse-format` redaction lane; [05] is the integration reference's placement law; [06] is the verification reference's red-team harness.
+Tactics [01]-[03] are the `pretooluse-gate` template and the command-decomposition recipe; [04] is the value-rewrite recipe and the `posttooluse-format` redaction path; [05] is the integration reference's placement law; [06] is the verification reference's red-team harness.
 
 ## [02]-[ENFORCEMENT_LOCUS]
 

@@ -4,7 +4,7 @@
 # dependencies = ["msgspec"]
 # ///
 # Boundary-kernel hook seam: focused one-line docstrings, and a tolerant transcript decode that skips one malformed line.
-# ruff: noqa: DOC201, S112
+# ruff:file-ignore[docstring-missing-returns, try-except-continue]
 """Summarize the transcript into a durable handoff before compaction discards the working set.
 
 Wire: PreCompact (Codex ships PreCompact with a trigger field, so the body ports). A companion SessionStart reloads the newest
