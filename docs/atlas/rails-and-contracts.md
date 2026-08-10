@@ -16,7 +16,7 @@ The Forge rails are `writeShellApplication` commands with fixed contracts: share
 
 ## [02]-[FORGE_REDEPLOY]
 
-Darwin builds and switches locally; NixOS check is eval-only, build proves closure, and switch runs locally on Linux or remotely through `nixos-rebuild --target-host --build-host` from Darwin. The invariants: the deploy/maintenance lock is shared through `FORGE_REDEPLOY_LOCK`; a state-touching run emits its receipt on the EXIT trap even on failure; activation uses the already-built store path, never a second evaluation; and a Cachix push failure must not fail an already-switched deploy. One state-touching run emits one tab-delimited receipt carrying mode/os/host, eval/build/activate timings, to-build and to-fetch counts, diff lines, and result — the field vector is owned by `forge-tools.nix`.
+Darwin builds and switches locally; NixOS check is eval-only, build proves closure, and switch runs locally on Linux or remotely through `nixos-rebuild --target-host --build-host` from Darwin. The invariants: the deploy/maintenance lock is shared through `FORGE_REDEPLOY_LOCK`; a state-touching run emits its receipt on the EXIT trap even on failure; activation uses the already-built store path, never a second evaluation; and a Cachix push failure must not fail an already-switched deploy. One state-touching run emits one tab-delimited receipt carrying mode/os/host, eval/build/activate timings, diff lines, and result — the field vector is owned by `forge-tools.nix`.
 
 ## [03]-[FORGE_ACCEPT]
 

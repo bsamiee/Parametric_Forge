@@ -172,14 +172,14 @@
       # One typed receipt per state-touching run; the EXIT trap emits it even when a phase aborts, so failed activations stay visible (result=fail).
       system_path="-" gen_live="-"
       eval_s="-" build_s="-" activate_s="-"
-      to_build="-" to_fetch="-" diff_lines="-"
+      diff_lines="-"
       push="-" verify="-" kickstart="-" current="-"
       mux="''${ZELLIJ_SESSION_NAME:+zellij}"
       result="fail"
       emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tos=%s\thost=%s\ttarget=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tto_build=%s\tto_fetch=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
+        persist_receipt "$(printf 'ts=%s\tmode=%s\tos=%s\thost=%s\ttarget=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
           "$ts" "$mode" "$os" "$host" "''${target_host:--}" "$system_path" "$gen_live" "$eval_s" "$build_s" "$activate_s" \
-          "$to_build" "$to_fetch" "$diff_lines" "$push" "$verify" "$kickstart" \
+          "$diff_lines" "$push" "$verify" "$kickstart" \
           "$current" "''${mux:-none}" "$result")"
       }
 
@@ -267,20 +267,6 @@
         attr="darwinConfigurations.$host.system"
       else
         attr="nixosConfigurations.$host.config.system.build.toplevel"
-      fi
-
-      # Pre-build proof: to-build/to-fetch counts expose derivation-identity drift (the 1h local-rebuild class) the day it appears. Parsing is
-      # version-sensitive and degrades to unknown, never fails the deploy.
-      if nix build --dry-run --no-link "$forge_root#$attr" 2>"$tmpdir/dryrun"; then
-        # Store paths outside a recognized section mean the wording drifted: report unknown instead of a false-clean 0/0.
-        read -r to_build to_fetch < <(awk '
-          /will be built:?$/ { s = 1; next }
-          /will be fetched/  { s = 2; next }
-          /^  \/nix\/store\// { if (s == 1) b++; else if (s == 2) f++; else u++ }
-          END { if (u) print "unknown unknown"; else printf "%d %d\n", b, f }' "$tmpdir/dryrun")
-      else
-        to_build="unknown" to_fetch="unknown"
-        printf 'forge-redeploy: WARNING dry-run failed; build counts unknown\n' >&2
       fi
       eval_s=$((EPOCHSECONDS - t0))
 
