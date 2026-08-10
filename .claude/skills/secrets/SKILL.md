@@ -82,12 +82,12 @@ Local custody is `op`, never the OS keychain: every service, IaC, and MCP token 
 |  [01]   | Config-scoped service token      | `op://Tokens/DOPPLER_*_READONLY`             | Hook and runtime reads          |
 |  [02]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`        | Topology writes via Pulumi only |
 |  [03]   | Pulumi stack passphrase          | `op://Tokens/PULUMI_FORGE_SERVICES/password` | Stack state decryption          |
-|  [04]   | MCP token                        | Injected as `DOPPLER_TOKEN`                  | Read-only agent MCP             |
+|  [04]   | MCP token                        | Ambient personal CLI token as `DOPPLER_TOKEN`| Read-only agent MCP             |
 |  [05]   | Provider PATs (GitHub and peers) | `op://Tokens` items, mirrored into configs   | Consumed through the pull rail  |
 
 - Config-scoped service token: minted by topology rows; static Developer-plan tokens are revoked and reminted, never rotated in place.
 - IaC admin token and stack passphrase: brokered by `driver.ts`; an ambient `DOPPLER_TOKEN` or `PULUMI_CONFIG_PASSPHRASE` short-circuits the op read per run.
-- MCP token: injected through the doppler-run indirection, its grants the enforcement, while `--read-only --project --config` narrow only the tool surface.
+- MCP token: the launcher prelude resolves the ambient personal CLI token, its grants the enforcement, while `--read-only` filters the toolset to GET endpoints.
 - Provider PATs are never topology identity.
 
 ## [07]-[LAW]

@@ -35,14 +35,14 @@ Command chains are generated inside owned wrappers — Nix rows, driver code —
 
 ## [04]-[MCP_ROW]
 
-Fleet rows run the server through a doppler-run indirection: the outer run injects the MCP service token from its own config, and the inner server authenticates with that token.
+The fleet runs one Doppler MCP server under the ambient personal CLI token, resolved in the launcher prelude; every tool addresses project and config per call.
 
 ```text
-doppler run --project <token-project> --config <token-config> --fallback <snapshot> \
-  --command 'DOPPLER_TOKEN=$<SECRET_NAME> exec forge-doppler-mcp --read-only --project <p> --config <c>'
+export DOPPLER_TOKEN="${DOPPLER_TOKEN:-$(doppler configure get token --plain --scope /)}"
+exec doppler-mcp --read-only
 ```
 
-- `--read-only` and the project/config flags narrow the exposed tool surface; the token's grants are the enforcement.
+- `--read-only` filters the exposed toolset to GET endpoints; the token's grants are the enforcement.
 - Write-capable MCP binds only in an explicit operator session with a short-lived scoped token.
 
 ## [05]-[PLAN_GATES]

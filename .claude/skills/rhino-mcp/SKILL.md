@@ -11,7 +11,7 @@ description: >-
 
 # [RHINO_MCP]
 
-`rhino-mcp-platform`, a USER-scope stdio server in `~/.claude.json` running the `rhino-mcp-router` binary, proxies each `mcp__rhino-mcp-platform__*` call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool binds to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block). Its wrapper runs the vendor router persistently under the supervised stdio lane regardless of Rhino state, so the full toolset is always live; only client disconnect tears the router down, and the router itself spawns a Rhino host on demand and adopts a user-started one through its slot lifecycle.
+`rhino-mcp-platform`, a USER-scope stdio server in `~/.claude.json` running the `rhino-mcp-router` binary, proxies each `mcp__rhino-mcp-platform__*` call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool binds to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block). The router runs directly on the client's stdio pipe: it spawns a Rhino host on demand, adopts a user-started session through its slot lifecycle, and exits on client disconnect.
 
 `forge-rhino-up` (idempotent, splash-free) brings up a visible Rhino the router adopts.
 

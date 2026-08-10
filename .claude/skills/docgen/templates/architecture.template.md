@@ -17,6 +17,8 @@
   [10] CONSUMPTION_MODEL         the deployment-shape axis roster: closed axes fix their vocabulary here, an open axis fixes the descriptor shape alone and grows at its supplying branch, and a value an owner assumes at compile time is the defect the roster forecloses.
   [11] DESIGN_LANGUAGE           the shape invariants every estate shares so disparate packages read as one system, each row routing its spelling to the language doctrine.
   [12] ADMISSION                 the rung ladder new capability climbs — row, adapter, page, sub-domain, package, host boundary, branch — each rung's earn-test stated.
+  [13] APPEARANCE                the surface-appearance documents crossing the runtimes, their producers, and the one frozen vocabulary each transcribes.
+  [14] EVENT_FABRIC              the event envelope every branch mints alone — the specification owns the semantics, an SDK accelerates, and grammar, roster, format, and binding stay data.
 -->
 
 <!-- source-only: tier-0 voice — a section states the invariant and its extension rule, never a branch's member roster, package registry, or file names; the narrowest tier owning a fact keeps it, and Tier-0 keeps only what spans branches. -->
