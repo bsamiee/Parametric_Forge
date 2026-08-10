@@ -58,7 +58,7 @@
     launcher = {
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
-      version = "1.27.0";
+      version = "1.33.1";
       bin = "hostinger-api-mcp";
       upstream = "npm:hostinger-api-mcp";
       updateEngine = "npm-registry";
@@ -104,7 +104,7 @@
     launcher = {
       names = ["forge-playwright-mcp"];
       pkg = "@playwright/mcp";
-      version = "0.0.78";
+      version = "0.0.79";
       bin = "playwright-mcp";
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";
