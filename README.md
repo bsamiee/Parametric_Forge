@@ -138,8 +138,8 @@ GitHub repository settings for the estate (merge hygiene, rulesets, feature bool
 
 Everything lands declaratively with the first switch; only these steps are manual, each with its proof:
 
-1. Install Determinate Nix.
-    - Command: `curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install`
+1. Install Determinate Nix via the macOS package — the `curl | sh` installer can die creating the encrypted APFS volume and strand fstab/synthetic.conf residue.
+    - Command: `curl -sSfL https://install.determinate.systems/determinate-pkg/stable/Universal -o determinate.pkg && sudo installer -pkg determinate.pkg -target /`
     - Verify: `nix --version` reports Determinate
 2. Sign into the 1Password app; enable Settings → Developer → SSH agent + CLI integration. GUI-only by vendor design; key custody syncs from the cloud — zero key handling.
     - Verify: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key
@@ -152,10 +152,12 @@ Everything lands declaratively with the first switch; only these steps are manua
 5. Authenticate Doppler.
     - Command: `doppler login`
     - Verify: `doppler me`
-6. First switch — installs the sudoers allowlist every later `forge-redeploy --switch` rides.
+6. Grant the bootstrap terminal Full Disk Access (System Settings → Privacy & Security) — `universalaccess` defaults writes abort activation without it; move the grant to WezTerm after the first switch.
+    - Verify: the switch's `user defaults` phase passes without `Could not write domain com.apple.universalaccess`
+7. First switch — installs the sudoers allowlist every later `forge-redeploy --switch` rides. Installer-written real files at `/etc/pam.d/sudo_local` or `/etc/nix/nix.custom.conf` trip the /etc collision guard: move each aside (`.before-nix-darwin`) and rerun.
     - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
     - Verify: `forge-redeploy --check-only`
-7. Approve the TCC/automation prompts macOS raises on first agent launches.
+8. Approve the TCC/automation prompts macOS raises on first launches: Karabiner driver extension + Input Monitoring, Hammerspoon and LinearMouse Accessibility, and the 1Password autofill pair (AutoFill & Passwords → 1Password on, Apple Passwords off; Privacy & Security → Accessibility → 1Password).
     - Verify: affected agents run without prompting
 
 Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with nixos-anywhere + disko from its `hosts/context.nix` row; day-2 is the same rail with `--os nixos --target-host`.

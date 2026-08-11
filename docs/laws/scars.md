@@ -81,12 +81,14 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 |  [08]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
 |  [09]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
 |  [10]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
+|  [11]   | Brew 6 `bundle` fetched, printed ✔︎, exited 0, installed nothing  | Activation converges declared taps/brews/casks/mas rows directly      |
 
 - [01]: the killed activation meant font projection never ran.
 - [02]: the Brewfile `cask_args` then killed new cask installs; owner `darwin/homebrew/`.
 - [03]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
 - [04]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
 - [05]: a darwin-only `pkgs.*` in a both-host module throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
+- [11]: even taps skipped while `brew install` direct worked; bundle output is never proof of install — owner `darwin/homebrew/` (`forge-brew-converge`), verify with `brew list`.
 
 ## [08]-[SHELL_KERNELS]
 

@@ -17,7 +17,6 @@ _: {
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
     "aldente" # Battery charging limiter
-    "jordanbaird-ice" # Menu bar manager
     "linearmouse" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
     "raycast" # Launcher/productivity
 

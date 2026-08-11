@@ -64,6 +64,28 @@
       brew autoupdate start ${toString autoupdateIntervalSeconds} ${autoupdateStartArgs}
     '';
   };
+
+  # --- [ROW_CONVERGENCE]
+  # Brew 6 `bundle` fetches, prints per-item checkmarks, and exits 0 while installing nothing — not even taps (scars.md [07]-[11]) — so
+  # activation converges the declared rows itself with direct installs. On a converged system every row degrades to a fast presence check.
+  brewConverge = pkgs.writeShellApplication {
+    name = "forge-brew-converge";
+    text = ''
+      export PATH="${activationPath}"
+      export HOMEBREW_CASK_OPTS="--no-quarantine"
+      export HOMEBREW_NO_ANALYTICS=1
+      rc=0
+      ${lib.concatMapStringsSep "\n" (t: ''brew tap | grep -qx "${t}" || brew tap "${t}" || { echo "forge-brew-converge: tap ${t} failed" >&2; rc=1; }'') (map (t: t.name) config.homebrew.taps)}
+      for f in ${lib.escapeShellArgs (map (b: b.name) config.homebrew.brews)}; do
+        brew list --formula "$f" >/dev/null 2>&1 || brew install --formula "$f" || { echo "forge-brew-converge: formula $f failed" >&2; rc=1; }
+      done
+      for c in ${lib.escapeShellArgs (map (c: c.name) config.homebrew.casks)}; do
+        brew list --cask "$c" >/dev/null 2>&1 || brew install --cask "$c" || { echo "forge-brew-converge: cask $c failed" >&2; rc=1; }
+      done
+      ${lib.concatMapStringsSep "\n" (id: ''mas list | awk '{print $1}' | grep -qx "${toString id}" || mas install ${toString id} || { echo "forge-brew-converge: mas ${toString id} failed" >&2; rc=1; }'') (lib.attrValues config.homebrew.masApps)}
+      exit "$rc"
+    '';
+  };
 in {
   imports = [
     ./taps.nix
@@ -100,6 +122,11 @@ in {
     # Brew 6 silently skips new cask installs when the Brewfile carries cask_args (scars.md [07]-[02]): no caskArgs row, every declared value
     # is the Homebrew default, and posture rides HOMEBREW_CASK_OPTS above.
   };
+
+  # Converge runs as the primary user (brew refuses root); extraActivation is the free nix-darwin hook — postActivation is security-owned.
+  system.activationScripts.extraActivation.text = ''
+    sudo -u ${config.system.primaryUser} --set-home ${brewConverge}/bin/forge-brew-converge
+  '';
 
   # Converged runs are read-only and exit 0, logged so a failed regeneration never hides until the next day. The reconciled agent keeps
   # its upstream tap label (com.github.domt4.homebrew-autoupdate) — an upstream-owned identifier renamed only upstream, never here. nix-darwin's
