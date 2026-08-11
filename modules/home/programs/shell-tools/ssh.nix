@@ -30,6 +30,7 @@
       # DNS name over the IPv4 literal: it resolves A + AAAA, so openssh walks to the IPv6 path when a backbone blackhole eats the IPv4 route
       # (2026-07-27: Cogent nulled the prefix while the VPS stayed healthy). ConnectTimeout on every consumer bounds each address attempt.
       hostName = "srv1196440.hstgr.cloud";
+      hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAlmIUKQSIH1e3bBtoXCFXhn8Ti0i3y13hRELMd0FNAL";
       mounts = [
         {
           name = "home";
@@ -83,6 +84,13 @@
 
   # Supervisors project only onto client hosts: a self-named row would tunnel the machine to itself and flap on port-conflict.
   clientTunnels = lib.filterAttrs (name: _: name != host.name) vpsTunnels;
+
+  # Pinned host keys kill the fresh-machine TOFU trap: BatchMode transports can never answer a host-key prompt, so every tunnel row ships its
+  # key into a projected known-hosts file; GitHub's published ed25519 key rides along for the clone-before-first-switch path.
+  knownHostsFile = pkgs.writeText "forge-known-hosts" (lib.concatLines (
+    lib.mapAttrsToList (_: t: "${t.hostName} ${t.hostKey}") vpsTunnels
+    ++ ["github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"]
+  ));
 
   forwardsFor = tunnel:
     map (f: {
@@ -486,6 +494,10 @@ in {
 
   config =
     {
+      # The public half of the estate key on disk: IdentitiesOnly hosts select the agent-held private key through it, so a fresh machine needs
+      # no manual seeding and custody never leaves 1Password.
+      home.file.".ssh/id_ed25519.pub".text = lib.head host.ssh.authorizedKeys + "\n";
+
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false; # suppress the default-config deprecation warning
@@ -516,6 +528,7 @@ in {
 
                 AddKeysToAgent = "yes";
                 HashKnownHosts = true;
+                UserKnownHostsFile = "${config.home.homeDirectory}/.ssh/known_hosts ${knownHostsFile}";
 
                 Compression = true;
               };
