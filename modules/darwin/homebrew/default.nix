@@ -60,6 +60,8 @@
       export HOMEBREW_CASK_OPTS="--no-quarantine"
       export HOMEBREW_NO_ANALYTICS=1
       mkdir -p "$HOME/Library/LaunchAgents"
+      # Brew 6 refuses external commands from untrusted taps; trust is per-machine state (trust.json), so a fresh host needs the grant re-minted.
+      brew trust --tap domt4/autoupdate >/dev/null
       brew autoupdate delete >/dev/null 2>&1 || true
       brew autoupdate start ${toString autoupdateIntervalSeconds} ${autoupdateStartArgs}
     '';
