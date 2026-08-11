@@ -40,6 +40,9 @@ in {
       RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
       TRIPPY_CONFIG_DIR = "${config.xdg.configHome}/trippy";
       STARSHIP_CACHE = "${config.xdg.cacheHome}/starship";
+      # Timeout drops are by-design (command_timeout keeps the prompt under budget); error level stops the [WARN] pair a
+      # cold toolchain spawn (first node exec after boot) would otherwise print into the terminal.
+      STARSHIP_LOG = "error";
       EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
       BAT_CACHE_PATH = "${config.xdg.cacheHome}/bat";
       XH_CONFIG_DIR = "${config.xdg.configHome}/xh";
