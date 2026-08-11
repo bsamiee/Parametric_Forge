@@ -104,7 +104,9 @@
     mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
     tool_list="$(${pkgs.uv}/bin/uv tool list --show-version-specifiers 2>/dev/null || true)"
     if [ ! -x "$UV_TOOL_BIN_DIR/${row.launcher.bin}" ] || [[ "$tool_list" != *"${uvNeedle row}"* ]]; then
-      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" ${lib.escapeShellArg (uvSpec row)} >/dev/null
+      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" ${
+      lib.concatMapStrings (c: "--with ${lib.escapeShellArg c} ") (row.launcher.constraints or [])
+    }${lib.escapeShellArg (uvSpec row)} >/dev/null
     fi
   '';
   mkUvLauncher = row: name:

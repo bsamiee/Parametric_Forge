@@ -14,11 +14,12 @@
 #   url/headerNames  http endpoint + Claude header-name set
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
-#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath? }
+#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath?, constraints? }
 #                    => Forge-built wrapper(s); kind selects the build lane — "pnpm" (default, registry install into the launcher cache) or
 #                    "uv" / "uv-git" (uv tool environment, version is a PyPI pin or a git rev). upstream/updateEngine are manifest
 #                    extension-family fields (`forge-mcp outdated` observes, `forge-mcp advance` rewrites: npm-registry | pypi | git-head);
-#                    runtimePath names pkgs attrs front-run onto the wrapper PATH
+#                    runtimePath names pkgs attrs front-run onto the wrapper PATH; constraints are uv `--with` bounds pinning a transitive
+#                    dep the upstream spec leaves open — each carries a named incompatibility and dies when upstream absorbs it
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
@@ -163,6 +164,9 @@
       upstream = "github:ast-grep/ast-grep-mcp";
       updateEngine = "git-head";
       runtimePath = ["ast-grep-upstream"];
+      # mcp 2.0.0 removed the mcp.server.fastmcp layer sg-mcp imports; upstream pins mcp[cli]>=1.6.0 with no ceiling, so a fresh
+      # resolve breaks at import. Dies when upstream lands mcp 2.x support.
+      constraints = ["mcp<2"];
     };
     codex = {
       required = false;
@@ -295,11 +299,11 @@
     };
   }
   {
-    # Codex.app-private REPL: presence asserted, definition owned by the app.
+    # ChatGPT.app-private REPL: presence asserted, definition owned by the app.
     name = "node_repl";
     transport = "stdio";
     platforms = ["darwin"];
-    command = "/Applications/Codex.app/Contents/Resources/cua_node/bin/node_repl";
+    command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl";
     args = [];
     envKeys = [];
     clients = ["codex"];
