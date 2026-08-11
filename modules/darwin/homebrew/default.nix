@@ -97,16 +97,8 @@ in {
       };
     };
 
-    # --- [CASK_CONFIGURATION]
-    caskArgs = mkDefault {
-      appdir = "/Applications";
-      require_sha = false;
-      no_binaries = false;
-      fontdir = "~/Library/Fonts";
-      colorpickerdir = "~/Library/ColorPickers";
-      prefpanedir = "~/Library/PreferencePanes";
-      qlplugindir = "~/Library/QuickLook";
-    };
+    # Brew 6 silently skips new cask installs when the Brewfile carries cask_args (scars.md [07]-[02]): no caskArgs row, every declared value
+    # is the Homebrew default, and posture rides HOMEBREW_CASK_OPTS above.
   };
 
   # Converged runs are read-only and exit 0, logged so a failed regeneration never hides until the next day. The reconciled agent keeps
@@ -126,6 +118,30 @@ in {
       ProcessType = "Background";
       StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-brew-autoupdate.log";
       StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-brew-autoupdate.log";
+    };
+  };
+
+  # WezTerm nightly is a :latest cask the domt4 updater never boards (blanket --greedy would drag every auto-updating cask with it), so a
+  # dedicated row owns its daily advance. Bundle swap under a running terminal is safe — live sessions hold the open binary and the operator
+  # relaunches on their own schedule.
+  launchd.user.agents.forge-wezterm-nightly = {
+    serviceConfig = {
+      Label = "com.parametric-forge.forge-wezterm-nightly";
+      ProgramArguments = ["${config.homebrew.prefix}/bin/brew" "upgrade" "--cask" "wezterm@nightly" "--greedy-latest"];
+      EnvironmentVariables = {
+        HOMEBREW_CASK_OPTS = "--no-quarantine";
+        HOMEBREW_NO_ANALYTICS = "1";
+      };
+      RunAtLoad = false;
+      StartCalendarInterval = [
+        {
+          Hour = 10;
+          Minute = 30;
+        }
+      ];
+      ProcessType = "Background";
+      StandardOutPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-wezterm-nightly.log";
+      StandardErrorPath = "/Users/${config.system.primaryUser}/Library/Logs/forge-wezterm-nightly.log";
     };
   };
 }

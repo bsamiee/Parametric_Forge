@@ -10,14 +10,13 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly (version :latest) conflicts with the stable "wezterm" cask: hard prerequisite before the first switch is `brew uninstall --cask wezterm`.
-    # Pin after install (`brew pin --cask wezterm@nightly`) so the autoupdate daemon never upgrades it implicitly.
+    # Nightly (version :latest) conflicts with the stable "wezterm" cask — never install both. The domt4 updater skips :latest casks, so the
+    # forge-wezterm-nightly agent (homebrew/default.nix) owns its daily --greedy-latest advance; no pin anywhere.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
     "aldente" # Battery charging limiter
-    "bettertouchtool" # Touch/gesture management
     "jordanbaird-ice" # Menu bar manager
     "linearmouse" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
     "raycast" # Launcher/productivity
@@ -37,6 +36,7 @@ _: {
     # --- [CLOUD_STORAGE]
     "google-drive"
     "megasync"
+    "onedrive"
 
     # --- [DEVELOPMENT]
     "visual-studio-code"
