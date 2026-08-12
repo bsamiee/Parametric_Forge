@@ -1587,8 +1587,8 @@
     "codex.previous" = "retention: self-update backup; aged out by forge-cleanup";
     coderabbit = "reviewer-identity: unmanaged reviewer binary (services matrix)";
     cr = "reviewer-identity: symlink to coderabbit";
-    greptile = "reviewer-identity: launcher";
-    "greptile.js" = "reviewer-identity: bundle";
+    greptile = "reviewer-identity: unmanaged reviewer binary (services matrix); v3.4.0+ single self-contained binary, no sibling bundle";
+    macroscope = "reviewer-identity: unmanaged reviewer binary (services matrix); release-asset install, never `macroscope update`";
     agy = "admitted-agent: antigravity CLI";
     "pre-commit" = "uv-lane: uv tool shim";
     "pynvim-python" = "uv-lane: uv tool shim";
