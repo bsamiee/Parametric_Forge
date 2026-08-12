@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/bardiasamiee/Documents/99.Github/Parametric_Forge/.codex/hooks/setup-env.sh'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

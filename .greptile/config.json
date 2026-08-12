@@ -96,13 +96,6 @@
             "severity": "high",
             "scope": ["overlays/**"],
             "enabled": true
-        },
-        {
-            "id": "vscode-truth-ladder",
-            "rule": "VS Code keys and color tokens verify against the shipped workbench bundle or the installed extension manifests, never recall; asserted rows pin design law, never extension-behavior toggles with UI side effects; universal (user-level) rows respect per-key language-block merges and application-scope exclusions — an application- or machine-scoped key promoted into workspace guidance is a defect.",
-            "severity": "medium",
-            "scope": ["modules/home/programs/apps/vscode/**"],
-            "enabled": true
         }
     ]
 }

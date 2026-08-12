@@ -25,26 +25,26 @@
   };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.5.7";
+    version = "2.5.8";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-darwin-arm64";
-      sha256 = "sha256-9x/oCQnS9w8eBRMg9bqd/VU7xe87rO9c3uGwDulqKFw=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-darwin-arm64";
+      sha256 = "sha256-BMLUTmEkLIv1bi1mPlMS54Y5M0tKL++EtfWayLyVefs=";
     };
   };
   biome-aarch64-linux = {
     pname = "biome-aarch64-linux";
-    version = "2.5.7";
+    version = "2.5.8";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-arm64-musl";
-      sha256 = "sha256-GfCV2hc/puJ0206rp83P9hveMq02j3VLMYXJ6rzWcgI=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-arm64-musl";
+      sha256 = "sha256-CdArmDmqG/l7ZfzOObVhxWh/ZSFgfbRuS8/92ZoBdaU=";
     };
   };
   biome-x86_64-linux = {
     pname = "biome-x86_64-linux";
-    version = "2.5.7";
+    version = "2.5.8";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.7/biome-linux-x64-musl";
-      sha256 = "sha256-RgmkkwaNeoTGHQHV7V7IyvuAW8xSBIa+Y/CjiLvjyCc=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-x64-musl";
+      sha256 = "sha256-Nl8qrHEFGELWWp0DE53A8Yliig6MLcOqLvCaUe+UvL0=";
     };
   };
   duckdb-aarch64-darwin = {

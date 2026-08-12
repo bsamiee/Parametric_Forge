@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/project.json
+# Copies to the project root as sgconfig.yml. Keys below are the config surface; the binary accepts unknown keys silently
+# while the declared schema rejects them — path scoping rides per-rule files/ignores only.
+ruleDirs:
+    - rules
+utilDirs:
+    - utils
+testConfigs:
+    - testDir: rule-tests # snapshots land in rule-tests/__snapshots__; snapshotDir overrides, the CLI --snapshot-dir flag is inert
+languageGlobs:
+    <language>: ['<glob>'] # non-standard extensions and superset reuse; overrides the default parser for matched files
+customLanguages:
+    <name>:
+        libraryPath: <parser-dylib> # tree-sitter dynamic library, relative to this file
+        extensions: ['<ext>']
+        expandoChar: µ # one character replacing $ where the grammar rejects it in patterns
+        languageSymbol: <dylib-symbol> # default tree_sitter_<name>
+        outlineRules: <outline-rules>.yml
+languageInjections:
+    - hostLanguage: <host-language>
+      rule: {pattern: '<host-pattern capturing $CONTENT>'}
+      injected: <embedded-language> # or a list resolved through a $LANG capture in the rule

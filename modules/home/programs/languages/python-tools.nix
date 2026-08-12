@@ -38,16 +38,20 @@
         ${projectRootFunction}
 
         _main() {
-          if [[ "''${FORGE_PYTHON_SHIM_BYPASS:-}" == "1" || "''${FORGE_PYTHON_SHIM_ACTIVE:-}" == "1" ]]; then
-            export UV_PYTHON_PREFERENCE="only-system"
-            export UV_PYTHON_DOWNLOADS="never"
+          export UV_PYTHON_PREFERENCE="only-system"
+          export UV_PYTHON_DOWNLOADS="never"
+
+          if [[ "''${FORGE_PYTHON_SHIM_BYPASS:-}" == "1" ]]; then
             exec "${python}/bin/${name}" "$@"
           fi
 
+          # Materialized environments only: an unsynced locked project falls through to the store
+          # interpreter. An implicit `uv run` here deadlocks against any external uv holding the
+          # project lock (uv sync's interpreter discovery execs this shim) and lets incidental
+          # callers (node-gyp probing python3) trigger a full dependency materialization;
+          # provisioning is explicit via `uv sync`.
           local project_root
           if project_root="$(_find_project_root)"; then
-            export UV_PYTHON_PREFERENCE="only-system"
-            export UV_PYTHON_DOWNLOADS="never"
             if [[ -n "''${UV_PROJECT_ENVIRONMENT:-}" ]]; then
               if [[ "$UV_PROJECT_ENVIRONMENT" = /* ]]; then
                 if [[ -x "$UV_PROJECT_ENVIRONMENT/bin/python" ]]; then
@@ -60,16 +64,8 @@
             if [[ -x "$project_root/.venv/bin/python" ]]; then
               exec "$project_root/.venv/bin/python" "$@"
             fi
-
-            # The uv lane needs a locked project; a config-only pyproject (no lock) must not trigger dependency resolution or venv creation.
-            if [[ -f "$project_root/uv.lock" ]]; then
-              export FORGE_PYTHON_SHIM_ACTIVE=1
-              exec uv --project "$project_root" run python "$@"
-            fi
           fi
 
-          export UV_PYTHON_PREFERENCE="only-system"
-          export UV_PYTHON_DOWNLOADS="never"
           exec "${python}/bin/${name}" "$@"
         }
 
@@ -114,30 +110,25 @@
         ''}
 
         _main() {
-          local active_var="FORGE_PYTHON_TOOL_SHIM_ACTIVE_${name}"
+          export UV_PYTHON_PREFERENCE="only-system"
+          export UV_PYTHON_DOWNLOADS="never"
 
-          if [[ "''${FORGE_PYTHON_TOOL_SHIM_BYPASS:-}" == "1" || "''${!active_var:-}" == "1" ]]; then
+          if [[ "''${FORGE_PYTHON_TOOL_SHIM_BYPASS:-}" == "1" ]]; then
             exec "${package}/bin/${name}" "$@"
           fi
 
+          # Materialized environments only: an unsynced project falls through to the store binary,
+          # which still reads the project's [tool.*] law from the working tree. An implicit
+          # `uv run` here blocks on the project lock during syncs and materializes the full
+          # dependency set as a side effect; provisioning is explicit via `uv sync`.
           local project_root
           local tool_path
           if project_root="$(_find_project_root)"; then
-            export UV_PYTHON_PREFERENCE="only-system"
-            export UV_PYTHON_DOWNLOADS="never"
-            export "$active_var=1"
             if tool_path="$(_resolve_project_tool "$project_root")"; then
               exec "$tool_path" "$@"
             fi
-            # The uv lane needs a locked project; a config-only pyproject (no lock) falls through to the store binary, which still reads
-            # the project's [tool.*] law from the working tree.
-            if [[ -f "$project_root/uv.lock" ]]; then
-              exec uv --project "$project_root" run "${name}" "$@"
-            fi
           fi
 
-          export UV_PYTHON_PREFERENCE="only-system"
-          export UV_PYTHON_DOWNLOADS="never"
           ${lib.optionalString (name == "mypy") ''
           _fallback_env
         ''}

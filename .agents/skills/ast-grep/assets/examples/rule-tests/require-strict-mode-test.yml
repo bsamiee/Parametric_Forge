@@ -1,0 +1,17 @@
+id: require-strict-mode
+valid:
+    - | # strict mode at file level
+      #!/usr/bin/env bash
+      set -euo pipefail
+      echo "hello"
+invalid:
+    - | # no strict mode
+      #!/usr/bin/env bash
+      echo "hello"
+    - |- # strict mode buried in a function is not file-level strictness
+      #!/usr/bin/env bash
+      run() {
+        set -euo pipefail
+        echo "hello"
+      }
+      run

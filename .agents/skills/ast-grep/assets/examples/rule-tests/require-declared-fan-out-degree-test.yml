@@ -1,0 +1,8 @@
+id: require-declared-fan-out-degree
+valid:
+    - 'const declared = (keys: ReadonlyArray<string>) => Effect.forEach(keys, (key) => probe(key), { concurrency: "inherit" });'
+    - 'const shorthand = (keys: ReadonlyArray<string>, concurrency: number) => Effect.forEach(keys, (key) => probe(key), { concurrency, discard: true });'
+invalid:
+    - 'const swept = (keys: ReadonlyArray<string>) => Effect.forEach(keys, (key) => probe(key));'
+    - 'const gated = (raw: Raw) => Effect.all({ floor: admit(raw.floor) }, { mode: "validate" });'
+    - 'const nested = (keys: ReadonlyArray<string>) => Effect.forEach(keys, (key) => Effect.forEach(key.split(","), probe, { concurrency: 4 }));'

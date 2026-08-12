@@ -1,0 +1,32 @@
+id: closed-family-switch-to-generated-switch
+valid:
+    - | # already on the generated Switch
+      public static class S {
+          public static Fin<Receipt> Done(Request request, Ledger ledger) =>
+              request.Switch(open: static o => ledger.Open(o.Code), close: static c => ledger.Close(c.Code));
+      }
+    - | # when-guarded arm refuses the fix
+      public static class S {
+          public static int Guarded(Request request) =>
+              request switch { Request.Open o when o.Code.Live => 1, Request.Close c => 0 };
+      }
+    - | # discard arm refuses the fix
+      public static class S {
+          public static int Fallback(Request request) =>
+              request switch { Request.Open o => 1, _ => 0 };
+      }
+    - | # bare compound subject would rebind under member access — the guard refuses it
+      public static class S {
+          public static Fin<Receipt> Waited(Task<Request> t, Ledger ledger) =>
+              await t switch { Request.Open o => ledger.Open(o.Code), Request.Close c => ledger.Close(c.Code) };
+      }
+invalid:
+    - |- # bare qualified family on a language switch
+      public static class S {
+          public static Fin<Receipt> Dispatch(Request request, Ledger ledger) =>
+              request switch {
+                  Request.Open o => ledger.Open(o.Code),
+                  Request.Amend a => ledger.Amend(a.Code, a.Delta),
+                  Request.Close c => ledger.Close(c.Code),
+              };
+      }

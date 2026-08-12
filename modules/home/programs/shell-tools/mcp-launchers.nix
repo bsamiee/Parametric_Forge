@@ -79,7 +79,7 @@
             exit 69
           fi
         fi
-        exec "$entry" "$@"
+        ${row.launcher.ensure or ""}exec "$entry" "$@"
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) pnpmRows;
@@ -133,13 +133,14 @@
       exec "$entry" "$@"
     '';
   };
-  # Agent host bootstrap: one splash-free idempotent verb brings RhinoWIP up so the vendor router adopts it through slot lifecycle; the
-  # MCP platform listener autostarts with the app. `open -a` passes -nosplash only on a fresh launch, so the pgrep guard keeps it honest.
+  # Agent host bootstrap: one splash-free idempotent verb brings the Rhino 9 host (BETA bundle, WIP lane) up so the vendor router adopts it
+  # through slot lifecycle; the MCP platform listener autostarts with the app. `open -a` passes -nosplash only on a fresh launch, so the
+  # pgrep guard keeps it honest.
   rhinoUp = pkgs.writeShellApplication {
     name = "forge-rhino-up";
     runtimeInputs = [pkgs.coreutils];
     text = ''
-      app="''${RHINO_WIP_APP_PATH:-/Applications/RhinoWIP.app}"
+      app="''${RHINO_WIP_APP_PATH:-/Applications/RhinoBETA.app}"
       rhino_bin="$app/Contents/MacOS/Rhinoceros"
       if /usr/bin/pgrep -qf "$rhino_bin"; then
         echo "rhino: running (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1))"

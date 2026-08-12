@@ -32,7 +32,7 @@
       ++ lib.optionals isDarwin [
         "/opt/homebrew/bin"
         "/opt/homebrew/sbin"
-        "/Applications/Rhino 8.app/Contents/Resources/bin"
+        "/Applications/RhinoBETA.app/Contents/Resources/bin"
       ];
     fallbackPathEntries = [
       "/usr/local/bin"

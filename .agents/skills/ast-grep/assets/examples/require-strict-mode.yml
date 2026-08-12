@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/bash_rule.json
+id: require-strict-mode
+language: bash
+severity: error
+rule:
+    kind: program # the file is the match — absence rules anchor on the container
+    not:
+        has: {pattern: set -euo pipefail} # direct child only — a set inside a function is not file-level strictness
+message: Script runs without strict mode
+note: Add `set -euo pipefail` immediately after the shebang, before the first command

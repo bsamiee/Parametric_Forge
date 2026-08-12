@@ -1,0 +1,408 @@
+# [EXTENSIONS]
+
+First-class extension integration for PostgreSQL 18. Install with `CREATE EXTENSION ... CASCADE` for automatic dependency resolution.
+
+## [01]-[PGVECTOR]
+
+Vector storage and similarity search. HNSW, IVFFlat, and DiskANN indexes for approximate nearest-neighbor.
+
+### [01.1]-[SCHEMA_INDEX_PATTERNS]
+
+```sql conceptual
+CREATE EXTENSION vector;
+ALTER TABLE documents ADD COLUMN embedding vector(1536);
+
+-- HNSW: higher m = more connections = better recall, larger index
+CREATE INDEX ON documents USING hnsw (embedding vector_cosine_ops)
+    WITH (m = 16, ef_construction = 200);
+-- IVFFlat: lists ~ sqrt(rows) for <1M, sqrt(rows)/10 for >1M
+CREATE INDEX ON documents USING ivfflat (embedding vector_l2_ops)
+    WITH (lists = 100);
+-- DiskANN: disk-based index for large-scale (>1M vectors), lower memory than HNSW
+-- Requires: CREATE EXTENSION vectorscale;
+CREATE INDEX ON documents USING diskann (embedding);
+-- With Statistical Binary Quantization for high-dimensional (>768) embeddings
+CREATE INDEX ON documents USING diskann (embedding) WITH (num_neighbors = 50);
+
+-- Filtered DiskANN search — label-based pre-filtering avoids post-filter recall degradation
+-- Store discrete tenant/category labels in a smallint[] column indexed with the vector.
+CREATE INDEX ON documents USING diskann (embedding, labels)
+    WITH (num_neighbors = 50, search_list_size = 100);
+
+-- Query with filter pushdown into index scan
+SELECT id, embedding <=> $1::vector AS distance
+FROM documents
+WHERE labels @> ARRAY[$2::smallint, $3::smallint]
+ORDER BY embedding <=> $1::vector LIMIT 20;
+```
+
+### [01.2]-[QUERY_PATTERNS]
+
+```sql conceptual
+SELECT id, 1 - (embedding <=> $1::vector) AS similarity
+FROM documents ORDER BY embedding <=> $1::vector LIMIT 20;
+
+-- Filtered search with iterative scan (0.8+) — prevents overfiltering
+SET LOCAL hnsw.iterative_scan = relaxed_order;
+SET LOCAL hnsw.ef_search = 100;
+SET LOCAL hnsw.max_scan_tuples = 50000;
+SELECT id, embedding <=> $1::vector AS distance
+FROM documents
+WHERE tenant_id = $2 AND archived_at IS NULL
+ORDER BY embedding <=> $1::vector LIMIT 20;
+```
+
+### [01.3]-[TYPE_VARIANTS]
+
+| [INDEX] | [TYPE]         | [BYTES_DIM] | [MAX_DIMS]     | [INDEX_SUPPORT]        | [USE_WHEN]                                    |
+| :-----: | :------------- | :---------- | :------------- | :--------------------- | :-------------------------------------------- |
+|  [01]   | `vector(n)`    | 4           | 2000           | HNSW, IVFFlat, DiskANN | Default — full precision                      |
+|  [02]   | `halfvec(n)`   | 2           | 4000           | HNSW, IVFFlat          | Memory-constrained, acceptable precision loss |
+|  [03]   | `sparsevec(n)` | variable    | 16000 non-zero | HNSW                   | High-dimensional sparse embeddings            |
+
+### [01.4]-[CONTRACTS]
+
+- Distance operators: `<->` (L2), `<=>` (cosine), `<#>` (negative inner product — ASC = most similar)
+- HNSW `ef_construction` affects build quality; `ef_search` (runtime) controls recall/speed tradeoff
+- Iterative scan: `relaxed_order` (approximate, faster), `strict_order` (exact, re-sorts after expansion)
+- `hnsw.max_scan_tuples` (default 20000): caps tuples visited — increase for large filtered sets, -1 for unlimited
+- IVFFlat requires `VACUUM` after bulk insert — stale statistics degrade recall
+- DiskANN for >1M vectors or memory-constrained; HNSW for <1M with RAM budget
+- SBQ compression for dimensions >768 (e.g., text-embedding-3-large at 3072); same distance operators
+- Pre-filter: partial indexes (`WHERE tenant_id = X`) for high-selectivity; iterative scan for low-selectivity
+- DiskANN label filtering: store discrete filters as labels and query with label containment so filtering participates in the index scan — avoids post-filter recall degradation on high-selectivity filters
+
+## [02]-[PG_SEARCH_BM25_VIA_TANTIVY]
+
+Full-text search with BM25 relevance scoring. Replaces `ts_rank_cd` for search-quality ranking.
+
+```sql conceptual
+CREATE EXTENSION pg_search;
+CREATE INDEX ON documents USING bm25 (id, title, body)
+    WITH (key_field = 'id', text_fields = '{"title": {"tokenizer": {"type": "default"}}, "body": {}}');
+
+SELECT id, title, paradedb.score(id) AS relevance
+FROM documents
+WHERE id @@@ paradedb.parse('title:postgres & body:performance')
+ORDER BY relevance DESC LIMIT 20;
+```
+
+Advanced query syntax — phrase, regex, fuzzy, boost:
+
+```sql conceptual
+-- Phrase match (exact sequence)
+SELECT id, paradedb.score(id) FROM documents
+WHERE id @@@ paradedb.phrase('body', 'distributed consensus protocol');
+
+-- Fuzzy match (edit distance)
+SELECT id, paradedb.score(id) FROM documents
+WHERE id @@@ paradedb.fuzzy_term('title', 'postgrs', distance => 2);
+
+-- Boolean combination with field boost
+SELECT id, paradedb.score(id) FROM documents
+WHERE id @@@ paradedb.boolean(
+    should => ARRAY[
+        paradedb.boost(2.0, paradedb.parse('title:postgres')),
+        paradedb.parse('body:performance')
+    ]
+)
+ORDER BY paradedb.score(id) DESC LIMIT 20;
+
+-- Regex match
+SELECT id FROM documents
+WHERE id @@@ paradedb.regex('title', 'post(gres|gre).*');
+```
+
+Tokenizer configuration — per-field control in index definition:
+
+```sql conceptual
+CREATE INDEX ON documents USING bm25 (id, title, body)
+    WITH (key_field = 'id',
+          text_fields = '{
+              "title": {"tokenizer": {"type": "default"}, "record": "position"},
+              "body":  {"tokenizer": {"type": "en_stem"}, "record": "position"}
+          }');
+```
+
+### [02.1]-[CONTRACTS]
+
+- BM25 replaces `ts_rank_cd` for relevance scoring; retain tsvector for simple boolean matching
+- `@@@` operator with `paradedb.parse()` for query syntax; `paradedb.score(key_field)` for relevance
+- `key_field` must be a unique column (typically PK) — used for score association
+- `record: "position"` drives phrase queries and proximity scoring; without it, phrase matching degrades to term co-occurrence
+- Tokenizer types: `default` (Unicode segmentation), `en_stem` (English stemmer), `raw` (no tokenization), `ngram`, `chinese_compatible`
+- `paradedb.fuzzy_term`: `distance` is Levenshtein edit distance (default 1, max 2); `transpose_cost_one = true` treats transpositions as single edit
+- `paradedb.boost(factor, query)`: field-level relevance weighting — title matches weighted higher than body
+
+## [03]-[HYBRID_SEARCH_BM25_PGVECTOR_RRF]
+
+```sql conceptual
+WITH semantic AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY embedding <=> $1::vector) AS rank_s
+    FROM documents ORDER BY embedding <=> $1::vector LIMIT 100
+),
+bm25 AS (
+    SELECT id, ROW_NUMBER() OVER (ORDER BY paradedb.score(id) DESC) AS rank_b
+    FROM documents WHERE id @@@ paradedb.parse($2) LIMIT 100
+)
+SELECT COALESCE(s.id, b.id) AS id,
+       COALESCE(1.0 / (60 + s.rank_s), 0) + COALESCE(1.0 / (60 + b.rank_b), 0) AS rrf_score
+FROM semantic s FULL OUTER JOIN bm25 b ON s.id = b.id
+ORDER BY rrf_score DESC LIMIT 20;
+```
+
+RRF formula: `rrf_score = Σ 1/(k + rank_i)` where k=60 dampens rank differences. RRF operates on ranks only — never combine raw BM25 scores with raw vector distances (different scales, incomparable). k=60 means a result must rank in top ~100 to contribute meaningful signal. Weighted variant: `w_s/(k + rank_s) + w_b/(k + rank_b)` for asymmetric retrieval (e.g., 70/30 semantic/keyword). Without pg_search: substitute tsvector + `ts_rank_cd` for BM25 CTE.
+
+## [04]-[PG_TRGM]
+
+Trigram-based fuzzy text search and similarity scoring.
+
+```sql conceptual
+CREATE EXTENSION pg_trgm;
+CREATE INDEX ON users USING gin (name gin_trgm_ops);   -- faster for LIKE/ILIKE/regex
+CREATE INDEX ON users USING gist (name gist_trgm_ops);  -- supports ORDER BY similarity + KNN
+
+SET LOCAL pg_trgm.similarity_threshold = 0.3;
+SELECT name, similarity(name, $1) AS sim
+FROM users WHERE name % $1 ORDER BY sim DESC LIMIT 10;
+
+-- Word similarity — matches subsequences within text
+SELECT name, word_similarity($1, name) AS wsim
+FROM users WHERE $1 <% name ORDER BY wsim DESC LIMIT 10;
+```
+
+### [04.1]-[CONTRACTS]
+
+- `%` uses `pg_trgm.similarity_threshold` — tunable per-transaction via `SET LOCAL`
+- `<%` (word similarity) and `<<%` (strict word similarity) — subsequence and word-boundary matching
+- Trigrams require minimum 3 characters — shorter strings produce empty trigram sets
+- GiST alone drives `ORDER BY similarity()` KNN
+
+## [05]-[POSTGIS]
+
+Spatial data types, geodesic calculations, and geometric operations.
+
+```sql conceptual
+CREATE EXTENSION postgis;
+CREATE INDEX ON locations USING gist (geom);
+
+-- KNN proximity with index support
+SELECT id, ST_Distance(geom::geography, ST_MakePoint($1, $2)::geography) AS distance_m
+FROM locations
+WHERE ST_DWithin(geom::geography, ST_MakePoint($1, $2)::geography, $3)
+ORDER BY geom <-> ST_MakePoint($1, $2)::geometry LIMIT 20;
+
+-- Containment test
+SELECT id FROM zones
+WHERE ST_Within(ST_SetSRID(ST_MakePoint($1, $2), 4326), boundary_geom);
+
+SELECT id, ST_AsGeoJSON(geom)::jsonb AS geojson FROM locations WHERE id = $1;
+
+-- Coverage Clean (3.6 window function)
+SELECT id, ST_CoverageClean(geom) OVER (PARTITION BY region) AS cleaned_geom FROM coverage_layers;
+```
+
+| [INDEX] | [ASPECT] | [GEOMETRY]                          | [GEOGRAPHY]                 |
+| :-----: | :------- | :---------------------------------- | :-------------------------- |
+|  [01]   | Units    | Coordinate (degrees if 4326)        | Meters                      |
+|  [02]   | Speed    | Fast                                | ~5x slower                  |
+|  [03]   | Use when | Small areas, computational geometry | Earth-surface distance/area |
+
+### [05.1]-[CONTRACTS]
+
+- `ST_DWithin` uses GiST index — `ST_Distance < threshold` does not
+- Always `ST_SetSRID(ST_MakePoint(lon, lat), 4326)` — longitude first, latitude second
+- Cast to geography for meters: `geom::geography`; back for spatial index: `::geometry`
+- `ST_CoverageClean` is a window function — requires `OVER ()` clause
+
+## [06]-[TIMESCALEDB]
+
+Hypertables, continuous aggregates, columnar compression, and retention policies.
+
+```sql conceptual
+SELECT create_hypertable('metrics', by_range('time', INTERVAL '1 day'));
+ALTER TABLE metrics SET (
+    timescaledb.compress, timescaledb.compress_segmentby = 'device_id',
+    timescaledb.compress_orderby = 'time DESC');
+SELECT add_compression_policy('metrics', INTERVAL '7 days');
+SELECT add_retention_policy('metrics', INTERVAL '90 days');
+```
+
+### [06.1]-[CONTINUOUS_AGGREGATES]
+
+```sql conceptual
+CREATE MATERIALIZED VIEW metrics_hourly WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 hour', time) AS bucket, device_id,
+       avg(value) AS avg_value, max(value) AS max_value, count(*) AS sample_count
+FROM metrics GROUP BY bucket, device_id WITH NO DATA;
+
+SELECT add_continuous_aggregate_policy('metrics_hourly',
+    start_offset => INTERVAL '3 days', end_offset => INTERVAL '1 hour',
+    schedule_interval => INTERVAL '1 hour');
+
+-- Hierarchical CAGG (2.9+): aggregate over existing CAGG
+CREATE MATERIALIZED VIEW metrics_daily WITH (timescaledb.continuous) AS
+SELECT time_bucket('1 day', bucket) AS day_bucket, device_id,
+       avg(avg_value) AS avg_value, max(max_value) AS max_value, sum(sample_count) AS sample_count
+FROM metrics_hourly GROUP BY day_bucket, device_id WITH NO DATA;
+```
+
+### [06.2]-[CONTRACTS]
+
+- Table must be empty before `create_hypertable` (or `migrate_data => true`)
+- Compression `segmentby`: columns in WHERE for selective decompression — wrong segmentby forces full decompression
+- Real-time aggregation enabled by default — queries union materialized + recent raw data
+- Hierarchical CAGGs: child `time_bucket` must be a multiple of the parent's
+- UUIDv7 compression: 30% better ratio via the `timescaledb.enable_uuid_compression` GUC
+- Direct Compress: incoming inserts write directly to compressed columnar storage — bypasses the uncompressed→compress cycle for append-only hypertables. Enable via `ALTER TABLE metrics SET (timescaledb.compress_direct_write = true)`. Reduces write amplification and compression policy lag
+- Concurrent CAGG refresh: non-overlapping time ranges refresh in parallel workers — `SELECT add_continuous_aggregate_policy(..., schedule_interval => INTERVAL '5 min')` with overlapping windows is safe as long as `start_offset > end_offset` (non-overlapping materialization ranges)
+- Always pair hypertables with a BRIN index on the time dimension — chunk exclusion is coarse-grained (eliminates whole chunks) while BRIN filters ranges within a chunk for efficient intra-chunk scans
+
+### [06.3]-[TIMESCALEDB_VS_PG_PARTMAN]
+
+| [INDEX] | [CRITERION]              | [TIMESCALEDB]         | [PG_PARTMAN]              |
+| :-----: | :----------------------- | :-------------------- | :------------------------ |
+|  [01]   | Time-series ingestion    | Hypertable            | Over-engineered           |
+|  [02]   | Continuous aggregates    | Native CAGG           | Manual materialized views |
+|  [03]   | Non-time range partition | Not applicable        | Native declarative        |
+|  [04]   | Compression              | Columnar (90%+ ratio) | None (use pg_duckdb)      |
+|  [05]   | Retention policy         | Built-in              | Built-in                  |
+
+## [07]-[PG_CRON]
+
+In-database job scheduling via cron expressions.
+
+```sql conceptual
+SELECT cron.schedule('refresh-mat-view', '*/15 * * * *',
+    $$REFRESH MATERIALIZED VIEW CONCURRENTLY mv_dashboard$$);
+SELECT cron.schedule_in_database('maintenance', '0 3 * * *',
+    $$CALL batch_archive(5000)$$, 'mydb');
+SELECT cron.unschedule('refresh-mat-view');
+```
+
+### [07.1]-[CONTRACTS]
+
+- Jobs run as the creating user; each invocation in a new transaction — no session state
+- Maximum 1 concurrent run per job — next invocation waits if previous still running
+- Failure logged in `cron.job_run_details` with `status = 'failed'` — no automatic retry
+
+## [08]-[PG_PARTMAN]
+
+Automated partition lifecycle: creation, retention, and template management.
+
+```sql conceptual
+CREATE EXTENSION pg_partman;
+CREATE TABLE events (
+    id uuid PRIMARY KEY, created_at timestamptz NOT NULL, payload jsonb NOT NULL
+) PARTITION BY RANGE (created_at);
+
+SELECT partman.create_parent(
+    p_parent_table := 'public.events', p_control := 'created_at',
+    p_type := 'native', p_interval := '1 month');
+UPDATE partman.part_config
+SET premake = 4, retention = '12 months', retention_keep_table = false
+WHERE parent_table = 'public.events';
+
+SELECT cron.schedule('partman-maintenance', '0 * * * *',
+    $$SELECT partman.run_maintenance()$$);
+```
+
+### [08.1]-[CONTRACTS]
+
+- `run_maintenance()` must be called regularly — creates future partitions and executes retention
+- `native` type uses PG declarative partitioning; `p_type := 'native'` is the partition type
+- Template table: indexes/constraints on `_template` propagate to new partitions
+- Default partition created automatically — monitor its size as a health signal
+
+## [09]-[BTREE_GIST]
+
+Required for EXCLUDE constraints mixing equality + range operators.
+
+```sql conceptual
+CREATE EXTENSION btree_gist;
+-- Enables: EXCLUDE USING gist (employee_id WITH =, assignment_range WITH &&)
+```
+
+- Prerequisite for any EXCLUDE constraint combining `=` with range operators — always install alongside range-based exclusion schemas
+
+## [10]-[PG_DUCKDB]
+
+Analytical query acceleration via embedded DuckDB engine. OLAP complement to PostgreSQL OLTP.
+
+[DECISION_RULE]: When the prompt names analytical workloads on time-series or transactional data at scale (>10M rows/day, dashboard aggregations, ad-hoc OLAP, heavy GROUP BY over large tables), reach for pg_duckdb with `SET LOCAL duckdb.force_execution = true`. This is not optional for heavy OLAP — pure PostgreSQL sequential scans on 100M+ row tables cannot meet interactive analytical query latency.
+
+```sql conceptual
+CREATE EXTENSION pg_duckdb;
+
+-- Analytical aggregation — 1000x+ over native PG for wide GROUP BY
+-- REQUIRED for analytical queries on large datasets (>10M rows)
+SET LOCAL duckdb.force_execution = true;
+SELECT department, fiscal_quarter,
+       avg(salary) AS avg_salary,
+       percentile_cont(0.95) WITHIN GROUP (ORDER BY salary) AS p95_salary,
+       count(*) FILTER (WHERE status = 'active') AS active_headcount
+FROM employees
+GROUP BY department, fiscal_quarter;
+
+-- Direct lake access — Parquet/Iceberg without ETL
+SELECT tenant_id, event_type, count(*) AS event_count
+FROM read_parquet('s3://datalake/events/year=2025/month=*/*.parquet')
+WHERE event_date > '2025-01-01'
+GROUP BY tenant_id, event_type;
+
+-- Hybrid: join PG transactional data with lake historical data
+SET LOCAL duckdb.force_execution = true;
+SELECT c.name, c.plan, lake.total_events, lake.last_active
+FROM customers c
+JOIN (
+    SELECT customer_id, count(*) AS total_events, max(event_date) AS last_active
+    FROM read_parquet('s3://datalake/events/*.parquet')
+    GROUP BY customer_id
+) lake ON c.id = lake.customer_id
+WHERE lake.total_events > 1000;
+
+-- Iceberg scan with time travel — query historical snapshots
+SET LOCAL duckdb.force_execution = true;
+SELECT product_id, inventory_count, updated_at
+FROM iceberg_scan('s3://warehouse/inventory', version => '2025-01-15T00:00:00Z')
+WHERE product_id IN (SELECT id FROM products WHERE category = 'electronics');
+
+-- Delta Lake read
+SET LOCAL duckdb.force_execution = true;
+SELECT region, sum(amount) AS total_sales
+FROM delta_scan('s3://datalake/sales_delta/')
+WHERE sale_date >= '2025-01-01'
+GROUP BY region;
+```
+
+### [10.1]-[CONTRACTS]
+
+- `SET LOCAL duckdb.force_execution = true` — transaction-scoped, PgBouncer-safe
+- pg_duckdb for analytical queries (GROUP BY, window functions, aggregates over large datasets) — never for OLTP (INSERT/UPDATE/DELETE)
+- `read_parquet` / `read_csv` / `read_json` for direct lake access without ETL pipeline
+- `iceberg_scan(path, version => timestamp)` for Apache Iceberg with time travel — query historical snapshots by timestamp or snapshot ID
+- `delta_scan(path)` for Delta Lake tables — reads transaction log for consistent snapshot
+- Hybrid joins: DuckDB scans lake tables while PG owns the transactional foreign-key tables — the optimizer handles the cross-engine join
+- DuckDB execution inherits PG transaction context — `SET LOCAL` settings, RLS (via query rewrite), advisory locks all apply
+- Parallel table scanning: DuckDB parallelizes across Parquet row groups and PG table pages — scales with `max_parallel_workers`
+
+## [11]-[PG_JSONSCHEMA]
+
+Declarative JSONB validation via JSON Schema.
+
+```sql conceptual
+CREATE EXTENSION pg_jsonschema;
+-- jsonb_matches_schema(schema::json, data::jsonb) → boolean
+-- See ddl.md for CHECK constraint integration pattern
+```
+
+- Use for all JSONB columns with enforceable structure — primary enforcement at database layer
+- Application-side JSON validation is redundant defense, not primary enforcement
+
+## [12]-[EXTENSION_INTERACTION_CONTRACTS]
+
+- [PGVECTOR_PG_SEARCH]: BM25 + semantic RRF hybrid
+- [PGVECTOR_PG_TRGM]: semantic + fuzzy text via weighted linear combination; vector CTE + trigram CTE joined on PK
+- [TIMESCALEDB_PG_PARTMAN]: mutually exclusive on same table — TimescaleDB manages own chunking; pg_partman for non-time-series only
+- [PGAUDIT]: compliance-grade audit logging via the pgaudit extension
+- [BTREE_GIST_RANGE_TYPES]: prerequisite pairing for EXCLUDE constraints with mixed operator types

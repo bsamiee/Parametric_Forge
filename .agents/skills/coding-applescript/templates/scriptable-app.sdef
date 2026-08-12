@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<!--
+Title    : scriptable-app.sdef
+Purpose  : Dictionary spine of a scriptable app. One suite declares the terminology AppleScript,
+           JXA, Cocoa Scripting, and ScriptingBridge all read; each cocoa row binds its term to
+           the runtime counterpart its attribute names — key for KVC access, class for the
+           backing type, method for the verb selector, name for the Objective-C spelling.
+Ship     : Info.plist sets NSAppleScriptEnabled true and OSAScriptingDefinition to this file's
+           base name; the file itself installs into Contents/Resources.
+Replace  : every UPPER_SNAKE slot token, every minted code — four bytes on a term, eight on a
+           command (event class + event ID) — and every cocoa value. Slots stay NMTOKEN-shaped,
+           so a filled term reads as space-separated words.
+-->
+<dictionary title="DICTIONARY_TITLE">
+
+  <!-- Codes are exactly four ASCII bytes carrying at least one uppercase byte; the all-lowercase
+       space is Apple's, so a standard term reuses Apple's own code rather than minting a rival. -->
+  <suite name="SUITE_NAME" code="Suit" description="SUITE_CHARTER">
+    <cocoa name="SUITE_COCOA_NAME"/>
+
+    <!-- Each enumerator binds one Objective-C constant whose raw value equals the four-byte
+         code; a new case is a new row. -->
+    <enumeration name="ENUM_NAME" code="Enum">
+      <enumerator name="CASE_A" code="EnA1" description="CASE_A_MEANING">
+        <cocoa name="ENUM_CONSTANT_A"/>
+      </enumerator>
+      <enumerator name="CASE_B" code="EnB2" description="CASE_B_MEANING">
+        <cocoa name="ENUM_CONSTANT_B"/>
+      </enumerator>
+    </enumeration>
+
+    <!-- A class-extension grafts terminology onto a Cocoa class the app never declares, so the
+         application object gains elements and properties with no rival root class. -->
+    <class-extension extends="application" description="APPLICATION_ROLE">
+      <cocoa class="NSApplication"/>
+      <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>
+      <element type="CLASS_NAME" access="rw">
+        <cocoa key="TO_MANY_KVC_KEY"/>
+        <accessor style="index"/>
+        <accessor style="id"/>
+      </element>
+      <property name="APPLICATION_PROPERTY" code="Papp" type="text" access="r"
+                description="APPLICATION_PROPERTY_MEANING">
+        <cocoa key="APPLICATION_PROPERTY_KEY"/>
+      </property>
+    </class-extension>
+
+    <!-- An element is an array-backed to-many KVC key and a property is a scalar or to-one value.
+         Each accessor style declares a lookup the container answers from its own index instead of
+         materializing every candidate, and a stable id keeps a specifier valid across reorder. -->
+    <class name="CLASS_NAME" code="Cobj" plural="CLASS_PLURAL" inherits="item"
+           description="CLASS_CHARTER">
+      <cocoa class="MODEL_CLASS"/>
+      <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>
+      <property name="id" code="ID  " type="text" access="r" description="STABLE_IDENTITY">
+        <cocoa key="UNIQUE_ID_KEY"/>
+      </property>
+      <property name="name" code="pnam" type="text" access="rw" description="DISPLAY_NAME">
+        <cocoa key="NAME_KEY"/>
+      </property>
+      <property name="TYPED_PROPERTY" code="Ptyp" type="ENUM_NAME" access="rw"
+                description="TYPED_PROPERTY_MEANING">
+        <cocoa key="TYPED_PROPERTY_KEY"/>
+      </property>
+      <element type="CHILD_CLASS_NAME" access="rw">
+        <cocoa key="CHILDREN_KVC_KEY"/>
+        <accessor style="name"/>
+        <accessor style="range"/>
+        <accessor style="test"/>
+      </element>
+      <responds-to command="COMMAND_NAME">
+        <cocoa method="COMMAND_SELECTOR"/>
+      </responds-to>
+    </class>
+
+    <!-- A command's cocoa class names the NSScriptCommand subclass that runs the verb, and each
+         parameter's cocoa key is the exact key that subclass reads back out of its evaluated
+         arguments. Access groups slice the suite: a sandboxed sender earns the one group it
+         names instead of blanket automation, and the group spans every declaration on the
+         specifier path — command, class, and containment route — or the sender's specifier dies
+         short of the object. A new verb is another command row under this suite. -->
+    <command name="COMMAND_NAME" code="SuitCmnd" description="COMMAND_CHARTER">
+      <cocoa class="COMMAND_CLASS"/>
+      <access-group identifier="ACCESS_GROUP_IDENTIFIER" access="rw"/>
+      <direct-parameter type="specifier" requires-access="r" description="DIRECT_OPERAND"/>
+      <parameter name="NAMED_PARAMETER" code="Kdst" type="file" description="NAMED_OPERAND">
+        <cocoa key="NAMED_PARAMETER_KEY"/>
+      </parameter>
+      <parameter name="OPTIONAL_PARAMETER" code="Kopt" type="ENUM_NAME" optional="yes"
+                 description="OPTIONAL_OPERAND">
+        <cocoa key="OPTIONAL_PARAMETER_KEY"/>
+      </parameter>
+      <result type="CLASS_NAME" description="RESULT_MEANING"/>
+    </command>
+
+  </suite>
+</dictionary>

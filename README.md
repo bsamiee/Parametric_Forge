@@ -29,7 +29,6 @@ Parametric_Forge/
 │       │   ├── apps/
 │       │   │   ├── karabiner/     # Leader-chord keyboard layer
 │       │   │   ├── nvim/          # Editor estate
-│       │   │   ├── vscode/
 │       │   │   ├── wezterm/       # Terminal host
 │       │   │   ├── yazi/          # File manager
 │       │   │   └── zellij/        # Multiplexer layouts and themes
@@ -116,7 +115,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
-`modules/home/theme.nix` is the estate palette owner: Dracula-variant base rows, semantic roles, ANSI-16 projection, and syntax scope tables serialize into every consumer (WezTerm, Zellij, Yazi, Neovim, VS Code, bat/delta, Starship) — no consumer carries a private hex. `modules/home/programs/apps/chords.nix` is the single chord-vocabulary owner: one parameterized table projects physical leader layers into Karabiner JSON, Zellij keybind KDL, and which-key/hint content — a new bind is one row. The mesh: WezTerm auto-attaches Zellij; the integration rail (`modules/home/scripts/terminal.nix`) runs Yazi as a floating popup and routes edits into the tab's live Neovim over RPC sockets; shell is zsh with fzf-tab, Atuin, carapace, Starship, zoxide, delta.
+`modules/home/theme.nix` is the estate palette owner: Dracula-variant base rows, semantic roles, ANSI-16 projection, and syntax scope tables serialize into every consumer (WezTerm, Zellij, Yazi, Neovim, bat/delta, Starship) — no consumer carries a private hex. `modules/home/programs/apps/chords.nix` is the single chord-vocabulary owner: one parameterized table projects physical leader layers into Karabiner JSON, Zellij keybind KDL, and which-key/hint content — a new bind is one row. The mesh: WezTerm auto-attaches Zellij; the integration rail (`modules/home/scripts/terminal.nix`) runs Yazi as a floating popup and routes edits into the tab's live Neovim over RPC sockets; shell is zsh with fzf-tab, Atuin, carapace, Starship, zoxide, delta.
 
 ## [12]-[QUALITY_BAR]
 

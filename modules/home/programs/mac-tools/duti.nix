@@ -45,9 +45,9 @@
     com.microsoft.VSCode	com.apple.log	all
     com.microsoft.VSCode	.log	all
 
-    # STL Files -> Rhino
-    com.mcneel.rhinoceros.8	public.standard-tesselated-geometry-format	all
-    com.mcneel.rhinoceros.8	.stl	all
+    # STL Files -> Rhino 9 BETA
+    com.mcneel.rhinoceros.9	public.standard-tesselated-geometry-format	all
+    com.mcneel.rhinoceros.9	.stl	all
 
     # Image Files -> Preview
     com.apple.Preview	public.image	all

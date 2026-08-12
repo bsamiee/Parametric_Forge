@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/python_rule.json
+id: no-raise-in-railed-function
+language: python
+severity: error
+rule:
+    kind: raise_statement
+    all:
+        - not: {regex: '^raise$'} # bare re-raise propagating cancellation is the one legal raise
+        - inside:
+            kind: function_definition
+            stopBy:
+                kind: function_definition # nearest enclosing def — a sanctioned raise inside a nested closure never fires
+            has:
+                field: return_type
+                regex: '^"?(Result|Option)\[' # the quote arm reaches stringized annotations
+message: Rail-returning function raises in its own body
+note: Return the failure case on the declared rail — `Error(<fault>)` — or move the raise into the closure a boundary converter wraps; waive a true seam with `ast-grep-ignore` on the raise line

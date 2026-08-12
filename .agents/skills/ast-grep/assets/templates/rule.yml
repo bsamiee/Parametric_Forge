@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/rule.json
+id: <rule-id> # imperative grammar: no-<construct> / require-<shape>; defaults to the filename stem when omitted
+language: <language>
+severity: error
+files: ['<scope-glob>'] # relative to sgconfig.yml, never ./-prefixed; string glob or {glob, caseInsensitive}
+ignores: ['<seam-glob>'] # tested before files; the ONLY exclusion channel — a !-negated glob inside files: is inert
+utils:
+    <util-id>:
+        any:
+            - {kind: <kind-a>}
+            - {kind: <kind-b>}
+rule:
+    all: # explicit all — capture order is law, the defining pattern rides first
+        - pattern: <anchor with $VAR and $$$ARGS>
+        - matches: <util-id>
+        - has: {kind: <kind>, field: <role>, stopBy: end}
+        - not: {inside: {kind: <exempting-kind>, stopBy: end}}
+constraints:
+    <VAR>: {regex: '<grammar>'} # post-rule filter on one single-node capture
+transform:
+    <NEW>: <op>($VAR, <key>=<value>) # op: replace | substring | convert | rewrite
+fix: <template referencing $VAR and $NEW> # only when the repair is mechanical
+message: <one line naming the violated law>
+note: <the exact repair — the shape to produce>
+labels:
+    <VAR>: {style: primary, message: '<span fact>'} # rule/constraints vars only; a rule carrying fix: renders the diff, never labels
+metadata:
+    <key>: <routing-fact> # surfaces only under --json --include-metadata
+---
+id: <sibling-rule-id> # one topic file carries the whole law family, rules split by ---
+language: <language>
+severity: error
+rule: <rule>
+message: <law>
+note: <repair>

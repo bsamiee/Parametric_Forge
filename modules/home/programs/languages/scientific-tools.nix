@@ -340,6 +340,16 @@
       export PKG_CONFIG_PATH="${scientificPaths.pkgconfig}''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
       export CMAKE_PREFIX_PATH="${scientificPaths.cmake}''${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
       export LIBRARY_PATH="${scientificPaths.library}''${LIBRARY_PATH:+:$LIBRARY_PATH}"
+      # Compilers translate LIBRARY_PATH entries into explicit -L flags; the macOS 26 CLT ld warns on a
+      # missing -L directory and meson links under -Wl,-fatal_warnings, so an eval-time entry with no lib
+      # dir (header-only eigen, a dev output) breaks every meson build. Prune to directories that exist.
+      _pruned=""
+      IFS=':' read -ra _entries <<<"$LIBRARY_PATH"
+      for _entry in "''${_entries[@]}"; do
+        [ -d "$_entry" ] && _pruned="''${_pruned:+$_pruned:}$_entry"
+      done
+      export LIBRARY_PATH="$_pruned"
+      unset _pruned _entries _entry
       # CFLAGS/CXXFLAGS are the one compile-flag carrier: distutils appends them, meson and cargo cc read them, and CMake initializes
       # CMAKE_<lang>_FLAGS from them at configure — reaching try_compile probes too. The OpenMP header rides here because FindOpenMP's
       # predefine below is include-blind and the flag values must stay space-free for naive CMAKE_ARGS splitters.

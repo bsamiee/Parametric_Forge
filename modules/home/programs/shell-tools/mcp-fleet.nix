@@ -14,7 +14,7 @@
 #   url/headerNames  http endpoint + Claude header-name set
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
-#   launcher         { kind?, names, pkg, version, bin, prelude?, upstream, updateEngine, runtimePath?, constraints? }
+#   launcher         { kind?, names, pkg, version, bin, prelude?, ensure?, upstream, updateEngine, runtimePath?, constraints? }
 #                    => Forge-built wrapper(s); kind selects the build lane — "pnpm" (default, registry install into the launcher cache) or
 #                    "uv" / "uv-git" (uv tool environment, version is a PyPI pin or a git rev). upstream/updateEngine are manifest
 #                    extension-family fields (`forge-mcp outdated` observes, `forge-mcp advance` rewrites: npm-registry | pypi | git-head);
@@ -86,6 +86,12 @@
       pkg = "@playwright/mcp";
       version = "0.0.79";
       bin = "playwright-mcp";
+      # Browser ensure runs after the tree materializes and before exec: the bundled playwright's own
+      # revision set installs into the shared PLAYWRIGHT_BROWSERS_PATH pin, a present revision returns
+      # in milliseconds, and a launch therefore never fails on a browser the bump left behind.
+      ensure = ''
+        "$prefix/node_modules/.bin/playwright" install chromium >&2 || true
+      '';
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";
     };
@@ -209,7 +215,7 @@
   {
     name = "exa";
     transport = "http";
-    url = "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_tools";
+    url = "https://mcp.exa.ai/mcp";
     headerNames = ["x-api-key"];
     envKeys = ["EXA_API_KEY"];
     codex = {
