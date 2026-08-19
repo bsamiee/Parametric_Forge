@@ -79,7 +79,9 @@
     transport = "stdio";
     platforms = ["darwin"]; # pnpm-fetched browser binaries never run on NixOS; a linux row lands with a store-built browser wiring
     command = "${profileBin}/forge-playwright-mcp";
-    args = ["--isolated" "--caps=vision,pdf"];
+    # --browser chromium pins the bundled build the ensure hook provisions into the shared cache;
+    # the default "chrome" channel launches the real Google Chrome.app, which the estate never pins.
+    args = ["--isolated" "--browser" "chromium" "--caps=vision,pdf"];
     envKeys = [];
     launcher = {
       names = ["forge-playwright-mcp"];
@@ -88,9 +90,13 @@
       bin = "playwright-mcp";
       # Browser ensure runs after the tree materializes and before exec: the bundled playwright's own
       # revision set installs into the shared PLAYWRIGHT_BROWSERS_PATH pin, a present revision returns
-      # in milliseconds, and a launch therefore never fails on a browser the bump left behind.
+      # in milliseconds, and a launch therefore never fails on a browser the bump left behind. The CLI
+      # resolves through the pnpm store glob — playwright is a transitive dep, so no top-level .bin
+      # entry exists and its exports map refuses require.resolve on cli.js.
       ensure = ''
-        "$prefix/node_modules/.bin/playwright" install chromium >&2 || true
+        for cli in "$prefix"/node_modules/.pnpm/playwright@*/node_modules/playwright/cli.js; do
+          if [ -f "$cli" ]; then node "$cli" install chromium >&2 || true; fi
+        done
       '';
       upstream = "npm:@playwright/mcp";
       updateEngine = "npm-registry";

@@ -54,7 +54,8 @@ in {
       # Shared Nix Chrome-for-Testing pin (owned by toolchain-env) so mmdc/puppeteer and the mermaid validator
       # never launch the real Chrome.app or an unstable downloaded shell.
       PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
-      # One machine-wide browsers path: playwright/patchright default to ~/Library/Caches/ms-playwright, outside XDG; every repo shares this pin.
-      PLAYWRIGHT_BROWSERS_PATH = "${config.xdg.cacheHome}/ms-playwright";
+      # PLAYWRIGHT_BROWSERS_PATH rides toolchain-env's `all` class: launchd-spawned MCP servers and
+      # interactive shells must resolve the one machine-wide browsers pin, so a session-only row here
+      # would fork the cache per surface.
     };
 }

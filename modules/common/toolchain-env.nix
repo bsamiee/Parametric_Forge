@@ -113,6 +113,10 @@
           MAGHZ_REMOTE_HOST = "31.97.131.41";
           MAGHZ_REMOTE_USER = "maghz-agent";
           MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
+          # One machine-wide playwright browsers pin: playwright/patchright default to ~/Library/Caches/ms-playwright, outside XDG.
+          # Cross-surface by necessity — repo test runs, launchd-spawned MCP servers, and interactive shells must resolve ONE cache,
+          # or each surface downloads its own revision set.
+          PLAYWRIGHT_BROWSERS_PATH = "${xdgCacheHome}/ms-playwright";
         }
         // lib.optionalAttrs isDarwin {
           HOMEBREW_PREFIX = "/opt/homebrew";

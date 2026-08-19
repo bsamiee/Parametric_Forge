@@ -133,29 +133,43 @@
       exec "$entry" "$@"
     '';
   };
-  # Agent host bootstrap: one splash-free idempotent verb brings the Rhino 9 host (BETA bundle, WIP lane) up so the vendor router adopts it
-  # through slot lifecycle; the MCP platform listener autostarts with the app. `open -a` passes -nosplash only on a fresh launch, so the
-  # pgrep guard keeps it honest.
+  # Agent host bootstrap: one splash-free idempotent verb brings the Rhino 9 host (BETA bundle, WIP lane) up and proves its MCP listener.
+  # The vendor plug-in can load after the first document's open event, so the documented -runscript startup seam explicitly starts MCP; the
+  # listener registry, never process presence alone, is the readiness boundary the router consumes.
   rhinoUp = pkgs.writeShellApplication {
     name = "forge-rhino-up";
     runtimeInputs = [pkgs.coreutils];
     text = ''
       app="''${RHINO_WIP_APP_PATH:-/Applications/RhinoBETA.app}"
       rhino_bin="$app/Contents/MacOS/Rhinoceros"
-      if /usr/bin/pgrep -qf "$rhino_bin"; then
-        echo "rhino: running (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1))"
+      listeners="$HOME/Library/Application Support/McNeel/rhino-mcp/listeners"
+      listener_ready() {
+        local -r target_pid="$1"
+        local candidate
+        [ -n "$target_pid" ] || return 1
+        for candidate in "$listeners/$target_pid"-*.json; do
+          [ ! -f "$candidate" ] || return 0
+        done
+        return 1
+      }
+      mapfile -t pids < <(/usr/bin/pgrep -f "$rhino_bin" || true)
+      pid="''${pids[0]:-}"
+      if listener_ready "$pid"; then
+        echo "rhino: MCP ready (pid $pid)"
         exit 0
       fi
       [ -d "$app" ] || { echo "forge-rhino-up: $app not installed" >&2; exit 69; }
-      /usr/bin/open -a "$app" --args -nosplash
-      for _ in $(seq 1 60); do
-        if /usr/bin/pgrep -qf "$rhino_bin"; then
-          echo "rhino: launched splash-free (pid $(/usr/bin/pgrep -f "$rhino_bin" | head -1))"
+      /usr/bin/open -a "$app" --args -nosplash '-runscript=_MCPStart _Enter'
+      for _ in {1..60}; do
+        mapfile -t pids < <(/usr/bin/pgrep -f "$rhino_bin" || true)
+        pid="''${pids[0]:-}"
+        if listener_ready "$pid"; then
+          echo "rhino: MCP ready (pid $pid)"
           exit 0
         fi
         sleep 0.5
       done
-      echo "forge-rhino-up: Rhino did not register within 30s" >&2
+      echo "forge-rhino-up: Rhino did not register an MCP listener within 30s" >&2
       exit 1
     '';
   };

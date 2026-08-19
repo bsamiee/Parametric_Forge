@@ -23,7 +23,13 @@
 # speed 0.9; the same row at speed 0 is the density floor of the whole engine, 32pt. Horizontal takes the smooth preset
 # for its 0.93 decay — the longest carry — at speed 6.5 for 65pt per notch, and past the speed ceiling of 8 the only
 # remaining density lever is acceleration against the preset's 0.06 gain. bouncing false keeps synthetic momentum while
-# dropping the app rubber-band phases. launchd owns login start.
+# dropping the app rubber-band phases. Viewport apps break the smoothed contract: Rhino applies its zoom scale factor per
+# scroll event instead of integrating deltas, so the 120 Hz synthetic stream turns one detent into dozens of zoom steps
+# and a free-spin flick into hundreds. The Rhino row ANDs app bundle with the MX device (one if-object is a conjunction;
+# an array would be a disjunction, and app-only scope would drag the trackpad in) and disables both smoothed axes, which
+# takes the hi-res normalizer out of passthrough so micro-ticks re-coalesce to detent-scale discrete events; vertical
+# distance 1 then makes a detent exactly one line — one zoom step at Rhino's own zoom scale factor. launchd owns login
+# start.
 {pkgs, ...}: let
   settings = {
     "$schema" = "https://schema.linearmouse.app/0.11.4-beta.5";
@@ -64,6 +70,22 @@
             acceleration = 0;
             inertia = 0;
             bouncing = false;
+          };
+        };
+      }
+      {
+        "if" = {
+          app = "com.mcneel.rhinoceros.9";
+          device = {
+            vendorID = "0x046d";
+            productID = "0xb034";
+          };
+        };
+        scrolling = {
+          distance.vertical = 1;
+          smoothed = {
+            vertical.enabled = false;
+            horizontal.enabled = false;
           };
         };
       }
