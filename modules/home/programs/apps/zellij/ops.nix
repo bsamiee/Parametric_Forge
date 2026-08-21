@@ -16,7 +16,7 @@
   ...
 }: let
   # Dual-receipt emit fold (receipts.nix).
-  receiptsFold = import ../../shell-tools/receipts.nix;
+  receiptsFold = import ../../../../common/receipts.nix;
   # Display-time grammar rows (theme owner): human stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
   td = config.forge.theme.projections.timeDisplay;
   # Display-time projection (inlined; the resurrection-cause map is the sole consumer): ISO-UTC stored, folded to local at render; malformed passes through.

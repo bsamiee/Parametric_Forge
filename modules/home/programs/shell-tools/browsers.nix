@@ -15,7 +15,7 @@
 }: let
   inherit (config.forge.theme) roles;
   # Shared dual-receipt emit fold (receipts.nix).
-  receiptsFold = import ./receipts.nix;
+  receiptsFold = import ../../../common/receipts.nix;
   # Receipt-query vocabulary (forge-receipts is the sole substantive consumer): ONE ordered column vector derives both the jq spine projection and the
   # spineColumnsSql schema clause; every column lands VARCHAR so a thin or single-kind corpus never splits a column's inferred type. session_id joins on
   # the zellij session name, else the emitter's own session id. A new column is one vector entry, plus an override row only when it computes.

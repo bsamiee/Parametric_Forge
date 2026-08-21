@@ -12,20 +12,6 @@
         "**/obj/**/CLAUDE.md",
         "**/.artifacts/**/CLAUDE.md"
     ],
-    "hooks": {
-        "SessionStart": [
-            {
-                "matcher": "startup|resume|compact",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/setup-env.sh",
-                        "timeout": 10
-                    }
-                ]
-            }
-        ]
-    },
     "permissions": {
         "allow": ["Bash(container run *)", "Bash(docker run *)"],
         "deny": []

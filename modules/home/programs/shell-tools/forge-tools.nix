@@ -13,7 +13,7 @@
 }: let
   logs = "${config.home.homeDirectory}/Library/Logs";
   bundleId = "com.parametric-forge.forge-nix-automation";
-  receiptsFold = import ./receipts.nix;
+  receiptsFold = import ../../../common/receipts.nix;
   inherit (config.forge.theme) roles icons;
 
   # One verdict fold across the acceptance rail and the two doctors: `mark` renders a verdict as its alphabet ASCII twin colored on the state
@@ -1269,13 +1269,10 @@
       lock_file="''${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}"
       cache_home="''${XDG_CACHE_HOME:-$HOME/.cache}"
       config_home="''${XDG_CONFIG_HOME:-$HOME/.config}"
-      session_cache="$cache_home/forge-secrets/session-env.sh"
+      op_cache="$config_home/hm-op-session.sh"
       gui_manifest="$cache_home/forge-secrets/gui-replay.names"
       brew_bin="''${FORGE_BREW:-/opt/homebrew/bin/brew}"
-      hook="''${FORGE_ACCEPT_HOOK:-$HOME/.claude/hooks/setup-env.sh}"
       pass=0 warn=0 fail=0 instruct=0 skip=0
-      work="$(mktemp -d)"
-      trap 'rm -rf "$work"' EXIT
 
       row() {
         append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" || true
@@ -1299,7 +1296,7 @@
           | awk '/^\tenvironment = \{/ {f = 1; next} f && /^\t\}/ {exit} f {sub(/^\t\t/, ""); sub(/ =>.*/, ""); print}'
       }
       expected_names() {
-        key_names "$session_cache" | sort -u
+        key_names "$op_cache" | sort -u
       }
 
       step_preflight() {
@@ -1479,24 +1476,19 @@
       }
 
       step_lanes() {
-        local expected tmp cli_names cli_missing tui_missing gui_missing
+        local expected tui_missing gui_missing
         expected="$(expected_names)"
         [ -n "$expected" ] || {
-          row WARN lanes "no session material on disk; run a Claude session first"
+          row WARN lanes "no op-injected session material on disk; run forge-redeploy --switch"
           return 0
         }
-        tmp="$work/lanes"
-        mkdir -p "$tmp"
-        CLAUDE_ENV_FILE="$tmp/env.sh" bash "$hook" >/dev/null 2>"$tmp/receipt" || true
-        cli_names="$(key_names "$tmp/env.sh" | sort -u)"
-        cli_missing="$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$cli_names") | paste -sd' ' -)"
         tui_missing="$(ZKEYS="$(printf '%s\n' "$expected" | paste -sd' ' -)" /bin/zsh -il -c \
           'for k in ''${(s: :)ZKEYS}; do [ -n "''${(P)k}" ] || print "$k"; done' 2>/dev/null | paste -sd' ' -)"
         gui_missing="$(comm -23 <(printf '%s\n' "$expected") <(gui_names | sort -u) | paste -sd' ' -)"
-        if [ -z "$cli_missing$tui_missing$gui_missing" ]; then
-          row PASS lanes "cli/tui/gui all carry the expected key-name set ($(printf '%s\n' "$expected" | wc -l | tr -d ' ') names)"
+        if [ -z "$tui_missing$gui_missing" ]; then
+          row PASS lanes "shell/gui carry the op-injected key-name set ($(printf '%s\n' "$expected" | wc -l | tr -d ' ') names)"
         else
-          row FAIL lanes "missing — cli:[''${cli_missing}] tui:[''${tui_missing}] gui:[''${gui_missing}]"
+          row FAIL lanes "missing — shell:[''${tui_missing}] gui:[''${gui_missing}]"
         fi
       }
 
@@ -1719,7 +1711,6 @@
     {
       "com.parametric-forge." = ["forge" "Forge launchd grammar"];
       "org.nix-community.home." = ["hm" "HM module agents"];
-      "com.github.domt4.homebrew-autoupdate" = ["by-design" "forge-reconciler-declared updater pair; single-owner collapse open"];
       "com.adobe." = ["vendor" "Adobe CC estate; retain-or-prune trust row open"];
       "mega.mac." = ["residue" "MEGA updater poller; gui-removal open class"];
       "org.pqrs." = ["vendor" "Karabiner services"];

@@ -56,11 +56,11 @@ Parametric_Forge/
 
 ## [02]-[HOSTS]
 
-`hosts/context.nix` is the host register: one row per machine carries name, OS, system, state versions, user identity, feature flags, and SSH keys — server rows add service users, the disk device, and static network facts. Host files project rows into `darwinSystem`/`nixosSystem`; the home graph gates imports on `host.os` and `host.features`, never on `pkgs`. Two hosts are live: `macbook` (aarch64-darwin workstation, desktop features) and `maghz` (x86_64-linux Hostinger VPS, server features — static addressing projected from its network row, SSH the only open port, every service loopback-bound and reached through `vpsTunnels` rows). A new machine is a new row; nothing else changes shape.
+`hosts/context.nix` is the host register: one row per machine carries name, OS, system, state versions, user identity, feature flags, and SSH keys — server rows add service users, the disk device, and static network facts. Host files project rows into `darwinSystem`/`nixosSystem`; the home graph gates imports on `host.os` and `host.features`, never on `pkgs`. Two hosts are live: `macbook` (aarch64-darwin workstation, desktop features) and `maghz` (x86_64-linux Hostinger VPS, server features — static addressing projected from its network row, SSH the only open port, every service loopback-bound and reached through `vpsTunnels` rows). `hosts/context.nix` admits each machine through one new row.
 
 ## [03]-[DECISION_FRAMEWORK]
 
-Rulings derive from principles, not precedent lists. A new situation resolves from these axes without a new ruling:
+Rulings derive from principles, not precedent lists. These axes resolve each new situation:
 
 | [INDEX] | [AXIS]                 | [LAW]                                                                                                       |
 | :-----: | :--------------------- | :---------------------------------------------------------------------------------------------------------- |
@@ -75,21 +75,21 @@ Rulings derive from principles, not precedent lists. A new situation resolves fr
 
 ## [04]-[DETERMINATE_NIX]
 
-This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, NixOS rides the thin determinate module plus `nix.settings`. GC and store maintenance ride the `forge-nix-maintenance` agent, never ad-hoc `nix-collect-garbage`.
+This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, and NixOS rides the thin determinate module with `nix.settings`. GC and store maintenance ride the `forge-nix-maintenance` agent, never ad-hoc `nix-collect-garbage`.
 
 ## [05]-[MODULE_BOUNDARIES]
 
-- `modules/common/` carries what both OSes consume identically: Nix settings and the toolchain env vocabulary. The OS branch keys on the static host context (`hosts/context.nix`), never on `pkgs` — module fixpoint safety.
-- `modules/darwin/` carries system-scope macOS state: defaults, security (sudoers NOPASSWD allowlist, TCC adjacency), fonts, and the Homebrew bridge. Homebrew exists only for GUI/proprietary bundles nixpkgs cannot ship; activation refreshes metadata while the `forge-brew-autoupdate` reconciler owns the upgrade/cleanup cadence with keychain-backed sudo. Uninstall/zap stays off so operator installs survive.
+- `modules/common/` carries what both OSes consume identically: Nix settings and the toolchain env vocabulary. `host.os` selects the OS branch from the static host context without entering the package fixpoint.
+- `modules/darwin/` carries system-scope macOS state: defaults, security (sudoers NOPASSWD allowlist, TCC adjacency), fonts, and the Homebrew bridge. Homebrew carries GUI/proprietary bundles nixpkgs cannot ship; nix-darwin's Brewfile installs the roster, and `forge-brew-maintenance` runs native upgrade and cleanup commands from a credential-free environment. Uninstall/zap stays off so operator installs survive.
 - `modules/nixos/` carries system-scope NixOS state for server hosts: boot and disko, static addressing projected from the host-context network row, key-only SSH, declarative users, container runtime, and loopback-bound services reached solely through tunnel rows. Nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes here.
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: each overlay owns its version, source hash (`nix-prefetch-github`), and build; the flake-level overlay composes them. Admission requires a real consumer now — never anticipatory packaging.
-- `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. The repo root is the single pnpm workspace (`package.json` + `pnpm-workspace.yaml` catalog — one manifest, no per-folder package files). An existing service domain extends its rows; a new service domain gets a new organized owner, mirroring the module folder philosophy.
-- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix; `apps` projects the browser-custodied GitHub App census. The driver brokers the Pulumi and Doppler control credentials from 1Password and resolves `GITHUB_TOKEN` from the agent environment or Doppler.
+- `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. `package.json` and `pnpm-workspace.yaml` bind the repo-root workspace without per-folder manifests. Existing service domains extend their rows; new domains get one organized owner.
+- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix; `apps` projects the browser-custodied GitHub App census. `services/driver.ts` brokers Pulumi and Doppler credentials from 1Password and resolves `GITHUB_TOKEN` from the agent environment or Doppler.
 
 ## [06]-[SECRETS]
 
-Doppler is the sole secret backend for projects and agents; 1Password is operator-personal custody (the SSH key item, personal vaults, and the driver-brokered IaC tokens). The canonical SessionStart hook (`.claude/hooks/setup-env.sh`, byte-identical in every repo, mastered here) resolves each Doppler source row live with per-source verdicts, serves encrypted snapshots on fetch failure, and writes a mode-600 env file — agents read credentials from the environment, key names only in receipts, never values. Reading: `doppler secrets --project <p> --config <c> --only-names`. Adding: set the key in the owning Doppler config; the hook propagates it — zero per-repo secret files. Topology (projects, configs, service tokens) mutates only through `services/topology.ts` rows. The `secrets` skill owns the full custody and consumption law.
+Doppler owns project and service configuration; 1Password owns local operator and session custody. Home Manager resolves the mode-600 session cache during activation. Process-specific Doppler consumers invoke `doppler run` or `doppler secrets download` explicitly. Read names with `doppler secrets --project <p> --config <c> --only-names`; add a key in its owning config and wire its process consumer. Topology mutates only through `services/topology.ts` rows. `secrets` owns the custody law.
 
 ## [07]-[MCP_FLEET]
 
@@ -97,13 +97,13 @@ Doppler is the sole secret backend for projects and agents; 1Password is operato
 
 ## [08]-[SSH_ESTATE]
 
-One ed25519 key serves everything: custodied in the 1Password Personal vault, served through the 1Password agent socket (`~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`), registered on GitHub exactly twice (authentication key + signing key), with `~/.ssh/id_ed25519` as the on-disk recovery pair. Commit signing is SSH-format (`gpg.format ssh`, allowed-signers projected by `git-tools`). Remotes and tunnels are `vpsTunnels` rows in `modules/home/programs/shell-tools/ssh.nix`: one row projects the interactive host block, the transport-only tunnel block, the health-gated launchd supervisor (bind proof, service-probe receipts, port-conflict detection), and the Linux systemd twin. The tunnel agent solely owns loopback forwards; interactive sessions never bind them. A new remote is a new row.
+One ed25519 key serves everything: custodied in the 1Password Personal vault, served through the 1Password agent socket (`~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock`), registered on GitHub exactly twice (authentication key + signing key), with `~/.ssh/id_ed25519` as the on-disk recovery pair. Commit signing is SSH-format (`gpg.format ssh`, allowed-signers projected by `git-tools`). Remotes and tunnels are `vpsTunnels` rows in `modules/home/programs/shell-tools/ssh.nix`: one row projects the interactive host block, transport-only tunnel block, health-gated launchd supervisor, and Linux systemd twin. `vpsTunnels` owns loopback forwards and admits each remote through one row.
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
 `forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable step pipeline from preflight through fleet, lane, and maghz probes to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
 
-Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. The scheduled nix rails double as manual commands — `forge-nix-maintenance` (GC/store), `forge-cleanup plan|apply` (declared-row litter sweep), `forge-activation-sweep [--clear]` (activation residue) — every rail appends receipts under `~/Library/Logs/forge-<name>.receipts.log`, and the receipt is read before a failed rail reruns. Ad-hoc background processes are a defect; a new job is a new agent declaration.
+Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. Scheduled nix rails double as manual commands and append receipts under `~/Library/Logs/forge-<name>.receipts.log`; a failed rail's receipt governs re-entry. Each new recurring job lands as one agent declaration.
 
 ## [10]-[TOOLCHAINS]
 
@@ -115,7 +115,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
-`modules/home/theme.nix` is the estate palette owner: Dracula-variant base rows, semantic roles, ANSI-16 projection, and syntax scope tables serialize into every consumer (WezTerm, Zellij, Yazi, Neovim, bat/delta, Starship) — no consumer carries a private hex. `modules/home/programs/apps/chords.nix` is the single chord-vocabulary owner: one parameterized table projects physical leader layers into Karabiner JSON, Zellij keybind KDL, and which-key/hint content — a new bind is one row. The mesh: WezTerm auto-attaches Zellij; the integration rail (`modules/home/scripts/terminal.nix`) runs Yazi as a floating popup and routes edits into the tab's live Neovim over RPC sockets; shell is zsh with fzf-tab, Atuin, carapace, Starship, zoxide, delta.
+`modules/home/theme.nix` owns the estate palette and serializes it into every visual consumer. `modules/home/programs/apps/chords.nix` owns the chord vocabulary and projects each row into Karabiner, Zellij, and hint content. `modules/home/scripts/terminal.nix` binds the mesh: WezTerm attaches Zellij, Yazi opens as a floating popup, and edits route into the tab's Neovim RPC socket.
 
 ## [12]-[QUALITY_BAR]
 
@@ -127,7 +127,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 |  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |
 |  [05]   | Python          | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                       |
 |  [06]   | Markdown        | `docs/standards/` prose owners; `prose_gate.py` (docgen skill) is the check + fix rail.                         |
-|  [07]   | launchd         | Declared agent rows with receipts and health gates; never ad-hoc `launchctl` state.                             |
+|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law; standing transports add health receipts.          |
 
 ## [13]-[GITHUB_AND_SERVICES]
 
@@ -159,7 +159,7 @@ Everything lands declaratively with the first switch; only these steps are manua
 8. Approve the TCC/automation prompts macOS raises on first launches: Karabiner driver extension + Input Monitoring, Hammerspoon and LinearMouse Accessibility, and the 1Password autofill pair (AutoFill & Passwords → 1Password on, Apple Passwords off; Privacy & Security → Accessibility → 1Password).
     - Verify: affected agents run without prompting
 
-Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with nixos-anywhere + disko from its `hosts/context.nix` row; day-2 is the same rail with `--os nixos --target-host`.
+Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstraps each NixOS host from its `hosts/context.nix` row; day-2 uses the same rail with `--os nixos --target-host`.
 
 ## [15]-[MAINTENANCE]
 
@@ -169,7 +169,7 @@ Day-2 rebuilds: `forge-redeploy --switch`. A fresh NixOS host bootstraps with ni
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[08]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 - Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor`, and `forge-mcp drift` after any fleet or client change.
 
-Automated currency is `forge-mcp advance` (daily, MCP launcher pins) and the Homebrew autoupdate agent; each proves its result through its own gate and never switches unattended. Every other family — flake inputs, nvfetcher pins, python venv, store — moves through the ordered update sequence on demand. `forge-update-board` reads every family's last receipt plus the flake-lock input age.
+Automated currency is `forge-mcp advance` (daily, MCP launcher pins) and `forge-brew-maintenance`. `forge-mcp advance` owns its build-and-commit gate; `forge-brew-maintenance` exposes native Homebrew failures through its job status and log. Neither switches unattended. Every other family moves through the ordered update sequence on demand. `forge-update-board` reads every family's last receipt with the flake-lock input age.
 
 Manual-engine pins (`updateEngine = "manual"`, hash-pinned binaries) advance only by hand; `forge-mcp outdated` still boards them when they carry launcher metadata.
 

@@ -19,7 +19,7 @@
   naming = config.forge.registers.naming;
   sshHosts = config.forge.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
-  receiptsFold = import ../../shell-tools/receipts.nix;
+  receiptsFold = import ../../../../common/receipts.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
   # Frozen-layout asset root (forge-zellij layout record): rows.paths and forge-workspace resolve <slug>.kdl from this ONE spelling.

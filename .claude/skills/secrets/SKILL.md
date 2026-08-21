@@ -10,9 +10,9 @@ description: >-
 
 # [SECRETS]
 
-`op` owns permanent local custody. Doppler owns runtime delivery. Estate custody binds both backends — both maintained forever, neither retires the other.
+`op` owns permanent local and session custody. Doppler owns project configuration and explicit process delivery.
 
-Topology — projects, environments, configs, service tokens, directory scopes — lives as IaC rows in `Parametric_Forge/services/topology.ts`, materialized by `estate.ts` and applied by `driver.ts` over the Pulumi Automation API. `doppler` reads and writes secret values against declared configs; the SessionStart hook is the sole consumption rail; `~/.doppler` holds CLI config and fallback state.
+Topology — projects, environments, configs, service tokens, directory scopes — lives as IaC rows in `Parametric_Forge/services/topology.ts`, materialized by `estate.ts` and applied by `driver.ts` over the Pulumi Automation API. `doppler` reads and writes secret values against declared configs; `doppler run` and owner-specific downloads inject values at the consuming process; `~/.doppler` holds CLI scope and authentication state.
 
 ## [01]-[ROUTING]
 
@@ -25,7 +25,7 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 - Precedence, highest first: a service token's embedded project/config, runtime flags, env vars, config-file scope.
 - Config-file scope resolves an exact directory match before the nearest ancestor.
 - Scope env vars: `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, `DOPPLER_CONFIG`, `DOPPLER_CONFIG_DIR`, `DOPPLER_PASSPHRASE`.
-- Agents pass `--project`/`--config` explicitly; env carries only token custody and hook mode switches.
+- Agents pass `--project`/`--config` explicitly; env carries only token custody.
 - An ambient `DOPPLER_TOKEN` outranks flags and represents one config; strip it with `env -u DOPPLER_TOKEN` when fetching more than one source.
 
 ## [03]-[DOPPLER_CLI]
@@ -61,17 +61,15 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 |  [07]   | Rename an item to its real name | `op item edit "<old-title>" title="<official-name>" --vault Tokens`            |
 
 - `op` serves the SSH key to `ssh`, `git`, WezTerm, Yazi, and rclone through the 1Password agent socket; the item ref lives in `1Password/ssh/agent.toml`, never a private key on disk.
-- Read a secret only to verify presence or wire a one-off; standing consumption rides the pull rail, never inline `op read` in durable code.
+- Read a secret only to verify presence or wire a one-off; standing local consumption rides the activation-generated session cache.
 
-## [05]-[PULL_RAIL]
+## [05]-[SESSION_CUSTODY]
 
-SessionStart hook `.claude/hooks/setup-env.sh` is the only consumption rail. A warm session replays its cache into `CLAUDE_ENV_FILE` and dispatches a detached refresh; a cold boot resolves Doppler inline. `op inject` resolves the vaults into the mode-600 op cache (`~/.config/hm-op-session.sh`) on every `forge-redeploy --switch` — the bootstrap baseline a fresh machine emits from before any Doppler token exists — and the Doppler session cache overlays that baseline with fresher per-key values.
+`op inject` resolves `~/.config/op/env.template` into the mode-600 `~/.config/hm-op-session.sh` cache on every `forge-redeploy --switch`. Interactive shells source that cache through `forge-session-secrets.sh`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their material explicitly with the owning project and config.
 
-- `DOPPLER_SOURCES` rows carry the shape `project:config:snapshot[:TOKEN_ENV_VAR]`; each resolves independently and in parallel.
-- `TOKEN_ENV_VAR` names an op-served config-scoped service token; an empty or unset segment falls back to ambient CLI auth, and a degraded token retries ambient once and blames the token in the receipt.
-- `CLAUDE_DOPPLER_OFFLINE=1` forces fallback-only fetches; `CLAUDE_DOPPLER_STALE_DAYS` (default 14) marks aged snapshots `STALE`.
-- `jq` parses each JSON dump into a literal assignment, so secret bytes never reach a shell parser; receipts land at `~/.cache/forge-secrets/receipt`.
-- A live fetch rewrites its encrypted snapshot under `~/.cache/doppler`; a failed fetch serves the snapshot; a dead row is loud and names the keys it owes.
+- `~/.config/op/env.template` owns the local session key set; activation keeps values outside the Nix store.
+- `forge-session-secrets.sh` is the shell source path; `gui-op-secrets` is the GUI projection path.
+- Doppler delivery stays at the process boundary through `doppler run` or an owner-specific `doppler secrets download`.
 
 ## [06]-[CUSTODY]
 
@@ -79,11 +77,11 @@ Local custody is `op`, never the OS keychain: every service, IaC, and MCP token 
 
 | [INDEX] | [CLASS]                          | [CUSTODY]                                    | [USE]                           |
 | :-----: | :------------------------------- | :------------------------------------------- | :------------------------------ |
-|  [01]   | Config-scoped service token      | `op://Tokens/DOPPLER_*_READONLY`             | Hook and runtime reads          |
+|  [01]   | Config-scoped service token      | Pulumi stack secret output                    | Explicit runtime reads          |
 |  [02]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`        | Topology writes via Pulumi only |
 |  [03]   | Pulumi stack passphrase          | `op://Tokens/PULUMI_FORGE_SERVICES/password` | Stack state decryption          |
 |  [04]   | MCP token                        | Ambient personal CLI token as `DOPPLER_TOKEN`| Read-only agent MCP             |
-|  [05]   | Provider PATs (GitHub and peers) | `op://Tokens` items, mirrored into configs   | Consumed through the pull rail  |
+|  [05]   | Provider PATs (GitHub and peers) | `op://Tokens` items, mirrored into configs   | Activation or process injection |
 
 - Config-scoped service token: minted by topology rows; static Developer-plan tokens are revoked and reminted, never rotated in place.
 - IaC admin token and stack passphrase: brokered by `driver.ts`; an ambient `DOPPLER_TOKEN` or `PULUMI_CONFIG_PASSPHRASE` short-circuits the op read per run.

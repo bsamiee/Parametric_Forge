@@ -10,8 +10,7 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly (version :latest) conflicts with the stable "wezterm" cask — never install both. The domt4 updater skips :latest casks, so the
-    # forge-wezterm-nightly agent (homebrew/default.nix) owns its daily --greedy-latest advance; no pin anywhere.
+    # Nightly conflicts with the stable cask; forge-wezterm-nightly owns its greedy-latest advance.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]

@@ -11,42 +11,40 @@ Each row is a trap the estate already paid for: the failure shape and the rule t
 |  [03]   | `git add --renormalize` immediately stages unrelated index state | Renormalize only inside the owning commit                  |
 
 - [01]: recovery: an eaten push recovers by fast-forward, not reset.
-- [02]: the shadowed credential carries `admin:ssh_signing_key`.
+- [02]: `GH_TOKEN`/`GITHUB_TOKEN` shadowing carries `admin:ssh_signing_key`.
 - [03]: no LFS attribute rows exist, so the filter is inert; verify with `git lfs ls-files` before push.
 
 ## [02]-[SIGNING]
 
-`ssh-add -L` returned no 1Password identities and GitHub SSH auth silently fell back to an on-disk `id_ed25519`. The signing rail is the 1Password agent item `Forge SSH Key` in the `Personal` vault (`shell-tools/1password.nix`, `git-tools/git.nix`); local verification requires the generated `allowed_signers`. Personal 1Password reads need `env -u OP_SERVICE_ACCOUNT_TOKEN` because the service account is read-only, and SSH key import is desktop-app-only — the CLI cannot set reserved key fields.
+`ssh-add -L` returned no 1Password identities and GitHub SSH auth silently fell back to an on-disk `id_ed25519`. `Forge SSH Key` in the `Personal` vault owns signing through the 1Password agent; local verification consumes generated `allowed_signers`. Personal reads use `env -u OP_SERVICE_ACCOUNT_TOKEN`, while SSH key import remains desktop-app-owned.
 
 ## [03]-[DOPPLER]
 
 | [INDEX] | [TRAP]                                                             | [RULE_NOW]                                          |
 | :-----: | :----------------------------------------------------------------- | :-------------------------------------------------- |
 |  [01]   | MCP `--read-only` is cosmetic relative to token scope              | The token's scope is the auth boundary              |
-|  [02]   | A pruner reaping every non-dotfile wiped a repointed cache dir     | Prune only owned snapshot families                  |
-|  [03]   | `forge-mcp drift` crashed on absent/empty/malformed client configs | A parse failure is a drift finding, not a raw crash |
+|  [02]   | `forge-mcp drift` crashed on absent/empty/malformed client configs | A parse failure is a drift finding, not a raw crash |
 
 - [01]: read-only is default posture, not enforcement (`mcp-fleet.nix`).
-- [02]: owner: `.claude/hooks/setup-env.sh`.
-- [03]: crash inputs: `~/.claude.json`/`~/.codex/config.toml`; owner `mcp-launchers.nix`.
+- [02]: crash inputs: `~/.claude.json`/`~/.codex/config.toml`; owner `mcp-launchers.nix`.
 
 ## [04]-[CONTAINER]
 
-Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `DOCKER_HOST`; Apple Container is additive behind a macOS/Xcode gate and equivalent-contract proofs (`environments/containers.nix`). A Home Manager default path move orphaned the live VM, so the live VM path is preserved, the launchd agent owns lifecycle, and the Docker current context is never set by hand. Credential stores differ across runtimes: Docker config uses helper-free inline `auths`, Apple Container uses the macOS Keychain, and OCI tools use `REGISTRY_AUTH_FILE`.
+Colima is the Docker API / Compose / Buildx / Pulumi default and owns `DOCKER_HOST`; Apple Container is additive behind its platform gate (`environments/containers.nix`). Home Manager preserves the live VM path and delegates lifecycle to launchd. Docker config uses helper-free inline `auths`, Apple Container uses the macOS Keychain, and OCI tools use `REGISTRY_AUTH_FILE`.
 
 ## [05]-[MCP]
 
-| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                       |
-| :-----: | :---------------------------------------------------------------- | :--------------------------------------------------------------- |
-|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs  |
-|  [02]   | `mcpServers.<name>.env` carried a literal token                   | Carry no literal token env; the wrapper resolves the live token  |
-|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init    |
-|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted     |
-|  [05]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store  |
+| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                      |
+| :-----: | :---------------------------------------------------------------- | :-------------------------------------------------------------- |
+|  [01]   | Project `mcpServers` blocks shadowed the fleet with stale servers | Estate repositories carry no client registration; Forge governs |
+|  [02]   | `mcpServers.<name>.env` carried a literal token                   | Carry no literal token env; the wrapper resolves the live token |
+|  [03]   | Required MCP registration proves only startup/registration        | `required = true` fails startup/resume if the MCP cannot init   |
+|  [04]   | Relocated LSP telemetry/plugin rows pointed at absent paths/SHAs  | Telemetry is `@forge-lsp`; dead marketplace keys are deleted    |
+|  [05]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store |
 
-- [02]: the literal token overrode wrapper token-file resolution.
+- [02]: literal token state overrode wrapper token-file resolution.
 - [03]: tunnel health, env, and wrapper are separate axes.
-- [04]: the plugin cache is materialized with `claude plugin update`.
+- [04]: `claude plugin update` materializes the plugin cache.
 - [05]: `mcp_oauth_credentials_store = "keyring"` prevents backend drift; concurrent lanes omit `heptabase-mcp` unless they call it.
 
 ## [06]-[ZELLIJ_TERMINAL]
@@ -64,7 +62,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 |  [09]   | Focus assertions scraped `list-clients` needlessly               | Focus is detached-mutable server state in `list-panes --all --json` |
 |  [10]   | `send-keys` treated as keybind-engine input                      | It is a pane-pty write; keybind input is client-only                |
 
-- [06]: owner: `apps/chords.nix`; the law extends to yazi — its key parser cannot represent `S-` plus non-letter chars, so shifted punctuation binds as the shifted codepoint plus the `S`-consumed sibling.
+- [06]: owner: `apps/chords.nix`; yazi's key parser cannot represent `S-` with non-letter chars, so shifted punctuation binds as the shifted codepoint and the `S`-consumed sibling.
 - [07]: `loc` wraps its scan with `LOC_SCAN_DEADLINE_SECONDS` and emits typed degrade output; the caller's death is what stranded it.
 
 ## [07]-[DEPLOY]
@@ -72,23 +70,21 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 | [INDEX] | [TRAP]                                                           | [RULE_NOW]                                                            |
 | :-----: | :--------------------------------------------------------------- | :-------------------------------------------------------------------- |
 |  [01]   | A Brew failure killed HM activation while `nh` printed success   | `forge-redeploy` receipts propagate activation-phase exit status      |
-|  [02]   | Homebrew removed `--no-quarantine`/`--no-binaries`               | Dead arg removed; posture in `HOMEBREW_CASK_OPTS` + session vars      |
-|  [03]   | `_reap` exited `129` on every signal, stranding workers          | Per-signal traps pass the signal number                               |
-|  [04]   | `nix flake check` passed while the maghz toplevel eval was dead  | Both-OS static gate: darwin build AND the maghz toplevel drv eval     |
-|  [05]   | A darwin-only package interpolation broke the shared home graph  | Darwin-only `pkgs.*` rides `optionalString isDarwin`                  |
-|  [06]   | A dirty-tree build silently packaged without untracked new files | `git add --intent-to-add` every created file before its first build   |
-|  [07]   | A single-path config projection was dead on one host OS          | Tools resolve per-OS config paths; the live probe is truth            |
-|  [08]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
-|  [09]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
-|  [10]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
-|  [11]   | Brew 6 `bundle` fetched, printed ✔︎, exited 0, installed nothing  | Activation converges declared taps/brews/casks/mas rows directly      |
+|  [02]   | `HOMEBREW_CASK_OPTS=--no-quarantine` silently became inert       | Casks keep Homebrew-native quarantine and Gatekeeper approval         |
+|  [03]   | `nix flake check` passed while the maghz toplevel eval was dead  | Both-OS static gate: darwin build AND the maghz toplevel drv eval     |
+|  [04]   | A darwin-only package interpolation broke the shared home graph  | Darwin-only `pkgs.*` rides `optionalString isDarwin`                  |
+|  [05]   | A dirty-tree build silently packaged without untracked new files | `git add --intent-to-add` every created file before its first build   |
+|  [06]   | A single-path config projection was dead on one host OS          | Tools resolve per-OS config paths; the live probe is truth            |
+|  [07]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
+|  [08]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
+|  [09]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
+|  [10]   | An untrusted tap made Brewfile convergence report false success  | A tap-free Brewfile keeps nix-darwin as the sole roster installer     |
 
-- [01]: the killed activation meant font projection never ran.
-- [02]: the Brewfile `cask_args` then killed new cask installs; owner `darwin/homebrew/`.
-- [03]: HUP/INT/TERM reap resolver workers before EXIT cleanup; the stranded workers were SessionStart resolver workers (`.claude/hooks/setup-env.sh`).
-- [04]: the dead reference (`forge.chords` from darwin-gated `apps/`) shipped through repeated darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` is the missing half of the gate.
-- [05]: a darwin-only `pkgs.*` in a both-host module throws at linux eval; an empty interpolation plus a runtime `[ -n "$tn" ]` guard is the shape.
-- [11]: even taps skipped while `brew install` direct worked; bundle output is never proof of install — owner `darwin/homebrew/` (`forge-brew-converge`), verify with `brew list`.
+- [01]: killed activation prevented font projection.
+- [02]: `darwin/homebrew/` declares only cask options accepted by Homebrew's pinned command surface.
+- [03]: dead `forge.chords` reference shipped through darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` closes the gate.
+- [04]: darwin-only `pkgs.*` in a shared module throws at linux eval; an empty interpolation and runtime `[ -n "$tn" ]` guard preserve both hosts.
+- [10]: `brew bundle check --verbose` proves nix-darwin's declared roster after activation.
 
 ## [08]-[SHELL_KERNELS]
 
@@ -114,7 +110,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and never yields `D
 - [01]: owner: the `forge-receipts` json-grain readers (`shell-tools/browsers.nix`).
 - [02]: owner: the `sqlite-forge` kernel in `overlays/default.nix`; proven live — `trap ... EXIT; exec true` prints nothing.
 - [04]: owner: the opt-runtime recipe in `overlays/default.nix` (energyplus, openstudio); wrapper text generates Nix-side (`placeholder "out"` + `lib.escapeShellArg`), never as runtime heredocs.
-- [14]: bash 5.3 backs every sub-64K here-doc and here-string with an anonymous pipe the writer holds both ends of, filled before `exec`; under pipe-KVA exhaustion the buffer falls to 512 bytes and the pre-exec write blocks forever with no reader to deliver EOF, each wedged body deepening the exhaustion that wedges the next. The cure is two-sided — payload-scale data pipes from `printf` to a live reader or a file, and the wrapper's whole body re-execs under `timeout`.
+- [14]: bash 5.3 backs sub-64K here-docs with anonymous pipes filled before `exec`; pipe-KVA exhaustion can block that write without a reader. Payload-scale data flows through `printf` to a live reader or a file, and the wrapper's whole body runs under `timeout`.
 
 ## [09]-[FORMATTERS]
 
@@ -134,4 +130,4 @@ shfmt parses bare hyphenated associative-array subscripts as arithmetic and rewr
 
 ## [11]-[MAGHZ_HOST]
 
-The NixOS cutover to `nixosConfigurations.maghz` paid for host-base traps now folded into the host config: the first boot failed silent because initrd lacked virtio/qemu-guest support, so the host carries the qemu-guest profile and virtio initrd modules; Hostinger serves no DHCP, so the static address comes from `hosts/context.nix` with predictable interface names off and the interface `eth0`; a cross-OS switch needs `--no-reexec`, and a long remote build runs detached because a harness-killed foreground pipeline killed the first attempt mid-build.
+`nixosConfigurations.maghz` carries the qemu-guest profile, virtio initrd modules, static host-context address, predictable interface-name override, and `eth0` binding. Cross-OS switches use `--no-reexec`; long remote builds run detached from the harness.

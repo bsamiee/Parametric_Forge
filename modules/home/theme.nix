@@ -371,7 +371,7 @@
     </script></body></html>
   '';
 
-  receiptsFold = import ./programs/shell-tools/receipts.nix;
+  receiptsFold = import ../common/receipts.nix;
 
   # forge-theme-proof: the terminal-native proof lane. Renders every claim in the live renderer and stamps a dual receipt (source hash, geometry,
   # font, TERM) through the shared receipts fold; NO_COLOR=1 rerun is the strip test.

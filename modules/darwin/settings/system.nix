@@ -71,8 +71,6 @@ in {
       NetBIOSName = mkDefault null;
       ServerDescription = mkDefault null;
     };
-    # LSQuarantine is dead as a global opt-out on modern macOS (quarantine is per-producing-app, Gatekeeper enforces regardless);
-    # cask quarantine stays off through HOMEBREW_CASK_OPTS=--no-quarantine.
     # --- [ACCESSIBILITY]
     universalaccess = {
       closeViewScrollWheelToggle = mkDefault false;

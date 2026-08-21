@@ -15,7 +15,7 @@
   # HM-installed cross-module kernels (forge-zellij, forge-workspace) reach the harness through the per-user profile — sibling-module owners.
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   # Shared dual-receipt emit fold: one grammar for every receipt-bearing kernel, TSV plus JSONL with identical keys.
-  receiptsFold = import ../programs/shell-tools/receipts.nix;
+  receiptsFold = import ../../common/receipts.nix;
   # Chord-vocabulary projection: the injected dismiss chord's bytes derive from the same row that emits the zellij bind.
   yaziToggle = config.forge.chords.zellij.ids.yaziToggle;
   # Geometry-owner projection: popup flags render from the zellij option rows.

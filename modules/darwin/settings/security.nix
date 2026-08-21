@@ -56,7 +56,6 @@ in {
       %admin ALL=(root) NOPASSWD: /usr/bin/mdutil *
       %admin ALL=(root) NOPASSWD: /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister *
       %admin ALL=(root) NOPASSWD: /usr/bin/defaults write /Library/Preferences/com.apple.security*
-      %admin ALL=(root) NOPASSWD: /usr/sbin/spctl *
       %admin ALL=(root) NOPASSWD: /usr/bin/killall *
       %admin ALL=(root) NOPASSWD: /usr/bin/dscacheutil *
       %admin ALL=(root) NOPASSWD: /usr/sbin/softwareupdate *
@@ -82,9 +81,6 @@ in {
 
       # Determinate custom-config adoption: move the installer-written real file aside so activation's /etc collision guard passes (module owns the symlink)
       %admin ALL=(root) NOPASSWD: /bin/mv /etc/nix/nix.custom.conf /etc/nix/nix.custom.conf.before-determinate-module
-
-      # Homebrew shell integration (prevents login security prompts)
-      %admin ALL=(root) NOPASSWD: /opt/homebrew/bin/brew *
 
       # Developer tools and services
       %admin ALL=(root) NOPASSWD: /usr/bin/codesign *

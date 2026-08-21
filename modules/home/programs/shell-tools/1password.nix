@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/1password.nix
 # ----------------------------------------------------------------------------
-# 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI/session secret replay
+# 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI secret replay
 {
   config,
   lib,
@@ -12,15 +12,7 @@
   inputs,
   ...
 }: let
-  # Doppler owns every lane (CLI, TUI, GUI) through the session cache. The op cache stays written on every switch as the 1Password
-  # custody/bootstrap anchor — a fresh machine emits from it before Doppler tokens exist.
-  sessionCache = "${config.xdg.cacheHome}/forge-secrets/session-env.sh";
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
-  setupEnv = pkgs.writeShellApplication {
-    name = "forge-setup-env";
-    runtimeInputs = [pkgs.coreutils pkgs.doppler pkgs.findutils pkgs.gawk pkgs.gnused pkgs.jq];
-    text = builtins.readFile ../../../../.claude/hooks/setup-env.sh;
-  };
   # Replay constants as rows: one declaration owns name AND value; the export block and the replay-manifest name set both derive from it.
   replayRows = {
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
@@ -31,14 +23,13 @@
     MAGHZ_REMOTE_USER = "maghz-agent";
     MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
   };
-  # GUI-session secret replay: re-export each session key into the launchd GUI domain via "launchctl setenv" so GUI-launched apps inherit the
-  # same tokens as interactive shells. Key NAMES enumerate from both caches; a name no backend serves is cleared, narrowing the replay.
+  # GUI-session replay writes the op cache into the launchd domain; a missing name clears its stale GUI value.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
     text = ''
       # shellcheck source=/dev/null
-      [ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ] || . "${config.xdg.configHome}/forge-session-secrets.sh"
+      [ ! -f "${opCache}" ] || . "${opCache}"
       ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (k: v: ''export ${k}="${v}"'') replayRows)}
       # Replay manifest (key NAMES only, mode 600): the set names forge-accept asserts against the live gui domain for lane parity. The temp
       # lives beside its rename target so the publish stays same-filesystem atomic.
@@ -55,49 +46,12 @@
           # stale GUI values at replay instead of leaving them pinned until logout.
           /bin/launchctl unsetenv "$k" || true
         fi
-      done < <({ for f in "${sessionCache}" "${opCache}"; do
-        [ -f "$f" ] || continue
-        awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$f"
-      done
+      done < <({
+      [ ! -f "${opCache}" ] || awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "${opCache}"
       printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") (lib.attrNames replayRows)}; } | sort -u)
       chmod 600 "$names_tmp"
       mv -f "$names_tmp" "${config.xdg.cacheHome}/forge-secrets/gui-replay.names"
       trap - EXIT
-    '';
-  };
-  # Per-lane cutover proof: key NAMES only, never values. CLI runs the canonical hook against a temp CLAUDE_ENV_FILE and shows its receipt; TUI
-  # probes an interactive login zsh; GUI reads the launchd domain.
-  secretsProof = pkgs.writeShellApplication {
-    name = "forge-secrets-proof";
-    runtimeInputs = [pkgs.bash pkgs.coreutils pkgs.gnugrep pkgs.gnused pkgs.gawk];
-    text = ''
-      key_names() {
-        [ -f "$1" ] || return 0
-        awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "$1"
-      }
-      keys="$({ key_names "${sessionCache}"; key_names "${opCache}"; } | sort -u)"
-      [ -n "$keys" ] || { printf 'no session material on disk; run a Claude session first\n' >&2; exit 1; }
-      tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
-      printf -- '--- CLI lane (SessionStart hook, fresh env file)\n'
-      hook_rc=0
-      # shellcheck source=/dev/null
-      . "${config.xdg.configHome}/forge-session-secrets.sh"
-      CLAUDE_ENV_FILE="$tmp/env.sh" bash "$HOME/.claude/hooks/setup-env.sh" >"$tmp/alerts" 2>"$tmp/receipt" || hook_rc=$?
-      printf '  hook rc: %s\n' "$hook_rc"
-      sed 's/^/  receipt: /' "$tmp/receipt"
-      sed 's/^/  ALERT:   /' "$tmp/alerts"
-      printf '  emitted: %s\n' "$(key_names "$tmp/env.sh" | tr '\n' ' ')"
-      printf -- '--- TUI lane (interactive login zsh)\n'
-      ZKEYS="$(printf '%s' "$keys" | tr '\n' ' ')" /bin/zsh -il -c \
-        'for k in ''${(s: :)ZKEYS}; do if [ -n "''${(P)k}" ]; then print "  present $k"; else print "  ABSENT  $k"; fi; done' 2>/dev/null
-      printf -- '--- GUI lane (launchctl getenv)\n'
-      while IFS= read -r k; do
-        if [ -n "$(/bin/launchctl getenv "$k" 2>/dev/null || true)" ]; then
-          printf '  present %s\n' "$k"
-        else
-          printf '  ABSENT  %s\n' "$k"
-        fi
-      done < <(printf '%s\n' "$keys")
     '';
   };
 in {
@@ -111,8 +65,6 @@ in {
   };
 
   home = {
-    packages = [secretsProof setupEnv];
-
     # --- [BIOMETRIC_UNLOCK]
     sessionVariables = {
       OP_BIOMETRIC_UNLOCK_ENABLED = "true";
@@ -172,10 +124,9 @@ in {
     '';
 
     # --- [SESSION_SECRETS]
-    # The op cache supplies bootstrap credentials; Doppler session material overlays every ordinary secret with the fresher owner value.
+    # Interactive shells source the op-injected cache through one stable path.
     "forge-session-secrets.sh".text = ''
       [ ! -f "${opCache}" ] || . "${opCache}"
-      [ ! -f "${sessionCache}" ] || . "${sessionCache}"
     '';
 
     # --- [SECRET_TEMPLATE]
@@ -195,11 +146,6 @@ in {
       export CACHIX_AUTH_TOKEN="op://Tokens/CACHIX_AUTH_TOKEN/token"
       export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_API_TOKEN/token"
       export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
-
-      # Config-scoped Doppler tokens keep SessionStart independent of personal CLI authentication.
-      export DOPPLER_TOKEN_AGENT_RUNTIME="op://Tokens/DOPPLER_AGENT_READONLY/token"
-      export DOPPLER_TOKEN_FORGE_MACHINE="op://Tokens/DOPPLER_FORGE_MACHINE_READONLY/token"
-      export DOPPLER_TOKEN_MAGHZ_HOST="op://Tokens/DOPPLER_MAGHZ_HOST_READONLY/token"
 
       # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
       export GH_TOKEN="op://Tokens/GITHUB_TOKEN/token"

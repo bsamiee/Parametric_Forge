@@ -10,21 +10,19 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 |  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row                    | `driver.ts --reveal`    | read-only grant   |
 |  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`                | `op read`, else ambient | driver child only |
 |  [04]   | GitHub IaC PAT             | `op://Tokens/GITHUB_TOKEN/token`                     | `op read`, else ambient | provider env only |
-|  [05]   | MCP Doppler token          | `agent-runtime/dev` secret `DOPPLER_MCP_AGENT_TOKEN` | session-cache env       | posting lane only |
+|  [05]   | MCP Doppler access         | Doppler CLI auth or `agent-runtime/dev` secret       | explicit process fetch  | read-only tool    |
 |  [06]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
 
-- [01]: User CLI Doppler token: stripped with `env -u DOPPLER_TOKEN` during the multi-source hook fetch; one CLI identity, never serialized into receipts or client configs.
-- [02]: Config service token: output secret `token:<project>/<config>/<name>`, revealed once via `driver.ts outputs <name> --reveal` and consumed by the hook `TOKEN_ENV_VAR` lane; read-only grant, a failed token retries ambient once and reports failure by name, never value.
+- [01]: User CLI Doppler token: one local CLI identity, never serialized into receipts or client configs.
+- [02]: Config service token: output secret `token:<project>/<config>/<name>`, revealed on demand through `driver.ts outputs <name> --reveal`; each read-only grant stays bound to one config.
 - [03]: IaC admin token: `op read` unless ambient `DOPPLER_TOKEN` exists, injected as Pulumi Automation env; only the driver child process receives the unwrapped token.
 - [04]: GitHub IaC PAT: `op read` unless ambient `GITHUB_TOKEN` exists, injected into `@pulumi/github`; provider env only, repository resources stay protected.
-- [05]: MCP Doppler token: `posting.nix` consumes it from the session cache. The fleet `doppler` MCP row authenticates with the ambient personal CLI token, resolved in the launcher prelude; `--read-only` filters the toolset to GET endpoints, and token scope remains the API-side boundary.
+- [05]: MCP Doppler access: `posting.nix` fetches its process environment explicitly, while the fleet launcher resolves the ambient personal CLI token; `--read-only` filters the toolset to GET endpoints, and token scope remains the API-side boundary.
 - [06]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
 
-## [02]-[DOPPLER_PULL_RAIL]
+## [02]-[LOCAL_SESSION_CUSTODY]
 
-The SessionStart hook `.claude/hooks/setup-env.sh` is the estate's secret ingress. `DOPPLER_SOURCES` rows have shape `project:config:snapshot[:TOKEN_ENV_VAR]`; an empty token segment means ambient CLI auth, a present one names the config-service-token env var. Each source resolves in a background worker that writes an outcome/keys/age/auth/reason meta, downloads against the config with a snapshot `--fallback`, and decodes JSON with `jq` assigned literally — secret bytes are never sourced or evaluated. The resolved keys land in the mandatory mode-600 `CLAUDE_ENV_FILE`; the receipt at the cache path carries source verdicts, key counts, stale/dead states, and unresolved key names, never values.
-
-`CLAUDE_DOPPLER_OFFLINE=1` forces `--fallback-only` fetches. `~/.config/hm-op-session.sh` is the permanent op baseline sourced ahead of this Doppler cache, so Doppler overlays op with fresher per-key values, never retiring it. The GUI lane is separate: `gui-op-secrets` sources the session material and writes key values into the launchd GUI domain with `launchctl setenv`, so GUI-launched Codex/Claude inherit tokens shells already have — its replay manifest stores key names only.
+Home Manager resolves `~/.config/op/env.template` through `op inject` during activation and publishes `~/.config/hm-op-session.sh` mode 600. Interactive shells source that cache through `forge-session-secrets.sh`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their own material with an explicit project and config at their execution boundary.
 
 ## [03]-[SERVICES_IAC]
 
@@ -34,7 +32,7 @@ Directory scopes replace `doppler.yaml`: `scopes apply` runs `doppler configure 
 
 ## [04]-[SSH_GIT_SIGNING]
 
-`hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600 — the permanent op custody baseline every lane (CLI, TUI, GUI) sources before the Doppler session cache overlays it. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
+`hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600 for shell and GUI consumption. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
 
 ## [05]-[TUNNELS]
 

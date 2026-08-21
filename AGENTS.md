@@ -14,7 +14,7 @@
 
 ## [02]-[ESTATE_PROPAGATION]
 
-- `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`. `.claude/hooks/setup-env.sh` is the canonical SessionStart hook, byte-identical everywhere it lands.
+- `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`.
 - Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally byte-copy to `~/.codex/skills/`. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
 - The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
 
@@ -35,8 +35,6 @@
 
 - Diagnose agent-tool runtime behavior separately from shell behavior. Claude workflow globals such as `args` are owned by Claude's workflow runtime; Nix, zsh, aliases, and PATH only explain subprocess, hook, or shell-command behavior.
 - Gemini judgment, visual, and image-prompt legs route through the `delegate-agy` skill (`.claude/skills/delegate-agy`), strongest reasoning tier pinned; its review lanes are read-only. A codex session reaches `agy` only under `-s danger-full-access` — the Seatbelt sandbox kills the process at lower sandbox levels.
-- Persist API tokens through `CLAUDE_ENV_FILE` only when subagents or tools need inherited credentials; Claude may expand that file into shell launch command lines while commands run.
-- Use `CLAUDE_ENV_EXPORT_KEYS` (comma/space list) for additional sub-agent credential variables required beyond the default `setup-env.sh` key set.
 - The harness edit path can materialize control-character escapes (the `\u001f` class) as raw bytes on disk; after writing content that carries them, byte-verify with `cat -v` — raw control bytes are invisible to every text reader — and can strip 3-byte BMP private-use glyphs while planes 15/16 survive, so glyph-bearing files ride scripted writes with byte-level diff gates.
 - Estate rebuild passes hold the structural-win bar: a pass that only polishes is a failed pass unless an exhausted attack proves clean; a byte-fidelity deferral discharges by baseline eval-diff of the rendered artifact, never by standing; every pass returns evidence-anchored harvest rows that fold into scars, doctrine, and review rules the same session.
 - `docs/laws/` binds every substantive pass: a touched topology `[SURFACE]` lands its obligated counterparts in the same change, and harvest nominations land only through the run's terminal doctrine stage under the corpus admission law — `CLAUDE.md` [02] carries the full pointer.

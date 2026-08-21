@@ -60,7 +60,7 @@
   features.harfbuzz = ["calt=1" "liga=0" "clig=0" "dlig=0"];
 
   overridePath = "${config.xdg.configHome}/forge/fonts/override.json";
-  receiptsFold = import ./programs/shell-tools/receipts.nix;
+  receiptsFold = import ../common/receipts.nix;
 
   # --- [BUILD_TIME_MANIFEST_NAME_TABLE_IDENTITY_FEATURE_SHAPING_RECEIPTS]
   # fonttools is the metadata oracle, hb-shape the shaping oracle; feature claims are proven by receipts, never by settings presence. Script rows

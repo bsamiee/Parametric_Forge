@@ -11,7 +11,6 @@ _: {
     "defaultbrowser" # CLI tool for setting default browser
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
-    "pinentry-mac" # Keychain-backed sudo askpass for the brew autoupdate agent
 
     # --- [CONTAINER_RUNTIMES]
     "container" # Apple Container; requires macOS 26 (arm64); coexistence runtime, never DOCKER_HOST owner

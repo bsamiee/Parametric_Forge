@@ -169,7 +169,7 @@
   # "<Name> VPS Tunnel" instead of the "/bin/sh" basename.
   tunnelTitle = name: "${lib.toSentenceCase name} VPS Tunnel";
   tunnelBundleId = name: "com.parametric-forge.${name}-vps-tunnel";
-  receiptsFold = import ./receipts.nix;
+  receiptsFold = import ../../../common/receipts.nix;
 
   # Health-gated supervisor: spawns ssh -N, proves every local bind, then emits service-health receipts on state transitions. Restart-worthy
   # states are transport-scoped only (port-conflict, vps-unreachable, bind-failed, bind-lost) — service-down is receipted, never restarted: a

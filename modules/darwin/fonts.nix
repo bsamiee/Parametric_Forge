@@ -32,7 +32,7 @@
   '';
 
   # Shared dual-receipt emit fold: a scope-free shell fragment, so the system-scope kernel composes the receipt grammar every home kernel carries.
-  receiptsFold = import ../home/programs/shell-tools/receipts.nix;
+  receiptsFold = import ../common/receipts.nix;
 
   # Generation-marked copy: prune stale managed files via manifest, never touch unmanaged fonts.
   projectFonts = pkgs.writeShellApplication {

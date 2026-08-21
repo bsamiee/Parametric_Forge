@@ -16,7 +16,7 @@
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   stateHome = config.xdg.stateHome;
   # Shared owner: the dual-receipt emit fold (receipts.nix) that forge-mcp folds for its schema=forge-mcp/v1 receipt surface.
-  receiptsFold = import ./receipts.nix;
+  receiptsFold = import ../../../common/receipts.nix;
   # Host-OS row admission: launchers, projections, and drift all fold the same filtered fleet, so a Linux switch never builds, registers,
   # or expects a Darwin-only server.
   hostOs =
