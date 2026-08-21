@@ -25,7 +25,9 @@ Exit 2 with a stderr reason on a `command` hook is the one hard block identical 
 
 ## [03]-[DISPOSITION_BY_ROLE]
 
-Failure disposition is fixed at the decode seam by the hook's role, never left to a crash: a gate blocks on a malformed payload, an unparseable command, or a raised exception; an observer or telemetry transmitter exits 0 on the same. A hook that raises exits a non-2 code, which is non-blocking, so a security check without an explicit fail-closed seam permits the very action it guards — the gate template's `main` wraps the decision in one denying `except`. A guardrail is defense-in-depth: paired with a permission deny rule and a startup preflight, a single miss is not a breach.
+Failure disposition is fixed at the decode seam by the hook's role, never left to a crash: a gate blocks on a malformed payload, an unparseable command, or a raised exception; an observer or telemetry transmitter exits 0 on the same. A hook that raises exits a non-2 code, which is non-blocking, so a security check without an explicit fail-closed seam permits the very action it guards — the gate template's `main` wraps the decision in one denying `except`.
+
+Totality decides that seam: a narrowed exception tuple lets whatever it omits escape as a non-2 exit, so one blanket `except` under a declared per-line suppression beats any tuple. Two failures land outside the body and read alike — a launcher dying before `main` runs, and a hook the harness cancels at its timeout. Neither renders a verdict, so both let the call through. Gates therefore keep the launcher on a platform guarantee and the work inside a bound it can finish. A guardrail is defense-in-depth: paired with a permission deny rule and a startup preflight, a single miss is not a breach.
 
 ## [04]-[SUPPLY_CHAIN]
 

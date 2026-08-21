@@ -8,6 +8,10 @@ As a measured kernel the hook admits the host-API primitives its role forces —
 
 A Python hook ships as a uv single-file script with PEP 723 inline metadata — no venv, no `requirements.txt`, dependencies resolved and cached per script. A shebang makes the file directly executable, and `chmod +x` is mandatory or the hook silently fails.
 
+One role inverts that law. Gates blocking solely through exit 2 — `PreToolUse` and `PermissionRequest` — ship stdlib-only under `#!/usr/bin/env python3`, because the launcher belongs to the gate's failure surface: `uv` off the inherited PATH exits 127, a cold cache with no network exits 1, and the harness treats both as non-blocking errors that let the guarded call run.
+
+Verdict integers collide too — uv returns 1 on dependency-resolution failure, downgrading a block to a pass, and 2 on interpreter failure, refusing every call for a reason naming an interpreter rather than a policy. `BOUNDARY_ADMISSION` still holds there through one subscript admission whose `KeyError`/`TypeError` routes to the denying `except`, stricter than a `msgspec.Struct` whose field defaults admit a missing payload as an allow. Every non-blocking role keeps the uv law, since one that fails to launch degrades to a no-op rather than a bypass.
+
 ```python signature
 #!/usr/bin/env -S uv run --quiet --script
 # /// script
