@@ -10,7 +10,7 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; forge-wezterm-nightly owns its greedy-latest advance.
+    # Nightly conflicts with the stable cask and needs a targeted greedy-latest upgrade in the operator Homebrew pass.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
@@ -37,6 +37,7 @@ _: {
     "onedrive"
 
     # --- [DEVELOPMENT]
+    "codex" # Official OpenAI CLI cask
     "visual-studio-code"
     "typeface" # Font management
     "sf-symbols" # Apple's symbol library
