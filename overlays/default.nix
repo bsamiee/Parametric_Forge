@@ -304,10 +304,27 @@ in
     pythonPackagesExtensions =
       (prev.pythonPackagesExtensions or [])
       ++ [
-        (_pyFinal: pyPrev: {
-          duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
-          ruff = pyPrev.ruff.override {inherit (prev) ruff;};
-        })
+        (_pyFinal: pyPrev:
+          {
+            duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
+            ruff = pyPrev.ruff.override {inherit (prev) ruff;};
+          }
+          # patchFamily darwin-install-name: upstream links the extension module against @rpath/libcurl-impersonate.4.dylib and seats no LC_RPATH, so
+          # every import dies at dlopen and takes yt-dlp and mpv down with it. Seat the provider's lib dir; the row retires when nixpkgs links it.
+          // lib.optionalAttrs (prev.stdenv.hostPlatform.isDarwin && pyPrev ? curl-cffi) {
+            curl-cffi = pyPrev.curl-cffi.overrideAttrs (old: {
+              postFixup =
+                (old.postFixup or "")
+                + ''
+                  wrapper="$out/${pyPrev.python.sitePackages}/curl_cffi/_wrapper.abi3.so"
+                  [ -f "$wrapper" ] || {
+                    echo "curl-cffi: expected extension module missing from the release layout" >&2
+                    exit 1
+                  }
+                  install_name_tool -add_rpath ${prev.curl-impersonate}/lib "$wrapper"
+                '';
+            });
+          })
         betaSetLane
       ];
     forge-package-manifest = prev.writeTextFile {
