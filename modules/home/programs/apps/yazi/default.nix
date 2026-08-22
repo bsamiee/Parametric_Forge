@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS projected
 # from the estate SSH rows, and the diagnostic previewer kernel. File-action routing is rows here, never inline TOML literals; upstream-default rows
-# are deleted, so every settings row below diverges from the 26.5.6 preset.
+# are deleted, so every settings row below diverges from the upstream preset.
 {
   config,
   lib,
@@ -14,6 +14,16 @@
   ...
 }: let
   tomlFormat = pkgs.formats.toml {};
+  vfsRows = tomlFormat.generate "yazi-vfs" {
+    sftp =
+      lib.mapAttrs (_: row: {
+        host = row.hostName;
+        inherit (row) user;
+        port = 22;
+        identity_agent = config.forge.ssh.identityAgent;
+      })
+      config.forge.ssh.hosts;
+  };
   # Remote-context Header badge (theme owner contextBadges.remote): an SFTP tree reads the same glyph and hue as the prompt hostname and the
   # WezTerm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
   badge = config.forge.theme.projections.contextBadges.remote;
@@ -143,11 +153,9 @@
     run = "noop";
   }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
-  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status; the version assert pins the
-  # surface these rows and files spell — fetcher `group` grammar, per-lane task worker pools, and the scheme-keyed `[sftp.<name>]` vfs.toml schema that
-  # replaced the discriminated `[services.<name>]` table. A floor alone cannot catch an upward grammar break, so it tracks the spelled surface.
-  fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.8.15")
-  "yazi ${yaziPkg.version}: config assumes the 26.8.15 fetcher/tasks/vfs grammar";
+  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status. The grammar these rows spell
+  # is proved against the binary by [CONFIG_PROOF] below, never asserted against a version number.
+  fetcherRows =
     map (side: {
       url = "${side}://*";
       run = "mime-ext.${side}";
@@ -338,14 +346,21 @@ in {
 
   # SFTP VFS projected from the estate SSH rows: one `[sftp.<name>]` table per host, authenticated through the 1Password agent socket; enter with
   # `cd sftp://<host>/`. Preloading over the link is opted out above.
-  xdg.configFile."yazi/vfs.toml".source = tomlFormat.generate "yazi-vfs" {
-    sftp =
-      lib.mapAttrs (_: row: {
-        host = row.hostName;
-        inherit (row) user;
-        port = 22;
-        identity_agent = config.forge.ssh.identityAgent;
-      })
-      config.forge.ssh.hosts;
-  };
+  #
+  # --- [CONFIG_PROOF]
+  # The rendered config set rides through the very yazi that will read it, so an upstream grammar change fails the build instead of landing and killing
+  # the binary at first launch. yazi parses every file in YAZI_CONFIG_HOME and exits nonzero on a rejected one once stdin is closed, so this proves
+  # yazi.toml, keymap.toml, and vfs.toml together. A `versionAtLeast` floor cannot express this: it admits every future release, which is exactly the
+  # direction a grammar breaks.
+  xdg.configFile."yazi/vfs.toml".source = pkgs.runCommand "yazi-vfs-proved" {nativeBuildInputs = [yaziPkg];} ''
+    mkdir -p cfg
+    cp ${config.xdg.configFile."yazi/yazi.toml".source} cfg/yazi.toml
+    cp ${./keymap.toml} cfg/keymap.toml
+    cp ${vfsRows} cfg/vfs.toml
+    if ! report="$(YAZI_CONFIG_HOME="$PWD/cfg" HOME="$PWD" yazi --version </dev/null 2>&1)"; then
+      printf 'yazi ${yaziPkg.version} rejected the generated config:\n%s\n' "$report" >&2
+      exit 1
+    fi
+    cp ${vfsRows} "$out"
+  '';
 }
