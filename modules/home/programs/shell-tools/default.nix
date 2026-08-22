@@ -51,7 +51,7 @@ in {
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
-    ./forge-tools.nix
+    ./forge-tools
     ./fzf.nix
     ./heptabase.nix
     ./jnv.nix

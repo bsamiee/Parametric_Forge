@@ -371,114 +371,6 @@
     </script></body></html>
   '';
 
-  receiptsFold = import ../common/receipts.nix;
-
-  # forge-theme-proof: the terminal-native proof lane. Renders every claim in the live renderer and stamps a dual receipt (source hash, geometry,
-  # font, TERM) through the shared receipts fold; NO_COLOR=1 rerun is the strip test.
-  forgeThemeProof = pkgs.writeShellApplication {
-    name = "forge-theme-proof";
-    runtimeInputs = [pkgs.jq pkgs.coreutils];
-    text = ''
-      p="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/theme/palette.json"
-      f="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
-      receipt_log="''${FORGE_THEME_PROOF_RECEIPT_LOG:-$HOME/Library/Logs/forge-theme-proof.receipts.log}"
-      receipt_surface="forge-theme-proof"
-      ${receiptsFold}
-      # Admission gate: the palette snapshot crosses once, shape-asserted — a missing or torn projection fails typed, never as an unbound-var crash.
-      jq -e '(.palette | type == "object") and (.derived | type == "object")
-        and (.roles.git | type == "object") and (.syntax | type == "array")' "$p" >/dev/null 2>&1 || {
-        printf 'forge-theme-proof: palette projection missing or malformed: %s\n' "$p" >&2
-        exit 66
-      }
-      hash="$(sha256sum "$p" | cut -c1-12)"
-      font="$(jq -r '.roles.mono + " " + (.surfaces.terminal.size|tostring)' "$f" 2>/dev/null || true)"
-      font="''${font:-unknown}"
-
-      # One projection over the palette snapshot: color, syntax, git, and alphabet rows cross on a unit-separator rail; hex decodes in shell arithmetic.
-      declare -A RGB HEX
-      syntax_rows=()
-      git_rows=()
-      alpha_rows=()
-      while IFS=$'\x1f' read -r kind key hex glyph twin; do # streaming boundary: typed row feed
-        if [[ "$kind" == alpha ]]; then # alphabet rows carry glyph + ascii twin, never a hue
-          alpha_rows+=("$key"$'\x1f'"$hex"$'\x1f'"$glyph")
-          continue
-        fi
-        h="''${hex#\#}"
-        rgb="$((16#''${h:0:2}));$((16#''${h:2:2}));$((16#''${h:4:2}))"
-        case "$kind" in
-          color)
-            RGB[$key]="$rgb"
-            HEX[$key]="$hex"
-            ;;
-          syntax) syntax_rows+=("$key"$'\x1f'"$rgb") ;;
-          git) git_rows+=("$key"$'\x1f'"$rgb"$'\x1f'"$glyph"$'\x1f'"$twin") ;;
-        esac
-      done < <(jq -r '
-        ((.palette | to_entries[] | ["color", "palette.\(.key)", .value, "", ""]),
-         (.derived | to_entries[] | ["color", "derived.\(.key)", .value, "", ""]),
-         (.syntax[] | ["syntax", .name, .color, "", ""]),
-         (.roles.git | to_entries[] | ["git", .key, .value.color, .value.glyph, .value.ascii]),
-         (.icons.alphabet | to_entries[] | ["alpha", .key, .value.glyph, .value.ascii, ""]))
-        | join("\u001f")' "$p")
-
-      esc() { printf '\033[%sm' "$1"; }
-      if [[ -n "''${NO_COLOR:-}" ]]; then
-        esc() { :; }
-      fi
-      fg() { printf '38;2;%s' "''${RGB[$1]}"; }
-      bg() { printf '48;2;%s' "''${RGB[$1]}"; }
-      r() { esc 0; }
-      printf '\n%s[FORGE-THEME-PROOF]%s src=%s geometry=%sx%s font="%s" term=%s\n\n' \
-        "$(esc "$(fg palette.pink);1")" "$(r)" "$hash" "''${COLUMNS:-?}" "''${LINES:-?}" "$font" "''${TERM_PROGRAM:-$TERM}"
-      printf '%s[SURFACE_LADDER]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for row in crust background surface current_line selection; do
-        printf '  %s %-14s %s\n' "$(esc "$(bg "palette.$row")")        $(r)" "$row" "''${HEX[palette.$row]}"
-      done
-      printf '  %s %-14s %s\n\n' "$(esc "$(bg derived.overlay)")        $(r)" "overlay" "''${HEX[derived.overlay]}"
-      printf '%s[FG_TIERS]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      printf '%sprimary%s %ssubtle%s %smuted%s\n\n' \
-        "$(esc "$(fg palette.foreground)")" "$(r)" "$(esc "$(fg palette.subtle)")" "$(r)" "$(esc "$(fg palette.comment)")" "$(r)"
-      printf '%s[ANSI16]%s\n  ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for i in 0 1 2 3 4 5 6 7; do printf '%s  %s' "$(esc "4$i")" "$(r)"; done
-      printf '\n  '
-      for i in 0 1 2 3 4 5 6 7; do printf '%s  %s' "$(esc "10$i")" "$(r)"; done
-      printf '\n\n%s[SEMANTIC]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      printf '%sok%s %swarn%s %sattention%s %sdanger%s %sinfo%s\n\n' \
-        "$(esc "$(fg palette.green)")" "$(r)" "$(esc "$(fg palette.amber)")" "$(r)" \
-        "$(esc "$(fg palette.orange)")" "$(r)" "$(esc "$(fg palette.red)")" "$(r)" "$(esc "$(fg palette.blue)")" "$(r)"
-      printf '%s[SYNTAX]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      {
-        for row in "''${syntax_rows[@]}"; do
-          IFS=$'\x1f' read -r name rgb <<<"$row"
-          printf '  %s%-12s%s' "$(esc "38;2;$rgb")" "$name" "$(r)"
-        done
-        printf '\n'
-      } | fold -w "''${COLUMNS:-100}" -s
-      printf '\n%s[DIFF_FILLS]%s\n' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for pair in "diffAdd:+ inserted" "diffDel:- deleted" "diffChange:~ changed" "search:search match" "searchCurrent:current match"; do
-        printf '  %s %s %s\n' "$(esc "$(bg "derived.''${pair%%:*}");$(fg palette.foreground)")" "''${pair#*:}" "$(r)"
-      done
-      printf '\n%s[GIT]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for row in "''${git_rows[@]}"; do
-        IFS=$'\x1f' read -r k rgb glyph twin <<<"$row"
-        printf '%s%s %s%s %s%s%s  ' "$(esc "38;2;$rgb")" "$glyph" "$k" "$(r)" "$(esc "$(fg palette.comment)")" "$twin" "$(r)"
-      done
-      printf '\n\n%s[ALPHABET]%s ' "$(esc "$(fg palette.cyan);1")" "$(r)"
-      for row in "''${alpha_rows[@]}"; do
-        IFS=$'\x1f' read -r k glyph twin <<<"$row"
-        printf '%s %s %s%s%s  ' "$glyph" "$k" "$(esc "$(fg palette.comment)")" "$twin" "$(r)"
-      done
-      printf '\n\n'
-      TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-      receipt="$(printf 'ts=%s\tartifact=terminal\trenderer=%s\tfont=%s\tgeometry=%sx%s\thash=%s\tresult=ok' \
-        "$ts" "''${TERM_PROGRAM:-$TERM}" "$font" "''${COLUMNS:-?}" "''${LINES:-?}" "$hash")"
-      # An unwritable log must never mask a rendered proof.
-      append_receipt "$receipt" \
-        || printf 'forge-theme-proof: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
-    '';
-  };
-
   fzfColorRows = [
     "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
     "--color=hl:${roles.state.success.hex},hl+:${roles.accent.secondary.hex},info:${roles.text.muted.hex},marker:${roles.state.success.hex}"
@@ -581,8 +473,6 @@ in {
   };
 
   config = {
-    home.packages = [forgeThemeProof];
-
     # Machine-readable projections for consumers outside Home Manager, the ecosystem exchange adapter, the proof board, and the coverage ledger.
     xdg.configFile = {
       "forge/theme/palette.json".text = paletteJson;

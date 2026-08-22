@@ -8,7 +8,6 @@
 # type consumer interpolates these rows; no consumer carries a private family, size, leading, or weight. The darwin module folds the same catalog into
 # its install list; this owner names families and drives renderers — it never reads config.fonts.packages.
 {
-  config,
   host,
   lib,
   pkgs,
@@ -24,7 +23,7 @@
   # Roles are the swap surface: one family per role, scripts ordered by shaping preference. The mono chain is the only fallback expression on macOS —
   # fontconfig is inert against CoreText and Chromium renderers. Emoji is system-owned (Apple Color Emoji) and is never a role or a package row.
   roles = {
-    mono = "Geist Mono"; # forge-font:mono
+    mono = "Geist Mono";
     sans = "Geist";
     symbols = "Symbols Nerd Font Mono";
     scripts = ["Scheherazade New" "Noto Naskh Arabic" "Noto Sans Arabic"];
@@ -58,9 +57,6 @@
 
   # Literal-safe shaping: contextual alternates on, every ligature class off.
   features.harfbuzz = ["calt=1" "liga=0" "clig=0" "dlig=0"];
-
-  overridePath = "${config.xdg.configHome}/forge/fonts/override.json";
-  receiptsFold = import ../common/receipts.nix;
 
   # --- [BUILD_TIME_MANIFEST_NAME_TABLE_IDENTITY_FEATURE_SHAPING_RECEIPTS]
   # fonttools is the metadata oracle, hb-shape the shaping oracle; feature claims are proven by receipts, never by settings presence. Script rows
@@ -123,98 +119,6 @@
        ${fontManifest}/families.json >$out
   '';
 
-  # --- [FORGE_FONT_ONE_POLYMORPHIC_DISPATCH_OVER_THE_OWNER]
-  # pick (default) | list | set <role> <family> | commit | reset. The runtime override prepends a manifest-proven family; WezTerm hot-reloads
-  # through its watch list. commit folds the override into this file and switches.
-  forgeFont = pkgs.writeShellApplication {
-    name = "forge-font";
-    runtimeInputs = [pkgs.jq pkgs.fzf pkgs.sd pkgs.gnugrep pkgs.coreutils];
-    text = ''
-      manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
-      override="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/override.json"
-      owner="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}/modules/home/fonts.nix"
-      receipt_log="''${FORGE_FONT_RECEIPT_LOG:-$HOME/Library/Logs/forge-font.receipts.log}"
-      receipt_surface="forge-font"
-      ${receiptsFold}
-      emit() { # $1=verb $2=outcome key (result|state) $3=outcome $4=detail
-        local ts row
-        TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-        printf -v row 'ts=%s\tverb=%s\tdetail=%s\t%s=%s' "$ts" "$1" "$4" "$2" "$3"
-        # An unwritable log must never mask a landed verb.
-        append_receipt "$row" \
-          || printf 'forge-font: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
-      }
-      require_manifest() { # admission gate: shape-asserted once, typed fault on a torn file
-        jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
-          printf 'forge-font: manifest missing or malformed: %s\n' "$manifest" >&2
-          exit 66
-        }
-      }
-      monos() { jq -r '.families | to_entries[] | select(.value.roles | index("mono")) | .key' "$manifest"; }
-      apply() { # $1=role $2=family
-        require_manifest
-        jq -e --arg f "$2" '.families | has($f)' "$manifest" >/dev/null || {
-          printf 'forge-font: %s is not a manifest family\n' "$2" >&2
-          exit 64
-        }
-        mkdir -p "''${override%/*}"
-        jq -n --arg r "$1" --arg f "$2" '{($r): $f}' >"$override"
-        emit set result ok "$1=$2"
-        printf 'override: %s = %s (WezTerm reloads live; forge-font commit makes it durable)\n' "$1" "$2"
-      }
-      case "''${1:-pick}" in
-        pick)
-          require_manifest
-          fam="$(monos | fzf --border-label='[FORGE-FONT: MONO]' --height=40%)" || exit 130
-          apply mono "$fam"
-          ;;
-        list)
-          require_manifest
-          jq -r '.families | to_entries[] | [.key, .value.class, (.value.roles | join("+")), .value.version, .value.package] | @tsv' "$manifest" \
-            | awk -F'\t' 'BEGIN{printf "%-24s %-9s %-14s %-24s %s\n","FAMILY","CLASS","ROLES","VERSION","PACKAGE"}{printf "%-24s %-9s %-14s %-24s %s\n",$1,$2,$3,$4,$5}'
-          ;;
-        set) apply "''${2:?role}" "''${3:?family}" ;;
-        commit)
-          [[ -f $override ]] || {
-            printf 'forge-font: no override to commit\n' >&2
-            exit 64
-          }
-          fam="$(jq -r '.mono // empty' "$override")"
-          [[ -n $fam ]] || {
-            printf 'forge-font: override carries no mono role\n' >&2
-            exit 64
-          }
-          command -v forge-redeploy >/dev/null || {
-            printf 'forge-font: forge-redeploy not on PATH — commit needs the deploy rail\n' >&2
-            emit commit result fail "forge-redeploy-missing"
-            exit 69
-          }
-          sd '^    mono = ".*"; # forge-font:mono' "    mono = \"$fam\"; # forge-font:mono" "$owner"
-          # sd exits 0 on zero matches; the landed row is the only edit proof.
-          grep -qF "mono = \"$fam\"; # forge-font:mono" "$owner" || {
-            printf 'forge-font: marker drift — no "# forge-font:mono" row landed in %s\n' "$owner" >&2
-            emit commit result fail marker-drift
-            exit 65
-          }
-          # Transition receipt at the edit, terminal receipt only after the switch lands — a failed redeploy leaves state=edited on record.
-          emit commit state edited "mono=$fam"
-          forge-redeploy --switch
-          rm -f "$override"
-          emit commit result ok "mono=$fam"
-          ;;
-        reset)
-          rm -f "$override"
-          emit reset result ok "-"
-          printf 'override cleared; nix roles govern\n'
-          ;;
-        *)
-          printf 'usage: forge-font [pick|list|set <role> <family>|commit|reset]\n' >&2
-          exit 64
-          ;;
-      esac
-    '';
-  };
-
   # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
   # Rows: payload parity against the darwin projection manifest, CoreText registration through system_profiler enumeration, per-role presence,
   # and the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.
@@ -265,18 +169,16 @@ in {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      # overridePath reaches consumers only through luaFont.override_path — one public channel, never two; the manifest's one channel is the
-      # xdg projection every kernel reads.
+      # The manifest's one public channel is the xdg projection every kernel reads.
       inherit catalog roles chains surfaces features;
       projections = {
-        # WezTerm rows (terminal surface): deck.lua walks the chain, applies per-family leading, and prepends the override family when it exists.
+        # WezTerm rows (terminal surface): deck.lua walks the chain and applies per-family leading.
         luaFont = {
           chain = map (f: {family = f;}) chains.mono;
           inherit (surfaces.terminal) size;
           line_heights = familyLeading;
           default_line_height = surfaces.terminal.leading;
           harfbuzz_features = features.harfbuzz;
-          override_path = overridePath;
         };
         # CSS stacks carry a generic fallback; the sans stack falls through to the mono chain.
         cssMono = lib.concatStringsSep ", " (chains.mono ++ ["monospace"]);
@@ -292,7 +194,7 @@ in {
 
   config = {
     # The doctor probes CoreText and the ~/Library/Fonts payload — Darwin-only.
-    home.packages = [forgeFont] ++ lib.optionals (host.os == "darwin") [forgeFontDoctor];
+    home.packages = lib.optionals (host.os == "darwin") [forgeFontDoctor];
     xdg.configFile."forge/fonts/manifest.json".source = manifestJson;
   };
 }

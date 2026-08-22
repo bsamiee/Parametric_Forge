@@ -11,15 +11,13 @@
   gitRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "git");
   # 1Password agent socket, HOME-relative; matches the IdentityAgent row in shell-tools/ssh.nix.
   opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-  # Receipt surface for the identity/signing/fsmonitor rail: doctor prints resolved identity, signing rows, op-agent key service, and
-  # fsmonitor health; sign-proof lands a verified empty signed commit in a throwaway repo; verify [ref] returns GitHub verification for a commit.
+  # Identity/signing/fsmonitor doctor: prints resolved identity, signing rows, op-agent key service, and fsmonitor health.
   forge-git-doctor = pkgs.writeShellApplication {
     name = "forge-git-doctor";
-    runtimeInputs = [pkgs.git pkgs.gh pkgs.coreutils pkgs.openssh];
+    runtimeInputs = [pkgs.git pkgs.coreutils pkgs.openssh];
     text = ''
-      mode="''${1:-doctor}"
-      case "$mode" in
-        doctor)
+      case "''${1:-}" in
+        "")
           printf '%-26s %s <%s>\n' "identity" "$(git config get user.name || echo UNSET)" "$(git config get user.email || echo UNSET)"
           for key in user.signingkey commit.gpgsign tag.gpgsign gpg.format gpg.ssh.program gpg.ssh.allowedsignersfile; do
             printf '%-26s %s\n' "$key" "$(git config get "$key" || echo UNSET)"
@@ -52,22 +50,11 @@
             printf '%-26s %s\n' "fsmonitor" "outside a repository"
           fi
           ;;
-        sign-proof)
-          tmp="$(mktemp -d)"
-          trap 'rm -rf "$tmp"' EXIT
-          git -C "$tmp" init --quiet
-          # No fsmonitor daemon for a repo the EXIT trap deletes.
-          git -C "$tmp" config core.fsmonitor false
-          git -C "$tmp" commit --allow-empty --quiet -m "forge signing proof"
-          git -C "$tmp" log --show-signature -1
-          ;;
-        verify)
-          sha="$(git rev-parse "''${2:-HEAD}")"
-          repo="$(gh repo view --json nameWithOwner --jq .nameWithOwner)"
-          gh api "repos/$repo/commits/$sha" --jq '.commit.verification | "verified=\(.verified) reason=\(.reason)"'
+        --help | -h)
+          printf 'usage: forge-git-doctor\n'
           ;;
         *)
-          printf 'usage: forge-git-doctor [doctor|sign-proof|verify [ref]]\n' >&2
+          printf 'usage: forge-git-doctor\n' >&2
           exit 2
           ;;
       esac

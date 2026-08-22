@@ -365,32 +365,14 @@ local function key_actions(launcher, quick_select)
 end
 
 function M.apply(config)
-    -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound. The forge-font override file prepends a
-    -- manifest-proven family and rides the config reload watch list, so a swap applies live; leading travels per mono
-    -- family, never as one global value; an override naming a chain row keeps that row's full spec (weight included).
+    -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound; leading travels per mono family, never as one global value.
     local function font_spec(f)
         return f.weight and { family = f.family, weight = f.weight } or f.family
     end
-    local chain_rows = {}
-    for _, f in ipairs(rows.font.chain) do
-        chain_rows[f.family] = f
-    end
     local families = {}
     local primary = rows.font.chain[1] and rows.font.chain[1].family
-    wezterm.add_to_config_reload_watch_list(rows.font.override_path)
-    local fh = io.open(rows.font.override_path)
-    if fh then
-        local ok, override = pcall(wezterm.json_parse, fh:read("*a"))
-        fh:close()
-        if ok and type(override) == "table" and override.mono then
-            primary = override.mono
-            families[1] = chain_rows[primary] and font_spec(chain_rows[primary]) or primary
-        end
-    end
     for _, f in ipairs(rows.font.chain) do
-        if f.family ~= primary or #families == 0 then
-            families[#families + 1] = font_spec(f)
-        end
+        families[#families + 1] = font_spec(f)
     end
     config.font = wezterm.font_with_fallback(families)
     config.font_size = rows.font.size
