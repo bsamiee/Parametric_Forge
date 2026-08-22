@@ -17,6 +17,8 @@
 }: let
   # Dual-receipt emit fold (receipts.nix).
   receiptsFold = import ../../../../common/receipts.nix;
+  # ONE list-sessions parse shared with every consumer (wezterm's lifecycle join reads the same rows).
+  sessionRowsJq = import ./session-rows.nix;
   # Display-time grammar rows (theme owner): human stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
   td = config.forge.theme.projections.timeDisplay;
   # Display-time projection (inlined; the resurrection-cause map is the sole consumer): ISO-UTC stored, folded to local at render; malformed passes through.
@@ -148,17 +150,9 @@
                   | map({key: .s, value: ("last: " + .what + " " + .result + " " + (.ts | disp_ts))}) | from_entries'
             }
 
-            # ONE list-sessions parse: name/exited/detail rows (control chars scrubbed; a no-session exit 1 is benign). The inventory row
-            # grammar and the state classifier both project from these rows, so the text-format parse cannot fork. The " [Created " anchor keeps
-            # space-bearing session names whole (first-word split is the anchorless fallback), and EXITED classifies on the detail alone so a
-            # session NAMED "EXITED-x" never reads as dead.
+            # ONE list-sessions parse, owned by session-rows.nix so every consumer reads the same rows and the text-format parse cannot fork.
             session_rows() {
-              (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rcn '
-                [inputs | select(length > 0)
-                 | ((capture("^(?<name>.*?) \\[Created (?<rest>.*)$") | {name, detail: ("[Created " + .rest)})
-                    // {name: (split(" ")[0]), detail: (sub("^\\S+ ?"; ""))})
-                 | {name, exited: (.detail | test("EXITED")),
-                    detail: (.detail | gsub("[\\x00-\\x1f]"; " "))}]'
+              (zellij list-sessions --no-formatting 2>/dev/null || true) | jq -Rcn '${sessionRowsJq}'
             }
 
             # --- [DISCRIMINATED_INVENTORY_ONE_ROW_GRAMMAR]

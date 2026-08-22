@@ -20,6 +20,7 @@
   sshHosts = config.forge.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
   receiptsFold = import ../../../../common/receipts.nix;
+  sessionRowsJq = import ../zellij/session-rows.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
   # Frozen-layout asset root (forge-zellij layout record): rows.paths and forge-workspace resolve <slug>.kdl from this ONE spelling.
@@ -478,17 +479,16 @@
       # Lifecycle join: zellij session truth per row — live (session up), resurrectable (EXITED, serialized), cold (no session); `gui` carries the
       # wezterm workspace presence separately (a session can outlive its window). One list-sessions text parse feeds both classifications.
       lifecycle_rows() {
-        local sess
-        sess="$("$zellij_bin" list-sessions --no-formatting 2>/dev/null || true)"
+        local raw sess
+        raw="$("$zellij_bin" list-sessions --no-formatting 2>/dev/null || true)"
+        sess="$(jq -Rcn '${sessionRowsJq}' <<<"$raw")"
         jq --argjson gui "$(live_workspaces | jq -nR '[inputs]')" \
-          --argjson zlive "$(gawk '!/EXITED/ && NF {print $1}' <<<"$sess" | jq -nR '[inputs]')" \
-          --argjson zexit "$(gawk '/EXITED/ {print $1}' <<<"$sess" | jq -nR '[inputs]')" \
+          --argjson zrows "$sess" \
           'map(. + {
              gui: (.name as $n | ($gui | index($n)) != null),
              lifecycle: (.name as $n
-               | if ($zlive | index($n)) != null then "live"
-                 elif ($zexit | index($n)) != null then "resurrectable"
-                 else "cold" end)})' "$rows"
+               | ($zrows | map(select(.name == $n)) | first) as $z
+               | if $z == null then "cold" elif $z.exited then "resurrectable" else "live" end)})' "$rows"
       }
 
       case "''${1:-}" in

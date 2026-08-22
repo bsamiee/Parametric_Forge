@@ -6,8 +6,8 @@
 # ----------------------------------------------------------------------------
 # Signed-event inbox on adnanh/webhook: typed source rows generate hooks.json (HMAC verification via env-named secrets, never literals) and one
 # projector appends typed receipt rows. Loopback-only; an absent secret fails closed (empty HMAC key never matches a signed delivery). Rows may
-# pin event type or emitter identity through `match` clauses ANDed beside the HMAC rule. A launchd agent owns the listener on Darwin;
-# forge-cockpit consumes the standing listener's receipt ledger and never creates a second listener.
+# pin event type or emitter identity through `match` clauses ANDed beside the HMAC rule. A launchd agent owns the listener on Darwin, and a
+# consumer reads that standing listener's receipt ledger in place rather than standing up a second listener.
 {
   config,
   lib,
@@ -86,7 +86,7 @@
         '{ts: $ts, source: $source, event_id: $event_id, payload_hash: $payload_hash,
           signature_state: $sig, dedupe_state: $dedupe, action: "project",
           result: (if $dedupe == "fresh" then "recorded" else "skipped" end)}' \
-        >>"$state_dir/receipts.jsonl"
+        >>"$state_dir/webhook.receipts.jsonl"
     '';
   };
 

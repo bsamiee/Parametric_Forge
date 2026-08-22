@@ -136,9 +136,5 @@
   zellij = [
     ["zjl" "zellij list-sessions" "List sessions"]
     ["zja" "zellij attach" "Attach to session"]
-    ["zjd" "zellij delete-session" "Delete a session" "session-destructive"]
-    ["zjda" "zellij delete-all-sessions" "Delete all sessions" "session-destructive"]
-    ["zjk" "zellij kill-session" "Kill a session" "session-destructive"]
-    ["zjka" "zellij kill-all-sessions" "Kill all sessions" "session-destructive"]
   ];
 }
