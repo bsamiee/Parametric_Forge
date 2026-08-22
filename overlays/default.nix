@@ -57,13 +57,6 @@ final: prev: let
         def.rows;
     };
 
-  # Launcher extension rows project live from the fleet manifest owner into the ledger; placeholder args: only family fields cross, never spawn lines.
-  fleetLauncherRows = lib.listToAttrs (map (
-    r:
-      assert lib.assertMsg (lib.elem r.launcher.updateEngine voc.updateEngines) "${r.name}: launcher updateEngine '${r.launcher.updateEngine}' outside vocabulary";
-        lib.nameValuePair r.name {inherit (r.launcher) pkg version upstream updateEngine;}
-  ) (lib.filter (r: r ? launcher) (import ../modules/home/programs/shell-tools/mcp-fleet.nix {profileBin = "";})));
-
   rowOf = name: checkRow name manifest.packages.${name};
   assetOf = name: row:
     row.assets.${system}
@@ -322,10 +315,7 @@ in
       destination = "/share/forge/manifest.json";
       text = builtins.toJSON {
         inherit (manifest) vocabulary;
-        extensions = lib.mapAttrs checkExtensionLane (manifest.extensions
-          // {
-            mcp-launchers = manifest.extensions.mcp-launchers // {rows = fleetLauncherRows;};
-          });
+        extensions = lib.mapAttrs checkExtensionLane manifest.extensions;
         # Nixpkgs-followed package rows carry no frozen version copy; the ledger resolves the live pin from the package set, mirroring admissions.
         packages =
           lib.mapAttrs (

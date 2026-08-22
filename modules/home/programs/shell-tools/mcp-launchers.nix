@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/mcp-launchers.nix
 # ----------------------------------------------------------------------------
-# Data-plane owner: builds pinned pnpm launchers from mcp-fleet.nix rows and ships the MCP observability surface — `forge-mcp` emitting
-# schema=forge-mcp/v1 receipts across outdated/doctor/drift/reconcile/generate/roots/snoop. Launchers exec their pinned servers directly under
-# the client's stdio pipe. Launcher code never touches providers or credentials.
+# Data-plane owner: projects ecosystem-native launchers from mcp-fleet.nix rows and ships the MCP observability surface — `forge-mcp` emitting
+# schema=forge-mcp/v1 receipts across doctor/drift/reconcile/generate/roots/snoop. Launchers resolve the upstream package at spawn and exec the
+# server directly under the client's stdio pipe. Launcher code never touches providers or credentials.
 {
   config,
   lib,
@@ -25,8 +25,8 @@
     else "linux";
   fleet = builtins.filter (row: builtins.elem hostOs (row.platforms or ["darwin" "linux"])) (import ./mcp-fleet.nix {inherit profileBin;});
   launcherRows = builtins.filter (r: r ? launcher) fleet;
-  pnpmRows = builtins.filter (r: (r.launcher.kind or "pnpm") == "pnpm") launcherRows;
-  uvRows = builtins.filter (r: lib.hasPrefix "uv" (r.launcher.kind or "pnpm")) launcherRows;
+  pnpmRows = builtins.filter (r: r.launcher.kind == "pnpm") launcherRows;
+  uvRows = builtins.filter (r: lib.hasPrefix "uv" r.launcher.kind) launcherRows;
   fleetJson = pkgs.writeText "mcp-fleet.json" (builtins.toJSON fleet);
 
   # Traffic-capture policy rows (annex-gated): capture is unreachable without the opt-in env, frames log metadata only, and files age out.
@@ -39,82 +39,42 @@
   mkLauncher = row: name:
     pkgs.writeShellApplication {
       inherit name;
-      runtimeInputs = [pkgs.coreutils pkgs.nodejs-bin_26 pkgs.pnpm_11];
+      runtimeInputs = [pkgs.nodejs-bin_26 pkgs.pnpm_11];
       text = ''
-        ${row.launcher.prelude or ""}prefix="''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp/${row.launcher.pkg}/${row.launcher.version}"
-        entry="$prefix/node_modules/.bin/${row.launcher.bin}"
-        if [ ! -x "$entry" ]; then
-          # Stage-then-rename: fleet clients spawn every server at once, so first installs race; each racer stages privately, the rename winner owns
-          # the prefix, and losers discard their stage and exec the winner's tree.
-          parent="$(dirname "$prefix")"
-          mkdir -p "$parent"
-          stage="$(mktemp -d "$parent/.stage.XXXXXX")"
-          # Failure litter guard: an errexit death mid-install must not strand the stage, so every success path removes or promotes it first.
-          trap 'rm -rf "$stage"' EXIT
-          # --config rows pin XDG containment for launchd spawns without session env; prefer-offline lets exact pins cold-start from a warm store.
-          pnpm add --dir "$stage" \
+        ${row.launcher.prelude or ""}${lib.optionalString (row.launcher ? ensureArgs) ''
+          pnpm \
             --config.loglevel=error \
-            --config.prefer-offline=true \
+            --config.prefer-online=true \
             --config.store-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" \
             --config.cache-dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pnpm" \
             --config.state-dir="''${XDG_STATE_HOME:-$HOME/.local/state}/pnpm" \
-            "${row.launcher.pkg}@${row.launcher.version}" >&2 || true
-          # Success predicate is the staged bin, not pnpm's exit status: a node teardown crash after full materialization must not kill cold-start,
-          # and a tree missing its bin must never be promoted to the prefix.
-          if [ -x "$entry" ]; then
-            rm -rf "$stage"
-          elif [ -x "$stage/node_modules/.bin/${row.launcher.bin}" ]; then
-            # mv first: a prefix a racer just promoted must never be deleted; only a still-corrupt prefix is cleared, then one retry.
-            if ! mv -T "$stage" "$prefix" 2>/dev/null; then
-              if [ -x "$entry" ]; then
-                rm -rf "$stage"
-              else
-                rm -rf "$prefix"
-                mv -T "$stage" "$prefix" 2>/dev/null || rm -rf "$stage"
-              fi
-            fi
-          else
-            rm -rf "$stage"
-            echo "${name}: pnpm add ${row.launcher.pkg}@${row.launcher.version} materialized no executable ${row.launcher.bin}" >&2
-            exit 69
-          fi
-        fi
-        ${row.launcher.ensure or ""}exec "$entry" "$@"
+            dlx --package=${lib.escapeShellArg "${row.launcher.pkg}@latest"} ${lib.escapeShellArg row.launcher.bin} ${lib.escapeShellArgs row.launcher.ensureArgs} >&2
+        ''}exec pnpm \
+          --config.loglevel=error \
+          --config.prefer-online=true \
+          --config.store-dir="''${XDG_DATA_HOME:-$HOME/.local/share}/pnpm/store" \
+          --config.cache-dir="''${XDG_CACHE_HOME:-$HOME/.cache}/pnpm" \
+          --config.state-dir="''${XDG_STATE_HOME:-$HOME/.local/state}/pnpm" \
+          dlx --package=${lib.escapeShellArg "${row.launcher.pkg}@latest"} ${lib.escapeShellArg row.launcher.bin} "$@"
       '';
     };
   launchers = lib.concatMap (row: map (mkLauncher row) row.launcher.names) pnpmRows;
 
-  # uv build lane: one ensure body per row serves the wrapper and the activation hook, materializing the pinned spec (PyPI pin or git rev)
-  # into the shared XDG uv tool environment. The tool list is captured, never piped into grep -q: an early-exit grep would SIGPIPE uv under
-  # pipefail and force a spurious reinstall on every launch. The needle proves the exact pin; a git row's needle is its rev-suffixed URL.
+  # uvx owns Python tool isolation and cache reuse. `@latest` resolves PyPI currency; `--refresh` also advances git-backed tools from repository HEAD.
   uvSpec = row:
     if row.launcher.kind == "uv-git"
-    then "${row.launcher.pkg} @ git+https://github.com/${lib.removePrefix "github:" row.launcher.upstream}@${row.launcher.version}"
-    else "${row.launcher.pkg}==${row.launcher.version}";
-  uvNeedle = row:
-    if row.launcher.kind == "uv-git"
-    then "git+https://github.com/${lib.removePrefix "github:" row.launcher.upstream}@${row.launcher.version}"
-    else "${row.launcher.pkg} v${row.launcher.version} [required: ==${row.launcher.version}]";
-  mkUvEnsure = row: ''
-    export UV_TOOL_DIR="${config.xdg.dataHome}/uv/forge-tools"
-    export UV_TOOL_BIN_DIR="${config.xdg.dataHome}/uv/forge-bin"
-    export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
-    export UV_PYTHON_DOWNLOADS=never
-    export PATH="${pkgs.git}/bin:$PATH" # uv resolves a git spec by shelling out; activation runs without the session PATH
-    mkdir -p "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_CACHE_DIR"
-    tool_list="$(${pkgs.uv}/bin/uv tool list --show-version-specifiers 2>/dev/null || true)"
-    if [ ! -x "$UV_TOOL_BIN_DIR/${row.launcher.bin}" ] || [[ "$tool_list" != *"${uvNeedle row}"* ]]; then
-      ${pkgs.uv}/bin/uv tool install --force --python "${pkgs.python313}/bin/python3" ${
-      lib.concatMapStrings (c: "--with ${lib.escapeShellArg c} ") (row.launcher.constraints or [])
-    }${lib.escapeShellArg (uvSpec row)} >/dev/null
-    fi
-  '';
+    then "git+https://github.com/${row.launcher.source}"
+    else "${row.launcher.pkg}@latest";
   mkUvLauncher = row: name:
     pkgs.writeShellScriptBin name ''
       set -euo pipefail
-      ${mkUvEnsure row}
+      export UV_CACHE_DIR="${config.xdg.cacheHome}/uv"
+      export UV_PYTHON_DOWNLOADS=never
+      export PATH="${pkgs.git}/bin:$PATH"
       ${lib.concatMapStringsSep "\n" (attr: ''export PATH="${pkgs.${attr}}/bin:$PATH"'') (row.launcher.runtimePath or [])}
-      exec "$UV_TOOL_BIN_DIR/${row.launcher.bin}" "$@"
+      exec ${pkgs.uv}/bin/uvx --refresh --python "${pkgs.python313}/bin/python3" ${
+        lib.concatMapStrings (c: "--with ${lib.escapeShellArg c} ") (row.launcher.constraints or [])
+      }--from ${lib.escapeShellArg (uvSpec row)} ${lib.escapeShellArg row.launcher.bin} "$@"
     '';
   uvLaunchers = lib.concatMap (row: map (mkUvLauncher row) row.launcher.names) uvRows;
   # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. The router
@@ -173,11 +133,6 @@
       exit 1
     '';
   };
-  # Pin board: every launcher row joins engine-tagged (pkg|version|engine|upstream). `outdated` probes latest per engine; `advance` rewrites the
-  # owning mcp-fleet.nix version literal behind the build gate.
-  pins =
-    builtins.concatStringsSep "\n"
-    (map (r: "${r.launcher.pkg}|${r.launcher.version}|${r.launcher.updateEngine}|${r.launcher.upstream}") launcherRows);
   # Full-parity drift program: fleet rows vs both user-owned registrations; Claude secret fields must be environment references, never literals.
   driftJq = pkgs.writeText "mcp-drift.jq" ''
     def env_ref: "$" + "{\(.)}";
@@ -357,13 +312,13 @@
   '';
   forgeMcp = pkgs.writeShellApplication {
     name = "forge-mcp";
-    runtimeInputs = [pkgs.coreutils pkgs.curl pkgs.git pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
+    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.yq-go pkgs.findutils pkgs.gawk pkgs.gnugrep pkgs.flock];
     text = ''
       fleet='${fleetJson}'
       receipt_log="''${FORGE_MCP_RECEIPT_LOG:-$HOME/Library/Logs/forge-mcp.receipts.log}"
       vscode_mcp="$HOME/Library/Application Support/Code/User/mcp.json"
       usage() {
-        echo "usage: forge-mcp outdated [--json] | advance [--json] | doctor [--json] | drift [--json] | reconcile <claude|codex>" >&2
+        echo "usage: forge-mcp doctor [--json] | drift [--json] | reconcile <claude|codex>" >&2
         echo "       forge-mcp generate <claude|codex|vscode> | roots [--json] | snoop SERVER [-- ARGS...]" >&2
         exit 64
       }
@@ -377,129 +332,6 @@
         ts="$(iso_now)"
         printf -v row 'ts=%s\tverb=%s\tresult=%s\tdetail=%s' "$ts" "$1" "$2" "$3"
         append_receipt "$row" || true
-      }
-
-      # Engine dispatch: latest version per updateEngine family — npm registry, PyPI JSON, or the upstream git HEAD rev. A probe failure returns
-      # non-zero and the caller reports unknown, never drift.
-      latest_for() { # $1=pkg $2=engine $3=upstream
-        case "$2" in
-          npm-registry) curl -fsS --max-time 20 "https://registry.npmjs.org/$(jq -rn --arg p "$1" '$p|@uri')/latest" | jq -er .version ;;
-          pypi) curl -fsS --max-time 20 "https://pypi.org/pypi/$1/json" | jq -er .info.version ;;
-          git-head) git ls-remote "https://github.com/''${3#github:}" HEAD 2>/dev/null | awk 'NR == 1 {print $1; exit}' | grep . ;;
-          *) return 1 ;;
-        esac
-      }
-
-      # Shared pin sweep: one TSV row per launcher pin (state, pkg, pinned, latest, engine); outdated presents it, advance consumes it.
-      pin_rows() {
-        while IFS="|" read -r pkg version engine upstream; do
-          [ -n "$pkg" ] || continue
-          if latest="$(latest_for "$pkg" "$engine" "$upstream")"; then
-            if [ "$latest" != "$version" ]; then
-              printf 'OUTDATED\t%s\t%s\t%s\t%s\n' "$pkg" "$version" "$latest" "$engine"
-            else
-              printf 'current\t%s\t%s\t%s\t%s\n' "$pkg" "$version" "$latest" "$engine"
-            fi
-          else
-            printf 'unknown\t%s\t%s\t-\t%s\n' "$pkg" "$version" "$engine"
-          fi
-        done < <(printf '%s\n' '${pins}')
-      }
-
-      cmd_outdated() {
-        as_json=0
-        for a in "$@"; do
-          case "$a" in
-            --json) as_json=1 ;;
-            *) usage ;;
-          esac
-        done
-        rows="$(pin_rows)"
-        rc=0
-        ! grep -q $'^OUTDATED\t' < <(printf '%s\n' "$rows") || rc=1
-        n="$(printf '%s\n' "$rows" | grep -c $'^OUTDATED\t' || true)"
-        if [ "$as_json" = 1 ]; then
-          jq -Rcs --arg ts "$(iso_now)" --arg rc "$rc" '{
-            schema: "forge-mcp/v1", ts: $ts, verb: "outdated",
-            result: (if $rc == "0" then "ok" else "outdated" end),
-            rows: (split("\n") | map(select(length > 0) | split("\t")
-                   | {state: .[0], pkg: .[1], pin_current: .[2], latest: .[3], engine: .[4]}))
-          }' < <(printf '%s\n' "$rows")
-        else
-          printf '%s\n' "$rows" | while IFS=$'\t' read -r s p v l e; do
-            printf '%-9s %-32s engine=%-12s pinned=%s latest=%s\n' "$s" "$p" "$e" "$v" "$l"
-          done
-        fi
-        receipt outdated "$([ "$rc" = 0 ] && echo ok || echo outdated)" "outdated=$n"
-        exit "$rc"
-      }
-
-      # Currency landing rail: rewrite each outdated pin's version literal in the fleet manifest, prove the result through the deploy owner's
-      # build, then auto-commit (full automation, no branches, never an unattended switch). An unproven bump
-      # is withdrawn whole, so HEAD's manifest stays last known-good.
-      cmd_advance() {
-        as_json=0
-        for a in "$@"; do
-          case "$a" in
-            --json) as_json=1 ;;
-            *) usage ;;
-          esac
-        done
-        forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
-        rel="modules/home/programs/shell-tools/mcp-fleet.nix"
-        fleet_file="$forge_root/$rel"
-        [ -f "$fleet_file" ] || {
-          receipt advance fail "missing-manifest"
-          echo "forge-mcp advance: missing $fleet_file" >&2
-          exit 1
-        }
-        exec {advance_fd}>"''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp-advance.lock"
-        flock -n "$advance_fd" || {
-          receipt advance skipped "lock-held"
-          echo "forge-mcp advance: another advance run holds the lock; skipped" >&2
-          exit 75
-        }
-        # Bump only an untouched manifest: uncommitted operator edits must never be entangled with an automated pin commit.
-        if [ -n "$(git -C "$forge_root" status --porcelain -- "$rel")" ]; then
-          receipt advance skipped "dirty-manifest"
-          echo "forge-mcp advance: $rel carries uncommitted edits; skipped" >&2
-          exit 75
-        fi
-        moved="" bumped=""
-        while IFS=$'\t' read -r state pkg version latest engine; do
-          [ "$state" = "OUTDATED" ] || continue
-          # pkg-context rewrite: the pkg line arms the substitution and the row's own version line (always next in the launcher block) consumes it.
-          awk -v pkg="$pkg" -v new="$latest" '
-            index($0, "pkg = \"" pkg "\";") {hot = 1}
-            hot && /version = "/ {sub(/version = "[^"]*"/, "version = \"" new "\""); hot = 0}
-            {print}
-          ' "$fleet_file" >"$fleet_file.advance"
-          mv "$fleet_file.advance" "$fleet_file"
-          moved="$moved $pkg:$version->$latest"
-          bumped="''${bumped:+$bumped,}$pkg"
-        done < <(pin_rows)
-        if [ -z "$moved" ]; then
-          receipt advance ok "current"
-          [ "$as_json" = 1 ] && jq -cn --arg ts "$(iso_now)" '{schema: "forge-mcp/v1", ts: $ts, verb: "advance", result: "current", moved: []}' \
-            || echo "forge-mcp advance: every pin current"
-          return 0
-        fi
-        if "${profileBin}/forge-redeploy" --build >&2; then
-          if git -C "$forge_root" -c commit.gpgsign=false commit -m "home: advance mcp pins ($bumped)" -- "$rel" >/dev/null; then
-            receipt advance ok "moved=$bumped"
-            [ "$as_json" = 1 ] && jq -cn --arg ts "$(iso_now)" --arg moved "$moved" \
-              '{schema: "forge-mcp/v1", ts: $ts, verb: "advance", result: "landed", moved: ($moved | split(" ") | map(select(length > 0)))}' \
-              || echo "forge-mcp advance: landed$moved (switch lands it: forge-redeploy --switch)"
-            return 0
-          fi
-          receipt advance fail "commit-failed"
-          echo "forge-mcp advance: bump built but commit failed; $rel left uncommitted" >&2
-          exit 1
-        fi
-        git -C "$forge_root" checkout -- "$rel"
-        receipt advance fail "build-failed moved=$bumped"
-        echo "forge-mcp advance: build failed; bump withdrawn ($bumped)" >&2
-        exit 1
       }
 
       # Named check families: launcher rows declaring `doctor` get local companion checks — the Forge launcher name IS the row.
@@ -822,7 +654,6 @@
           scan codex tmp-staging "$HOME/.codex/.tmp"
           scan codex tmp "$HOME/.codex/tmp"
           scan codex attachments "$HOME/.codex/attachments"
-          scan forge-mcp launcher-cache "''${XDG_CACHE_HOME:-$HOME/.cache}/forge-mcp"
           scan forge-mcp snoop-logs "${snoopPolicy.logDir}"
         )"
         if [ "$as_json" = 1 ]; then
@@ -874,8 +705,6 @@
       }
 
       case "$verb" in
-        outdated) cmd_outdated "$@" ;;
-        advance) cmd_advance "$@" ;;
         doctor) cmd_doctor "$@" ;;
         drift) cmd_drift "$@" ;;
         reconcile) cmd_reconcile "$@" ;;
@@ -891,43 +720,20 @@
   mcpCompletion = pkgs.writeTextDir "share/zsh/site-functions/_forge-mcp" ''
     #compdef forge-mcp
     _arguments \
-      '1:verb:(outdated advance doctor drift reconcile generate roots snoop)' \
+      '1:verb:(doctor drift reconcile generate roots snoop)' \
       '--json[schema=forge-mcp/v1 receipt]'
   '';
 in {
   config = {
-    home.packages = launchers ++ uvLaunchers ++ [rhinoRouter rhinoUp forgeMcp mcpCompletion pkgs.mcp-nixos];
+    home.packages = launchers ++ uvLaunchers ++ [rhinoRouter rhinoUp forgeMcp mcpCompletion];
 
     home.activation = {
-      # Warm every uv tool environment at switch so a cold client spawn never pays the install.
-      ensureUvMcpTools = lib.hm.dag.entryAfter ["linkGeneration"] (lib.concatMapStringsSep "\n" mkUvEnsure uvRows);
-
       # Each switch on either OS reasserts the host-filtered fleet maps while preserving non-MCP client state; Codex app-private rows remain
       # presence-owned by ChatGPT.
       forgeMcpReconcile = lib.hm.dag.entryAfter ["writeBoundary"] ''
         run ${forgeMcp}/bin/forge-mcp reconcile claude
         run ${forgeMcp}/bin/forge-mcp reconcile codex
       '';
-    };
-
-    # Daily currency cadence; the advance verb owns its own lock, dirty-manifest guard, build gate, and auto-commit.
-    # Repo mutation is a Darwin operator-machine concern — the NixOS host holds no working tree.
-    launchd.agents.forge-mcp-advance = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-      enable = true;
-      config = {
-        Label = "com.parametric-forge.forge-mcp-advance";
-        ProgramArguments = ["${forgeMcp}/bin/forge-mcp" "advance"];
-        ProcessType = "Background";
-        StartCalendarInterval = [
-          {
-            Hour = 10;
-            Minute = 30;
-          }
-        ];
-        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-advance.log";
-        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-mcp-advance.log";
-        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-nix-automation"];
-      };
     };
   };
 }

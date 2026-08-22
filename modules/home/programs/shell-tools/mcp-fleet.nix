@@ -14,12 +14,10 @@
 #   url/headerNames  http endpoint + Claude header-name set
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
-#   launcher         { kind?, names, pkg, version, bin, prelude?, ensure?, upstream, updateEngine, runtimePath?, constraints? }
-#                    => Forge-built wrapper(s); kind selects the build lane — "pnpm" (default, registry install into the launcher cache) or
-#                    "uv" / "uv-git" (uv tool environment, version is a PyPI pin or a git rev). upstream/updateEngine are manifest
-#                    extension-family fields (`forge-mcp outdated` observes, `forge-mcp advance` rewrites: npm-registry | pypi | git-head);
-#                    runtimePath names pkgs attrs front-run onto the wrapper PATH; constraints are uv `--with` bounds pinning a transitive
-#                    dep the upstream spec leaves open — each carries a named incompatibility and dies when upstream absorbs it
+#   launcher         { kind, names, pkg, bin, prelude?, ensureArgs?, source?, runtimePath?, constraints? }
+#                    => Forge-built wrapper(s); kind selects the ecosystem runner — "pnpm", "uv", or "uv-git". Every spawn resolves the
+#                    upstream release; source names a git repository for uv-git. runtimePath names pkgs attrs front-run onto the wrapper PATH;
+#                    constraints are uv `--with` compatibility bounds for transitive dependencies whose upstream specification is incomplete
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
@@ -36,12 +34,10 @@
     args = [];
     envKeys = ["HOSTINGER_API_TOKEN"];
     launcher = {
+      kind = "pnpm";
       names = ["forge-hostinger-mcp"];
       pkg = "hostinger-api-mcp";
-      version = "1.33.1";
       bin = "hostinger-api-mcp";
-      upstream = "npm:hostinger-api-mcp";
-      updateEngine = "npm-registry";
     };
     codex = {
       required = false;
@@ -58,15 +54,13 @@
     args = ["--read-only"];
     envKeys = [];
     launcher = {
+      kind = "pnpm";
       names = ["forge-doppler-mcp"];
       pkg = "@dopplerhq/mcp-server";
-      version = "1.0.5";
       bin = "doppler-mcp";
       prelude = ''
         export DOPPLER_TOKEN="''${DOPPLER_TOKEN:-$(${profileBin}/doppler configure get token --plain --scope /)}"
       '';
-      upstream = "npm:@dopplerhq/mcp-server";
-      updateEngine = "npm-registry";
     };
     codex = {
       required = false;
@@ -79,27 +73,15 @@
     transport = "stdio";
     platforms = ["darwin"]; # pnpm-fetched browser binaries never run on NixOS; a linux row lands with a store-built browser wiring
     command = "${profileBin}/forge-playwright-mcp";
-    # --browser chromium pins the bundled build the ensure hook provisions into the shared cache;
-    # the default "chrome" channel launches the real Google Chrome.app, which the estate never pins.
+    # --browser chromium selects the MCP-managed browser build; the "chrome" channel delegates to the separately managed Google Chrome.app.
     args = ["--isolated" "--browser" "chromium" "--caps=vision,pdf"];
     envKeys = [];
     launcher = {
+      kind = "pnpm";
       names = ["forge-playwright-mcp"];
       pkg = "@playwright/mcp";
-      version = "0.0.79";
       bin = "playwright-mcp";
-      # Browser ensure runs after the tree materializes and before exec: the bundled playwright's own
-      # revision set installs into the shared PLAYWRIGHT_BROWSERS_PATH pin, a present revision returns
-      # in milliseconds, and a launch therefore never fails on a browser the bump left behind. The CLI
-      # resolves through the pnpm store glob — playwright is a transitive dep, so no top-level .bin
-      # entry exists and its exports map refuses require.resolve on cli.js.
-      ensure = ''
-        for cli in "$prefix"/node_modules/.pnpm/playwright@*/node_modules/playwright/cli.js; do
-          if [ -f "$cli" ]; then node "$cli" install chromium >&2 || true; fi
-        done
-      '';
-      upstream = "npm:@playwright/mcp";
-      updateEngine = "npm-registry";
+      ensureArgs = ["install-browser" "chromium"];
     };
     codex = {
       required = false;
@@ -117,10 +99,7 @@
       kind = "uv";
       names = ["forge-workspace-mcp"];
       pkg = "workspace-mcp";
-      version = "1.23.1";
       bin = "workspace-mcp";
-      upstream = "pypi:workspace-mcp";
-      updateEngine = "pypi";
     };
     codex = {
       required = false;
@@ -131,7 +110,6 @@
   {
     name = "nuget";
     transport = "stdio";
-    platforms = ["darwin"]; # dev-tools.nix packages the osx-arm64 RID only; a linux RID row widens both gates together
     command = "${profileBin}/nuget-mcp";
     args = [];
     envKeys = [];
@@ -142,13 +120,18 @@
     };
   }
   {
-    # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals;
-    # pure retrieval, so headless codex may call it. Binary is the nixpkgs mcp-nixos package installed by mcp-launchers.nix.
+    # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals.
     name = "nixos";
     transport = "stdio";
     command = "${profileBin}/mcp-nixos";
     args = [];
     envKeys = [];
+    launcher = {
+      kind = "uv";
+      names = ["mcp-nixos"];
+      pkg = "mcp-nixos";
+      bin = "mcp-nixos";
+    };
     codex = {
       required = false;
       startupTimeoutSec = 30;
@@ -158,7 +141,7 @@
   }
   {
     # Structural code search: ast-grep's official MCP (dump_syntax_tree, test_match_code_rule, find_code, find_code_by_rule); pure retrieval, so
-    # headless codex may call it. Upstream publishes no PyPI dist, so the pin is a git rev; runtimePath front-runs the estate ast-grep binary.
+    # headless codex may call it. Upstream publishes no PyPI dist; runtimePath front-runs the estate ast-grep binary.
     name = "ast-grep";
     transport = "stdio";
     command = "${profileBin}/forge-ast-grep-mcp";
@@ -171,13 +154,11 @@
       kind = "uv-git";
       names = ["forge-ast-grep-mcp"];
       pkg = "sg-mcp";
-      version = "732c339c3812a44e9111e6c3aefec64894acd58f";
       bin = "ast-grep-server";
-      upstream = "github:ast-grep/ast-grep-mcp";
-      updateEngine = "git-head";
+      source = "ast-grep/ast-grep-mcp";
       runtimePath = ["ast-grep-upstream"];
-      # mcp 2.0.0 removed the mcp.server.fastmcp layer sg-mcp imports; upstream pins mcp[cli]>=1.6.0 with no ceiling, so a fresh
-      # resolve breaks at import. Dies when upstream lands mcp 2.x support.
+      # MCP 2.x removed the mcp.server.fastmcp layer sg-mcp imports; upstream leaves the dependency unbounded, so a fresh resolve breaks at import.
+      # Delete this bound when upstream absorbs MCP 2.x.
       constraints = ["mcp<2"];
     };
     codex = {

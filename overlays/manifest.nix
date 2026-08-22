@@ -57,7 +57,7 @@ in rec {
     sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "extension-bundle" "nixpkgs" "repo"];
     patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "npm-tool-strip" "source-substitute"];
     cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported" "intentionally-uncached"];
-    updateEngines = ["nvfetcher" "manual" "nixpkgs-follows" "npm-registry" "pypi" "git-head"];
+    updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
     overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
     installModes = ["hm-roster" "ca1" "landed"]; # roster-installed | CA-1 owns installation/projection | owned by a config module
@@ -708,12 +708,6 @@ in rec {
           license = "Apache-2.0"; # the one diagnostics/references surface
         };
       };
-    };
-    mcp-launchers = {
-      source = "npm-registry";
-      owner = "modules/home/programs/shell-tools/mcp-fleet.nix"; # launcher rows carry upstream + updateEngine family fields
-      requiredFields = ["pkg" "version" "upstream" "updateEngine"];
-      rows = {};
     };
   };
 }
