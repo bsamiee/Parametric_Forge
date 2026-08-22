@@ -71,18 +71,18 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and owns `DOCKER_HO
 | :-----: | :--------------------------------------------------------------- | :-------------------------------------------------------------------- |
 |  [01]   | A Brew failure killed HM activation while `nh` printed success   | `forge-redeploy` receipts propagate activation-phase exit status      |
 |  [02]   | `HOMEBREW_CASK_OPTS=--no-quarantine` silently became inert       | Casks keep Homebrew-native quarantine and Gatekeeper approval         |
-|  [03]   | `nix flake check` passed while the maghz toplevel eval was dead  | Both-OS static gate: darwin build AND the maghz toplevel drv eval     |
+|  [03]   | `nix flake check` passed while the VPS toplevel eval was dead    | Both-OS static gate: Darwin build and the VPS toplevel drv eval       |
 |  [04]   | A darwin-only package interpolation broke the shared home graph  | Darwin-only `pkgs.*` rides `optionalString isDarwin`                  |
 |  [05]   | A dirty-tree build silently packaged without untracked new files | `git add --intent-to-add` every created file before its first build   |
 |  [06]   | A single-path config projection was dead on one host OS          | Tools resolve per-OS config paths; the live probe is truth            |
 |  [07]   | Configs with silently-ignored unknown keys hid schema drift      | Row spellings verify against the source structs, never key acceptance |
 |  [08]   | An asserted extension toggle silently removed a UI affordance    | Asserted rows pin design law, never extension-behavior toggles        |
 |  [09]   | TCC denies synthetic input; live `state.vscdb` writes clobbered  | Window UI-state mutations are operator-manual, named with the gesture |
-|  [10]   | An untrusted tap made Brewfile convergence report false success  | A tap-free Brewfile keeps nix-darwin as the sole roster installer     |
+|  [10]   | An untrusted tap made Brewfile convergence report false success  | Third-party items carry fully-qualified, formula-scoped trust         |
 
 - [01]: killed activation prevented font projection.
 - [02]: `darwin/homebrew/` declares only cask options accepted by Homebrew's pinned command surface.
-- [03]: dead `forge.chords` reference shipped through darwin-only switches; `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'` closes the gate.
+- [03]: dead `forge.chords` reference shipped through Darwin-only switches; `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'` closes the gate.
 - [04]: darwin-only `pkgs.*` in a shared module throws at linux eval; an empty interpolation and runtime `[ -n "$tn" ]` guard preserve both hosts.
 - [10]: `brew bundle check --verbose` proves nix-darwin's declared roster after activation.
 
@@ -116,18 +116,6 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and owns `DOCKER_HO
 
 shfmt parses bare hyphenated associative-array subscripts as arithmetic and rewrites `[a-b]` to `[a - b]`, silently corrupting dispatch tables — every literal subscript in a `.sh` surface is quoted. Placeholder-bearing templates are formatter poison: the treefmt sqruff lane rewrote `||` to `| |` and lowercased `__FORGE_SERVICE_SQL__` inside live provisioning SQL, breaking `apply`/`check`/`up` for every service. Templates carrying substitution placeholders use a formatter-unowned extension (`.sql.tpl`), and the consuming self-test asserts the placeholders and the absence of mangle signatures (`overlays/forge-provision/`).
 
-## [10]-[REMOTE_MOUNT]
+## [10]-[VPS_HOST]
 
-| [INDEX] | [TRAP]                                                            | [RULE_NOW]                                                        |
-| :-----: | :---------------------------------------------------------------- | :---------------------------------------------------------------- |
-|  [01]   | Backend drop left rclone a zombie NFS server, ejected receiptless | Health loop probes process/device/statfs; a failed verdict drains |
-|  [02]   | Reaping rclone under a held volume raised the interrupted dialog  | Drain detaches the volume first, reaps the NFS server second      |
-|  [03]   | A stale rclone survives its supervisor across agent bounces       | Startup reaps stale rclone by `--volname` before serving twice    |
-|  [04]   | Idle SFTP pool expiry re-handshook per statfs; one RST = dialog   | `idle_timeout=0` pins one warm session for the mount's lifetime   |
-
-- Owner: `shell-tools/ssh.nix` `mountSupervisor`; an external clean unmount also exits rclone (rc=0), so `cause=rclone-exited` and `cause=ejected` are two receipts of one recovery arm.
-- WezTerm nightly fronts `default_ssh_auth_sock` with a per-process proxy (`~/.local/share/wezterm/agent.<pid>`); panes see the proxy, and `ssh-add -l` through it must list the 1Password identity — the proxy, not the raw socket path, is the propagation proof.
-
-## [11]-[MAGHZ_HOST]
-
-`nixosConfigurations.maghz` carries the qemu-guest profile, virtio initrd modules, static host-context address, predictable interface-name override, and `eth0` binding. Cross-OS switches use `--no-reexec`; long remote builds run detached from the harness.
+`nixosConfigurations.vps` carries the qemu-guest profile, virtio initrd modules, static host-context address, predictable interface-name override, and `eth0` binding. Cross-OS switches use `--no-reexec`; long remote builds run detached from the harness.

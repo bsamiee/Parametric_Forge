@@ -28,16 +28,16 @@ Home Manager resolves `~/.config/op/env.template` through `op inject` during act
 
 `services/` owns the Doppler topology and GitHub settings as typed Pulumi rows over `@pulumiverse/doppler`, `@pulumi/github`, and `@pulumi/pulumi` — not per-repo YAML. Topology rows cover the Doppler and GitHub resource families; `estate.ts` folds them into resources. An `origin: "adopt"` row imports an existing resource only under `--adopt`; an `origin: "mint"` row creates fresh. The driver is `node driver.ts preview|up|refresh [--adopt] [--target=...]`, `outputs [name] [--reveal]`, and `scopes apply|doctor|strict`; Pulumi state is a local file backend under XDG state with a passphrase secrets provider.
 
-Directory scopes replace `doppler.yaml`: `scopes apply` runs `doppler configure set` per declared directory and removes stray scope rows under the scope root. The declared bindings map the `Parametric_Forge`, `Maghz`, and `Rasm` directories to their config; the owning rows in `topology.ts` are the system of record for which config a directory resolves.
+`topology.ts` maps the `Parametric_Forge` and `Rasm` directories to Doppler configs. `scopes apply` projects those rows with `doppler configure set` and removes stray scopes under the declared root.
 
 ## [04]-[SSH_GIT_SIGNING]
 
 `hm-op-session.sh` is generated during activation by `op inject` from `~/.config/op/env.template` and published mode 600 for shell and GUI consumption. SSH auth serves only `Forge SSH Key` from the `Personal` vault through the 1Password agent, and `ssh.nix` sets the Darwin `IdentityAgent` to the stable 1Password socket. Git signing uses SSH format with `key::<publicKey>`, `op-ssh-sign`, and an `allowed_signers` generated from the same public key — signing and verification are the 1Password agent item, not an on-disk key.
 
-## [05]-[TUNNELS]
+## [05]-[VPS_SSH]
 
-One `vpsTunnels.maghz` row in `ssh.nix` projects the interactive SSH host, transport-only tunnel host, launchd or systemd tunnel agent, and loopback forwards. Forwards carry named services and their probe class: `pg` uses `pg_isready`, `http` uses a GET path, and bind-only `none` skips service probing. One row owns the complete service-to-port map.
+`hosts/context.nix` gives the `vps` row deployment networking, client hostname, user, authorized keys, and pinned server key. `ssh.nix` projects native OpenSSH, WezTerm, and Yazi SFTP clients. No mount or background tunnel runs locally; bounded forwarding uses OpenSSH's `-L`, `-R`, or `-D` flags.
 
 ## [06]-[GITHUB_AS_CODE]
 
-GitHub repository settings are Pulumi rows adopting live `gh`-applied state across the `Parametric_Forge`, `Rasm`, and `Maghz` repositories. Merge hygiene is `allowMergeCommit=false`, `allowSquashMerge=true`, `allowRebaseMerge=true`, `deleteBranchOnMerge=true`, with wiki disabled. `main-guard` rulesets are active branch rulesets on `~DEFAULT_BRANCH` with non-fast-forward and deletion protection. The rows in `topology.ts`/`estate.ts` are the source of truth; a `gh` change made outside them drifts until the next adopt.
+Pulumi rows adopt GitHub settings for `Parametric_Forge` and `Rasm`. Merge hygiene disables merge commits and wikis, enables squash and rebase merges, and deletes merged branches. `topology.ts` and `estate.ts` own the desired state; outside changes drift until the next adopt.

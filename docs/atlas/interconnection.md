@@ -1,8 +1,8 @@
 # Interconnection
 
-Single-owner surfaces web the estate; each projection fans into many consumers, and a change to an owner ripples to every reader that composes it. This map names the load-bearing seams, the `config.forge.*` option hinges, and the estate's reach into machine, services, Rasm, and Maghz. It carries edges and blast radius only — usage lives in each owner's own surface, module boundaries in the repo root router.
+Single-owner surfaces web the estate; each projection fans into many consumers, and a change to an owner ripples to every reader that composes it. This map names the load-bearing seams, the `config.forge.*` option hinges, and the estate's reach into machines, services, and consumer repos. It carries edges and blast radius only — usage lives in each owner's own surface, module boundaries in the repo root router.
 
-Forge is the machine owner — cross-repo law. When a shell wrapper, PATH entry, container socket, DB CLI, or scientific build fails in Rasm or Maghz, the fix is the Forge owner, never a patch in the sibling. Rasm owns the method and language-law bedrock Forge composes; Maghz owns its own service plane and `ops-doctrine`. Standards mirror by copy, never by tooling.
+Forge is the machine owner — cross-repo law. When a shell wrapper, PATH entry, container socket, DB CLI, or scientific build fails in a consumer repo, the fix is the Forge owner, never a sibling patch. Rasm owns the method and language-law bedrock Forge composes. Standards mirror by copy, never by tooling.
 
 ## [01]-[CONFIG_FORGE_NAMESPACE]
 
@@ -12,7 +12,7 @@ Forge is the machine owner — cross-repo law. When a shell wrapper, PATH entry,
 | :-----: | :-------------------------- | :-------------------------------------- | :------------------------------------------------------------- |
 |  [01]   | `config.forge.theme`        | `modules/home/theme.nix`                | Rename/reshape fails eval for every themed reader.             |
 |  [02]   | `config.forge.chords`       | `modules/home/programs/apps/chords.nix` | Key/mod change couples leader and popup bytes.                 |
-|  [03]   | `config.forge.ssh.*`        | `shell-tools/ssh.nix`                   | A host row fans to supervisors, mounts, receipts, pickers.     |
+|  [03]   | `config.forge.ssh.*`        | `shell-tools/ssh.nix`                   | A host row fans to native SSH, WezTerm, and Yazi clients.      |
 |  [04]   | `config.forge.ignoreEstate` | `shell-tools/fd.nix`                    | One ignore taxonomy renders for every search/watch consumer.   |
 |  [05]   | `config.forge.registers.*`  | `aliases/`, `shell-tools/browsers.nix`  | Register rows project to `forge/registers/*.json` for pickers. |
 |  [06]   | `config.forge.fonts`        | `modules/home/fonts.nix`                | Font identity drives terminal, editor, and glyph render seams. |
@@ -21,8 +21,7 @@ Forge is the machine owner — cross-repo law. When a shell wrapper, PATH entry,
 - `config.forge.theme` shape: `{ palette, roles, ansi16, syntaxScopes, projections; }`
 - `config.forge.chords` shape: `{ layers, modes, register, nvim.rows, wezterm.rows, karabiner.rules, zellij.{ ... }; }`
 - `config.forge.chords` is defined under the darwin-gated `apps/` import: a both-OS consumer reads it only through an `or` default (`browsers.nix` chords register).
-- `config.forge.ssh` shape: `{ hosts.<name>.{ name, user, hostName, aliases, tunnelHost, forwards, mounts }, identityAgent, mountRoot; }` — mount rows carry `{ name, path, readOnly, cache, mountpoint }`; `identityAgent` is the 1Password socket every remote consumer pins, and cache posture sinks only into the rclone `forge-vps-mount` agents (Yazi's SFTP schema has no cache field).
-- `config.forge.ssh` mount agents prove liveness continuously and emit `mounted|down|reaped` transitions the receipt registry judges; the workspace picker derives one remote row per (host, mount).
+- `config.forge.ssh` shape: `{ hosts.<name>.{ name, user, hostName, aliases }, identityAgent; }`. `identityAgent` is the 1Password socket every remote client pins.
 
 ## [02]-[THEME_PROJECTION_WEB]
 
@@ -36,7 +35,7 @@ Consumers never restate hex. WezTerm receives `projections.luaPalette` as `wezte
 
 ## [04]-[HOST_CONTEXT_FACTORY]
 
-`hosts/context.nix` mints the per-host row (`name`, `os`, `system`, versions, timeZone, user, ssh, and NixOS disk/network/service-user fields; Darwin rows add `label`). One wrong row shape breaks flake host construction, NixOS static networking, and Home Manager import gates at once. `hosts/default.nix` is the single factory: an OS dispatch row selects the system builder and module set, and one shared per-host module carries platform, identity, and the Home Manager projection for every row — a new machine is one context row. `host.os` is the gate that keeps Darwin-only GUI apps and mac tools off Linux (`modules/home/programs/default.nix`) and drives the static systemd-user-service gate in `ssh.nix`.
+`hosts/context.nix` mints the per-host row (`name`, `os`, `system`, versions, time zone, user, ssh, and NixOS disk/network fields; Darwin rows add `label`). The VPS SSH row also carries its client hostname and pinned server key. One wrong row shape breaks flake host construction, NixOS static networking, and Home Manager import gates at once. `hosts/default.nix` is the single factory: an OS dispatch row selects the system builder and module set, and one shared per-host module carries platform, identity, and the Home Manager projection for every row. `host.os` is the gate that keeps Darwin-only GUI apps and Mac tools off Linux (`modules/home/programs/default.nix`).
 
 ## [05]-[TOOLCHAIN_PATH_FACTORY]
 
@@ -69,10 +68,10 @@ MCP manifest changes fan through `mcp-launchers.nix`, fleet serialization, gener
 
 Beyond eval-time option hinges, these contracts bind processes at runtime across module boundaries; each side is edited only with the other in view.
 
-- [01]-[RECEIPTS]: every `forge-*` kernel persists TSV receipts to `~/Library/Logs/forge-<name>.receipts.log`, override key `FORGE_<NAME>_RECEIPT_LOG` (grammar minted by the `forge-tools.nix` builder); `forge-receipts` discovers sources from `config.forge.registers.receiptSources` (rows carry `grain` — `kv` TSV or `json` JSONL) and `config.forge.ssh.hosts` rows. A new kernel that hand-rolls its receipt path is an `--audit` FAIL — invisible to browser and query plane alike.
+- [01]-[RECEIPTS]: every `forge-*` kernel persists TSV receipts to `~/Library/Logs/forge-<name>.receipts.log`, override key `FORGE_<NAME>_RECEIPT_LOG` (grammar minted by the `forge-tools.nix` builder); `forge-receipts` discovers sources from `config.forge.registers.receiptSources` (rows carry `grain` — `kv` TSV or `json` JSONL). A new kernel that hand-rolls its receipt path is an `--audit` FAIL — invisible to browser and query plane alike.
     - Queries run live on the plane: `--sql`/`--verb` run DuckDB over the normalized event spine, and `--audit` diffs registry rows against on-disk reality and fails on unregistered emitters.
 - [02]-[TERMINAL_MESH]: `apps/chords.nix` bind rows invoke `forge-yazi.sh toggle` (`scripts/terminal.nix`); the yazi opener invokes `forge-edit.sh %s`; the editor registry publishes `editor-tab-*.tsv` rows the dispatcher globs; `forge-terminal-accept.sh` asserts the whole mesh. A rename on any edge is a four-file edit proven by the acceptance run.
 - [03]-[XDG_PROJECTIONS]: agent-facing artifacts live at fixed projection paths — `~/.config/forge/registers/*.json` (browsers), `~/.config/forge/theme/palette.json` + `forge-dracula.tmTheme` (theme), `~/.local/state/forge/` (frozen zellij layout assets), `~/.cache/forge*/` (launcher prefixes). Consumers hardcode these paths by contract; moving one is an estate-wide grep, not a local edit.
 - [04]-[QA_HOOKS]: `flake-modules/qa.nix` invokes `fmt --self-test`/`--check` from `scripts/fmt.nix`; treefmt lanes and `fmt` share formatter ownership per extension — a file class both claim gets formatted twice, and a placeholder-bearing template neither may own (the `.sql.tpl` scar).
-- [05]-[SESSION_FABRIC]: one workspace row (`wezterm/default.nix`) carries picker entry, zellij session identity, cwd, float policy, and warm posture, and remote rows device-diff their mountpoint before spawning; `forge-terminal-accept.sh` R15/R16 assert both envelopes.
+- [05]-[SESSION_FABRIC]: one workspace row (`wezterm/default.nix`) carries picker entry, zellij session identity, cwd, float policy, and warm posture; `forge-terminal-accept.sh` R15/R16 assert the envelope.
     - `deck.lua session_args` and `forge-workspace` both resolve frozen `~/.local/state/forge/zellij-layouts/<slug>.kdl` assets (`forge-zellij layout record`) before the default layout, and `forge-workspace --json` lifecycle and `forge-zellij state` (schema v2: classification, `serialized_ts`, `last` fabric receipt) parse the same `list-sessions` EXITED text.

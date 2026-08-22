@@ -12,7 +12,7 @@ description: >-
 
 # [HOSTINGER]
 
-Hostinger's estate is one API surface with three entry transports, and the work's shape chooses the transport, never habit. Maghz — the durable second brain — runs on the Hostinger VPS, so VPS mutations are production operations: snapshot before destructive work, and route lifecycle through the sanctioned transports below.
+Hostinger's estate is one API surface with three entry transports, and the work's shape chooses the transport, never habit. Forge treats the generic NixOS VPS as a production machine: snapshot before destructive work, and route lifecycle through the sanctioned transports below.
 
 | [INDEX] | [TRANSPORT]     | [SURFACE]                                                     | [WHEN]                                          |
 | :-----: | :-------------- | :------------------------------------------------------------ | :---------------------------------------------- |

@@ -251,9 +251,6 @@ knowledge_base:
         - repository: bsamiee/Rasm
           instructions: >-
             Doctrine master for the shared stack and docgen law; skill bundles mirror byte-identical across the estate — flag divergence in mirrored surfaces.
-        - repository: bsamiee/Maghz
-          instructions: >-
-            VPS second-brain consumer of Forge machine rails; provisioning contract and launcher changes ripple here.
 issue_enrichment:
     auto_enrich:
         enabled: true

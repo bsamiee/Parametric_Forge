@@ -18,11 +18,9 @@ Per-agent quirks a plist read does not explain live in their owner modules; the 
 | :-----: | :-------------------------------------- | :---------------------------- | :------------------------------------ |
 |  [01]   | `org.nix-community.home.colima-default` | `environments/containers.nix` | restart-on-stop; needs `ExitTimeOut`  |
 |  [02]   | `org.nix-community.home.atuin-daemon`   | `shell-tools/atuin.nix`       | upstream HM label, not estate grammar |
-|  [03]   | `com.parametric-forge.maghz-vps-tunnel` | `shell-tools/ssh.nix`         | row from `vpsTunnels`; owns forwards  |
 
 - [01]: `KeepAlive.SuccessfulExit=true` restarts it after `colima stop`; the default exit timeout SIGKILLs VM teardown, so teardown needs the declared `ExitTimeOut`.
 - [02]: upstream HM label, not estate grammar; a `com.parametric-forge.*` label search misses the live agent.
-- [03]: row-generated from `vpsTunnels`; receipts classify tunnel health and port ownership.
 
 `Forge Nix Automation.app` is one shared BTM identity for the maintenance and orphan-sweep jobs; splitting it fragments the scheduled jobs into opaque Login Items rows.
 

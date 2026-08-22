@@ -32,7 +32,7 @@
     },
     "ignorePatterns": "flake.lock\npnpm-lock.yaml\nuv.lock\nmodules/home/assets/**\n.claude/scratch/**",
     "context": {
-        "repos": ["bsamiee/Rasm", "bsamiee/Maghz"]
+        "repos": ["bsamiee/Rasm"]
     },
     "rules": [
         {

@@ -12,7 +12,7 @@ Forge rails are `writeShellApplication` commands with shared locks and receipt-o
 |  [04]   | `forge-activation-sweep` | Root-owned in-the-way HM target detection and clear                     | `shell-tools/forge-tools.nix`   |
 |  [05]   | `forge-cleanup`          | Litter plan/apply and orphan sweep over a typed row registry            | `shell-tools/forge-tools.nix`   |
 |  [06]   | `forge-provision`        | Docker/Compose DB estate: envelope, locks, generations, extension apply | `overlays/forge-provision/`     |
-|  [07]   | `forge-mcp`              | MCP wrapper presence doctor, drift, and pin currency                    | `shell-tools/mcp-launchers.nix` |
+|  [07]   | `forge-mcp`              | MCP wrapper presence doctor and registration drift                      | `shell-tools/mcp-launchers.nix` |
 
 ## [02]-[FORGE_REDEPLOY]
 
@@ -20,7 +20,7 @@ Darwin builds and switches locally; NixOS check is eval-only, build proves closu
 
 ## [03]-[FORGE_ACCEPT]
 
-`forge-accept --list` emits the ordered step vocabulary; `--from STEP` and `--only STEP` select into it. Ordering is contractual: `preflight` gates `switch` through the flake root, WezTerm cask, `nix.custom.conf`, activation sweep, and deploy lock; `maghz` evaluates each declared tunnel receipt. `fleet` runs `forge-mcp doctor` (wrapper presence; stateless clients own protocol health) and `forge-mcp drift`; `lanes` compares expected secret key names across CLI, TUI, and GUI without values. Rows carry `ts / step / status / detail` and close with the folded result.
+`forge-accept --list` emits the ordered step vocabulary; `--from STEP` and `--only STEP` select into it. Ordering is contractual: `preflight` gates `switch` through the flake root, WezTerm cask, `nix.custom.conf`, activation sweep, and deploy lock. `fleet` runs `forge-mcp doctor` (wrapper presence; stateless clients own protocol health) and `forge-mcp drift`; `lanes` compares expected secret key names across CLI, TUI, and GUI without values. Rows carry `ts / step / status / detail` and close with the folded result.
 
 ## [04]-[MAINTENANCE_SWEEP]
 
@@ -49,12 +49,11 @@ One ordered pass refreshes every currency family; each step proves through its o
 |  [01]   | working tree | scoped commits, push                            | `git status` clean                                            |
 |  [02]   | flake inputs | `nix flake update`                              | `forge-redeploy --build`; commit `nix: bump flake inputs (…)` |
 |  [03]   | nvfetcher    | `nvfetcher -o overlays/_sources`                | build gate rides the switch                                   |
-|  [04]   | MCP pins     | `forge-mcp outdated` then `forge-mcp advance`   | advance owns its build gate and commit                        |
-|  [05]   | activation   | `forge-redeploy --switch`                       | `forge-accept`                                                |
-|  [06]   | homebrew     | full brew pass (below)                          | `brew outdated` and `brew doctor` clean                       |
-|  [07]   | python venv  | `forge-scientific-env uv sync` at the repo root | dead-dylib sweep after any python/native input move           |
-|  [08]   | store        | `forge-nix-maintenance`                         | single system generation, GC, optimise                        |
+|  [04]   | activation   | `forge-redeploy --switch`                       | `forge-accept`                                                |
+|  [05]   | homebrew     | full brew pass (below)                          | `brew outdated` and `brew doctor` clean                       |
+|  [06]   | python venv  | `forge-scientific-env uv sync` at the repo root | dead-dylib sweep after any python/native input move           |
+|  [07]   | store        | `forge-nix-maintenance`                         | single system generation, GC, optimise                        |
 
 Flake bumps moving the Nix python invalidate the venv whole; bumps moving native libs poison cached wheels — `otool -L` over every site-packages native, each `/nix/store/*.dylib` tested, rebuilds each hit with `forge-scientific-env uv pip install --reinstall --no-cache`; a path still missing after the rebuild is a missing library row in `scientific-tools.nix`, never another rebuild.
 
-Homebrew custody: nix-darwin's Brewfile declares and installs the roster while activation leaves versions and unlisted packages intact (`onActivation.upgrade = false`, `cleanup = "none"`). `forge-brew-maintenance` runs Homebrew's built-in update, upgrade, autoremove, and cleanup commands daily through an explicit environment that excludes GUI-domain credentials; the full operator pass adds `brew cleanup --prune=all -s` when immediate cache reclamation is intended.
+Homebrew custody: nix-darwin's Brewfile installs missing roster entries while activation leaves metadata, versions, and unlisted packages intact. Homebrew 6 third-party entries use a fully qualified name with item-scoped `trusted = true`; official formulae and casks are intrinsically trusted. Operator maintenance runs `brew update`, formula and cask upgrades, a targeted `wezterm@nightly --greedy-latest` upgrade, `brew autoremove`, and `brew cleanup --prune=all -s`; `brew outdated` and `brew doctor` close the pass.

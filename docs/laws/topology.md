@@ -6,7 +6,7 @@ The coupling map: editing a `[SURFACE]` obligates its `[OBLIGATED_COUNTERPARTS]`
 
 | [INDEX] | [SURFACE]                             | [OBLIGATED_COUNTERPARTS]                            | [WHY]                                      |
 | :-----: | :------------------------------------ | :-------------------------------------------------- | :----------------------------------------- |
-|  [01]   | new loopback service on a server host | its `ssh.nix` `vpsTunnels` forward row         | the tunnel registry is the only reach path |
+|  [01]   | new VPS workload or ingress          | host module, firewall, and access owner         | the SSH-only baseline stays minimal        |
 |  [02]   | harness master tree file              | sibling-repo byte copies                       | propagation is byte-identical copy         |
 |  [03]   | law or standards ruling               | `.greptile/rules.md` + `.coderabbit.yaml` twin | reviewer prose derives from doctrine       |
 |  [04]   | `CLAUDE.md` fact                      | `AGENTS.md` cross-reference                    | one fact lands at its acting reader        |
@@ -14,4 +14,4 @@ The coupling map: editing a `[SURFACE]` obligates its `[OBLIGATED_COUNTERPARTS]`
 |  [06]   | `forge-provision` envelope or verb    | its README contract row + `data/` catalog row  | the envelope is a cross-repo contract      |
 |  [07]   | `overlays/manifest.nix` admission row | its consuming roster surface                   | admission requires a real consumer now     |
 
-The harness master tree is `.claude/{skills,hooks,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards. A shared-home module edit additionally proves both hosts build — the darwin system build plus `nix eval '.#nixosConfigurations.maghz.config.system.build.toplevel.drvPath'`. The manifest admission's consuming roster is an HM `rosterRows` row or a flake projection row.
+Harness masters live in `.claude/{skills,hooks,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards. Shared-home module edits prove the Darwin build and `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'`. Manifest admission requires an HM `rosterRows` consumer or a flake projection.
