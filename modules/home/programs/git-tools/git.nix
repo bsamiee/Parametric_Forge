@@ -35,7 +35,7 @@ in {
     enable = true;
     lfs.enable = true;
 
-    # The op agent (and its signer binary) is Darwin-only; maghz holds no private key, so signing stays off there instead of faulting per commit.
+    # Darwin alone carries the op agent and signer binary; VPS commits keep signing off instead of faulting.
     signing =
       {
         key = "key::${identity.publicKey}";

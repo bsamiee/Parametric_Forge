@@ -22,7 +22,7 @@ in {
   home.sessionPath = toolchainEnv.userPathEntries;
   # pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
-  # sessionEnv folds the class-gated pager/gcloud/gws/maghz/gh + interactive man/bat vocabulary; the rows below are session-only concerns.
+  # sessionEnv folds the class-gated pager/gcloud/gws/gh and interactive man/bat vocabulary; the rows below are session-only concerns.
   home.sessionVariables =
     toolchainEnv.sessionEnv
     // {

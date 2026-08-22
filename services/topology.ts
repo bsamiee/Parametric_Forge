@@ -23,7 +23,6 @@ const _projects = [
         description: 'macOS machine and Home Manager toolchain secrets',
         origin: 'adopt',
     },
-    { slug: 'maghz', description: 'Maghz VPS runtime secrets', origin: 'adopt' },
     {
         slug: 'rasm',
         description: 'Rasm repo and service secrets',
@@ -74,7 +73,6 @@ const _configs = [
         name: 'dev_machine',
         origin: 'adopt',
     },
-    { project: 'maghz', environment: 'prd', name: 'prd_host', origin: 'adopt' },
     { project: 'rasm', environment: 'dev', name: 'dev_repo', origin: 'adopt' },
 ] as const satisfies ReadonlyArray<_BranchRow>;
 
@@ -99,12 +97,6 @@ const _tokens = [
         name: 'forge-machine-readonly',
         access: 'read',
     },
-    {
-        project: 'maghz',
-        config: 'prd_host',
-        name: 'maghz-host-readonly',
-        access: 'read',
-    },
 ] as const satisfies ReadonlyArray<
     _Coordinate & ({ readonly name: `${string}-readonly`; readonly access: 'read' } | { readonly name: string; readonly access: 'read/write' })
 >;
@@ -118,7 +110,6 @@ const _scopes = [
         project: 'parametric-forge',
         config: 'dev_machine',
     },
-    { dir: `${_scopeRoot}/Maghz`, project: 'maghz', config: 'dev' },
     { dir: `${_scopeRoot}/Rasm`, project: 'rasm', config: 'dev_repo' },
 ] as const satisfies ReadonlyArray<
     _Coordinate & {
@@ -141,20 +132,7 @@ type _WebhookRow = {
     };
 }[_ProjectSlug];
 
-const _webhooks = [
-    {
-        project: 'maghz',
-        slug: 'maghz-prd-redeploy',
-        url: 'https://31-97-131-41.sslip.io/hooks/doppler',
-        enabledConfigs: ['prd_host'],
-        secretSource: {
-            project: 'maghz',
-            config: 'prd_host',
-            name: 'MAGHZ_HOOK__SIGNING_SECRET',
-        },
-        origin: 'mint',
-    },
-] as const satisfies ReadonlyArray<_WebhookRow>;
+const _webhooks: ReadonlyArray<_WebhookRow> = [];
 
 // GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from estate.ts; branch rulesets are removed, so main takes direct pushes.
 const _owner = 'bsamiee';
@@ -168,11 +146,6 @@ const _repositories = [
     {
         name: 'Rasm',
         description: 'AEC/design-geometry workspace',
-        origin: 'adopt',
-    },
-    {
-        name: 'Maghz',
-        description: 'Agent-operated second brain infrastructure',
         origin: 'adopt',
     },
 ] as const satisfies ReadonlyArray<{

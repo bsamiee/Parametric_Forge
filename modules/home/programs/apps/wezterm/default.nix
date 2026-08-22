@@ -44,9 +44,8 @@
   fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS_ONE_SESSION_FABRIC_VOCABULARY]
-  # One row = picker entry + zellij session identity + cwd + float policy + warm posture. Local rows project from the name-policy register; remote
-  # rows derive from ssh-host mount rows (cwd = the rclone mountpoint), so a second VPS lights the picker with zero edits here. `warm` rows
-  # resurrect in the background at login (forge-workspace --warm); `float` names the shape workspace-scoped floats take while the workspace is active.
+  # One row = picker entry + zellij session identity + cwd + float policy + warm posture. Rows project from the local name-policy register; `warm`
+  # rows resurrect in the background at login (forge-workspace --warm), and `float` names the shape workspace-scoped floats take.
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
@@ -57,20 +56,7 @@
       float = "utility";
       warm = lib.elem "wezterm-workspace-warm" r.consumers;
     })
-    (builtins.filter (r: r.domain == "estate-repo") naming)
-    ++ lib.concatMap (
-      h:
-        map (m: {
-          name = "${h.name}-${m.name}";
-          label = "[${lib.toUpper h.name} ${lib.toUpper m.name}]";
-          cwd = m.mountpoint;
-          kind = "remote";
-          host = h.name;
-          float = "remote";
-          warm = false;
-        })
-        h.mounts
-    ) (lib.attrValues sshHosts);
+    (builtins.filter (r: r.domain == "estate-repo") naming);
   defaultWorkspace =
     (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {slug = "forge";} naming).slug;
   warmSlugs = map (r: r.name) (builtins.filter (r: r.warm) workspaceRows);
@@ -90,9 +76,9 @@
   # rows without it keep the native clipboard default.
   hostAliasAlternation =
     lib.concatStringsSep "|"
-    (map lib.escapeRegex (lib.unique (lib.concatMap (h: h.aliases ++ [h.tunnelHost]) (lib.attrValues sshHosts))));
+    (map lib.escapeRegex (lib.unique (lib.concatMap (h: h.aliases) (lib.attrValues sshHosts))));
   hostDomains = lib.listToAttrs (lib.concatMap (
-    h: map (a: lib.nameValuePair a "SSH:${h.name}") (lib.unique (h.aliases ++ [h.tunnelHost]))
+    h: map (a: lib.nameValuePair a "SSH:${h.name}") (lib.unique h.aliases)
   ) (lib.attrValues sshHosts));
   quickSelectRows =
     [
@@ -134,7 +120,6 @@
   ];
 
   # --- [FLOATING_UTILITY_DECK_ROWS]
-  # `remote` is the workspace-scoped shape remote workspaces select: near-opaque so a remote-context float never reads as a local one.
   floatRows = {
     utility = {
       width = 120;
@@ -148,13 +133,6 @@
       height = 24;
       level = "AlwaysOnTop";
       opacity = 0.88;
-      decorations = "RESIZE";
-    };
-    remote = {
-      width = 120;
-      height = 32;
-      level = "AlwaysOnTop";
-      opacity = 0.98;
       decorations = "RESIZE";
     };
   };
@@ -556,15 +534,7 @@
         printf 'forge-workspace: unknown slug %s\n' "$slug" >&2
         exit 64
       fi
-      IFS=$'\x1f' read -r cwd kind < <(jq -r '[.cwd, .kind] | join("\u001f")' <<<"$row")
-
-      # Remote rows ride a mountpoint: device-diff against the parent proves the mount answers before a session lands on a dead directory.
-      if [ "$kind" = "remote" ] \
-        && [ "$(stat -c %d "$cwd" 2>/dev/null || echo x)" = "$(stat -c %d "''${cwd%/*}" 2>/dev/null || echo y)" ]; then
-        emit "$slug" spawn error "mount absent at $cwd (forge-vps-mount agent down?)" "-"
-        printf 'forge-workspace: %s is not mounted; check the mount agent receipts\n' "$cwd" >&2
-        exit 69
-      fi
+      cwd="$(jq -r '.cwd' <<<"$row")"
 
       # Space bridge: provider table decides; `none` is a declared degrade.
       space_state="degrade:provider-none"
@@ -637,7 +607,7 @@ in {
       }
       {
         assertion = workspaceDupes == [];
-        message = "wezterm: duplicate workspace row names (local/remote collision): ${lib.concatStringsSep ", " workspaceDupes}";
+        message = "wezterm: duplicate workspace row names: ${lib.concatStringsSep ", " workspaceDupes}";
       }
     ];
 

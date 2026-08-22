@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/default.nix
 # ----------------------------------------------------------------------------
-# Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS mounts projected
+# Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS projected
 # from the estate SSH rows, and the diagnostic previewer kernel. File-action routing is rows here, never inline TOML literals; upstream-default rows
 # are deleted, so every settings row below diverges from the 26.5.6 preset.
 {
@@ -14,10 +14,8 @@
   ...
 }: let
   tomlFormat = pkgs.formats.toml {};
-  mountRoot = config.forge.ssh.mountRoot;
-
-  # Remote-context Header badge (theme owner contextBadges.remote): a VPS tree — SFTP VFS url or rclone mount — reads the same glyph + hue as
-  # the prompt hostname and the wezterm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
+  # Remote-context Header badge (theme owner contextBadges.remote): an SFTP tree reads the same glyph and hue as the prompt hostname and the
+  # WezTerm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
   badge = config.forge.theme.projections.contextBadges.remote;
   remoteBadgeLua = ''
 
@@ -25,9 +23,6 @@
     Header:children_add(function()
         local cwd = tostring(cx.active.current.cwd)
         local host = cwd:match("^sftp://([^/]+)")
-        if not host and cwd:find("${mountRoot}/", 1, true) == 1 then
-            host = cwd:sub(${toString (builtins.stringLength mountRoot + 2)}):match("^[^/]+")
-        end
         return host and ui.Span(" ${badge.glyph} " .. host .. " "):fg("${badge.color}"):bold() or ""
     end, 500, Header.LEFT)
   '';
@@ -142,12 +137,11 @@
       }
     ];
 
-  # Preload opt-outs: remote mounts (device, SFTP VFS, and the rclone VPS mount root), caches, and generated trees never burn preview
-  # bandwidth eagerly; hover still previews on demand.
+  # Preload opt-outs: volumes, SFTP, caches, and generated trees never spend preview bandwidth eagerly; hover still previews on demand.
   preloaderRows = map (url: {
     inherit url;
     run = "noop";
-  }) ["/Volumes/**" "${config.forge.ssh.mountRoot}/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
+  }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
   # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status; the version assert pins the
   # 26.5.6 surface these rows and files spell — fetcher `group` grammar, per-lane task worker pools, and the [services] vfs.toml schema.

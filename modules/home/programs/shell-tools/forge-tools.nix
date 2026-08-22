@@ -150,7 +150,7 @@
           ;;
       esac
       if [ -z "$host" ]; then
-        if [ "$os" = "darwin" ]; then host="macbook"; else host="maghz"; fi
+        if [ "$os" = "darwin" ]; then host="macbook"; else host="vps"; fi
       fi
 
       forge_root="''${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}"
@@ -512,7 +512,6 @@
     # pinned store-path origin; the live cache is empty — regrowth is litter.
     glob = {
       zdotdir-compdump = [".config/zsh" ".zcompdump*" 0];
-      mcp-stage-litter = [".cache/forge-mcp" ".stage.*" 0];
       zshrc-backups = ["" ".zshrc.backup-*" 1];
       wezterm-plugin-clone-cache = ["Library/Application Support/wezterm/plugins" "*" 1];
       downloads-office-locks = ["Downloads" "~$*" 1];
@@ -543,7 +542,6 @@
       codex-sessions-retention = [".codex/sessions" 60 ""];
       codex-archived-sessions-retention = [".codex/archived_sessions" 60 ""];
       codex-attachments-retention = [".codex/attachments" 30 ""];
-      codex-previous-binary = [".local/bin" 14 "codex.previous"];
     };
     # Stale trusted-project rows (nonexistent paths, scratch-class prefixes) leave config.toml; durable repo rows stay.
     codex-trust.codex-trusted-projects = ".codex/config.toml";
@@ -566,7 +564,6 @@
       ledger-pulumi-plugins = [".pulumi" 2 "services/ provider pins" "pulumi plugin rm --all; reinstall pinned"];
       ledger-rhinocode = [".rhinocode" 2 "rhino AEC lane" "operator"];
       ledger-npm-global = [".local/share/npm" 1 "pnpm-only law" "collapse remaining globals onto pnpm"];
-      ledger-forge-mcp-cache = [".cache/forge-mcp" 1 "shell-tools/mcp-fleet.nix" "trash; launchers rebuild on next start"];
       ledger-docker-root-dot = [".docker" 1 "environments/containers.nix" "deadlink row + endpoint-truth adjudication"];
       ledger-xdg-trash = [".local/share/Trash" 2 "trash-first cleanup law" "operator empties Trash"];
       ledger-nix-eval-cache = [".cache/nix" 3 "determinate-nixd" "trash eval/tarball caches; regenerated"];
@@ -1238,15 +1235,15 @@
     '';
   };
 
-  # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through the Maghz tunnel, idempotent
+  # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through client/runtime checks, idempotent
   # and re-enterable from any step (--from/--only). Probes stay owner-local (forge-redeploy receipts, forge-terminal-accept, forge-mcp doctor); this
   # owner orders and asserts. Key material is asserted by NAME only, never value.
   forgeAccept = mkTool {
     name = "forge-accept";
-    inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.lsof pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
+    inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.zellij pkgs.flock forgeActivationSweep forgeRedeploy];
     text = ''
       ${statusFold}
-      declare -ra STEPS=(preflight switch replay outputs zellij terminal fleet lanes maghz relaunch)
+      declare -ra STEPS=(preflight switch replay outputs zellij terminal fleet lanes relaunch)
       usage() {
         printf 'Usage: forge-accept [--from STEP | --only STEP | --list]\n  steps: %s\n' "''${STEPS[*]}" >&2
         exit 64
@@ -1492,60 +1489,6 @@
         fi
       }
 
-      # Holder classification separates routine (colima local-parity mode) from regression (a shared ssh mux retaining tunnel forwards).
-      classify_holder() {
-        local cmd
-        cmd="$(/bin/ps -o command= -p "$1" 2>/dev/null || true)"
-        case "$cmd" in
-          *colima* | *lima*) echo colima ;;
-          *ssh*) echo ssh-mux ;;
-          *) echo other ;;
-        esac
-      }
-
-      # One iteration per ssh-registry tunnel row: a new vpsTunnels row lands in acceptance untouched.
-      step_maghz() {
-        local name last state kinds receipts
-        local -a tunnel_names=(${lib.concatStringsSep " " (lib.attrNames config.forge.ssh.hosts)})
-        for name in "''${tunnel_names[@]}"; do
-          receipts="''${FORGE_TUNNEL_RECEIPTS:-$HOME/Library/Logs/forge-$name-vps-tunnel.receipts.log}"
-          state=""
-          last="$(tail -1 "$receipts" 2>/dev/null || true)"
-          if [ -z "$last" ]; then
-            row WARN "$name" "no tunnel receipts at $receipts"
-          else
-            [[ "$last" =~ state=([a-z-]+) ]] && state="''${BASH_REMATCH[1]}"
-            case "$state" in
-              up)
-                row PASS "$name" "tunnel up: ''${last#*state=up}"
-                ;;
-              port-conflict)
-                local -a cports=()
-                [[ "$last" =~ spawn:([0-9\ ]+) ]] && read -ra cports < <(printf '%s\n' "''${BASH_REMATCH[1]}")
-                # lsof exits 1 when a holder vanished between probes; under pipefail that rc would kill the step before the row lands.
-                kinds="$(for p in "''${cports[@]}"; do
-                  lsof -nP -iTCP:"$p" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2}' || true
-                done | sort -u | while IFS= read -r hpid; do classify_holder "$hpid"; done | sort -u | paste -sd' ' -)"
-                case "$kinds" in
-                  *ssh-mux*)
-                    row FAIL "$name" "port-conflict regression: a shared ssh ControlMaster retains the forwards; exit the mux (ssh -O exit $name) — ControlPath=none on the tunnel host prevents recurrence"
-                    ;;
-                  colima)
-                    row WARN "$name" "port-conflict routine: local compose parity mode holds the forwards; boot the tunnel agent out while local mode runs"
-                    ;;
-                  *)
-                    row WARN "$name" "port-conflict: holder kinds=''${kinds:-unknown}"
-                    ;;
-                esac
-                ;;
-              *)
-                row WARN "$name" "tunnel state=''${state:-unknown}: ''${last#*state=}"
-                ;;
-            esac
-          fi
-        done
-      }
-
       step_relaunch() {
         row INSTRUCT relaunch-chords "operator: in a fresh WezTerm window, verify karabiner leader chords fire — letter chords AND shifted-punctuation binds (key-identity law)"
         row INSTRUCT relaunch-popup "operator: verify the yazi popup rail — toggle chord opens one popup, repeat chord dismisses, F1 tooltip renders"
@@ -1575,12 +1518,9 @@
   # ~/.local/bin admission-or-removal decisions: every unmanaged entry carries a named ruling; an entry absent from this table reports unadjudicated.
   localBinDecisions = pkgs.writeText "forge-path-doctor-decisions.json" (builtins.toJSON {
     claude = "admitted: launcher symlink into the versioned install";
-    codex = "admitted-agent: unmanaged binary; manifest admission row open";
-    "codex.previous" = "retention: self-update backup; aged out by forge-cleanup";
-    coderabbit = "reviewer-identity: unmanaged reviewer binary (services matrix)";
+    coderabbit = "reviewer-identity: official self-updating reviewer binary (services matrix)";
     cr = "reviewer-identity: symlink to coderabbit";
-    greptile = "reviewer-identity: unmanaged reviewer binary (services matrix); v3.4.0+ single self-contained binary, no sibling bundle";
-    macroscope = "reviewer-identity: unmanaged reviewer binary (services matrix); release-asset install, never `macroscope update`";
+    macroscope = "reviewer-identity: official self-updating reviewer binary (services matrix)";
     agy = "admitted-agent: antigravity CLI";
     "pre-commit" = "uv-lane: uv tool shim";
     "pynvim-python" = "uv-lane: uv tool shim";

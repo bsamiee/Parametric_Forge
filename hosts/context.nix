@@ -29,10 +29,9 @@ in {
     ssh = {inherit authorizedKeys;};
   };
 
-  # Hostinger VPS: x86_64, BIOS boot, single /dev/sda. Primary user mirrors the Darwin identity; serviceUsers
-  # carry the Maghz compose-plane workload identities that own the tunnel and deploy rows.
-  maghz = {
-    name = "maghz";
+  # Hostinger VPS: x86_64, BIOS boot, single /dev/sda. This row owns deployment and client connection facts, keeping provider moves to one edit.
+  vps = {
+    name = "vps";
     os = "nixos";
     system = "x86_64-linux";
     timeZone = "America/Chicago";
@@ -44,13 +43,11 @@ in {
       name = "bardiasamiee";
       home = "/home/bardiasamiee";
     };
-    serviceUsers = [
-      {
-        name = "maghz-agent";
-        groups = ["docker"];
-      }
-    ];
-    ssh = {inherit authorizedKeys;};
+    ssh = {
+      inherit authorizedKeys;
+      hostName = "srv1196440.hstgr.cloud";
+      hostKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAlmIUKQSIH1e3bBtoXCFXhn8Ti0i3y13hRELMd0FNAL";
+    };
     disk.device = "/dev/sda";
     # Hostinger serves no DHCP: static addressing (proto static route, /24 + /48 scopes).
     network = {

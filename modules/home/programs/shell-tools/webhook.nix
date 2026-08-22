@@ -15,7 +15,7 @@
   ...
 }: let
   jsonFormat = pkgs.formats.json {};
-  port = "9010"; # beside the maghz tunnel's loopback 9000 (VPS hook forward), never under it
+  port = "9010";
 
   # Source rows: signature grammar + event-id extraction per emitter, plus optional `match` pins ({source="header"|"payload"; name; value})
   # ANDed beside the HMAC clause. `ping` carries no signature and no projector — it is the readiness contract only.

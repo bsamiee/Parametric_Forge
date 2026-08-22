@@ -19,9 +19,6 @@
     WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
     GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";
     GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
-    MAGHZ_REMOTE_HOST = "31.97.131.41";
-    MAGHZ_REMOTE_USER = "maghz-agent";
-    MAGHZ_REMOTE_WORKROOT = "/home/maghz-agent/maghz";
   };
   # GUI-session replay writes the op cache into the launchd domain; a missing name clears its stale GUI value.
   guiOpSecrets = pkgs.writeShellApplication {

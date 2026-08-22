@@ -77,7 +77,6 @@
     }) [
       ["Parametric_Forge" "forge" ["television-channel-prefix" "receipt-log-prefix" "launchd-agent-name-prefix" "wezterm-workspace-name" "wezterm-workspace-warm" "zellij-session-name"]]
       ["Rasm" "rasm" ["zellij-session-name"]]
-      ["Maghz" "maghz" ["tunnel-receipt-partition" "zellij-session-name"]]
     ];
   channelPrefix = (lib.findFirst (r: lib.elem "television-channel-prefix" r.consumers) {slug = "forge";} naming).slug;
   slugClaims = lib.concatMap (r: [r.slug] ++ r.previous) naming;
@@ -102,7 +101,8 @@
   };
   receiptSources =
     map (r: {grain = "kv";} // r)
-    (map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
+    (
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
@@ -112,26 +112,10 @@
           grain = "json";
         }
       ]
-      # Tunnel and mount rows derive from the ssh host registry: a new VPS or mount row appears here untouched; paths follow each supervisor's
-      # per-OS write target (launchd logs on Darwin, systemd state on Linux).
-      ++ lib.mapAttrsToList (name: _: {
-        kind = "tunnel-${name}";
-        path = osPath "Library/Logs/forge-${name}-vps-tunnel.receipts.log" ".local/state/forge-tunnels/${name}-vps-tunnel.receipts.log";
-        emitter = "${name}-vps-tunnel supervisor";
-      })
-      config.forge.ssh.hosts
-      ++ lib.concatLists (lib.mapAttrsToList (
-          name: h:
-            map (m: {
-              kind = "mount-${name}-${m.name}";
-              path = osPath "Library/Logs/forge-${name}-mount-${m.name}.receipts.log" ".local/state/forge-mounts/${name}-mount-${m.name}.receipts.log";
-              emitter = "forge-vps-mount supervisor";
-            }) (h.mounts or [])
-        )
-        config.forge.ssh.hosts));
+    );
 
   # --- [REGISTER_JSON_PROJECTIONS]
-  # MCP rows sanitize at the seam — endpoint basename, key NAMES, pin, doctor family — never argv, token custody paths, or values; `sub` projects
+  # MCP rows sanitize at the seam — endpoint basename, key NAMES, runner, doctor family — never argv, token custody paths, or values; `sub` projects
   # an optional sub-attrset onto its closed key family, null when absent.
   sub = keys: v:
     if v == null
@@ -144,7 +128,7 @@
       envKeys = r.envKeys or [];
       clients = r.clients or ["claude" "codex"];
       assertLevel = r.assertLevel or "full";
-      launcher = sub (lib.genAttrs ["pkg" "version"] (_: null)) (r.launcher or null);
+      launcher = sub (lib.genAttrs ["kind" "pkg" "source"] (_: null)) (r.launcher or null);
       codex = r.codex or null;
       doctor = sub {execs = [];} (r.doctor or null);
     })
@@ -171,7 +155,7 @@
       // lib.optionalAttrs (lib.length t > 2) {binds = lib.elemAt t 2;}) {
       aliases = [''.[] | [.alias, .category, .risk, .expansion, .desc] | @tsv'' "shell alias register"];
       chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
-      mcp = [''.[] | [.name, .transport, (.launcher.version // "-"), .assertLevel] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
+      mcp = [''.[] | [.name, .transport, (.launcher.kind // "remote"), .assertLevel] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
       naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];
     }
     // {

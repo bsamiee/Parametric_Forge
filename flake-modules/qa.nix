@@ -43,7 +43,7 @@
       (import ../modules/home/scripts/fmt.nix {pkgs = forgePkgs;}).home.packages;
     # Both-OS static gate as check rows: every context host's toplevel must evaluate, deriving from the context rows so any system a host runs
     # proves every host's eval and a new host or OS joins with zero edits. drvPath context is discarded so the row proves eval, never builds a host.
-    # Scar: a dead maghz eval once shipped through darwin-only switches.
+    # Scar: a dead VPS eval once shipped through Darwin-only switches.
     hostContext = import ../hosts/context.nix;
     hostEvals = optionalAttrs (builtins.elem system (map (host: host.system) (builtins.attrValues hostContext))) (mapAttrs' (
         name: host:
