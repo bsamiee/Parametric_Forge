@@ -144,9 +144,10 @@
   }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
   # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status; the version assert pins the
-  # 26.5.6 surface these rows and files spell — fetcher `group` grammar, per-lane task worker pools, and the [services] vfs.toml schema.
-  fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.5.6")
-  "yazi ${yaziPkg.version}: config assumes the 26.5.6 fetcher/tasks/vfs grammar";
+  # surface these rows and files spell — fetcher `group` grammar, per-lane task worker pools, and the scheme-keyed `[sftp.<name>]` vfs.toml schema that
+  # replaced the discriminated `[services.<name>]` table. A floor alone cannot catch an upward grammar break, so it tracks the spelled surface.
+  fetcherRows = assert lib.assertMsg (lib.versionAtLeast yaziPkg.version "26.8.15")
+  "yazi ${yaziPkg.version}: config assumes the 26.8.15 fetcher/tasks/vfs grammar";
     map (side: {
       url = "${side}://*";
       run = "mime-ext.${side}";
@@ -335,12 +336,11 @@ in {
 
   xdg.configFile."yazi/keymap.toml".source = ./keymap.toml;
 
-  # SFTP VFS mounts projected from the estate SSH rows: one service per host, authenticated through the 1Password agent socket; enter with
-  # `cd sftp://<host>/`. Preloading over the tunnel is opted out above.
+  # SFTP VFS projected from the estate SSH rows: one `[sftp.<name>]` table per host, authenticated through the 1Password agent socket; enter with
+  # `cd sftp://<host>/`. Preloading over the link is opted out above.
   xdg.configFile."yazi/vfs.toml".source = tomlFormat.generate "yazi-vfs" {
-    services =
+    sftp =
       lib.mapAttrs (_: row: {
-        type = "sftp";
         host = row.hostName;
         inherit (row) user;
         port = 22;
