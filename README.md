@@ -97,7 +97,7 @@ Doppler owns project and service configuration; 1Password owns local operator an
 
 ## [08]-[SSH_ESTATE]
 
-One ed25519 key serves everything: custodied in the 1Password Personal vault, served through its agent socket, registered on GitHub for authentication and signing, with `~/.ssh/id_ed25519` as the recovery pair. Commit signing uses SSH format and generated allowed signers. `hosts/context.nix` owns the generic VPS destination and pinned host key; `ssh.nix` projects native OpenSSH, WezTerm, and Yazi SFTP clients. Bounded forwarding uses OpenSSH's own `-L`, `-R`, or `-D` flags instead of a resident service.
+One ed25519 key serves everything: custodied in the 1Password Personal vault, served through its agent socket, registered on GitHub for authentication and signing. No private key lands on disk: vault sync is the recovery, and a local copy shadows a dead agent (`scars.md` [02]-[SIGNING]). Commit signing uses SSH format and generated allowed signers. `hosts/context.nix` owns the generic VPS destination and pinned host key; `ssh.nix` projects native OpenSSH, WezTerm, and Yazi SFTP clients. Bounded forwarding uses OpenSSH's own `-L`, `-R`, or `-D` flags instead of a resident service.
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
