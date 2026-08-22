@@ -24,6 +24,7 @@
 - `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
 - Nix option and package truth routes through the `nixos` MCP first, never recall; `CLAUDE.md` [03] carries the tool contract and its division of labor with `context7` and module source.
+- `forge-browse tools` renders every packaged estate command with its owner file and its trigger; `~/.config/forge/registers/tools.json` answers the same question without a TTY. Consult that register before hand-rolling a pipeline the estate already packages — `CLAUDE.md` [02] carries the load-bearing triggers for the maintenance rails.
 
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
@@ -45,6 +46,7 @@
 - Any change to a module, overlay, or launcher lands through `forge-redeploy --switch` and proves through `forge-accept`; an edited `.nix` file without a switch is invisible to the running estate.
 - A file created in the working tree is `git add --intent-to-add`ed before its first build — untracked files are invisible to the git-filtered flake source, and a dirty-tree build silently packages without them.
 - Shared-home module edits prove both hosts before landing: the Darwin system build and `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
+- `forge-doctor` diagnoses a machine that misbehaves after a switch, before anyone theorizes about it: `parity` reads generation-versus-`$HOME` drift, `launchd` reads the declared-versus-live agent census, `path` reads binary provenance and cross-owner shadows. Every lens is read-only, so it opens the investigation rather than closing it.
 - Forge deploys the generic `vps` NixOS host over SSH (`forge-redeploy --os nixos --host vps --target-host <ssh>`). Its baseline exposes only SSH; workloads and ingress require explicit owners.
 
 ## [07]-[REVIEW_GUIDELINES]

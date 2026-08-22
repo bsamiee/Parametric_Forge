@@ -66,7 +66,7 @@ Rulings derive from principles, not precedent lists. These axes resolve each new
 | :-----: | :--------------------- | :---------------------------------------------------------------------------------------------------------- |
 |  [01]   | Greenfield-only        | Every touched surface rebuilds to the best current shape; no compatibility layer of any kind survives.      |
 |  [02]   | One owner per axis     | One declaring file per concern; a second copy of any fact is a fork — extend the owner, never add files.    |
-|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table; a new host, tunnel, or service is one row.     |
+|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table; a new host, package, or service is one row.    |
 |  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction.          |
 |  [05]   | IaC over YAML          | Service state is typed Pulumi rows in `services/` — Doppler, GitHub — never per-repo files or click-ops.    |
 |  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands. |
@@ -103,6 +103,10 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 `forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable pipeline from preflight through fleet and credential-lane checks to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
 
+`forge-doctor <lens> [--json]` is the read-only machine doctor standing behind that rail, one lens per question: `path` classifies PATH owners and cross-owner shadows, `launchd` reconciles declared plists against the live `launchctl` table, `parity` diffs the generation's home-files against live `$HOME`, and `updates` projects a currency board from existing receipts. Each lens emits one typed row stream rendering both the human table and `--json`, and drift exits nonzero.
+
+`forge-cleanup plan|apply|sweep` drives the litter registry: `plan` writes a durable precheck receipt, `apply` trashes only plan-proved rows after re-detecting live state, and `sweep` is the hourly orphan lane. Registry rows carry standing policy no first-party tool expresses; storage questions are answered on demand with `dust -d 1 -n 20 -r ~` and each tool's own prune verb.
+
 Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. Scheduled nix rails double as manual commands and append receipts under `~/Library/Logs/forge-<name>.receipts.log`; a failed rail's receipt governs re-entry. Each new recurring job lands as one agent declaration.
 
 ## [10]-[TOOLCHAINS]
@@ -128,7 +132,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 |  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |
 |  [05]   | Python          | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                       |
 |  [06]   | Markdown        | `docs/standards/` prose owners; `prose_gate.py` (docgen skill) is the check + fix rail.                         |
-|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law; standing transports add health receipts.          |
+|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law; every scheduled rail receipts its own run.        |
 
 ## [13]-[GITHUB_AND_SERVICES]
 
@@ -167,10 +171,11 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 - Format: `nix fmt -- --check` — full proof: `nix flake check`.
 - Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
-- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[08]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
+- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 - Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor`, and `forge-mcp drift` after any fleet or client change.
+- Discovery: `forge-browse tools` indexes every packaged command with its owner file and its trigger; bare `forge-browse` lists the register domains, and `forge-receipts --verb`/`--sql`/`--audit` queries the receipt plane every rail writes.
 
-MCP launchers resolve server currency through their ecosystem runners at spawn. Every other family moves through the ordered update sequence on demand; `forge-update-board` reads existing receipts, local Homebrew currency, and flake-input age.
+MCP launchers resolve server currency through their ecosystem runners at spawn. Every other family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
 
 ## [16]-[LICENSE]
 

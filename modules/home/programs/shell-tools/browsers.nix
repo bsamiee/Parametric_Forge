@@ -102,7 +102,7 @@
   receiptSources =
     map (r: {grain = "kv";} // r)
     (
-      map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "path-doctor" "launchd-doctor" "parity" "update-board" "fonts||forge-project-fonts" "theme-proof"]
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
@@ -111,8 +111,55 @@
           emitter = "rsync-mv.sh";
           grain = "json";
         }
+        # The inbox emits JSONL under its own XDG state root (webhook.nix).
+        {
+          kind = "webhook";
+          path = ".local/state/forge-webhook/webhook.receipts.jsonl";
+          emitter = "forge-webhook-inbox";
+          grain = "json";
+        }
       ]
     );
+
+  # --- [TOOL_REGISTER]
+  # The estate's own command index — [owner purpose when] per packaged executable. `when` is the load-bearing column: a command whose trigger goes
+  # unstated is never reached for, so a row without one is dead weight. A newly packaged command lands here beside its owner file (topology [08]).
+  toolRows =
+    lib.mapAttrsToList (name: t: {
+      inherit name;
+      owner = lib.elemAt t 0;
+      purpose = lib.elemAt t 1;
+      when = lib.elemAt t 2;
+    }) {
+      fmt = ["home/scripts/fmt.nix" "Universal formatter front door; repo law outranks the machine XDG fallbacks" "before landing any edited file"];
+      forge-accept = ["shell-tools/forge-tools/accept.nix" "Ordered post-switch acceptance rail, receipting pass/warn/fail per step" "after every --switch; --from/--only re-enter one failed step"];
+      forge-activation-sweep = ["shell-tools/forge-tools/deploy.nix" "Root-owned in-the-way HM target detection; --clear batches one sudo removal" "when a switch dies writing a HOME target"];
+      forge-browse = ["shell-tools/browsers.nix" "fzf browser over every register domain, with read-only previews" "to find an alias, chord, MCP row, name ruling, or command"];
+      forge-cleanup = ["shell-tools/forge-tools/cleanup.nix" "plan/apply/sweep over the typed litter registry, trash-first" "plan on demand, apply only on a proved plan; sweep is the hourly agent"];
+      forge-console = ["shell-tools/posting.nix" "Posting TUI over the service collections, credentials materialized at launch" "to exercise a service endpoint by hand"];
+      forge-doctor = ["shell-tools/forge-tools/doctor.nix" "One machine doctor: path, launchd, parity, updates lenses; --json per lens" "before blaming the estate for a shadowed binary, dead agent, HOME drift, or staleness"];
+      "forge-edit.sh" = ["home/scripts/terminal.nix" "Editor handoff: routes a path into the tab's Neovim RPC socket, or a fresh instance" "as $EDITOR; the yazi opener calls it directly"];
+      forge-font-doctor = ["home/fonts.nix" "CoreText registration proof per manifest role; --json rows, fontconfig held to Pango consumers" "when a glyph renders wrong or a font fails to enumerate"];
+      forge-fmt = ["flake-modules/tooling.nix" "Repo treefmt wrapper behind nix fmt; --check maps to --ci" "on every touched repo file; nix flake check gates it"];
+      forge-git-doctor = ["git-tools/default.nix" "Resolved git identity, signing rows, op-agent key service, fsmonitor health" "when a commit fails to sign or fsmonitor stalls"];
+      forge-install-antigravity-cli = ["languages/dev-tools.nix" "Install or refresh the Antigravity CLI into ~/.local/bin" "when agy is absent or outdated"];
+      forge-mcp = ["shell-tools/mcp-launchers.nix" "Fleet reconcile, wrapper presence doctor, client projection drift" "after any mcp-fleet.nix or client-registration change"];
+      forge-nix-maintenance = ["shell-tools/forge-tools/deploy.nix" "Generation trim, profile GC, store optimise under the deploy lock" "weekly agent; by hand when the store outgrows the disk"];
+      forge-osa = ["languages/apple-tools.nix" "OSA syntax gate and the canonical comment-preserving AppleScript formatter" "on every AppleScript or JXA edit"];
+      forge-provision = ["overlays/forge-provision/" "Local Docker/Compose Postgres estate behind one schema-v3 JSON envelope" "standing up or debugging a project database"];
+      forge-python-overlay = ["languages/scientific-tools.nix" "build|link|unlink|status the nixpkgs python-module env into a uv venv" "when a venv needs the uncached nixpkgs python modules"];
+      forge-receipts = ["shell-tools/browsers.nix" "Receipt plane: rows, DuckDB --sql/--verb over the event spine, registry --audit" "after any failed rail, and --audit after adding a receipt emitter"];
+      forge-redeploy = ["shell-tools/forge-tools/deploy.nix" "Build, closure-diff, activate, receipt; the only sanctioned activation path" "after any modules/, overlays/, hosts/, or flake edit"];
+      forge-rhino-up = ["shell-tools/mcp-launchers.nix" "Bring the Rhino host up and prove its MCP listener registry" "before the first rhino-mcp-platform call of a session"];
+      forge-scientific-env = ["languages/scientific-tools.nix" "Native build closure as pkg-config, cmake, and library search paths" "building a wheel-less sdist or resyncing the repo venv"];
+      "forge-terminal-accept.sh" = ["home/scripts/terminal.nix" "Assert the WezTerm/Zellij/Yazi/Neovim mesh end to end; JSON receipt" "after any terminal-mesh, chord, or workspace row edit"];
+      forge-webhook = ["shell-tools/webhook.nix" "Signed-event inbox listener over the typed source rows" "launchd owns it on Darwin; run by hand only to debug a delivery"];
+      "forge-yazi.sh" = ["home/scripts/terminal.nix" "Yazi popup rail over the DDS bridge; toggle, dismiss, and SFTP entry" "to open the file workbench without leaving the pane"];
+      forge-workspace = ["apps/wezterm/default.nix" "Workspace picker and warm rail over the session-fabric rows" "to enter or pre-warm a workspace session"];
+      forge-zellij = ["apps/zellij/ops.nix" "Session graph, row inspection, state classification, pane star" "when a session's identity or liveness is in question"];
+      gha = ["home/scripts/gha.nix" "GitHub Actions run inspection from the terminal" "chasing a failed workflow run"];
+      loc = ["home/scripts/loc.nix" "Line-of-code and complexity census; the density law's measuring instrument" "before and after any density pass"];
+    };
 
   # --- [REGISTER_JSON_PROJECTIONS]
   # MCP rows sanitize at the seam — endpoint basename, key NAMES, runner, doctor family — never argv, token custody paths, or values; `sub` projects
@@ -140,6 +187,7 @@
     chords = config.forge.chords.register or [];
     mcp = mcpRegister;
     receipts = receiptSources;
+    tools = toolRows;
   };
 
   # --- [BROWSE_CATALOG]
@@ -157,6 +205,7 @@
       chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
       mcp = [''.[] | [.name, .transport, (.launcher.kind // "remote"), .assertLevel] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
       naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];
+      tools = [''.[] | [.name, .when, .purpose] | @tsv'' "estate commands: what each owns and when to run it"];
     }
     // {
       receipts = {
@@ -182,10 +231,8 @@
       kinds = ["corpus census: rows, span, failure count per kind" "SELECT kind, count(*) AS n, min(ts) AS first_ts, max(ts) AS last_ts, count(*) FILTER (urgency = 'high') AS failures FROM receipts GROUP BY kind ORDER BY n DESC"];
       failures = ["failure-urgency rows, newest first" "SELECT ts, kind, COALESCE(result, state, status, '-') AS outcome, COALESCE(surface, '-') AS surface FROM receipts WHERE urgency = 'high' ORDER BY ts DESC LIMIT 100"];
       redeploy-trend = ["per-day redeploy runs, build seconds, failures" "SELECT substr(ts, 1, 10) AS day, count(*) AS runs, round(avg(TRY_CAST(json_extract_string(raw, '$.build_s') AS DOUBLE)), 1) AS avg_build_s, round(max(TRY_CAST(json_extract_string(raw, '$.build_s') AS DOUBLE)), 1) AS max_build_s, count(*) FILTER (COALESCE(result, 'ok') != 'ok') AS failures FROM receipts WHERE kind = 'redeploy' GROUP BY day ORDER BY day DESC LIMIT 30"];
-      tunnel-flaps = ["per-day tunnel state transitions" "SELECT substr(ts, 1, 10) AS day, kind, count(*) FILTER (prev IS NOT NULL AND state IS DISTINCT FROM prev) AS flaps, count(*) FILTER (state != 'up') AS down_rows FROM (SELECT ts, kind, state, LAG(state) OVER (PARTITION BY kind ORDER BY ts) AS prev FROM receipts WHERE kind LIKE 'tunnel-%') GROUP BY day, kind ORDER BY day DESC, kind LIMIT 30"];
       accept-trend = ["acceptance pass/warn/fail per run" "SELECT ts, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'pass:(\\d+)', 1) AS INTEGER) AS pass, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'warn:(\\d+)', 1) AS INTEGER) AS warn, TRY_CAST(regexp_extract(json_extract_string(raw, '$.summary'), 'fail:(\\d+)', 1) AS INTEGER) AS fail, result FROM receipts WHERE kind = 'accept' ORDER BY ts DESC LIMIT 30"];
-      timeline = ["unified estate chronology: receipts + attention rows" "SELECT ts, kind, COALESCE(source, kind) AS source, urgency, COALESCE(event, verb, json_extract_string(raw, '$.mode'), json_extract_string(raw, '$.action'), '-') AS what, COALESCE(result, state, status, '-') AS outcome, COALESCE(surface, '-') AS surface FROM receipts ORDER BY ts DESC LIMIT 200"];
-      session-replay = ["forensic chronology of the latest attention session: events + receipts on one join key" "SELECT ts, kind, COALESCE(event, verb, '-') AS what, COALESCE(result, state, status, '-') AS outcome, urgency, COALESCE(surface, '-') AS surface FROM receipts WHERE session_id = (SELECT session_id FROM receipts WHERE kind = 'attention' AND COALESCE(session_id, '-') != '-' ORDER BY ts DESC LIMIT 1) ORDER BY ts DESC LIMIT 200"];
+      timeline = ["unified estate chronology across every registered kind" "SELECT ts, kind, COALESCE(source, kind) AS source, urgency, COALESCE(event, verb, json_extract_string(raw, '$.mode'), json_extract_string(raw, '$.action'), '-') AS what, COALESCE(result, state, status, '-') AS outcome, COALESCE(surface, '-') AS surface FROM receipts ORDER BY ts DESC LIMIT 200"];
     };
   verbsJson = pkgs.writeText "forge-receipts-verbs.json" (builtins.toJSON receiptVerbs);
 

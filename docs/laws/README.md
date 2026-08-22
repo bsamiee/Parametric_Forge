@@ -10,7 +10,7 @@ Repo-wide design and maintenance law: the universal design law with its machine-
 |  [02]   | `modules.md`     | Nix module graph law: modules, overlays, the package manifest, flake roots    |
 |  [03]   | `kernels.md`     | Shell kernel law: packaged `writeShellApplication` bodies and `.sh` surfaces  |
 |  [04]   | `projections.md` | Consumer law: Lua runtime config and generated declarative config             |
-|  [05]   | `agents.md`      | Service-agent law: launchd rows, systemd twins, standing remote transport     |
+|  [05]   | `agents.md`      | Service-agent law: launchd rows and their Linux systemd twins                 |
 |  [06]   | `topology.md`    | The coupling map: which surfaces obligate which counterparts on edit, and why |
 |  [07]   | `scars.md`       | The trap ledger: each paid-for failure and the rule that now forecloses it    |
 

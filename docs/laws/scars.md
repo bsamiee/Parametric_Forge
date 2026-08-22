@@ -43,7 +43,7 @@ Colima is the Docker API / Compose / Buildx / Pulumi default and owns `DOCKER_HO
 |  [05]   | Parallel clients raced one rotating OAuth refresh token           | Fan-out disables unused OAuth rows; Keychain is the fixed store |
 
 - [02]: literal token state overrode wrapper token-file resolution.
-- [03]: tunnel health, env, and wrapper are separate axes.
+- [03]: transport health, env, and wrapper are separate axes.
 - [04]: `claude plugin update` materializes the plugin cache.
 - [05]: `mcp_oauth_credentials_store = "keyring"` prevents backend drift; concurrent lanes omit `heptabase-mcp` unless they call it.
 
