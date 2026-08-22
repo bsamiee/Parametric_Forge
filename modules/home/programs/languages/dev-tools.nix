@@ -65,21 +65,10 @@
     exec ${pkgs.roslyn-ls}/bin/Microsoft.CodeAnalysis.LanguageServer \
       --logLevel Information --extensionLogDirectory "$logdir" "$@"
   '';
-  nuget-mcp-server = assert lib.asserts.assertMsg (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") "nuget-mcp packages the osx-arm64 RID and requires aarch64-darwin";
-    pkgs.runCommand "nuget-mcp-server-osx-arm64-1.4.15" {
-      src = pkgs.fetchurl {
-        url = "https://api.nuget.org/v3-flatcontainer/nuget.mcp.server.osx-arm64/1.4.15/nuget.mcp.server.osx-arm64.1.4.15.nupkg";
-        sha256 = "1zl6xxb7al1pydyma4lhd0fj8an5x0fv8g4h65jh65jz5h76grf1";
-      };
-      nativeBuildInputs = [pkgs.unzip];
-    } ''
-      mkdir -p "$out"
-      unzip -q "$src" -d "$out"
-      chmod +x "$out/tools/net10.0/osx-arm64/NuGet.Mcp.Server"
-    '';
+  # dnx owns NuGet tool resolution and RID selection; an unversioned package reference resolves the stable NuGet.org release at spawn.
   nuget-mcp = pkgs.writeShellScriptBin "nuget-mcp" ''
-    export DOTNET_ROOT="${dotnet-combined}/share/dotnet"
-    exec ${nuget-mcp-server}/tools/net10.0/osx-arm64/NuGet.Mcp.Server "$@"
+    export DOTNET_ROOT="${pkgs.dotnet-sdk_10}/share/dotnet"
+    exec ${pkgs.dotnet-sdk_10}/bin/dnx NuGet.Mcp.Server --source https://api.nuget.org/v3/index.json -- "$@"
   '';
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
   forge-install-antigravity-cli = pkgs.writeShellApplication {
@@ -109,68 +98,6 @@
       curl -fsSL https://antigravity.google/cli/install.sh -o "$tmp/install.sh"
       ${pkgs.bash}/bin/bash "$tmp/install.sh" --dir "$target_dir"
       test -x "$binary"
-    '';
-  };
-  # Codex CLI custody: codex-lane.sh resolves ~/.local/bin/codex, which tracks the newest stable
-  # openai/codex GitHub release per-arch, with a .previous rollback copy kept beside it. ~/.codex stays the sole codex configuration home.
-  forge-install-codex = pkgs.writeShellApplication {
-    name = "forge-install-codex";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.curl
-      pkgs.findutils
-      pkgs.gawk
-      pkgs.gnutar
-      pkgs.gzip
-      pkgs.jq
-    ];
-    text = ''
-      target_dir="${antigravity-cli-bin-dir}"
-      binary="$target_dir/codex"
-      mkdir -p "$target_dir"
-
-      case "$(uname -s)/$(uname -m)" in
-        Darwin/arm64) asset='codex-aarch64-apple-darwin.tar.gz' ;;
-        Darwin/x86_64) asset='codex-x86_64-apple-darwin.tar.gz' ;;
-        Linux/aarch64) asset='codex-aarch64-unknown-linux-musl.tar.gz' ;;
-        Linux/x86_64) asset='codex-x86_64-unknown-linux-musl.tar.gz' ;;
-        *) exit 0 ;;
-      esac
-
-      release_json="$(curl -fsSL 'https://api.github.com/repos/openai/codex/releases?per_page=50')" || {
-        printf '[WARN] codex release lookup failed; keeping existing binary\n' >&2
-        exit 0
-      }
-      latest_tag="$(printf '%s' "$release_json" | jq -r '[.[] | select(.prerelease == false)][0].tag_name')"
-      latest_version="''${latest_tag#rust-v}"
-      current_version="$([ -x "$binary" ] && "$binary" --version 2>/dev/null | awk '{print $2}' || true)"
-      if [ -n "$current_version" ] && [ "$current_version" = "$latest_version" ]; then
-        exit 0
-      fi
-
-      asset_url="$(printf '%s' "$release_json" | jq -r --arg tag "$latest_tag" --arg asset "$asset" \
-        '.[] | select(.tag_name == $tag) | .assets[] | select(.name == $asset) | .browser_download_url' | head -n 1)"
-      [ -n "$asset_url" ] && [ "$asset_url" != null ] || {
-        printf '[WARN] codex asset %s absent from %s; keeping existing binary\n' "$asset" "$latest_tag" >&2
-        exit 0
-      }
-
-      tmp="$(mktemp -d)"
-      trap 'rm -rf "$tmp"' EXIT
-      curl -fL "$asset_url" -o "$tmp/codex.tar.gz"
-      tar -xzf "$tmp/codex.tar.gz" -C "$tmp"
-      extracted="$tmp/codex"
-      if [ ! -x "$extracted" ]; then
-        extracted="$(find "$tmp" -maxdepth 1 -type f -name 'codex-*' | head -n 1)"
-        [ -n "$extracted" ] && chmod +x "$extracted"
-      fi
-      [ -n "$extracted" ] && [ -x "$extracted" ] || {
-        printf '[WARN] codex archive held no executable; keeping existing binary\n' >&2
-        exit 0
-      }
-      [ -x "$binary" ] && cp "$binary" "$binary.previous"
-      install -m 0755 "$extracted" "$binary"
-      "$binary" --version >/dev/null
     '';
   };
 in {
@@ -220,10 +147,6 @@ in {
       ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
         ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli
       '';
-
-      ensureCodexCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        ${forge-install-codex}/bin/forge-install-codex || true
-      '';
     };
 
     packages = with pkgs;
@@ -253,8 +176,12 @@ in {
         qsv # High-performance CSV and tabular data toolkit
         csvlens # Interactive CSV/TSV inspector
         hurl # HTTP request/assertion runner for API probes
-        grpcurl # gRPC server reflection and request CLI
         typos # Fast source and docs typo checker
+
+        # --- [PROTOBUF]
+        protobuf # protoc; buf drives its built-in csharp generator and ships none of its own
+        grpc # grpc_csharp_plugin the C# service row runs (grpc_python_plugin rides the same derivation)
+        grpcurl # gRPC server reflection and request CLI
 
         # --- [NET]
         dotnet-combined
@@ -266,11 +193,10 @@ in {
         # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
         gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
-        pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv (Maghz infra Automation API)
+        pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv
       ]
       ++ dataRoster
-      # nuget-mcp packages the osx-arm64 RID only; Linux gains a RID row before this gate widens.
-      ++ lib.optionals (pkgs.stdenv.hostPlatform.system == "aarch64-darwin") [nuget-mcp];
+      ++ [nuget-mcp];
 
     # DOTNET_ROOT required for Roslyn and other SDK-discovery tools; re-evaluated on every rebuild, store path stays current.
     sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
