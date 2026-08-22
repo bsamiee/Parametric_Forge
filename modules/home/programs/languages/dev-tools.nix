@@ -182,6 +182,7 @@ in {
         protobuf # protoc; buf drives its built-in csharp generator and ships none of its own
         grpc # grpc_csharp_plugin the C# service row runs (grpc_python_plugin rides the same derivation)
         grpcurl # gRPC server reflection and request CLI
+        protoc-gen-jsonschema # JSON Schema 2020-12 emitter over the descriptor graph (overlay source-build); buf's `local:` row resolves it bare on PATH
 
         # --- [NET]
         dotnet-combined

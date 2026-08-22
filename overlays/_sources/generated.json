@@ -175,6 +175,27 @@
         },
         "version": "11.22.0"
     },
+    "protoc-gen-jsonschema": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "protoc-gen-jsonschema",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "owner": "bufbuild",
+            "repo": "protoschema-plugins",
+            "rev": "v0.6.0",
+            "sha256": "sha256-LGHHpQ75BvapBsFycF1c/vUIKgvm+Rh4QR50c5VGI/g=",
+            "sparseCheckout": [],
+            "type": "github"
+        },
+        "version": "v0.6.0"
+    },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
         "date": null,

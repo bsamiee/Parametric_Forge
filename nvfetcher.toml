@@ -70,3 +70,7 @@ fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean
 [sqlean-x86_64-linux]
 src.github = "nalgeon/sqlean"
 fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-linux-x64.zip"
+
+[protoc-gen-jsonschema]
+src.github = "bufbuild/protoschema-plugins"
+fetch.github = "bufbuild/protoschema-plugins"

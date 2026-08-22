@@ -271,6 +271,8 @@ final: prev: let
   pnpmRow = rowOf "pnpm_11";
   astGrepRow = rowOf "ast-grep-upstream";
   astGrepSource = generatedSources.${astGrepRow.sourcePin};
+  jsonschemaRow = rowOf "protoc-gen-jsonschema";
+  jsonschemaSource = generatedSources.${jsonschemaRow.sourcePin};
 in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
@@ -282,6 +284,26 @@ in
       cargoDeps = prev.rustPlatform.importCargoLock astGrepSource.cargoLock."Cargo.lock";
       passthru = removeAttrs (old.passthru or {}) ["updateScript"];
     });
+    # Go plugin with no protoc linkage: buildGoModule over the generated pin, one subpackage, the row's meta. vendorHash is the one hand-kept
+    # value — nvfetcher cannot derive a Go vendor hash — and it re-keys on every pin advance.
+    protoc-gen-jsonschema = prev.buildGoModule {
+      pname = "protoc-gen-jsonschema";
+      inherit (jsonschemaRow) version;
+      inherit (jsonschemaSource) src;
+      vendorHash = "sha256-1ticxBOa3GSsIGhlNqqS5EbT51mspVHaG/DBBpe5ypU=";
+      subPackages = ["cmd/protoc-gen-jsonschema"];
+      env.CGO_ENABLED = 0;
+      # patchFamily source-substitute: protoplugin prints `Version()` on --version, which reads `(devel)` from a non-VCS build; seat the pin.
+      postPatch = ''
+        substituteInPlace internal/protoschema/protoschema.go \
+          --replace-fail 'return "devel"' 'return "${jsonschemaRow.version}"' \
+          --replace-fail 'ok && buildInfo != nil && buildInfo.Main.Version != ""' 'ok && buildInfo != nil && buildInfo.Main.Version != "" && buildInfo.Main.Version != "(devel)"'
+      '';
+      meta = {
+        inherit (jsonschemaRow) description homepage mainProgram;
+        license = lib.licenses.${jsonschemaRow.license};
+      };
+    };
     carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
       # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
       # the build loudly (patch_drift), never ship an unpatched binary.

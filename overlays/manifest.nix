@@ -205,6 +205,28 @@ in rec {
       mainProgram = "ast-grep";
     };
 
+    protoc-gen-jsonschema = {
+      upstream = "github:bufbuild/protoschema-plugins";
+      # Release tags carry the `v`; the generated pin keeps it because GitHub's archive URL resolves only the literal tag.
+      version = builtins.substring 1 (-1) generatedPins.protoc-gen-jsonschema.version;
+      sourcePin = "protoc-gen-jsonschema";
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      license = "asl20";
+      patchFamily = "source-substitute"; # `debug.ReadBuildInfo` reports `(devel)` outside a tagged checkout; the version literal lands at the source
+      cacheClass = "source-built-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection = {
+        overlay = "new";
+        package = true;
+      };
+      consumers = ["dev-tools"];
+      description = "protoc plugin emitting JSON Schema 2020-12 over the descriptor graph with protovalidate rules folded in";
+      homepage = "https://github.com/bufbuild/protoschema-plugins";
+      mainProgram = "protoc-gen-jsonschema";
+    };
+
     google-cloud-sdk = {
       upstream = "https://dl.google.com/dl/cloudsdk/channels/rapid";
       version = v.gcloud;

@@ -103,6 +103,17 @@
       sha256 = "sha256-V6l+byOj+v/AMVOk74x3CgVSYSuGQK6+Ob/dV1TQ69w=";
     };
   };
+  protoc-gen-jsonschema = {
+    pname = "protoc-gen-jsonschema";
+    version = "v0.6.0";
+    src = fetchFromGitHub {
+      owner = "bufbuild";
+      repo = "protoschema-plugins";
+      rev = "v0.6.0";
+      fetchSubmodules = false;
+      sha256 = "sha256-LGHHpQ75BvapBsFycF1c/vUIKgvm+Rh4QR50c5VGI/g=";
+    };
+  };
   sqlean-aarch64-darwin = {
     pname = "sqlean-aarch64-darwin";
     version = "0.28.4";
