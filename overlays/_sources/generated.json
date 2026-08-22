@@ -34,11 +34,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-BMLUTmEkLIv1bi1mPlMS54Y5M0tKL++EtfWayLyVefs=",
+            "sha256": "sha256-govCloB2W2VrajVN4B2af59REeavmbBM7+BtCcbS29o=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-darwin-arm64"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-darwin-arm64"
         },
-        "version": "2.5.8"
+        "version": "2.5.10"
     },
     "biome-aarch64-linux": {
         "cargoLock": null,
@@ -49,11 +49,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-CdArmDmqG/l7ZfzOObVhxWh/ZSFgfbRuS8/92ZoBdaU=",
+            "sha256": "sha256-QtTq8UUbd6TFmp2vbgGjRLR8EP04SefcXpijzOYVexc=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-arm64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-arm64-musl"
         },
-        "version": "2.5.8"
+        "version": "2.5.10"
     },
     "biome-x86_64-linux": {
         "cargoLock": null,
@@ -64,11 +64,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-Nl8qrHEFGELWWp0DE53A8Yliig6MLcOqLvCaUe+UvL0=",
+            "sha256": "sha256-Et5Czs3xx3aKkr4rM3YFOXxIuTXser6UufJY2oeDbfg=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-x64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-x64-musl"
         },
-        "version": "2.5.8"
+        "version": "2.5.10"
     },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
@@ -169,11 +169,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-hyN9N+rbedxiagV26zpS0j1wQiwyOuXgD8BckfQyN4A=",
+            "sha256": "sha256-V6l+byOj+v/AMVOk74x3CgVSYSuGQK6+Ob/dV1TQ69w=",
             "type": "url",
-            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.21.0.tgz"
+            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.22.0.tgz"
         },
-        "version": "11.21.0"
+        "version": "11.22.0"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
@@ -183,11 +183,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-G8qhU4xCuw0qXQhkkJqvV0dbDiuow4BwVXeQsOxaeFo=",
+            "sha256": "sha256-NlOnDIOnFdcMYnpMtjUjNfmfRox74cm82PQ06Y8IknI=",
             "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-macos-arm64.zip"
+            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-macos-arm64.zip"
         },
-        "version": "0.28.3"
+        "version": "0.28.4"
     },
     "sqlean-aarch64-linux": {
         "cargoLock": null,
@@ -197,11 +197,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-B02nNIeQFSF8oQU3uUf5R/qvta8NgFyrQO63KJVOix8=",
+            "sha256": "sha256-TEOLpVaoUEw+Z5BeBhh2G7KgrPRtHfW/4UAudcAU7M4=",
             "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-linux-arm64.zip"
+            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-arm64.zip"
         },
-        "version": "0.28.3"
+        "version": "0.28.4"
     },
     "sqlean-x86_64-linux": {
         "cargoLock": null,
@@ -211,10 +211,10 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-vyon1pZ7i+sjrONSq9PkJ7vC2tFHfFNNw8qp0ng0Pdw=",
+            "sha256": "sha256-e+tbjHjiG4cYtXomKK60h7586heIpc7S9vowb3R7RKI=",
             "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-linux-x64.zip"
+            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip"
         },
-        "version": "0.28.3"
+        "version": "0.28.4"
     }
 }

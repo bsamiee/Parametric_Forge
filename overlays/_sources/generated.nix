@@ -25,26 +25,26 @@
   };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.5.8";
+    version = "2.5.10";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-darwin-arm64";
-      sha256 = "sha256-BMLUTmEkLIv1bi1mPlMS54Y5M0tKL++EtfWayLyVefs=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-darwin-arm64";
+      sha256 = "sha256-govCloB2W2VrajVN4B2af59REeavmbBM7+BtCcbS29o=";
     };
   };
   biome-aarch64-linux = {
     pname = "biome-aarch64-linux";
-    version = "2.5.8";
+    version = "2.5.10";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-arm64-musl";
-      sha256 = "sha256-CdArmDmqG/l7ZfzOObVhxWh/ZSFgfbRuS8/92ZoBdaU=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-arm64-musl";
+      sha256 = "sha256-QtTq8UUbd6TFmp2vbgGjRLR8EP04SefcXpijzOYVexc=";
     };
   };
   biome-x86_64-linux = {
     pname = "biome-x86_64-linux";
-    version = "2.5.8";
+    version = "2.5.10";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.8/biome-linux-x64-musl";
-      sha256 = "sha256-Nl8qrHEFGELWWp0DE53A8Yliig6MLcOqLvCaUe+UvL0=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-x64-musl";
+      sha256 = "sha256-Et5Czs3xx3aKkr4rM3YFOXxIuTXser6UufJY2oeDbfg=";
     };
   };
   duckdb-aarch64-darwin = {
@@ -97,34 +97,34 @@
   };
   pnpm_11 = {
     pname = "pnpm_11";
-    version = "11.21.0";
+    version = "11.22.0";
     src = fetchurl {
-      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.21.0.tgz";
-      sha256 = "sha256-hyN9N+rbedxiagV26zpS0j1wQiwyOuXgD8BckfQyN4A=";
+      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.22.0.tgz";
+      sha256 = "sha256-V6l+byOj+v/AMVOk74x3CgVSYSuGQK6+Ob/dV1TQ69w=";
     };
   };
   sqlean-aarch64-darwin = {
     pname = "sqlean-aarch64-darwin";
-    version = "0.28.3";
+    version = "0.28.4";
     src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-macos-arm64.zip";
-      sha256 = "sha256-G8qhU4xCuw0qXQhkkJqvV0dbDiuow4BwVXeQsOxaeFo=";
+      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-macos-arm64.zip";
+      sha256 = "sha256-NlOnDIOnFdcMYnpMtjUjNfmfRox74cm82PQ06Y8IknI=";
     };
   };
   sqlean-aarch64-linux = {
     pname = "sqlean-aarch64-linux";
-    version = "0.28.3";
+    version = "0.28.4";
     src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-linux-arm64.zip";
-      sha256 = "sha256-B02nNIeQFSF8oQU3uUf5R/qvta8NgFyrQO63KJVOix8=";
+      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-arm64.zip";
+      sha256 = "sha256-TEOLpVaoUEw+Z5BeBhh2G7KgrPRtHfW/4UAudcAU7M4=";
     };
   };
   sqlean-x86_64-linux = {
     pname = "sqlean-x86_64-linux";
-    version = "0.28.3";
+    version = "0.28.4";
     src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.3/sqlean-linux-x64.zip";
-      sha256 = "sha256-vyon1pZ7i+sjrONSq9PkJ7vC2tFHfFNNw8qp0ng0Pdw=";
+      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip";
+      sha256 = "sha256-e+tbjHjiG4cYtXomKK60h7586heIpc7S9vowb3R7RKI=";
     };
   };
 }
