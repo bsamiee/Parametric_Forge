@@ -1,0 +1,75 @@
+# --- [UPDATE_RAIL] ---------------------------------------------------------------------
+# Project-owned freshness: one weekly sweep proposes both update families as reviewable PRs — flake inputs and nvfetcher pins — and each bump
+# must eval before its PR opens, so a broken update is a red run here, never a red working tree. The estate's own host-eval checks force every
+# host toplevel drvPath per system, and --all-systems reaches them from this runner, so one check gates darwin and NixOS hosts alike. PRs opened
+# with the workflow token deliberately re-trigger nothing — the gate already judged the exact tree each PR proposes. Activation stays a
+# deliberate local `forge-redeploy --switch`; this rail only keeps the proposals current so staleness is a reviewed choice, never drift.
+name: update
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: update-rail
+  cancel-in-progress: true
+
+jobs:
+  flake-lock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # determinate-nix-action tags pin the Nix release itself; nix-installer-action floats the installer even under a SHA pin.
+      - uses: DeterminateSystems/determinate-nix-action@527f17dd63d2d60d3e5552934bc84b9a33a14d11 # v3.22.2
+      - name: Bump flake inputs
+        run: nix flake update
+      - name: Eval every host on the bumped inputs
+        run: nix flake check --no-build --all-systems
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "nix: bump flake inputs"
+          title: "nix: bump flake inputs"
+          branch: update/flake-lock
+          labels: update
+          add-paths: flake.lock
+          delete-branch: true
+
+  nvfetcher:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: DeterminateSystems/determinate-nix-action@527f17dd63d2d60d3e5552934bc84b9a33a14d11 # v3.22.2
+      - name: Advance generated pins
+        # --inputs-from resolves nvfetcher from this flake's own lock, never the registry snapshot; LANG guards nvfetcher's UTF-8 arrows
+        # (nvfetcher#133); the nvchecker keyfile keeps GitHub version queries off the anonymous rate limit.
+        env:
+          LANG: C.UTF-8
+          GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '[keys]\ngithub = "%s"\n' "$GH_API_TOKEN" > "$RUNNER_TEMP/keyfile.toml"
+          nix run --inputs-from . nixpkgs#nvfetcher -- \
+            -c nvfetcher.toml -o overlays/_sources -k "$RUNNER_TEMP/keyfile.toml" --keep-going
+      - name: Eval every host on the advanced pins
+        run: |
+          git add -A overlays/_sources
+          nix flake check --no-build --all-systems
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "nix: advance nvfetcher pins"
+          title: "nix: advance nvfetcher pins"
+          branch: update/nvfetcher-pins
+          labels: update
+          delete-branch: true
