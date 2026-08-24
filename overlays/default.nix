@@ -243,9 +243,11 @@ final: prev: let
           NIX_OUTPATH_USED_AS_RANDOM_SEED = old.pname or old.name;
         };
       # $NIX_BUILD_TOP is per-build, so the base dir can only be spelled inside the builder.
-      preConfigure = (old.preConfigure or "") + ''
-        export CCACHE_BASEDIR="$NIX_BUILD_TOP"
-      '';
+      preConfigure =
+        (old.preConfigure or "")
+        + ''
+          export CCACHE_BASEDIR="$NIX_BUILD_TOP"
+        '';
     });
 
   betaPolicy = (rowOf "forge-python-overlay-env").betaSet;
