@@ -2,7 +2,7 @@
     "ast-grep-upstream": {
         "cargoLock": {
             "Cargo.lock": [
-                "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=/Cargo.lock",
+                "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA_6+qFFx5U=/Cargo.lock",
                 {}
             ]
         },
@@ -18,12 +18,12 @@
             "name": null,
             "owner": "ast-grep",
             "repo": "ast-grep",
-            "rev": "0.45.1",
-            "sha256": "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=",
+            "rev": "0.45.2",
+            "sha256": "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA/6+qFFx5U=",
             "sparseCheckout": [],
             "type": "github"
         },
-        "version": "0.45.1"
+        "version": "0.45.2"
     },
     "biome-aarch64-darwin": {
         "cargoLock": null,
@@ -211,11 +211,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-V6l+byOj+v/AMVOk74x3CgVSYSuGQK6+Ob/dV1TQ69w=",
+            "sha256": "sha256-eNy/RPQM71DR9LU1yplhow7bSxPEIMNgv0Bo1CSkG8Q=",
             "type": "url",
-            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.22.0.tgz"
+            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.23.0.tgz"
         },
-        "version": "11.22.0"
+        "version": "11.23.0"
     },
     "protoc-gen-jsonschema": {
         "cargoLock": null,

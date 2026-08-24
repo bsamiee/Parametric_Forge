@@ -8,16 +8,16 @@
 {
   ast-grep-upstream = {
     pname = "ast-grep-upstream";
-    version = "0.45.1";
+    version = "0.45.2";
     src = fetchFromGitHub {
       owner = "ast-grep";
       repo = "ast-grep";
-      rev = "0.45.1";
+      rev = "0.45.2";
       fetchSubmodules = false;
-      sha256 = "sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=";
+      sha256 = "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA/6+qFFx5U=";
     };
     cargoLock."Cargo.lock" = {
-      lockFile = ./. + "/sha256-YNn49WuILwe3gyvHSKh3dH5BZKhtR+YeSCCGDu0qulg=/Cargo.lock";
+      lockFile = ./. + "/sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA_6+qFFx5U=/Cargo.lock";
       outputHashes = {
         
       };
@@ -121,10 +121,10 @@
   };
   pnpm_11 = {
     pname = "pnpm_11";
-    version = "11.22.0";
+    version = "11.23.0";
     src = fetchurl {
-      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.22.0.tgz";
-      sha256 = "sha256-V6l+byOj+v/AMVOk74x3CgVSYSuGQK6+Ob/dV1TQ69w=";
+      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.23.0.tgz";
+      sha256 = "sha256-eNy/RPQM71DR9LU1yplhow7bSxPEIMNgv0Bo1CSkG8Q=";
     };
   };
   protoc-gen-jsonschema = {
