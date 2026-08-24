@@ -53,7 +53,9 @@
         "x86_64-linux"
       ];
     };
-    text = builtins.readFile "${src}/forge-provision.sh";
+    # Read the local file, never "${src}/..." — interpolating the fileset copy just to read it back forces the store copy at eval time, and a
+    # machine that has never built the package refuses the phantom path (lazy trees never materialize it).
+    text = builtins.readFile ./forge-provision.sh;
   };
 in
   runCommand "forge-provision" {

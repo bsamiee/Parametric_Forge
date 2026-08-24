@@ -379,7 +379,17 @@ in
               src = ocpSource;
               format = "other";
               nativeBuildInputs = [prev.cmake prev.ninja pyPrev.pybind11];
-              buildInputs = [prev.opencascade-occt prev.fmt prev.tbb_2022 pyPrev.vtk];
+              # The generated tree binds IVtk/IVtkOCC, OCCT's VTK bridge, so the kernel builds with its VTK integration against the same VTK the
+              # module links — one VTK per process, per the row's shared-renderer law.
+              buildInputs = [
+                (prev.opencascade-occt.override {
+                  withVtk = true;
+                  vtk = pyPrev.vtk;
+                })
+                prev.fmt
+                prev.tbb_2022
+                pyPrev.vtk
+              ];
               dontUseCmakeConfigure = false;
               # The generated tree names its own module directory, which cmake installs into; the wheelless `other` format then needs the
               # site-packages root spelled for it.

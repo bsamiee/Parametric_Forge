@@ -37,7 +37,11 @@ jobs:
       - name: Bump flake inputs
         run: nix flake update
       - name: Eval every host on the bumped inputs
-        run: nix flake check --no-build --all-systems
+        env:
+          NIX_CONFIG: lazy-trees = false
+        run: |
+          nix config show | grep lazy-trees
+          nix flake check --no-build --all-systems
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "nix: bump flake inputs"
@@ -73,7 +77,10 @@ jobs:
           nix run --inputs-from . nixpkgs#nvfetcher -- \
             -c nvfetcher.toml -o overlays/_sources -k "$RUNNER_TEMP/keyfile.toml" --keep-going
       - name: Eval every host on the advanced pins
+        env:
+          NIX_CONFIG: lazy-trees = false
         run: |
+          nix config show | grep lazy-trees
           git add -A overlays/_sources
           nix flake check --no-build --all-systems
       - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
