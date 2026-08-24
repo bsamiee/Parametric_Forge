@@ -29,8 +29,12 @@ final: prev: let
     assert lib.assertMsg (lib.all (f: row ? ${f}) ["description" "homepage"]) "${name}: package row missing description/homepage — every admission identifies what it admits and where it came from";
     assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason";
     assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers";
-    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind == "source-build") || (row ? sourcePin && generatedSources ? ${row.sourcePin}))
-    "${name}: nvfetcher source-build requires a generated sourcePin";
+    # A source-build row names one generated pin, or — where the publisher emits a per-OS source tree — one pin per system under `sourcePins`;
+    # both spellings resolve in `generatedSources`, so neither can name a pin nvfetcher never wrote.
+    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind == "source-build")
+      || (row ? sourcePin && generatedSources ? ${row.sourcePin})
+      || (row ? sourcePins && lib.all (pin: generatedSources ? ${pin}) (lib.attrValues row.sourcePins)))
+    "${name}: nvfetcher source-build requires a generated sourcePin or a sourcePins map whose every member resolves";
     assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind != "source-build") || (row ? assets && lib.all (a: a ? pin && generatedSources ? ${a.pin}) (lib.attrValues row.assets)))
     "${name}: nvfetcher binary assets require generated pins"; row;
 
@@ -206,6 +210,11 @@ final: prev: let
     openstudio = optRuntime;
   };
 
+  # OCP is the one python-overlay member nixpkgs carries no attr for, so the overlay mints it and the roster then takes it by name like every
+  # sibling. The release publishes the generated binding tree per OS; the row's pin family keys by system and the host picks its own.
+  ocpRow = rowOf "cadquery-ocp";
+  ocpSource = generatedSources.${ocpRow.sourcePins.${system}}.src;
+
   betaPolicy = (rowOf "forge-python-overlay-env").betaSet;
 
   # Removed-C-API shim for the beta interpreter: the macro expands to an immediately-invoked lambda holding the referent only across the call, which is
@@ -279,6 +288,17 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.genAttrs betaPolicy.nativeMembers betaNativeMember
   // {
+    # nixpkgs 1.8.12 derives the install rpath by gluing CMAKE_INSTALL_PREFIX (dev) onto the already-absolute ALEMBIC_LIB_INSTALL_DIR (lib),
+    # stamping a dev-prefixed LC_RPATH into the lib dylib; that back-reference closes a dev<->lib output cycle Darwin's registration refuses, felling
+    # the whole vtk/openusd/OCP chain above it. Every load command already resolves by absolute store path, so the rpath is dead weight and fixup
+    # deletes it — against the versioned name, loudly, so an upstream layout change fails the build instead of shipping the cycle back.
+    alembic = prev.alembic.overrideAttrs (old: {
+      postFixup =
+        (old.postFixup or "")
+        + lib.optionalString prev.stdenv.hostPlatform.isDarwin ''
+          install_name_tool -delete_rpath "$dev/$lib/lib" "$lib/lib/libAlembic.${old.version}.dylib"
+        '';
+    });
     ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
       inherit (astGrepSource) version src;
       cargoDeps = prev.rustPlatform.importCargoLock astGrepSource.cargoLock."Cargo.lock";
@@ -348,6 +368,43 @@ in
             });
           })
         betaSetLane
+        # OCP lane: 639 generated translation units compiled as one pybind11 module against the nixpkgs OCCT the row's version pin matches, and
+        # against the same VTK the overlay already builds for this interpreter, so the module and its renderer share one VTK. Only the beta
+        # interpreter's set carries it, since every other flavor resolves the module from a published wheel.
+        (_pyFinal: pyPrev:
+          lib.optionalAttrs (pyPrev.python.pythonVersion == betaPolicy.pythonVersion) {
+            cadquery-ocp = pyPrev.buildPythonPackage {
+              pname = "cadquery-ocp";
+              inherit (ocpRow) version;
+              src = ocpSource;
+              format = "other";
+              nativeBuildInputs = [prev.cmake prev.ninja pyPrev.pybind11];
+              buildInputs = [prev.opencascade-occt prev.fmt prev.tbb_2022 pyPrev.vtk];
+              dontUseCmakeConfigure = false;
+              # The generated tree names its own module directory, which cmake installs into; the wheelless `other` format then needs the
+              # site-packages root spelled for it.
+              cmakeFlags = [
+                "-DPYTHON_SP_DIR=${placeholder "out"}/${pyPrev.python.sitePackages}"
+                "-DCMAKE_BUILD_TYPE=Release"
+                # cmake's own FindPython version list ends before the beta interpreter, so a bare `find_package(Python ...)` searches for
+                # interpreter names it never enumerates. Naming the interpreter hands it the version instead of asking it to guess one.
+                "-DPython_EXECUTABLE=${pyPrev.python.pythonOnBuildForHost.interpreter}"
+              ];
+              # pybind11 3.x asserts the GIL is held on every inc/dec-ref. OCP parks each registered exception in a function-local static whose
+              # destructor runs after Py_Finalize, which trips that assert at interpreter shutdown and aborts the process. Leaking the static is the
+              # upstream-correct shape for a translator that must outlive teardown, and it retires the moment upstream moves to py::set_error.
+              postPatch = ''
+                substituteInPlace OCP_specific.inc \
+                  --replace-fail "static py::exception<CppException> ex;" \
+                    "static py::exception<CppException> &ex = *new py::exception<CppException>();"
+              '';
+              pythonImportsCheck = ["OCP"];
+              meta = {
+                inherit (ocpRow) description homepage;
+                license = lib.licenses.${ocpRow.license};
+              };
+            };
+          })
       ];
     forge-package-manifest = prev.writeTextFile {
       name = "forge-package-manifest";
@@ -391,8 +448,9 @@ in
       };
     };
     forge-provision = final.callPackage ./forge-provision {};
-    # Uncached-by-design (manifest cacheClass): reached only through legacyPackages and built on demand by forge-python-overlay — never by the
-    # system closure or the qa package smoke.
+    # Reached only through legacyPackages and built on demand by forge-python-overlay — never by the system closure or the qa package smoke; the
+    # build verb pushes the realized closure to the forge cache (manifest cacheClass), so a GC, a rollback, or a sibling darwin host substitutes
+    # instead of repaying the vtk/openusd/OCP compile.
     forge-python-overlay-env = final.python315.withPackages (ps: map (m: ps.${m}) (rowOf "forge-python-overlay-env").modules);
     google-cloud-sdk =
       if gcloudRow.assets ? ${system}
