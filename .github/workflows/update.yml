@@ -29,6 +29,11 @@ jobs:
           persist-credentials: false
       # determinate-nix-action tags pin the Nix release itself; nix-installer-action floats the installer even under a SHA pin.
       - uses: DeterminateSystems/determinate-nix-action@527f17dd63d2d60d3e5552934bc84b9a33a14d11 # v3.22.2
+        with:
+          # Lazy trees skip materializing path copies referenced from a dirty flake tree, and both jobs eval dirty by design — the store then
+          # refuses the phantom source at instantiation. Disabled until Determinate repairs dirty-tree materialization.
+          extra-conf: |
+            lazy-trees = false
       - name: Bump flake inputs
         run: nix flake update
       - name: Eval every host on the bumped inputs
@@ -52,6 +57,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: DeterminateSystems/determinate-nix-action@527f17dd63d2d60d3e5552934bc84b9a33a14d11 # v3.22.2
+        with:
+          # Lazy trees skip materializing path copies referenced from a dirty flake tree, and both jobs eval dirty by design — the store then
+          # refuses the phantom source at instantiation. Disabled until Determinate repairs dirty-tree materialization.
+          extra-conf: |
+            lazy-trees = false
       - name: Advance generated pins
         # --inputs-from resolves nvfetcher from this flake's own lock, never the registry snapshot; LANG guards nvfetcher's UTF-8 arrows
         # (nvfetcher#133); the nvchecker keyfile keeps GitHub version queries off the anonymous rate limit.
