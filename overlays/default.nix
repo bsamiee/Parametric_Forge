@@ -215,6 +215,39 @@ final: prev: let
   ocpRow = rowOf "cadquery-ocp";
   ocpSource = generatedSources.${ocpRow.sourcePins.${system}}.src;
 
+  # --- [CCACHE_LANE]
+  # ccache rides the deep C++ builds as a CMake launcher rather than through ccacheStdenv: no stdenv reconstruction, it survives
+  # buildPythonPackage (which takes no stdenv argument), and no other package's derivation hash moves. The cache dir is root:nixbld 0770 —
+  # machine prep, one mkdir+chown. Iteration rebuilds with a frozen dep closure hit ~95-99%; a dep bump still pays full price by construction,
+  # since the dependency store hash rides every compile line.
+  ccacheEnv = {
+    CCACHE_DIR = "/nix/var/cache/ccache";
+    CCACHE_UMASK = "007";
+    CCACHE_MAXSIZE = "60G";
+    # Nix canonicalizes every store file to mtime 1, so ccache's default compiler_check (mtime+size) cannot tell two clang builds apart.
+    CCACHE_COMPILERCHECK = "content";
+    # reproducible-builds.sh exports -frandom-seed=<first 10 chars of $out>; unhandled, it drives the hit rate to zero on every rebuild.
+    CCACHE_SLOPPINESS = "random_seed";
+    CCACHE_NOHASHDIR = "1";
+  };
+  withCcache = drv:
+    drv.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.ccache];
+      cmakeFlags = (old.cmakeFlags or []) ++ ["-DCMAKE_C_COMPILER_LAUNCHER=ccache" "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"];
+      env =
+        (old.env or {})
+        // ccacheEnv
+        // {
+          # Pin the reproducible-builds seed to package identity so the flag stops moving; it must ride the derivation env — the hook fires
+          # before any phase.
+          NIX_OUTPATH_USED_AS_RANDOM_SEED = old.pname or old.name;
+        };
+      # $NIX_BUILD_TOP is per-build, so the base dir can only be spelled inside the builder.
+      preConfigure = (old.preConfigure or "") + ''
+        export CCACHE_BASEDIR="$NIX_BUILD_TOP"
+      '';
+    });
+
   betaPolicy = (rowOf "forge-python-overlay-env").betaSet;
 
   # Removed-C-API shim for the beta interpreter: the macro expands to an immediately-invoked lambda holding the referent only across the call, which is
@@ -373,7 +406,7 @@ in
         # interpreter's set carries it, since every other flavor resolves the module from a published wheel.
         (_pyFinal: pyPrev:
           lib.optionalAttrs (pyPrev.python.pythonVersion == betaPolicy.pythonVersion) {
-            cadquery-ocp = pyPrev.buildPythonPackage {
+            cadquery-ocp = withCcache (pyPrev.buildPythonPackage {
               pname = "cadquery-ocp";
               inherit (ocpRow) version;
               src = ocpSource;
@@ -382,10 +415,10 @@ in
               # The generated tree binds IVtk/IVtkOCC, OCCT's VTK bridge, so the kernel builds with its VTK integration against the same VTK the
               # module links — one VTK per process, per the row's shared-renderer law.
               buildInputs = [
-                (prev.opencascade-occt.override {
+                (withCcache (prev.opencascade-occt.override {
                   withVtk = true;
                   vtk = pyPrev.vtk;
-                })
+                }))
                 prev.fmt
                 prev.tbb_2022
                 pyPrev.vtk
@@ -413,7 +446,7 @@ in
                 inherit (ocpRow) description homepage;
                 license = lib.licenses.${ocpRow.license};
               };
-            };
+            });
           })
       ];
     forge-package-manifest = prev.writeTextFile {
