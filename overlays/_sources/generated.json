@@ -70,6 +70,48 @@
         },
         "version": "2.5.10"
     },
+    "cadquery-ocp-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cadquery-ocp-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-06j4ZEQlBEBgcnHBs7iOLKmRDZJvGtirR9mfZdn21Ls=",
+            "type": "tarball",
+            "url": "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_OSX.zip"
+        },
+        "version": "7.9.3.1.1"
+    },
+    "cadquery-ocp-aarch64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cadquery-ocp-aarch64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-gfZFv/evrLHX5TSjAmc6ap45nCbAuNUGkb989BrfqhY=",
+            "type": "tarball",
+            "url": "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_Linux.zip"
+        },
+        "version": "7.9.3.1.1"
+    },
+    "cadquery-ocp-x86_64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cadquery-ocp-x86_64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-gfZFv/evrLHX5TSjAmc6ap45nCbAuNUGkb989BrfqhY=",
+            "type": "tarball",
+            "url": "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_Linux.zip"
+        },
+        "version": "7.9.3.1.1"
+    },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
         "date": null,

@@ -205,6 +205,35 @@ in rec {
       mainProgram = "ast-grep";
     };
 
+    # Generated pybind11 bindings over OCCT that no wheel reaches at the beta interpreter: upstream caps Requires-Python at <3.15 and its release
+    # wheels stop at cp314, while the same release publishes the whole generated C++ tree per OS. So the module builds from source against the
+    # nixpkgs OCCT whose version the pin already matches, and the overlay seats it into python315Packages for the python-overlay roster to take by
+    # attr name. The generated tree carries no CPython C-API of its own, delegating every interpreter fact to pybind11, so the reachable floor is a
+    # pybind11 fact here and never an upstream wheel fact.
+    cadquery-ocp = {
+      upstream = "github:CadQuery/OCP";
+      version = generatedPins.cadquery-ocp-aarch64-darwin.version;
+      # The publisher emits one generated binding tree per OS, whose Cocoa, Xw, and WNT modules differ, so the pin family keys by system.
+      sourcePins = {
+        aarch64-darwin = "cadquery-ocp-aarch64-darwin";
+        aarch64-linux = "cadquery-ocp-aarch64-linux";
+        x86_64-linux = "cadquery-ocp-x86_64-linux";
+      };
+      versionPolicy = "slow-scientific";
+      sourceKind = "source-build";
+      license = "asl20";
+      # pybind11 3.x compiles the GIL-held assert into every inc/dec-ref, and OCP parks its exception objects in function-local statics that outlive
+      # Py_Finalize, so the substitution leaks them deliberately and interpreter shutdown stops tripping that assert.
+      patchFamily = "source-substitute";
+      cacheClass = "forge-cache-hit";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["scientific-tools"];
+      description = "OCCT B-rep kernel bound to Python through pybind11, built from the release generated sources";
+      homepage = "https://github.com/CadQuery/OCP";
+    };
+
     protoc-gen-jsonschema = {
       upstream = "github:bufbuild/protoschema-plugins";
       # Release tags carry the `v`; the generated pin keeps it because GitHub's archive URL resolves only the literal tag.
@@ -332,8 +361,8 @@ in rec {
       updateEngine = "nixpkgs-follows";
       retention = "git-history";
       projection.overlay = "new";
-      modules = ["vtk" "pyvista" "openusd"]; # python315Packages attrs folded into the env
-      probeImports = ["vtk" "pyvista" "pxr"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
+      modules = ["vtk" "pyvista" "openusd" "cadquery-ocp"]; # python315Packages attrs folded into the env
+      probeImports = ["vtk" "pyvista" "pxr" "OCP"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
       # CPython 3.15 is a beta interpreter, so the whole module set carries two upstream escapes the overlay fold owns once. Upstream suites assert
       # 3.14-era diagnostics and clocks (parso, exceptiongroup, pure-eval, tornado, time-machine, hypothesis, mypy, zlib-ng all fail their own
       # checkPhase here); dropping doCheck also drops nativeCheckInputs, pruning the test-only tail out of the uncached closure. PyO3 <= 0.27 refuses

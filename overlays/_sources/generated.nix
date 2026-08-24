@@ -47,6 +47,30 @@
       sha256 = "sha256-Et5Czs3xx3aKkr4rM3YFOXxIuTXser6UufJY2oeDbfg=";
     };
   };
+  cadquery-ocp-aarch64-darwin = {
+    pname = "cadquery-ocp-aarch64-darwin";
+    version = "7.9.3.1.1";
+    src = fetchTarball {
+      url = "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_OSX.zip";
+      sha256 = "sha256-06j4ZEQlBEBgcnHBs7iOLKmRDZJvGtirR9mfZdn21Ls=";
+    };
+  };
+  cadquery-ocp-aarch64-linux = {
+    pname = "cadquery-ocp-aarch64-linux";
+    version = "7.9.3.1.1";
+    src = fetchTarball {
+      url = "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_Linux.zip";
+      sha256 = "sha256-gfZFv/evrLHX5TSjAmc6ap45nCbAuNUGkb989BrfqhY=";
+    };
+  };
+  cadquery-ocp-x86_64-linux = {
+    pname = "cadquery-ocp-x86_64-linux";
+    version = "7.9.3.1.1";
+    src = fetchTarball {
+      url = "https://github.com/CadQuery/OCP/releases/download/7.9.3.1.1/OCP_src_stubs_Linux.zip";
+      sha256 = "sha256-gfZFv/evrLHX5TSjAmc6ap45nCbAuNUGkb989BrfqhY=";
+    };
+  };
   duckdb-aarch64-darwin = {
     pname = "duckdb-aarch64-darwin";
     version = "1.5.5";

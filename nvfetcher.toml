@@ -74,3 +74,18 @@ fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean
 [protoc-gen-jsonschema]
 src.github = "bufbuild/protoschema-plugins"
 fetch.github = "bufbuild/protoschema-plugins"
+
+[cadquery-ocp-aarch64-darwin]
+src.github_tag = "CadQuery/OCP"
+src.include_regex = "^7\\.9\\.[0-9]+(\\.[0-9]+)*$"
+fetch.tarball = "https://github.com/CadQuery/OCP/releases/download/$ver/OCP_src_stubs_OSX.zip"
+
+[cadquery-ocp-aarch64-linux]
+src.github_tag = "CadQuery/OCP"
+src.include_regex = "^7\\.9\\.[0-9]+(\\.[0-9]+)*$"
+fetch.tarball = "https://github.com/CadQuery/OCP/releases/download/$ver/OCP_src_stubs_Linux.zip"
+
+[cadquery-ocp-x86_64-linux]
+src.github_tag = "CadQuery/OCP"
+src.include_regex = "^7\\.9\\.[0-9]+(\\.[0-9]+)*$"
+fetch.tarball = "https://github.com/CadQuery/OCP/releases/download/$ver/OCP_src_stubs_Linux.zip"
