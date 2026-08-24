@@ -420,6 +420,9 @@ in
                   vtk = pyPrev.vtk;
                 }))
                 prev.fmt
+                # The kernel builds USE_RAPIDJSON, and its RWGltf writer headers include rapidjson directly, so the header set rides every
+                # consumer compile line.
+                prev.rapidjson
                 prev.tbb_2022
                 pyPrev.vtk
               ];
