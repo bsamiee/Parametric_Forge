@@ -216,7 +216,18 @@
         build)
           mkdir -p "$state_root"
           nix build "$forge_root#forge-python-overlay-env" --out-link "$out_link"
-          receipt ok "env=$(readlink "$out_link") gcroot=$out_link"
+          # Cache seam mirroring forge-redeploy push_cache: the env closure never rides the system closure, so build is the one place its
+          # hours-deep vtk/openusd/OCP artifacts can reach the forge cache. Ambient CACHIX_AUTH_TOKEN wins, the session dispatcher resolves the
+          # machine rail, absence degrades to a skipped push — a missing or bad token never fails an already-realized env.
+          push="skipped"
+          if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/forge-session-secrets.sh}" ]; then
+            # shellcheck source=/dev/null
+            . "''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/forge-session-secrets.sh}" || true
+          fi
+          if [ -n "''${CACHIX_AUTH_TOKEN:-}" ]; then
+            if ${pkgs.cachix}/bin/cachix push "''${CACHIX_CACHE:-bsamiee}" "$(readlink "$out_link")"; then push="ok"; else push="failed"; fi
+          fi
+          receipt ok "env=$(readlink "$out_link") gcroot=$out_link cache=$push"
           ;;
         link)
           need_venv

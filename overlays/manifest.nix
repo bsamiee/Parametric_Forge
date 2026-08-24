@@ -56,7 +56,7 @@ in rec {
   vocabulary = {
     sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "extension-bundle" "nixpkgs" "repo"];
     patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "npm-tool-strip" "source-substitute"];
-    cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported" "intentionally-uncached"];
+    cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported"];
     updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
     overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
@@ -357,7 +357,7 @@ in rec {
       sourceKind = "nixpkgs";
       license = "tost"; # openusd; vtk rides bsd3 — the row records the least-permissive member
       patchFamily = "none";
-      cacheClass = "intentionally-uncached";
+      cacheClass = "forge-cache-hit";
       updateEngine = "nixpkgs-follows";
       retention = "git-history";
       projection.overlay = "new";
