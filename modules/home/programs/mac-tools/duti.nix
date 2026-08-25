@@ -16,12 +16,14 @@
     com.adobe.Acrobat.Pro	com.adobe.pdf	all
     com.adobe.Acrobat.Pro	.pdf	all
 
-    # URL Schemes -> Arc Browser (HTML associations need manual setup due to macOS restrictions)
-    company.thebrowser.Browser	http	all
-    company.thebrowser.Browser	https	all
-    company.thebrowser.Browser	ftp	all
+    # URL schemes -> Arc. A two-field row is duti's scheme grammar (LSSetDefaultHandlerForURLScheme); a role turns the scheme into a filename
+    # extension, which resolves to a dynamic UTI Launch Services refuses (-50). The http row is the default-browser role — macOS carries https
+    # and HTML with it and refuses a direct https write (-54) — and a browser change still routes through the system's consent dialog.
+    company.thebrowser.Browser	http
+    company.thebrowser.Browser	ftp
 
-    # Development Files -> Visual Studio Code
+    # Development files -> Visual Studio Code. Every extension row must resolve to a declared UTI: an undeclared one (toml, nix) mints a dynamic
+    # UTI Launch Services refuses (-50), so nix rides its declared UTI and toml rides VSCode's own Info.plist claim.
     com.microsoft.VSCode	public.plain-text	all
     com.microsoft.VSCode	public.source-code	all
     com.microsoft.VSCode	.txt	all
@@ -29,9 +31,7 @@
     com.microsoft.VSCode	.json	all
     com.microsoft.VSCode	.yaml	all
     com.microsoft.VSCode	.yml	all
-    com.microsoft.VSCode	.toml	all
     com.microsoft.VSCode	dev.nix.source	all
-    com.microsoft.VSCode	.nix	all
     com.microsoft.VSCode	.lua	all
     com.microsoft.VSCode	.py	all
     com.microsoft.VSCode	.js	all
@@ -58,7 +58,7 @@
     com.apple.Preview	.webp	all
 
     # Email -> Superhuman
-    com.superhuman.electron	mailto	all
+    com.superhuman.electron	mailto
   '';
 in {
   home.packages = [pkgs.duti];
