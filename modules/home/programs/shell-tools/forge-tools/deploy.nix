@@ -104,11 +104,22 @@
 
       # Backend-dispatched token resolution: ambient CACHIX_AUTH_TOKEN wins, the session-secrets dispatcher (FORGE_SECRETS_FILE) resolves the machine
       # rail, absence degrades to a skipped push. A present-but-bad token never fails an already-built/switched deploy.
-      push_cache() {
+      resolve_token() {
         if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "$secrets_file" ]; then
           # shellcheck source=/dev/null
           . "$secrets_file" || true
         fi
+      }
+      # Every build-capable phase runs under `cachix watch-exec`: its post-build hook pushes each path the moment the daemon finishes building it,
+      # so a check or build that fails later — or a switch that never lands — still banks every compiled path. No token: the bare command runs.
+      banked() {
+        if [ -n "''${CACHIX_AUTH_TOKEN:-}" ]; then
+          cachix watch-exec "$cache" -- "$@"
+        else
+          "$@"
+        fi
+      }
+      push_cache() {
         if [ -z "''${CACHIX_AUTH_TOKEN:-}" ]; then
           push="skipped" verify="skipped"
           printf 'forge-redeploy: cache push skipped: CACHIX_AUTH_TOKEN unset\n' >&2
@@ -173,8 +184,9 @@
       cd "$forge_root"
 
       printf 'forge-redeploy: nix=%s\n' "$(command -v nix)"
+      resolve_token
       t0=$EPOCHSECONDS
-      nix flake check --print-build-logs
+      banked nix flake check --print-build-logs
 
       if [ "$os" = "darwin" ]; then
         attr="darwinConfigurations.$host.system"
@@ -194,7 +206,7 @@
             printf 'forge-redeploy: check-only ok (eval) drv=%s\n' "$system_path"
             ;;
           build)
-            system_path="$(nix build --no-link --print-out-paths "$forge_root#$attr")"
+            system_path="$(banked nix build --no-link --print-out-paths "$forge_root#$attr")"
             build_s=$((EPOCHSECONDS - t0))
             push_cache "$system_path"
             result="ok"
@@ -232,7 +244,7 @@
 
       # Every Darwin mode builds the toplevel through nh and reviews the diff.
       t0=$EPOCHSECONDS
-      nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
+      banked nh darwin build --hostname "$host" --out-link "$out_link" --diff never "$forge_root"
       build_s=$((EPOCHSECONDS - t0))
       system_path="$(readlink -f "$out_link")"
 
@@ -255,16 +267,17 @@
           ;;
         switch)
           adopt_custom_conf
-          # Exact-closure activation: the reviewed store path is registered and activated directly, never re-evaluated.
+          # Exact-closure activation: the reviewed store path is registered and activated directly, never re-evaluated. -H seats root's own HOME:
+          # nix under a preserved user HOME warns on the ownership mismatch and falls back to it anyway.
           t0=$EPOCHSECONDS
-          sudo -n "$nix_env" -p "$profile" --set "$system_path" || {
+          sudo -n -H "$nix_env" -p "$profile" --set "$system_path" || {
             activate_s=$((EPOCHSECONDS - t0))
             printf 'forge-redeploy: profile registration denied; sudoers rows land on first switch.\n' >&2
             printf 'forge-redeploy: run once: sudo %s -p %s --set %s && sudo %s/sw/bin/darwin-rebuild activate\n' \
               "$nix_env" "$profile" "$system_path" "$system_path" >&2
             exit 1
           }
-          sudo -n "$system_path/sw/bin/darwin-rebuild" activate || {
+          sudo -n -H "$system_path/sw/bin/darwin-rebuild" activate || {
             activate_s=$((EPOCHSECONDS - t0))
             printf 'forge-redeploy: FATAL activation failed; if sudo denied, run once: sudo %s/sw/bin/darwin-rebuild activate\n' "$system_path" >&2
             exit 1

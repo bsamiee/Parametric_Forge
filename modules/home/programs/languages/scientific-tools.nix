@@ -215,17 +215,20 @@
       case "$verb" in
         build)
           mkdir -p "$state_root"
-          nix build "$forge_root#forge-python-overlay-env" --out-link "$out_link"
-          # Cache seam mirroring forge-redeploy push_cache: the env closure never rides the system closure, so build is the one place its
-          # hours-deep vtk/openusd/OCP artifacts can reach the forge cache. Ambient CACHIX_AUTH_TOKEN wins, the session dispatcher resolves the
-          # machine rail, absence degrades to a skipped push — a missing or bad token never fails an already-realized env.
+          # Cache seam mirroring forge-redeploy: the env closure never rides the system closure, so build is the one place its hours-deep
+          # vtk/openusd/OCP artifacts can reach the forge cache. `cachix watch-exec` banks every path the moment it builds, so a member failing
+          # hours in loses nothing already compiled; the closing push covers substituted paths and proves the whole env servable. Ambient
+          # CACHIX_AUTH_TOKEN wins, the session dispatcher resolves the machine rail, absence degrades to a bare build and a skipped push.
           push="skipped"
           if [ -z "''${CACHIX_AUTH_TOKEN:-}" ] && [ -f "''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/forge-session-secrets.sh}" ]; then
             # shellcheck source=/dev/null
             . "''${FORGE_SECRETS_FILE:-''${XDG_CONFIG_HOME:-$HOME/.config}/forge-session-secrets.sh}" || true
           fi
           if [ -n "''${CACHIX_AUTH_TOKEN:-}" ]; then
+            ${pkgs.cachix}/bin/cachix watch-exec "''${CACHIX_CACHE:-bsamiee}" -- nix build "$forge_root#forge-python-overlay-env" --out-link "$out_link"
             if ${pkgs.cachix}/bin/cachix push "''${CACHIX_CACHE:-bsamiee}" "$(readlink "$out_link")"; then push="ok"; else push="failed"; fi
+          else
+            nix build "$forge_root#forge-python-overlay-env" --out-link "$out_link"
           fi
           receipt ok "env=$(readlink "$out_link") gcroot=$out_link cache=$push"
           ;;
