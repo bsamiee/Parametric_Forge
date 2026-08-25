@@ -71,7 +71,8 @@ One ordered pass refreshes every currency family; each step proves through its o
 |  [04]   | activation   | `forge-redeploy --switch`                       | `forge-accept`                                                |
 |  [05]   | homebrew     | full brew pass (below)                          | `brew outdated` and `brew doctor` clean                       |
 |  [06]   | python venv  | `forge-scientific-env uv sync` at the repo root | dead-dylib sweep after any python/native input move           |
-|  [07]   | store        | `forge-nix-maintenance`                         | single system generation, GC, optimise                        |
+|  [07]   | sci lane     | `flake.nix` `nixpkgs-sci` rev → `nix flake lock`  | `forge-python-overlay build`, then `status <venv>`            |
+|  [08]   | store        | `forge-nix-maintenance`                         | single system generation, GC, optimise                        |
 
 Flake bumps moving the Nix python invalidate the venv whole; bumps moving native libs poison cached wheels — `otool -L` over every site-packages native, each `/nix/store/*.dylib` tested, rebuilds each hit with `forge-scientific-env uv pip install --reinstall --no-cache`; a path still missing after the rebuild is a missing library row in `scientific-tools.nix`, never another rebuild.
 

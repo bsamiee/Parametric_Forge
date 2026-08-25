@@ -350,10 +350,12 @@ in rec {
     # Uncached-by-design python-module lane: nixpkgs python modules a uv venv cannot take from PyPI (no cp315 wheel, no sdist). The overlay fold
     # builds python315.withPackages over `modules`; the forge-python-overlay kernel (scientific-tools.nix) realizes it on demand behind an
     # XDG-state GC root and projects one .pth into a consumer venv. Never projection.package and never home.packages — the qa build smoke and
-    # every switch would otherwise source-build the whole uncached closure.
+    # every switch would otherwise source-build the whole uncached closure. The flake seats the attr from the nixpkgs-sci pin (slow-scientific):
+    # the lane rebuilds only when that pin advances, never on a nixpkgs move; CPython's C ABI freezes at beta 1, so the pinned modules keep loading
+    # in a venv over the moving python315 of the same minor.
     forge-python-overlay-env = {
-      upstream = "nixpkgs:python315Packages";
-      versionPolicy = "nixpkgs";
+      upstream = "nixpkgs-sci:python315Packages";
+      versionPolicy = "slow-scientific";
       sourceKind = "nixpkgs";
       license = "tost"; # openusd; vtk rides bsd3 — the row records the least-permissive member
       patchFamily = "none";
