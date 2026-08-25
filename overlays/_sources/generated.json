@@ -211,11 +211,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-eNy/RPQM71DR9LU1yplhow7bSxPEIMNgv0Bo1CSkG8Q=",
+            "sha256": "sha256-0eqyQzFyZhzDahjshfzpP3cdsZYnFzKcwB7JwoJMok8=",
             "type": "url",
-            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.23.0.tgz"
+            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.24.0.tgz"
         },
-        "version": "11.23.0"
+        "version": "11.24.0"
     },
     "protoc-gen-jsonschema": {
         "cargoLock": null,

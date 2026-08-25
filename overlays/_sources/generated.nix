@@ -121,10 +121,10 @@
   };
   pnpm_11 = {
     pname = "pnpm_11";
-    version = "11.23.0";
+    version = "11.24.0";
     src = fetchurl {
-      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.23.0.tgz";
-      sha256 = "sha256-eNy/RPQM71DR9LU1yplhow7bSxPEIMNgv0Bo1CSkG8Q=";
+      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.24.0.tgz";
+      sha256 = "sha256-0eqyQzFyZhzDahjshfzpP3cdsZYnFzKcwB7JwoJMok8=";
     };
   };
   protoc-gen-jsonschema = {
