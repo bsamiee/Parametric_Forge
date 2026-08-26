@@ -202,6 +202,156 @@
         },
         "version": "26.7.0"
     },
+    "nuget-dotnet-counters": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-counters",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-sU+CNC8uYPjKA088C7WQrTPpuTMGxM/ndUH/x3j1gQ8=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-counters/9.0.661903/dotnet-counters.9.0.661903.nupkg"
+        },
+        "version": "9.0.661903"
+    },
+    "nuget-dotnet-coverage": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-coverage",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-beP7qF5zG3k77WXrxYRqTeoCJRpUgmEJbpeCNev6sTM=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-coverage/18.10.0/dotnet-coverage.18.10.0.nupkg"
+        },
+        "version": "18.10.0"
+    },
+    "nuget-dotnet-dump": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-dump",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-HKT7TiNjAWW8pMmDbZNWy5JzybSRaDOLTFWQ1DJktTw=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-dump/9.0.661903/dotnet-dump.9.0.661903.nupkg"
+        },
+        "version": "9.0.661903"
+    },
+    "nuget-dotnet-ef": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-ef",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-zuM7rUlvOOma3c7Jpl/xxw/Dbns7AfOHKq3zm3+SWNE=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-ef/10.0.11/dotnet-ef.10.0.11.nupkg"
+        },
+        "version": "10.0.11"
+    },
+    "nuget-dotnet-gcdump": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-gcdump",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-CrjZGMtwSDx6xISmSlZdrlCUnqMH8YDZ3CHwQCjvn8w=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-gcdump/9.0.661903/dotnet-gcdump.9.0.661903.nupkg"
+        },
+        "version": "9.0.661903"
+    },
+    "nuget-dotnet-reportgenerator-globaltool": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-reportgenerator-globaltool",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-MjIaSO34kxCbf52BqpGvGxk3DsSrDhGsUpRBha2P1d4=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-reportgenerator-globaltool/5.5.11/dotnet-reportgenerator-globaltool.5.5.11.nupkg"
+        },
+        "version": "5.5.11"
+    },
+    "nuget-dotnet-stryker": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-stryker",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-anGoF7Z64GoSjV7a2T69Nbv1SesjPjDYLJJAhidpREA=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-stryker/4.16.0/dotnet-stryker.4.16.0.nupkg"
+        },
+        "version": "4.16.0"
+    },
+    "nuget-dotnet-trace": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-dotnet-trace",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Mqd8z/etAbIs+Ub5UxlnAmml04VVJfl40RmNAKY+X5o=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/dotnet-trace/9.0.661903/dotnet-trace.9.0.661903.nupkg"
+        },
+        "version": "9.0.661903"
+    },
+    "nuget-ilspycmd": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-ilspycmd",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-j1VbP8qQodelkFDXhTnGne7arUIXVr1P5HjRNb2sLeo=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/ilspycmd/11.0.0.9375/ilspycmd.11.0.0.9375.nupkg"
+        },
+        "version": "11.0.0.9375"
+    },
+    "nuget-sharpfuzz-commandline": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nuget-sharpfuzz-commandline",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-/7GJLzeH/xhjZPQDmWXJrerKQqDdmUURKVv0uoxfWwM=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/sharpfuzz.commandline/2.3.0/sharpfuzz.commandline.2.3.0.nupkg"
+        },
+        "version": "2.3.0"
+    },
     "pnpm_11": {
         "cargoLock": null,
         "date": null,

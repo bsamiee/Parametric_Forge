@@ -43,6 +43,25 @@ let
     aarch64-linux = "sqlean-aarch64-linux";
     x86_64-linux = "sqlean-x86_64-linux";
   };
+  # NuGet global-tool admission: one generated pin per registry id carries the newest stable release and the nupkg hash; the nupkg is an immutable
+  # archive NuGet serves byte-identical from the flat container and the v2 endpoint, so the pin's hash proves the builder's fetch. The attr name
+  # is the installed executable; `nugetId` is the registry id the builder installs.
+  nugetTool = nugetId: license: homepage: description: let
+    pin = "nuget-${builtins.replaceStrings ["."] ["-"] nugetId}"; # a dotted id would nest as a TOML table, so the pin name flattens it
+  in {
+    upstream = "nuget:${nugetId}";
+    inherit nugetId license homepage description;
+    version = generatedPins.${pin}.version;
+    versionPolicy = "fast";
+    sourceKind = "nuget-tool";
+    assets.any = pinAsset pin;
+    patchFamily = "none";
+    cacheClass = "binary-only-local";
+    updateEngine = "nvfetcher";
+    retention = "git-history";
+    projection.overlay = "new";
+    consumers = ["dev-tools"];
+  };
   v = {
     openstudio = "3.11.0";
     energyplus = "26.1.0";
@@ -54,7 +73,7 @@ let
   };
 in rec {
   vocabulary = {
-    sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "extension-bundle" "nixpkgs" "repo"];
+    sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "nuget-tool" "extension-bundle" "nixpkgs" "repo"];
     patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "npm-tool-strip" "source-substitute"];
     cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported"];
     updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
@@ -256,6 +275,30 @@ in rec {
       mainProgram = "protoc-gen-jsonschema";
     };
 
+    # .NET tool estate: every row installs through the same SDK-10 builder and resolves the estate's combined `dotnet` at runtime, so a project's
+    # global.json pin governs every tool invocation and no repo carries a tool manifest of its own.
+    dotnet-trace = nugetTool "dotnet-trace" "mit" "https://github.com/dotnet/diagnostics" "EventPipe trace collection and conversion (speedscope, chromium) for a running .NET process";
+    dotnet-counters = nugetTool "dotnet-counters" "mit" "https://github.com/dotnet/diagnostics" "Live EventCounter and Meter monitoring for a running .NET process";
+    dotnet-dump = nugetTool "dotnet-dump" "mit" "https://github.com/dotnet/diagnostics" "Process dump capture and SOS-driven analysis for .NET";
+    dotnet-gcdump = nugetTool "dotnet-gcdump" "mit" "https://github.com/dotnet/diagnostics" "GC heap dump capture and report for a running .NET process";
+    # Dynamic instrumentation is Windows/Linux-x64/macOS-x64 only (the engine ships macos/x64); on Apple Silicon `collect` needs `--include-files`
+    # (static instrumentation, all platforms), and `merge` converts/merges coverage, cobertura, and xml everywhere.
+    dotnet-coverage = nugetTool "dotnet-coverage" "unfree" "https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage" "Cross-platform code-coverage collection, merge, and format conversion (cobertura, xml, coverage)";
+    reportgenerator = nugetTool "dotnet-reportgenerator-globaltool" "asl20" "https://reportgenerator.io/" "Coverage report renderer over cobertura, lcov, and OpenCover inputs (HTML, badges, markdown, summaries)";
+    dotnet-stryker = nugetTool "dotnet-stryker" "asl20" "https://stryker-mutator.io/" "Mutation testing for .NET over the Microsoft.Testing.Platform runner";
+    sharpfuzz = nugetTool "sharpfuzz.commandline" "mit" "https://github.com/Metalnem/sharpfuzz" "AFL-style coverage-guided fuzzing instrumentation for .NET assemblies";
+    dotnet-ef =
+      nugetTool "dotnet-ef" "mit" "https://learn.microsoft.com/ef/core/cli/dotnet" "Entity Framework Core design-time CLI: migrations, scaffolding, compiled models, idempotent scripts"
+      // {
+        projection.overlay = "override";
+        overlayReason = "the tool version must ride the EF Core patch line the consumers pin; nixpkgs trails the release train";
+      };
+    ilspycmd =
+      nugetTool "ilspycmd" "mit" "https://github.com/icsharpcode/ILSpy" "ILSpy decompiler CLI for assemblies and NuGet API catalogues"
+      // {
+        projection.overlay = "override";
+        overlayReason = "nixpkgs source-builds two majors behind on the SDK-8 lane; the release nupkg carries current C# and .NET 10 metadata support";
+      };
     google-cloud-sdk = {
       upstream = "https://dl.google.com/dl/cloudsdk/channels/rapid";
       version = v.gcloud;

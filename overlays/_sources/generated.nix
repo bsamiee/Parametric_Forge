@@ -119,6 +119,86 @@
       sha256 = "sha256-mCqiTdi+TIicaoqzN93/OwiWZFsg9COTVugFUsFid+4=";
     };
   };
+  nuget-dotnet-counters = {
+    pname = "nuget-dotnet-counters";
+    version = "9.0.661903";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-counters/9.0.661903/dotnet-counters.9.0.661903.nupkg";
+      sha256 = "sha256-sU+CNC8uYPjKA088C7WQrTPpuTMGxM/ndUH/x3j1gQ8=";
+    };
+  };
+  nuget-dotnet-coverage = {
+    pname = "nuget-dotnet-coverage";
+    version = "18.10.0";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-coverage/18.10.0/dotnet-coverage.18.10.0.nupkg";
+      sha256 = "sha256-beP7qF5zG3k77WXrxYRqTeoCJRpUgmEJbpeCNev6sTM=";
+    };
+  };
+  nuget-dotnet-dump = {
+    pname = "nuget-dotnet-dump";
+    version = "9.0.661903";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-dump/9.0.661903/dotnet-dump.9.0.661903.nupkg";
+      sha256 = "sha256-HKT7TiNjAWW8pMmDbZNWy5JzybSRaDOLTFWQ1DJktTw=";
+    };
+  };
+  nuget-dotnet-ef = {
+    pname = "nuget-dotnet-ef";
+    version = "10.0.11";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-ef/10.0.11/dotnet-ef.10.0.11.nupkg";
+      sha256 = "sha256-zuM7rUlvOOma3c7Jpl/xxw/Dbns7AfOHKq3zm3+SWNE=";
+    };
+  };
+  nuget-dotnet-gcdump = {
+    pname = "nuget-dotnet-gcdump";
+    version = "9.0.661903";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-gcdump/9.0.661903/dotnet-gcdump.9.0.661903.nupkg";
+      sha256 = "sha256-CrjZGMtwSDx6xISmSlZdrlCUnqMH8YDZ3CHwQCjvn8w=";
+    };
+  };
+  nuget-dotnet-reportgenerator-globaltool = {
+    pname = "nuget-dotnet-reportgenerator-globaltool";
+    version = "5.5.11";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-reportgenerator-globaltool/5.5.11/dotnet-reportgenerator-globaltool.5.5.11.nupkg";
+      sha256 = "sha256-MjIaSO34kxCbf52BqpGvGxk3DsSrDhGsUpRBha2P1d4=";
+    };
+  };
+  nuget-dotnet-stryker = {
+    pname = "nuget-dotnet-stryker";
+    version = "4.16.0";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-stryker/4.16.0/dotnet-stryker.4.16.0.nupkg";
+      sha256 = "sha256-anGoF7Z64GoSjV7a2T69Nbv1SesjPjDYLJJAhidpREA=";
+    };
+  };
+  nuget-dotnet-trace = {
+    pname = "nuget-dotnet-trace";
+    version = "9.0.661903";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/dotnet-trace/9.0.661903/dotnet-trace.9.0.661903.nupkg";
+      sha256 = "sha256-Mqd8z/etAbIs+Ub5UxlnAmml04VVJfl40RmNAKY+X5o=";
+    };
+  };
+  nuget-ilspycmd = {
+    pname = "nuget-ilspycmd";
+    version = "11.0.0.9375";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/ilspycmd/11.0.0.9375/ilspycmd.11.0.0.9375.nupkg";
+      sha256 = "sha256-j1VbP8qQodelkFDXhTnGne7arUIXVr1P5HjRNb2sLeo=";
+    };
+  };
+  nuget-sharpfuzz-commandline = {
+    pname = "nuget-sharpfuzz-commandline";
+    version = "2.3.0";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/sharpfuzz.commandline/2.3.0/sharpfuzz.commandline.2.3.0.nupkg";
+      sha256 = "sha256-/7GJLzeH/xhjZPQDmWXJrerKQqDdmUURKVv0uoxfWwM=";
+    };
+  };
   pnpm_11 = {
     pname = "pnpm_11";
     version = "11.24.0";

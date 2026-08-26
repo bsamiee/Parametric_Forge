@@ -57,11 +57,15 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
-  # dnx owns NuGet tool resolution and RID selection; an unversioned package reference resolves the stable NuGet.org release at spawn.
-  nuget-mcp = pkgs.writeShellScriptBin "nuget-mcp" ''
-    export DOTNET_ROOT="${pkgs.dotnet-sdk_10}/share/dotnet"
-    exec ${pkgs.dotnet-sdk_10}/bin/dnx NuGet.Mcp.Server --source https://api.nuget.org/v3/index.json -- "$@"
-  '';
+  # dnx owns NuGet MCP-server resolution and RID selection; an unversioned package reference resolves the stable NuGet.org release at spawn, the
+  # fleet's own currency contract. CLI tools never ride this lane — they are manifest rows with generated pins.
+  dnxMcp = name: package:
+    pkgs.writeShellScriptBin name ''
+      export DOTNET_ROOT="${pkgs.dotnet-sdk_10}/share/dotnet"
+      exec ${pkgs.dotnet-sdk_10}/bin/dnx ${package} --source https://api.nuget.org/v3/index.json -- "$@"
+    '';
+  nuget-mcp = dnxMcp "nuget-mcp" "NuGet.Mcp.Server";
+  binlog-mcp = dnxMcp "binlog-mcp" "Microsoft.AITools.BinlogMcp";
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
   forge-install-antigravity-cli = pkgs.writeShellApplication {
     name = "forge-install-antigravity-cli";
@@ -177,9 +181,21 @@ in {
         protoc-gen-jsonschema # JSON Schema 2020-12 emitter over the descriptor graph (overlay source-build); buf's `local:` row resolves it bare on PATH
 
         # --- [NET]
+        # Global tools resolve the combined SDK on PATH at runtime (overlay nuget-tool rows), so a project's global.json governs every invocation
+        # and no repo carries a .config/dotnet-tools.json of its own; `dotnet <verb>` reaches each `dotnet-<verb>` through PATH.
         dotnet-combined
         csharpier # C# formatter; reads project .csharpierrc/.editorconfig
-        ilspycmd # .NET assembly decompiler for NuGet API catalogues
+        dotnet-ef # EF Core design-time CLI (migrations, scaffold, dbcontext optimize); overlay row rides the EF patch line
+        dotnet-outdated # NuGet dependency currency report and upgrade over Directory.Packages.props
+        dotnet-trace # EventPipe trace collect/convert (speedscope, chromium)
+        dotnet-counters # live EventCounter/Meter monitor for a running process
+        dotnet-dump # process dump capture and SOS analysis
+        dotnet-gcdump # GC heap dump capture and report
+        dotnet-coverage # coverage collect/merge/convert; on Apple Silicon `collect` needs --include-files (static), dynamic instrumentation is x64-only
+        reportgenerator # coverage report renderer over cobertura/lcov (HTML, badges, markdown summaries)
+        dotnet-stryker # mutation testing over the Microsoft.Testing.Platform runner
+        sharpfuzz # coverage-guided fuzzing instrumentation for .NET assemblies
+        ilspycmd # .NET assembly decompiler for NuGet API catalogues (overlay row: release nupkg)
         nuget-to-json # NuGet package metadata extraction
         roslyn-ls # C# LSP: Microsoft.CodeAnalysis.LanguageServer; the server rows in apps/nvim pass --stdio, --autoLoadProjects, and the log directory
 
@@ -189,7 +205,7 @@ in {
         pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv
       ]
       ++ dataRoster
-      ++ [nuget-mcp];
+      ++ [nuget-mcp binlog-mcp];
 
     # DOTNET_ROOT required for Roslyn and other SDK-discovery tools; re-evaluated on every rebuild, store path stays current.
     sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";

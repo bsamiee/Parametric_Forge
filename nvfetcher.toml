@@ -89,3 +89,46 @@ fetch.tarball = "https://github.com/CadQuery/OCP/releases/download/$ver/OCP_src_
 src.github_tag = "CadQuery/OCP"
 src.include_regex = "^7\\.9\\.[0-9]+(\\.[0-9]+)*$"
 fetch.tarball = "https://github.com/CadQuery/OCP/releases/download/$ver/OCP_src_stubs_Linux.zip"
+
+# NuGet global tools: the version source is the flat container's newest stable release (prerelease rows carry a hyphen), and the nupkg is the
+# immutable archive buildDotnetGlobalTool installs; `nvfetcher --filter '^nuget-'` advances the family alone.
+
+[nuget-dotnet-trace]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-trace/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-trace/$ver/dotnet-trace.$ver.nupkg"
+
+[nuget-dotnet-counters]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-counters/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-counters/$ver/dotnet-counters.$ver.nupkg"
+
+[nuget-dotnet-dump]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-dump/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-dump/$ver/dotnet-dump.$ver.nupkg"
+
+[nuget-dotnet-gcdump]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-gcdump/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-gcdump/$ver/dotnet-gcdump.$ver.nupkg"
+
+[nuget-dotnet-coverage]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-coverage/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-coverage/$ver/dotnet-coverage.$ver.nupkg"
+
+[nuget-dotnet-reportgenerator-globaltool]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-reportgenerator-globaltool/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-reportgenerator-globaltool/$ver/dotnet-reportgenerator-globaltool.$ver.nupkg"
+
+[nuget-dotnet-stryker]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-stryker/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-stryker/$ver/dotnet-stryker.$ver.nupkg"
+
+[nuget-sharpfuzz-commandline]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/sharpfuzz.commandline/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/sharpfuzz.commandline/$ver/sharpfuzz.commandline.$ver.nupkg"
+
+[nuget-dotnet-ef]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/dotnet-ef/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/dotnet-ef/$ver/dotnet-ef.$ver.nupkg"
+
+[nuget-ilspycmd]
+src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/ilspycmd/index.json | jq -r '[.versions[] | select(test(\"-\") | not)] | last'"
+fetch.url = "https://api.nuget.org/v3-flatcontainer/ilspycmd/$ver/ilspycmd.$ver.nupkg"

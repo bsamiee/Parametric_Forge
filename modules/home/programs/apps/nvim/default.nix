@@ -247,8 +247,9 @@
           ".cs" = "csharp";
           ".csx" = "csharp";
         };
-        # Solution load on a large workspace outpaces the default startup window; a crash loop stops after three restarts.
-        startupTimeout = 60000;
+        # Solution load on a large workspace outpaces the default startup window (upstream's own plugin seats 120s); a crash loop stops after
+        # three restarts.
+        startupTimeout = 120000;
         maxRestarts = 3;
       };
     };

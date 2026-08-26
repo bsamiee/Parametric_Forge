@@ -24,7 +24,6 @@
       [
         "${home}/.local/bin"
         "${home}/bin"
-        "${home}/.dotnet/tools"
         "/etc/profiles/per-user/${username}/bin"
         "/run/current-system/sw/bin"
         "/nix/var/nix/profiles/default/bin"

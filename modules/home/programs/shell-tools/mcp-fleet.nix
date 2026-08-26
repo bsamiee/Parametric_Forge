@@ -120,6 +120,21 @@
     };
   }
   {
+    # Structured queries over an MSBuild .binlog (errors, properties, items, targets, embedded project files); the launcher rides the same dnx lane
+    # as nuget. Read-only over a log file, so headless codex may call its tools unprompted.
+    name = "binlog";
+    transport = "stdio";
+    command = "${profileBin}/binlog-mcp";
+    args = [];
+    envKeys = [];
+    codex = {
+      required = false;
+      startupTimeoutSec = 60;
+      toolTimeoutSec = 180;
+      toolsApprovalMode = "approve";
+    };
+  }
+  {
     # Nix truth surface: nixpkgs packages plus NixOS/Home Manager/nix-darwin options from the live search index and upstream manuals.
     name = "nixos";
     transport = "stdio";

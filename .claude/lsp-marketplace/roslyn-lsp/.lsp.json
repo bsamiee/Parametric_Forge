@@ -13,7 +13,7 @@
             ".cs": "csharp",
             ".csx": "csharp"
         },
-        "startupTimeout": 60000,
+        "startupTimeout": 120000,
         "maxRestarts": 3
     }
 }

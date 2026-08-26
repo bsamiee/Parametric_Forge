@@ -311,6 +311,28 @@ final: prev: let
       }
       // lib.genAttrs betaPolicy.capiShimMembers shim);
 
+  # NuGet global-tool fold: buildDotnetGlobalTool installs the pinned nupkg under the SDK-10 host and wraps the executable through useDotnetFromEnv,
+  # so the `dotnet` on PATH (the estate's combined SDK) serves at runtime and the build SDK is only the fallback host. NuGet serves one immutable
+  # nupkg per id+version from every endpoint, so the generated pin's hash proves the builder's own fetch.
+  nugetRows = lib.filterAttrs (_: row: row.sourceKind == "nuget-tool") manifest.packages;
+  mkNugetTool = name: _: let
+    row = rowOf name;
+  in
+    prev.buildDotnetGlobalTool {
+      pname = name;
+      nugetName = row.nugetId;
+      inherit (row) version;
+      nugetHash = row.assets.any.hash;
+      # Both rows name SDK 10: the builder's callPackage default would otherwise seat the nixpkgs default SDK as the fallback host closure.
+      dotnet-sdk = prev.dotnetCorePackages.sdk_10_0;
+      dotnet-runtime = prev.dotnetCorePackages.sdk_10_0;
+      executables = name;
+      meta = {
+        inherit (row) description homepage;
+        license = lib.licenses.${row.license};
+        mainProgram = name;
+      };
+    };
   gcloudRow = rowOf "google-cloud-sdk";
   pnpmRow = rowOf "pnpm_11";
   astGrepRow = rowOf "ast-grep-upstream";
@@ -321,6 +343,7 @@ in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
+  // lib.mapAttrs mkNugetTool nugetRows
   // lib.genAttrs betaPolicy.nativeMembers betaNativeMember
   // {
     # nixpkgs 1.8.12 derives the install rpath by gluing CMAKE_INSTALL_PREFIX (dev) onto the already-absolute ALEMBIC_LIB_INSTALL_DIR (lib),
