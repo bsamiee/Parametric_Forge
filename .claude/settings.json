@@ -3,7 +3,6 @@
     "effortLevel": "high",
     "cleanupPeriodDays": 30,
     "skillOverrides": {
-        "heptabase-cli": "name-only",
         "rhino-mcp": "name-only"
     },
     "claudeMdExcludes": [

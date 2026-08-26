@@ -53,7 +53,6 @@ in {
     ./fd.nix
     ./forge-tools
     ./fzf.nix
-    ./heptabase.nix
     ./jnv.nix
     ./mcp-launchers.nix
     ./mise.nix

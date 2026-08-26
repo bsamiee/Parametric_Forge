@@ -371,7 +371,7 @@ classes:
         - 'CLAUDE_SKILL_DIR.{0,60}allowed.?tools'
         - 'allowed.?tools.{0,60}CLAUDE_SKILL_DIR'
         - '(Read|tool).{0,60}(bypass|violat).{0,50}(boundary|CLI.only)'
-      refuting_citation: 'en/skills.mdx:274 — ${CLAUDE_PROJECT_DIR} is the documented allowed-tools substitution; .claude/skills/heptabase-cli/SKILL.md:40 owns the read boundary (r4b-10, r4f-05)'
+      refuting_citation: 'en/skills.mdx:274 — ${CLAUDE_PROJECT_DIR} is the documented allowed-tools substitution; each SKILL.md owns its own read boundary (r4b-10, r4f-05)'
       landed_surfaces:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'

@@ -54,7 +54,6 @@ in {
               small = false;
             };
           }
-          "/Applications/Heptabase.app"
           "/Applications/Drafts.app"
           "/Applications/Visual Studio Code.app"
           "/Applications/Arc.app"

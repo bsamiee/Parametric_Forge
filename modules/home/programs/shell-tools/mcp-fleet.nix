@@ -254,19 +254,6 @@
     };
   }
   {
-    name = "heptabase-mcp";
-    transport = "http";
-    url = "https://api.heptabase.com/mcp";
-    headerNames = [];
-    envKeys = [];
-    codex = {
-      auth = "oauth";
-      required = false;
-      startupTimeoutSec = 20;
-      toolTimeoutSec = 180;
-    };
-  }
-  {
     name = "openaiDeveloperDocs";
     transport = "http";
     url = "https://developers.openai.com/mcp";
