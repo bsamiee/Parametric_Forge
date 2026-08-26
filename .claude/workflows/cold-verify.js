@@ -274,7 +274,7 @@ const SELF_CHECK =
     'first pass skimmed past; a clean verdict is asserted only after this second pass returns empty.';
 
 const LAWS_READ =
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a ' +
     'topology row whose [SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row ' +
     'binds each branch it names.';
 

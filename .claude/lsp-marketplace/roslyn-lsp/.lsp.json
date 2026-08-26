@@ -1,7 +1,14 @@
 {
     "roslyn": {
-        "command": "roslyn-language-server",
-        "args": ["--stdio"],
+        "command": "Microsoft.CodeAnalysis.LanguageServer",
+        "args": [
+            "--stdio",
+            "--autoLoadProjects",
+            "--logLevel",
+            "Information",
+            "--extensionLogDirectory",
+            "/Users/bardiasamiee/.local/state/roslyn-ls"
+        ],
         "extensionToLanguage": {
             ".cs": "csharp",
             ".csx": "csharp"

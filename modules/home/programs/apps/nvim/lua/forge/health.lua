@@ -23,12 +23,9 @@ local function read_json(path)
     return ok and doc or nil
 end
 
--- Identity dimensions of one marketplace server entry vs the generated row.
+-- One marketplace server entry vs the generated row: every projected field is identity, lifecycle rows included.
 local function identity_match(live, want)
-    return live.command == want.command
-        and vim.deep_equal(live.args or {}, want.args or {})
-        and vim.deep_equal(live.extensionToLanguage, want.extensionToLanguage)
-        and vim.deep_equal(live.settings, want.settings)
+    return vim.deep_equal(live, want)
 end
 
 function M.check()

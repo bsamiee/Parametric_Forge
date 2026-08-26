@@ -447,7 +447,7 @@ const REG = {
 };
 
 const LAWS_READ =
-    'LAWS: read `docs/laws/` IN FULL (README + topology + patterns + scars; short registry pages) — a topology row whose ' +
+    'LAWS: read `docs/laws/` IN FULL (README + design + topology; short registry pages) — a topology row whose ' +
     '[SURFACE] your corrections touch binds its obligated counterparts into the SAME pass, and every patterns row binds each ' +
     'branch it names.';
 

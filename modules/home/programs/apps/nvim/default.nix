@@ -16,6 +16,7 @@
   toLua = lib.generators.toLua {};
   home = config.home.homeDirectory;
   flakeRoot = config.forge.lsp.flakeRoot;
+  stateHome = config.xdg.stateHome;
 
   # --- [TREESITTER_COMPAT_UNIT_NEOVIM_PIN_NVIM_TREESITTER_MAIN_PARSERS]
   grammars = [
@@ -78,7 +79,10 @@
 
   # --- [LSP_INVENTORY_ONE_ROW_FAMILY_TWO_CONSUMERS]
   # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows; `claude` is the marketplace identity (plugin dir, extension map,
-  # optional settings override) the health surface proves against .claude/lsp-marketplace — command/args derive from `cmd` at projection.
+  # optional settings override, optional lifecycle rows startupTimeout/shutdownTimeout/maxRestarts in milliseconds and counts) the health
+  # surface proves against .claude/lsp-marketplace — command/args derive from `cmd` at projection, so the tracked .lsp.json is a copy of the
+  # generated row and any hand edit there is drift. A plugin's tracked file change bumps its plugin.json version: Claude Code pins the
+  # installed cache to that version and refreshes it only on a bump (the activation row below runs the refresh).
   # Commands are bare names resolving through the Forge per-user profile — never per-project shells (tool-resolution policy).
   servers = {
     nixd = rec {
@@ -194,8 +198,19 @@
         inherit settings;
       };
     };
+    # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
+    # workspace folders itself, so generic clients (Claude Code, vim.lsp without roslyn.nvim) get project-scoped diagnostics, not misc-files mode.
+    # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
     roslyn_ls = {
-      cmd = ["roslyn-language-server" "--stdio"];
+      cmd = [
+        "Microsoft.CodeAnalysis.LanguageServer"
+        "--stdio"
+        "--autoLoadProjects"
+        "--logLevel"
+        "Information"
+        "--extensionLogDirectory"
+        "${stateHome}/roslyn-ls"
+      ];
       filetypes = ["cs"];
       root_markers = ["global.json" ".git"];
       settings = {};
@@ -205,6 +220,9 @@
           ".cs" = "csharp";
           ".csx" = "csharp";
         };
+        # Solution load on a large workspace outpaces the default startup window; a crash loop stops after three restarts.
+        startupTimeout = 60000;
+        maxRestarts = 3;
       };
     };
   };
@@ -408,8 +426,37 @@ in {
             extensionToLanguage = row.claude.extensions;
           }
           // lib.optionalAttrs (builtins.tail row.cmd != []) {args = builtins.tail row.cmd;}
-          // lib.optionalAttrs (row.claude ? settings) {inherit (row.claude) settings;}))
+          // lib.optionalAttrs (row.claude ? settings) {inherit (row.claude) settings;}
+          // lib.filterAttrs (name: _: builtins.elem name ["startupTimeout" "shutdownTimeout" "maxRestarts"]) row.claude))
       servers
     );
   };
+
+  # Claude Code consumes the marketplace only once registered and installed; directory marketplaces copy each plugin into
+  # ~/.claude/plugins/cache on install and refresh that copy only on `plugin update`. This row converges the registry with the tracked
+  # marketplace on every switch: register when absent, install a missing plugin, update one whose cached .lsp.json differs from the tracked
+  # file. The claude binary is a native install outside Nix; its absence defers the row, and `:checkhealth forge` proves the state.
+  home.activation.claudeLspPlugins = lib.hm.dag.entryAfter ["writeBoundary"] (let
+    plugins = lib.concatStringsSep " " (lib.mapAttrsToList (_: row: row.claude.plugin) servers);
+  in ''
+    claude_bin="$HOME/.local/bin/claude"
+    market="${flakeRoot}/.claude/lsp-marketplace"
+    if [ -x "$claude_bin" ] && [ -d "$market" ]; then
+      known="$HOME/.claude/plugins/known_marketplaces.json"
+      installed="$HOME/.claude/plugins/installed_plugins.json"
+      if ! ${pkgs.jq}/bin/jq -e '."forge-lsp"' "$known" >/dev/null 2>&1; then
+        run "$claude_bin" plugin marketplace add "$market" >/dev/null 2>&1 || echo "forge-lsp marketplace registration deferred" >&2
+      fi
+      for plugin in ${plugins}; do
+        cached="$(${pkgs.jq}/bin/jq -r --arg id "$plugin@forge-lsp" '.plugins[$id][0].installPath // empty' "$installed" 2>/dev/null)"
+        if [ -z "$cached" ]; then
+          run "$claude_bin" plugin install --scope user "$plugin@forge-lsp" >/dev/null 2>&1 || echo "$plugin@forge-lsp install deferred" >&2
+        elif ! cmp -s "$cached/.lsp.json" "$market/$plugin/.lsp.json"; then
+          run "$claude_bin" plugin update "$plugin@forge-lsp" >/dev/null 2>&1 || echo "$plugin@forge-lsp update deferred" >&2
+        fi
+      done
+    else
+      echo "claude binary or lsp-marketplace absent; Claude LSP plugin reconcile deferred" >&2
+    fi
+  '');
 }

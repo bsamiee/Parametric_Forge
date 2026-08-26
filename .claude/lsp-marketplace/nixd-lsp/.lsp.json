@@ -18,9 +18,6 @@
                     },
                     "home-manager": {
                         "expr": "(builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions [ ]"
-                    },
-                    "flake-parts": {
-                        "expr": "(builtins.getFlake \"git+file:///Users/bardiasamiee/Documents/99.Github/Parametric_Forge\").debug.options"
                     }
                 }
             }

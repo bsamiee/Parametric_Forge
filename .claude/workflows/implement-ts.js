@@ -549,7 +549,7 @@ const COMMENTS =
     'comment.';
 
 const LAWS =
-    'LAWS — read `docs/laws/` IN FULL (README + topology + patterns + scars; short registry pages) before any edit: a topology row whose ' +
+    'LAWS — read `docs/laws/` IN FULL (README + design + topology; short registry pages) before any edit: a topology row whose ' +
     '[SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each branch it names.';
 
 const HARVEST_LAW =

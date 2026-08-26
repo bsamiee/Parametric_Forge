@@ -352,7 +352,7 @@ const ENTRY_LAW =
     'assigned scope, `read` = what you actually full-read, `skipped`/`unverified` = what you did not reach — an honest skip beats a silent one.';
 
 const LAWS_READ =
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a topology row ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a topology row ' +
     'whose [SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each branch it names.';
 
 const HARVEST_LAW =

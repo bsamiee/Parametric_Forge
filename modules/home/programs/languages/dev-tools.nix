@@ -57,14 +57,6 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
-  # roslyn-ls installs the binary as Microsoft.CodeAnalysis.LanguageServer and requires an explicit log
-  # directory; wrap it so consumers invoke `roslyn-language-server --stdio` directly.
-  roslyn-language-server = pkgs.writeShellScriptBin "roslyn-language-server" ''
-    logdir="''${TMPDIR:-/tmp}/roslyn-ls"
-    mkdir -p "$logdir"
-    exec ${pkgs.roslyn-ls}/bin/Microsoft.CodeAnalysis.LanguageServer \
-      --logLevel Information --extensionLogDirectory "$logdir" "$@"
-  '';
   # dnx owns NuGet tool resolution and RID selection; an unversioned package reference resolves the stable NuGet.org release at spawn.
   nuget-mcp = pkgs.writeShellScriptBin "nuget-mcp" ''
     export DOTNET_ROOT="${pkgs.dotnet-sdk_10}/share/dotnet"
@@ -189,7 +181,7 @@ in {
         csharpier # C# formatter; reads project .csharpierrc/.editorconfig
         ilspycmd # .NET assembly decompiler for NuGet API catalogues
         nuget-to-json # NuGet package metadata extraction
-        roslyn-language-server # C# LSP (roslyn-ls wrapped for clean --stdio)
+        roslyn-ls # C# LSP: Microsoft.CodeAnalysis.LanguageServer; the server rows in apps/nvim pass --stdio, --autoLoadProjects, and the log directory
 
         # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration

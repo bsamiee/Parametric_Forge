@@ -2,5 +2,9 @@
     "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
     "name": "roslyn-lsp",
     "displayName": "Roslyn (C#)",
-    "description": "Roslyn language server for C# (.cs/.csx)"
+    "version": "1.0.0",
+    "description": "Roslyn language server for C# (.cs/.csx)",
+    "author": {
+        "name": "Bardia Samiee"
+    }
 }

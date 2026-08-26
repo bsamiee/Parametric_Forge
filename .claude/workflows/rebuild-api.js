@@ -98,7 +98,7 @@ const LAW = [
         '— the nuget MCP for NuGet feed truth, Context7 for official API docs, exa/tavily for the package source/official surface — never from ' +
         'memory. Before driving assay, READ tools/assay/README.md for the api-arm contract (its resolve/decompile/reflection invocation, ' +
         'supported artifact kinds, and JSON output shape) so you drive it correctly rather than guessing flags.',
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a topology row ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a topology row ' +
         'whose [SURFACE] your catalog edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each ' +
         'branch it names.',
     'MANDATE — INTEGRATION-SHAPED, NOT SURFACE-LEVEL: a rebuilt .api documents (a) the package full ADVANCED surface (combinators, hooks, native ' +

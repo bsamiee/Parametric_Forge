@@ -1181,7 +1181,7 @@ const readFirst = (L, pkg, dossiers) =>
         '(1c) ANALYZER LAW — read the repo `.editorconfig` rules for your language: every `error`-severity rule is a COMPILE ' +
             'GATE (`dotnet_style_namespace_match_folder = true:error` means namespace ALWAYS equals folder path); a claim ' +
             'contradicting an error-level analyzer rule is a FICTION to correct, never law to compose.',
-        '(1d) LAWS — read `docs/laws/` IN FULL (README + topology + patterns + scars; short registry pages): a topology row ' +
+        '(1d) LAWS — read `docs/laws/` IN FULL (README + design + topology; short registry pages): a topology row ' +
             'whose [SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each branch it names.',
         '(2) .API — `ls` BOTH catalog tiers in full — the shared substrate `' +
             L.root +

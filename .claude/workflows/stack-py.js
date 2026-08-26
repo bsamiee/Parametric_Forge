@@ -156,7 +156,7 @@ const LAW = [
         'COLLAPSE_SCAN + page-craft; a sub-folder README, where one exists on disk, is a one-table router whose shards compose the core laws and never ' +
         're-open them; each concept page owns ONE disjoint layer and states doctrine as fact. READ docs/stacks/python/README.md sections [02]-[DOCTRINE], ' +
         '[03]-[COLLAPSE_SCAN], [05]-[PAGE_CRAFT], [06]-[CORPUS_LAW] + any sub-folder routers on disk and hold them as law.',
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a topology row whose ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a topology row whose ' +
         '[SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each branch it names ' +
         '(the python/csharp parity coupling is a patterns concern).',
     'QUALITY BAR: the PYTHON stack is the highest-rigor stack in the repo; docs/stacks/csharp/ (the README + shapes + surfaces-and-dispatch + the ' +

@@ -845,7 +845,7 @@ const readFirst = (L, pkg) =>
         '(1c) ANALYZER LAW — read the repo `.editorconfig` rules for your language: every rule at `error` severity is a COMPILE ' +
             'GATE the fences must satisfy; a doc claim that contradicts an error-level analyzer rule is a FICTION to correct, ' +
             'never law to compose.',
-        '(1d) LAWS — read `docs/laws/` IN FULL (README + topology + patterns + scars; short registry pages): a topology row whose ' +
+        '(1d) LAWS — read `docs/laws/` IN FULL (README + design + topology; short registry pages): a topology row whose ' +
             '[SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each ' +
             'branch it names.',
         '(2) .API — `ls` BOTH catalog tiers in full — the shared substrate `' +

@@ -724,7 +724,7 @@ const WRITE_LAW =
     'consumer sites, index docs. Landed sibling work is composed as found; a conflict resolves to the stronger form, never a revert.';
 
 const LAWS_READ =
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a ' +
     'topology row whose [SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row ' +
     'binds each branch it names.';
 

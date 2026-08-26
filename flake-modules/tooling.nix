@@ -16,7 +16,18 @@ _: {
     # Repo law files are the single source: the biome row carries biome.json's bytes, its treefmt excludes are the same file's negation rows, and the
     # ruff row projects pyproject [tool.ruff] — a value changed in the law file busts the treefmt cache and lands in the row with zero edits here.
     biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
-    biomeExcludes = map (lib.removePrefix "!") (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
+    # Biome 2.2+ spells a folder ignore as `!dir` while treefmt's exclude globs need `dir/**`: a row whose basename carries a glob or a file
+    # extension (a non-dot leading name with a dot) passes verbatim, every other row is a folder and gains the recursive suffix here.
+    biomeExcludes = map (
+      row: let
+        path = lib.removePrefix "!" row;
+        base = baseNameOf path;
+        isFile = lib.hasInfix "*" base || (builtins.match "[^.].*[.].+" base != null);
+      in
+        if isFile
+        then path
+        else "${path}/**"
+    ) (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
     ruffLaw = (fromTOML (builtins.readFile ../pyproject.toml)).tool.ruff;
     # SQL dialect is a per-file fact; each row binds its files to a generated config projected from the style vocabulary. sqruff discovery is
     # cwd-only, so the explicit --config keeps rows hermetic inside the sandboxed check.

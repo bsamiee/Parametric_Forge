@@ -81,7 +81,7 @@ const LAW = [
         'hunt past the rubric yourself. NO NEW cards (ripple counterparts already exist; do not add more) — the single exception is ' +
         'the completeness lens, which MAY add exactly one missing genuinely-deferred card per real gap. Genuinely DEFERRED only; no ' +
         'test/meta/decision/create-file cards. Fix-in-place.',
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a topology row ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a topology row ' +
         'whose [SURFACE] your card edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each ' +
         'branch it names.',
     'ADVERSARIAL STANCE: every card, status, anchor, Ripple, and prior disposition is naive or illusory until it survives your attack; dense, ' +

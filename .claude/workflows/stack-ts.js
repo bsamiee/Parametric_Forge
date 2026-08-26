@@ -185,7 +185,7 @@ const LAW = [
         'project TypeScript is written. It is NOT a libs/typescript/.planning design corpus: a page teaches a coding LAW with exemplary agnostic ' +
         'snippets, never a concrete module. The README owns routing + the doctrine laws + the COLLAPSE_SCAN; each concept page owns ONE disjoint ' +
         'layer and states doctrine as fact. READ docs/stacks/typescript/README.md sections [02], [03], [05], [06] and hold them as law.',
-    'LAWS — read `docs/laws/` before any durable edit (README + topology + patterns + scars; short registry pages): a topology row whose ' +
+    'LAWS — read `docs/laws/` before any durable edit (README + design + topology; short registry pages): a topology row whose ' +
         '[SURFACE] your edits touch binds its obligated counterparts into the SAME pass, and every patterns row binds each branch it names ' +
         '(the python/csharp/typescript parity coupling is a patterns concern).',
     'SUPREMACY LAW: docs/stacks/python/ and docs/stacks/csharp/ are BOTH the floor, never the ceiling — read both READ-ONLY for the shared shape ' +

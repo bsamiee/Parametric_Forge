@@ -1,10 +1,5 @@
 {
     "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
-    "vcs": {
-        "enabled": true,
-        "clientKind": "git",
-        "useIgnoreFile": true
-    },
     "files": {
         "ignoreUnknown": true,
         "includes": [
@@ -13,6 +8,10 @@
             "!pnpm-lock.yaml",
             "!overlays/_sources/generated.json",
             "!node_modules",
+            "!**/__pycache__",
+            "!**/.artifacts",
+            "!**/.direnv",
+            "!**/.venv",
             "!**/.archive",
             "!**/_archive",
             "!**/scratch",
