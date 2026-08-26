@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+    "name": "taplo-lsp",
+    "displayName": "TOML",
+    "version": "1.0.0",
+    "description": "taplo language server with the SchemaStore catalog (.toml)",
+    "author": {
+        "name": "Bardia Samiee"
+    }
+}

@@ -61,7 +61,7 @@
     # shutdown first; codex lanes detach by design, so only lanes far past every effort-tier deadline are litter.
     orphan = {
       biome-daemon-orphans = ["biome (lsp-proxy|__run_server)" "" 300 "biome stop"];
-      lsp-server-orphans = ["(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server)" "" 300 ""];
+      lsp-server-orphans = ["(tsgo --lsp|bash-language-server|yaml-language-server|lua-language-server|(^|/)nixd|dts-lsp|postgrestools|Microsoft[.]CodeAnalysis[.]LanguageServer|(^|/)ty server|taplo lsp stdio|biome lsp-proxy)" "" 300 ""];
       csharp-buildhost-orphans = ["(BuildHost-netcore|MSBuild[.]BuildHost[.]dll)" "" 600 "dotnet build-server shutdown"];
       forge-edit-nvim-orphans = ["nvim.*(forge-edit|forge-accept)" "" 1800 ""];
       codex-lane-orphans = ["(^|/)codex (exec|e) " "Codex[.]app" 14400 ""];

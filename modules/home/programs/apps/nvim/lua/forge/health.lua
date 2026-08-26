@@ -138,7 +138,9 @@ function M.check()
             local record = installed and installed.plugins and installed.plugins[plugin .. "@forge-lsp"]
             local cached = record and record[1] and read_json(record[1].installPath .. "/.lsp.json")
             if not cached then
-                health.warn(("%s not installed in Claude Code (claude plugin install %s@forge-lsp)"):format(plugin, plugin))
+                health.info(
+                    ("%s not installed in Claude Code (opt in: claude plugin install %s@forge-lsp --scope user|project)"):format(plugin, plugin)
+                )
             else
                 local _, live = next(cached)
                 if identity_match(live, want) then

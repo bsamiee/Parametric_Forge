@@ -45,6 +45,16 @@
             "name": "yaml-lsp",
             "source": "./yaml-lsp",
             "description": "yaml-language-server with SchemaStore (.yaml/.yml)"
+        },
+        {
+            "name": "taplo-lsp",
+            "source": "./taplo-lsp",
+            "description": "taplo language server with the SchemaStore catalog (.toml)"
+        },
+        {
+            "name": "biome-lsp",
+            "source": "./biome-lsp",
+            "description": "Biome language server for JSON, JSONC, and CSS (.json/.jsonc/.css)"
         }
     ]
 }

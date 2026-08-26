@@ -201,6 +201,33 @@
     # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
     # workspace folders itself, so generic clients (Claude Code, vim.lsp without roslyn.nvim) get project-scoped diagnostics, not misc-files mode.
     # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
+    # TOML: taplo's LSP mode; the SchemaStore catalog is on by default, and the PATH wrapper seats the house taplo.toml only where no project config exists.
+    taplo = {
+      cmd = ["taplo" "lsp" "stdio"];
+      filetypes = ["toml"];
+      root_markers = [".taplo.toml" "taplo.toml" ".git"];
+      settings = {};
+      claude = {
+        plugin = "taplo-lsp";
+        extensions.".toml" = "toml";
+      };
+    };
+    # Biome's LSP proxy: the editor attaches it beside tsgo for lint diagnostics on every Biome language; the Claude lane claims only the
+    # extensions no other row owns (JSON, JSONC, CSS) because Claude Code starts one server per extension, first registered wins.
+    biome = {
+      cmd = ["biome" "lsp-proxy"];
+      filetypes = ["json" "jsonc" "css" "javascript" "javascriptreact" "typescript" "typescriptreact"];
+      root_markers = ["biome.json" "biome.jsonc" ".git"];
+      settings = {};
+      claude = {
+        plugin = "biome-lsp";
+        extensions = {
+          ".json" = "json";
+          ".jsonc" = "jsonc";
+          ".css" = "css";
+        };
+      };
+    };
     roslyn_ls = {
       cmd = [
         "Microsoft.CodeAnalysis.LanguageServer"
@@ -432,10 +459,11 @@ in {
     );
   };
 
-  # Claude Code consumes the marketplace only once registered and installed; directory marketplaces copy each plugin into
-  # ~/.claude/plugins/cache on install and refresh that copy only on `plugin update`. This row converges the registry with the tracked
-  # marketplace on every switch: register when absent, install a missing plugin, update one whose cached .lsp.json differs from the tracked
-  # file. The claude binary is a native install outside Nix; its absence defers the row, and `:checkhealth forge` proves the state.
+  # Claude Code consumes the marketplace only once registered; installing a plugin is an operator decision per scope
+  # (`claude plugin install <plugin>@forge-lsp --scope user|project`), never an activation side effect. Directory marketplaces copy each
+  # installed plugin into ~/.claude/plugins/cache and refresh that copy only on `plugin update`, so this row converges what IS installed:
+  # register the marketplace when absent, update an installed plugin whose cached .lsp.json differs from the tracked file. The claude binary
+  # is a native install outside Nix; its absence defers the row, and `:checkhealth forge` proves the state.
   home.activation.claudeLspPlugins = lib.hm.dag.entryAfter ["writeBoundary"] (let
     plugins = lib.concatStringsSep " " (lib.mapAttrsToList (_: row: row.claude.plugin) servers);
   in ''
@@ -449,9 +477,7 @@ in {
       fi
       for plugin in ${plugins}; do
         cached="$(${pkgs.jq}/bin/jq -r --arg id "$plugin@forge-lsp" '.plugins[$id][0].installPath // empty' "$installed" 2>/dev/null)"
-        if [ -z "$cached" ]; then
-          run "$claude_bin" plugin install --scope user "$plugin@forge-lsp" >/dev/null 2>&1 || echo "$plugin@forge-lsp install deferred" >&2
-        elif ! cmp -s "$cached/.lsp.json" "$market/$plugin/.lsp.json"; then
+        if [ -n "$cached" ] && ! cmp -s "$cached/.lsp.json" "$market/$plugin/.lsp.json"; then
           run "$claude_bin" plugin update "$plugin@forge-lsp" >/dev/null 2>&1 || echo "$plugin@forge-lsp update deferred" >&2
         fi
       done
