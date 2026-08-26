@@ -47,6 +47,7 @@ _: {
 
     # --- [NOTES_READING]
     "calibre" # E-book management
+    "heptabase" # Knowledge management
     "scrivener" # Writing tool
 
     # --- [QUICKLOOK_PLUGINS]
