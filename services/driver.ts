@@ -424,8 +424,10 @@ const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
         );
         const rows = yield* Effect.forEach(
             Topology.reviewers,
-            (row) =>
-                Effect.map(
+            (row) => {
+                // Read posture on the full union before the mechanism narrow: `as const` pins each roster row's literal, and the sole ruleset row is dormant today.
+                const active: boolean = row.posture === 'active';
+                return Effect.map(
                     Effect.forEach(
                         Topology.repositories,
                         (repository) =>
@@ -433,8 +435,8 @@ const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
                                 ? Effect.succeed<ReviewerRepo>({
                                       repo: repository.name,
                                       configurationApplicable: true,
-                                      configured: row.posture === 'active',
-                                      configHash: row.posture === 'active' ? policyHash : '',
+                                      configured: active,
+                                      configHash: active ? policyHash : '',
                                       installation: 'ruleset-native',
                                       active: false,
                                       required: false,
@@ -459,7 +461,8 @@ const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
                         { concurrency: 3 },
                     ),
                     (repos): ReviewerRow => ({ ...Struct.omit(row, 'artifacts'), repos }),
-                ),
+                );
+            },
             { concurrency: 2 },
         );
         // Activity stays unproven until a pull request produces reviewer behavior; required stays false until a proven check context enters policy.

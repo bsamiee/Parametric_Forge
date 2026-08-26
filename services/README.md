@@ -7,7 +7,7 @@ External SaaS desired state as typed Pulumi rows: `topology.ts` declares rows, `
 | [INDEX] | [PROVIDER]             | [OWNS]                                                                               |
 | :-----: | :--------------------- | :----------------------------------------------------------------------------------- |
 |  [01]   | `@pulumiverse/doppler` | Projects, environments, branch configs, service tokens, change-notification webhooks |
-|  [02]   | `@pulumi/github`       | Repository core and merge hygiene; the ruleset family is dormant                    |
+|  [02]   | `@pulumi/github`       | Repository core and merge hygiene; the ruleset family is dormant                     |
 
 Pins follow the package schema, never registry-page text. `pulumi-command` is admitted as tactical last-mile glue only — it installs with its first real resource, never anticipatorily. Doppler `secretsSync` and service-account rows wait for a real consumer: Actions secret sync is rejected while zero workflows exist, and every webhook row names its live receiver. Cloudflare, Tailscale, Hostinger-bridge, and Cachix Deploy hold behind their annex tripwires.
 
@@ -16,7 +16,7 @@ Pins follow the package schema, never registry-page text. `pulumi-command` is ad
 | [INDEX] | [FAMILY]                 | [STATE]                                                                                                     |
 | :-----: | :----------------------- | :---------------------------------------------------------------------------------------------------------- |
 |  [01]   | Repository core          | Uniform agent merge hygiene and feature booleans, `protect: true`, adopt-imported                           |
-|  [02]   | Rulesets / branch policy | Empty by ruling: `main` takes direct pushes; the dormant policy in `topology.ts` restores on a new row       |
+|  [02]   | Rulesets / branch policy | Empty by ruling: `main` takes direct pushes; the dormant policy in `topology.ts` restores on a new row      |
 |  [03]   | Environments             | Estate deployment rows stay empty; GitHub-managed agent environments remain platform-owned                  |
 |  [04]   | Secret/variable rows     | Empty by ruling: zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
 |  [05]   | Access bindings          | Empty by ruling: sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
