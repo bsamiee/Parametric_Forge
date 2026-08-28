@@ -17,10 +17,26 @@
   treeCommand = pkgs.writeShellApplication {
     name = "tree";
     runtimeInputs = [pkgs.eza];
+    # --all is baked in: the dotfile surfaces an agent navigates by — .claude, .github, a package .planning, a lone .gitkeep proving a stub
+    # directory is populated — are load-bearing, and the ls alias already lists hidden. --git-ignore is what makes that affordable, so the
+    # repo's own .gitignore retires the build, venv, and artifact trees instead of a glob list chasing them; FORGE_TREE_GITIGNORE=0 admits
+    # them back. --ignore-glob still covers the non-git checkout. A caller-supplied -a is dropped rather than forwarded, because eza reads a
+    # second --all as "show . and .." and rejects it beside --tree.
     text = ''
+      args=()
+      for a in "$@"; do
+        case "$a" in
+          -a | --all) ;;
+          -a?*) args+=("-''${a#-a}") ;;
+          *) args+=("$a") ;;
+        esac
+      done
+      gitignore=(--git-ignore)
+      if [[ "''${FORGE_TREE_GITIGNORE:-1}" == 0 ]]; then gitignore=(); fi
       exec eza \
         --tree \
         --level "''${FORGE_TREE_LEVEL:-4}" \
+        --all \
         --long \
         --header \
         --bytes \
@@ -33,8 +49,9 @@
         --no-permissions \
         --no-user \
         --time-style=relative \
+        "''${gitignore[@]}" \
         --ignore-glob "''${FORGE_TREE_IGNORE:-${treeIgnoreGlobs}}" \
-        "$@"
+        "''${args[@]}"
     '';
   };
 
