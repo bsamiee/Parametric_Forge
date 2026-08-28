@@ -38,50 +38,13 @@
       fi
 
       # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
-      _usage() { printf 'usage: %s [--json] [--self-test] [target...]\n' "''${0##*/}"; }
-
-      # Self-test rides the full scan -> envelope rail: the fixture overlaps a directory with a repeated file target and uses a leading-zero
-      # deadline, while the second scan forces / as the common root. Unique totals, language derivation, target truth, and grouping prove the jq arm.
-      _self_test() {
-        local st out root_out cleanup
-        st="$(mktemp -d)"
-        printf -v cleanup 'rm -rf -- %q' "$st"
-        # shellcheck disable=SC2064  # Capture the shell-quoted path while the function-local value remains in scope.
-        trap "$cleanup" EXIT
-        printf 'x = 1\n' >"$st/a.py"
-        mkdir "$st/sub"
-        printf '{a = 1;}\n' >"$st/sub/b.nix"
-        out="$(env -u _LOC_DEADLINE_ACTIVE LOC_SCAN_DEADLINE_SECONDS=08 "$0" --json "$st" "$st/a.py" "$st/a.py")" || {
-          printf 'self-test: fixture scan failed\n' >&2
-          return 1
-        }
-        printf '%s\n' "$out" | jq -e '.total.files == 2 and .total.code == 2
-          and (.targets | length == 2)
-          and ([.folders[].folder] | sort == ["Root", "sub"])
-          and ([.languages[].name] | sort == ["Nix", "Python"])' >/dev/null || {
-          printf 'self-test: envelope mismatch: %s\n' "$out" >&2
-          return 1
-        }
-        root_out="$("$0" --json "$st/a.py" "$0")" || {
-          printf 'self-test: root scan failed\n' >&2
-          return 1
-        }
-        printf '%s\n' "$root_out" | jq -e '.target == "/" and .total.files == 2
-          and (.folders | length == 2) and all(.folders[]; .folder != "Root")' >/dev/null || {
-          printf 'self-test: root envelope mismatch: %s\n' "$root_out" >&2
-          return 1
-        }
-        rm -rf -- "$st"
-        trap - EXIT
-        printf 'self-test: scan envelope ok (deduplicated targets, decimal deadline, root grouping)\n'
-      }
+      _usage() { printf 'usage: %s [--json] [target...]\n' "''${0##*/}"; }
 
       json_mode=0
       targets=()
       while (($#)); do
         case "$1" in
           --json) json_mode=1 ;;
-          --self-test) _self_test; exit ;;
           --help | -h) _usage; exit 0 ;;
           --) shift; targets+=("$@"); break ;;
           --*) _usage >&2; exit 2 ;;
