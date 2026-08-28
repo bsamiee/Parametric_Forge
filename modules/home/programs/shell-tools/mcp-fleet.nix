@@ -14,10 +14,9 @@
 #   url/headerNames  http endpoint + Claude header-name set
 #   envKeys          env key names the server consumes
 #   claudeEnvNames   Claude env-block name set when it differs from envKeys
-#   launcher         { kind, names, pkg, bin, prelude?, ensureArgs?, source?, runtimePath?, constraints? }
+#   launcher         { kind, names, pkg, bin, prelude?, ensureArgs?, source?, runtimePath? }
 #                    => Forge-built wrapper(s); kind selects the ecosystem runner — "pnpm", "uv", or "uv-git". Every spawn resolves the
-#                    upstream release; source names a git repository for uv-git. runtimePath names pkgs attrs front-run onto the wrapper PATH;
-#                    constraints are uv `--with` compatibility bounds for transitive dependencies whose upstream specification is incomplete
+#                    upstream release; source names a git repository for uv-git. runtimePath names pkgs attrs front-run onto the wrapper PATH
 #   codex            { required, startupTimeoutSec, toolTimeoutSec, auth?, bearerEnvVar?, headerEnv?, toolsApprovalMode? }
 #                    toolsApprovalMode projects codex `default_tools_approval_mode` — "approve" marks a pure information-retrieval server whose
 #                    unannotated tools headless `codex exec` (approval: never) may call; write-capable servers never carry it (MCP runs unsandboxed)
@@ -172,9 +171,6 @@
       bin = "ast-grep-server";
       source = "ast-grep/ast-grep-mcp";
       runtimePath = ["ast-grep-upstream"];
-      # MCP 2.x removed the mcp.server.fastmcp layer sg-mcp imports; upstream leaves the dependency unbounded, so a fresh resolve breaks at import.
-      # Delete this bound when upstream absorbs MCP 2.x.
-      constraints = ["mcp<2"];
     };
     codex = {
       required = false;

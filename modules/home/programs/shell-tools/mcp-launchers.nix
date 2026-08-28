@@ -72,9 +72,7 @@
       export UV_PYTHON_DOWNLOADS=never
       export PATH="${pkgs.git}/bin:$PATH"
       ${lib.concatMapStringsSep "\n" (attr: ''export PATH="${pkgs.${attr}}/bin:$PATH"'') (row.launcher.runtimePath or [])}
-      exec ${pkgs.uv}/bin/uvx --refresh --python "${pkgs.python313}/bin/python3" ${
-        lib.concatMapStrings (c: "--with ${lib.escapeShellArg c} ") (row.launcher.constraints or [])
-      }--from ${lib.escapeShellArg (uvSpec row)} ${lib.escapeShellArg row.launcher.bin} "$@"
+      exec ${pkgs.uv}/bin/uvx --refresh --python "${pkgs.python313}/bin/python3" --from ${lib.escapeShellArg (uvSpec row)} ${lib.escapeShellArg row.launcher.bin} "$@"
     '';
   uvLaunchers = lib.concatMap (row: map (mkUvLauncher row) row.launcher.names) uvRows;
   # Rhino's package manager owns the router install; version-globbing keeps client configs stable across McNeel package updates. The router
