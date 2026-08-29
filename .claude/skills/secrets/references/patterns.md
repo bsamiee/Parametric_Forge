@@ -33,18 +33,6 @@ doppler run --project <p> --config <c> --command='<preflight> && exec <process>;
 
 Command chains are generated inside owned wrappers — Nix rows, driver code — never assembled from freeform input.
 
-## [04]-[MCP_ROW]
-
-The fleet runs one Doppler MCP server under the ambient personal CLI token, resolved in the launcher prelude; every tool addresses project and config per call.
-
-```text
-export DOPPLER_TOKEN="${DOPPLER_TOKEN:-$(doppler configure get token --plain --scope /)}"
-exec doppler-mcp --read-only
-```
-
-- `--read-only` filters the exposed toolset to GET endpoints; the token's grants are the enforcement.
-- Write-capable MCP binds only in an explicit operator session with a short-lived scoped token.
-
-## [05]-[PLAN_GATES]
+## [04]-[PLAN_GATES]
 
 `PLAN_GATES` rejects every capability the active subscription withholds. Live entitlement proof owns each admission. `RBAC` and `Integration Access Scoping` bind Team and Enterprise; `Custom Roles` binds Enterprise or the Team add-on.

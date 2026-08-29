@@ -10,15 +10,13 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 |  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row                    | `driver.ts --reveal`    | read-only grant   |
 |  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`                | `op read`, else ambient | driver child only |
 |  [04]   | GitHub IaC PAT             | `op://Tokens/GITHUB_TOKEN/token`                     | `op read`, else ambient | provider env only |
-|  [05]   | MCP Doppler access         | Doppler CLI auth or `agent-runtime/dev` secret       | explicit process fetch  | read-only tool    |
-|  [06]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
+|  [05]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
 
 - [01]: User CLI Doppler token: one local CLI identity, never serialized into receipts or client configs.
 - [02]: Config service token: output secret `token:<project>/<config>/<name>`, revealed on demand through `driver.ts outputs <name> --reveal`; each read-only grant stays bound to one config.
 - [03]: IaC admin token: `op read` unless ambient `DOPPLER_TOKEN` exists, injected as Pulumi Automation env; only the driver child process receives the unwrapped token.
 - [04]: GitHub IaC PAT: `op read` unless ambient `GITHUB_TOKEN` exists, injected into `@pulumi/github`; provider env only, repository resources stay protected.
-- [05]: MCP Doppler access: `posting.nix` fetches its process environment explicitly, while the MCP server holds its own `login` credential; `--read-only` filters the toolset to GET endpoints, and token scope remains the API-side boundary.
-- [06]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
+- [05]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
 
 ## [02]-[LOCAL_SESSION_CUSTODY]
 

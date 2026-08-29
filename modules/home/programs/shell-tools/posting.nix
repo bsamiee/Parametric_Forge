@@ -64,29 +64,6 @@
       ];
     }
     {
-      name = "doppler-config";
-      description = "Doppler agent-runtime/dev config facts through the scoped MCP token";
-      method = "GET";
-      url = "https://api.doppler.com/v3/configs/config";
-      source = "agent";
-      params = [
-        {
-          name = "project";
-          value = "agent-runtime";
-        }
-        {
-          name = "config";
-          value = "dev";
-        }
-      ];
-      headers = [
-        {
-          name = "Authorization";
-          value = "Bearer \${DOPPLER_MCP_AGENT_TOKEN}";
-        }
-      ];
-    }
-    {
       name = "greptile-index";
       description = "Greptile index currency for the Forge repo (status + sha)";
       method = "GET";
