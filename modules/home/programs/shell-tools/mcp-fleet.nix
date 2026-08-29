@@ -305,4 +305,20 @@
       toolTimeoutSec = 180;
     };
   }
+  {
+    # ChatGPT.app-private Computer Use REPL (the app persists it disabled): presence asserted, definition owned by the app.
+    name = "cua_repl";
+    transport = "stdio";
+    platforms = ["darwin"];
+    command = "/Applications/ChatGPT.app/Contents/MacOS/ChatGPT";
+    args = [];
+    envKeys = [];
+    clients = ["codex"];
+    assertLevel = "presence";
+    codex = {
+      required = false;
+      startupTimeoutSec = 120;
+      toolTimeoutSec = 180;
+    };
+  }
 ]

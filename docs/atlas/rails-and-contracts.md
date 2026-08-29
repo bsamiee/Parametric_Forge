@@ -39,7 +39,7 @@ Darwin builds and switches locally; NixOS check is eval-only, build proves closu
 
 ## [05]-[MAINTENANCE_AND_CLEANUP]
 
-`forge-nix-maintenance` trims system generations to current-only (`--delete-generations old`), garbage-collects user profiles whole (`nix-collect-garbage -d`), and optimises the store under the shared `FORGE_REDEPLOY_LOCK` (scheduled nonblocking, manual waits up to 600s). `forge-activation-sweep` scans topmost root-owned entries under `.config`, `.local/share`, `.local/state` (exempting the detsys-ids client, `.hammerspoon`, and `Library/LaunchAgents`), exits `4` on findings, and `--clear` batches one `sudo` removal and rescans.
+`forge-nix-maintenance` trims system generations to current-only, garbage-collects user profiles whole (`nix-collect-garbage -d`), and optimises the store under the shared `FORGE_REDEPLOY_LOCK` (scheduled nonblocking, manual waits up to 600s); `forge-brew-maintenance` runs the Homebrew pass under the same lock and gate. `forge-activation-sweep` scans topmost root-owned entries under `.config`, `.local/share`, `.local/state` (exempting the detsys-ids client, `.hammerspoon`, and `Library/LaunchAgents`), exits `4` on findings, and `--clear` batches one `sudo` removal and rescans.
 
 `forge-cleanup plan|apply|sweep` drives a typed row registry over five kinds — `glob` (trash matches under a root), `age` (retention window, where the age gate is itself the live-session guard), `deadlink` (broken links only), `codex-trust` (stale trusted-project rows), and `orphan` (evidence-gated reap of ppid-1 tty-less agent litter).
 
@@ -53,7 +53,7 @@ Raw source-tree execution exits `126`; the packaged command or `nix run .#forge-
 
 `data/commands.json` owns the verb catalog through `command-routes.jq`. Self-test binds each mutating verb to `lockMode:"mutation"`, `psql` to `lockMode:"psql-session"`, and other verbs to `lockMode:"none"`; mutation and psql sessions exclude each other. Endpoint locks are endpoint-hash scoped. Routes govern diagnostic JSON admission. Root resolution hashes `FORGE_PROVISION_ROOT` or the Git worktree into `root_key`; generations publish through an atomic `current` symlink. Catalog absence rejects a verb.
 
-`up` is the full sequence: mutating Docker, endpoint lock, active-project cap, busy-aware ports, owned-resource assertions, compose generation, `docker compose up -d --remove-orphans --wait`, readiness, required-extension apply, generation publish, and volume-ledger render — a failed first-up preserves volumes unless `prune --owned --volumes` proves removal intent. `down` removes owned containers/networks and preserves volumes; `prune --owned` removes volumes only with `--volumes`. `check` and `apply` share one handler — `check` validates static env under no lock, `apply` runs the extension apply under mutation lock — and a missing required extension surfaces `error.code="required-extension-unavailable"`.
+`up` is the full sequence: endpoint lock, active-project cap, busy-aware ports, owned-resource assertions, compose generation, `docker compose up -d --remove-orphans --wait`, readiness, required-extension apply, generation publish, and volume-ledger render; a failed first-up preserves volumes. `down` removes owned containers and networks, keeping volumes; `prune --owned` removes volumes only with `--volumes`. `check` validates static env unlocked, `apply` runs the extension apply under the mutation lock, and a missing required extension surfaces `error.code="required-extension-unavailable"`.
 
 ## [08]-[DB_CONTAINER_ESTATE]
 
@@ -69,11 +69,11 @@ One ordered pass refreshes every currency family; each step proves through its o
 |  [02]   | flake inputs | `nix flake update`                              | `forge-redeploy --build`; commit `nix: bump flake inputs (…)` |
 |  [03]   | nvfetcher    | `nvfetcher -o overlays/_sources`                | build gate rides the switch                                   |
 |  [04]   | activation   | `forge-redeploy --switch`                       | `forge-accept`                                                |
-|  [05]   | homebrew     | full brew pass (below)                          | `brew outdated` and `brew doctor` clean                       |
+|  [05]   | homebrew     | `forge-brew-maintenance`                        | `brew outdated --greedy` empty, nightly stamp current         |
 |  [06]   | python venv  | `forge-scientific-env uv sync` at the repo root | dead-dylib sweep after any python/native input move           |
 |  [07]   | sci lane     | `flake.nix` `nixpkgs-sci` rev → `nix flake lock`  | `forge-python-overlay build`, then `status <venv>`            |
 |  [08]   | store        | `forge-nix-maintenance`                         | single system generation, GC, optimise                        |
 
 Flake bumps moving the Nix python invalidate the venv whole; bumps moving native libs poison cached wheels — `otool -L` over every site-packages native, each `/nix/store/*.dylib` tested, rebuilds each hit with `forge-scientific-env uv pip install --reinstall --no-cache`; a path still missing after the rebuild is a missing library row in `scientific-tools.nix`, never another rebuild.
 
-Homebrew custody: nix-darwin's Brewfile installs missing roster entries while activation leaves metadata, versions, and unlisted packages intact. Homebrew 6 third-party entries use a fully qualified name with item-scoped `trusted = true`; official formulae and casks are intrinsically trusted. Operator maintenance runs `brew update`, formula and cask upgrades, a targeted `wezterm@nightly --greedy-latest` upgrade, `brew autoremove`, and `brew cleanup --prune=all -s`; `brew outdated` and `brew doctor` close the pass.
+Homebrew custody: nix-darwin's Brewfile installs missing roster entries while activation leaves versions and unlisted packages intact. Third-party entries use a fully qualified name with item-scoped `trusted = true`; official formulae and casks are intrinsically trusted. `forge-brew-maintenance` is the currency pass — `brew update`, upgrades, the `wezterm@nightly --greedy-latest` refresh (a `:latest` cask never reads outdated), `autoremove`, `cleanup --prune=all -s` — receipting the nightly build stamp on both edges; its daily agent runs AC-gated under the deploy lock.

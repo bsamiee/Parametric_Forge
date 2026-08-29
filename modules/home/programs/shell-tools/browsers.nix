@@ -64,11 +64,16 @@
 
   # --- [NAME_POLICY_ROWS]
   # One repo/workroot identity per row — [source slug consumers previous?]; display derives from slug; slug claims (current + retired `previous`,
-  # which keep receipt-partition history across renames) collide at eval.
+  # which keep receipt-partition history across renames) collide at eval. `session` is the inner/outer session identity: the default workspace
+  # keeps the estate's historical `main` session (the pre-deck default_prog), every other row sessions under its slug.
   naming =
     map (t: {
       source = lib.elemAt t 0;
       slug = lib.elemAt t 1;
+      session =
+        if lib.elem "wezterm-workspace-name" (lib.elemAt t 2)
+        then "main"
+        else lib.elemAt t 1;
       display = "[${lib.toUpper (lib.elemAt t 1)}]";
       domain = "estate-repo";
       collision = "reject";
@@ -102,7 +107,7 @@
   receiptSources =
     map (r: {grain = "kv";} // r)
     (
-      map kvSource ["redeploy" "maintenance|nix-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
@@ -144,6 +149,7 @@
       forge-git-doctor = ["git-tools/default.nix" "Resolved git identity, signing rows, op-agent key service, fsmonitor health" "when a commit fails to sign or fsmonitor stalls"];
       forge-install-antigravity-cli = ["languages/dev-tools.nix" "Install or refresh the Antigravity CLI into ~/.local/bin" "when agy is absent or outdated"];
       forge-mcp = ["shell-tools/mcp-launchers.nix" "Fleet reconcile, wrapper presence doctor, client projection drift" "after any mcp-fleet.nix or client-registration change"];
+      forge-brew-maintenance = ["shell-tools/forge-tools/brew.nix" "Homebrew pass: update, upgrades, the wezterm@nightly greedy-latest refresh, autoremove, cleanup" "daily agent; by hand when brew outdated or the nightly stamp lags"];
       forge-nix-maintenance = ["shell-tools/forge-tools/deploy.nix" "Generation trim, profile GC, store optimise under the deploy lock" "weekly agent; by hand when the store outgrows the disk"];
       forge-osa = ["languages/apple-tools.nix" "OSA syntax gate and the canonical comment-preserving AppleScript formatter" "on every AppleScript or JXA edit"];
       forge-provision = ["overlays/forge-provision/" "Local Docker/Compose Postgres estate behind one schema-v3 JSON envelope" "standing up or debugging a project database"];
@@ -575,7 +581,7 @@ in {
         readOnly = true;
       };
   in {
-    naming = ro naming "Name policy rows: source, slug, display, domain, consumers.";
+    naming = ro naming "Name policy rows: source, slug, session, display, domain, consumers.";
     receiptSources = ro receiptSources "Declared receipt emitters: kind, path, grain (kv|json), emitter.";
   };
 

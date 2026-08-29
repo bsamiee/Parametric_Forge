@@ -10,7 +10,7 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask and needs a targeted greedy-latest upgrade in the operator Homebrew pass.
+    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so forge-brew-maintenance refreshes it with --greedy-latest.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]

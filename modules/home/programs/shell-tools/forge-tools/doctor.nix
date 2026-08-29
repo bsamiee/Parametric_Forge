@@ -18,6 +18,7 @@
     cr = "reviewer-identity: symlink to coderabbit";
     macroscope = "reviewer-identity: official self-updating reviewer binary (services matrix)";
     agy = "admitted-agent: antigravity CLI";
+    "codex-code-mode-host" = "app-launcher: symlink into ChatGPT.app's code-mode host";
     "pre-commit" = "uv-lane: uv tool shim";
     "pynvim-python" = "uv-lane: uv tool shim";
     "python3.12" = "uv-lane: uv runtime shim";

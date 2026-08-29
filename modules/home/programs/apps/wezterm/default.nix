@@ -45,12 +45,13 @@
   fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS_ONE_SESSION_FABRIC_VOCABULARY]
-  # One row = picker entry + zellij session identity + cwd + float policy + warm posture. Rows project from the local name-policy register; `warm`
-  # rows resurrect in the background at login (forge-workspace --warm), and `float` names the shape workspace-scoped floats take.
+  # One row = picker entry + zellij session identity + cwd + float policy + warm posture. Rows project from the local name-policy register (the
+  # workspace name IS the register's session name, so the default workspace attaches `main`); `warm` rows resurrect in the background at login
+  # (forge-workspace --warm), and `float` names the shape workspace-scoped floats take.
   workspaceRoot = "${homeDir}/Documents/99.Github";
   workspaceRows =
     map (r: {
-      name = r.slug;
+      name = r.session;
       label = r.display;
       cwd = "${workspaceRoot}/${r.source}";
       kind = "local";
@@ -59,7 +60,7 @@
     })
     (builtins.filter (r: r.domain == "estate-repo") naming);
   defaultWorkspace =
-    (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {slug = "forge";} naming).slug;
+    (lib.findFirst (r: lib.elem "wezterm-workspace-name" r.consumers) {session = "main";} naming).session;
   warmSlugs = map (r: r.name) (builtins.filter (r: r.warm) workspaceRows);
 
   # --- [SSH_DOMAIN_ROWS_SSH_REGISTRY_ROWS_TRANSPORT_ONLY_NEVER_PERSISTENCE]

@@ -61,10 +61,11 @@
   # Project-root ingress: one parent directory owns the estate repos; worktree rows derive from each root's git state at runtime.
   projectRootParents = ["${config.home.homeDirectory}/Documents/99.Github"];
 
-  # Inner session identity rides the name-policy register: the outer plane (forge-workspace) attaches estate repos by slug, so the graph's project
-  # arm resolves the same row — one repo never forks into basename- and slug-named sessions. Unregistered roots keep their basename.
+  # Inner session identity rides the name-policy register: the outer plane (forge-workspace) attaches estate repos by their register session
+  # name, so the graph's project arm resolves the same row — one repo never forks into basename- and session-named sessions. Unregistered roots
+  # keep their basename.
   sessionSlugArms =
-    lib.concatMapStrings (r: "          ${lib.escapeShellArg r.source}) printf '%s' ${lib.escapeShellArg r.slug} ;;\n")
+    lib.concatMapStrings (r: "          ${lib.escapeShellArg r.source}) printf '%s' ${lib.escapeShellArg r.session} ;;\n")
     (lib.filter (r: lib.elem "zellij-session-name" r.consumers) config.forge.registers.naming);
 
   # Per-command fzf theme: the theme owner's shared fzf vocabulary (global fzf options stay theme-only in fzf.nix).

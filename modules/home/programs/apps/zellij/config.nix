@@ -377,6 +377,10 @@ in {
         simplified_ui               true
         mouse_mode                  true
         pane_frames                 true
+        // 0.45 moved the frame default to "titles" (a title line, no gap) and stacks to a pinned list; both pins keep the windowed panes and the
+        // classic stack the swap layouts were tuned on.
+        pane_frame_style            "full"
+        stacked_pane_list           false
         session_serialization       true
         serialize_pane_viewport     true
         copy_command                "pbcopy"
@@ -387,21 +391,9 @@ in {
         web_sharing                 "disabled"
 
         // --- [PLUGIN_ALIASES]
+        // Estate-owned aliases only: the user block merges over zellij's own default alias table, so session-manager, configuration,
+        // plugin-manager, and about resolve upstream and never restate here.
         plugins {
-          configuration location="zellij:configuration"
-          compact-bar location="zellij:compact-bar"
-          tab-bar location="zellij:tab-bar"
-          status-bar location="zellij:status-bar"
-          strider location="zellij:strider"
-          plugin-manager location="zellij:plugin-manager"
-          session-manager location="zellij:session-manager"
-          about location="zellij:about"
-          filepicker location="zellij:strider" {
-            cwd "/"
-          }
-          welcome-screen location="zellij:session-manager" {
-            welcome_screen true
-          }
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
           // --- [ZJSTATUS_TOP_BAR]
