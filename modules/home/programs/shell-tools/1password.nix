@@ -16,7 +16,6 @@
   # Replay constants as rows: one declaration owns name AND value; the export block and the replay-manifest name set both derive from it.
   replayRows = {
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
-    WORKSPACE_MCP_CREDENTIALS_DIR = "${config.xdg.cacheHome}/workspace-mcp";
     GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${config.xdg.configHome}/gws";
     GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
   };

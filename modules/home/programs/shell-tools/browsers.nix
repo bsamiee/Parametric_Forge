@@ -59,8 +59,6 @@
   '';
   # DuckDB read_json `columns` clause from the same vector: a declared schema, never inference — an all-null column otherwise infers JSON downstream.
   spineColumnsSql = builtins.concatStringsSep ", " (map (c: "${c}: 'VARCHAR'") spineColumns);
-  profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
-  fleet = import ./mcp-fleet.nix {inherit profileBin;};
 
   # --- [NAME_POLICY_ROWS]
   # One repo/workroot identity per row — [source slug consumers previous?]; display derives from slug; slug claims (current + retired `previous`,
@@ -107,7 +105,7 @@
   receiptSources =
     map (r: {grain = "kv";} // r)
     (
-      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "mcp" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
       ++ [
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
@@ -139,7 +137,7 @@
       fmt = ["home/scripts/fmt.nix" "Universal formatter front door; repo law outranks the machine XDG fallbacks" "before landing any edited file"];
       forge-accept = ["shell-tools/forge-tools/accept.nix" "Ordered post-switch acceptance rail, receipting pass/warn/fail per step" "after every --switch; --from/--only re-enter one failed step"];
       forge-activation-sweep = ["shell-tools/forge-tools/deploy.nix" "Root-owned in-the-way HM target detection; --clear batches one sudo removal" "when a switch dies writing a HOME target"];
-      forge-browse = ["shell-tools/browsers.nix" "fzf browser over every register domain, with read-only previews" "to find an alias, chord, MCP row, name ruling, or command"];
+      forge-browse = ["shell-tools/browsers.nix" "fzf browser over every register domain, with read-only previews" "to find an alias, chord, name ruling, or command"];
       forge-cleanup = ["shell-tools/forge-tools/cleanup.nix" "plan/apply/sweep over the typed litter registry, trash-first" "plan on demand, apply only on a proved plan; sweep is the hourly agent"];
       forge-console = ["shell-tools/posting.nix" "Posting TUI over the service collections, credentials materialized at launch" "to exercise a service endpoint by hand"];
       forge-doctor = ["shell-tools/forge-tools/doctor.nix" "One machine doctor: path, launchd, parity, updates lenses; --json per lens" "before blaming the estate for a shadowed binary, dead agent, HOME drift, or staleness"];
@@ -148,7 +146,6 @@
       forge-fmt = ["flake-modules/tooling.nix" "Repo treefmt wrapper behind nix fmt; --check maps to --ci" "on every touched repo file; nix flake check gates it"];
       forge-git-doctor = ["git-tools/default.nix" "Resolved git identity, signing rows, op-agent key service, fsmonitor health" "when a commit fails to sign or fsmonitor stalls"];
       forge-install-antigravity-cli = ["languages/dev-tools.nix" "Install or refresh the Antigravity CLI into ~/.local/bin" "when agy is absent or outdated"];
-      forge-mcp = ["shell-tools/mcp-launchers.nix" "Fleet reconcile, wrapper presence doctor, client projection drift" "after any mcp-fleet.nix or client-registration change"];
       forge-brew-maintenance = ["shell-tools/forge-tools/brew.nix" "Homebrew pass: update, upgrades, the wezterm@nightly greedy-latest refresh, autoremove, cleanup" "daily agent; by hand when brew outdated or the nightly stamp lags"];
       forge-nix-maintenance = ["shell-tools/forge-tools/deploy.nix" "Generation trim, profile GC, store optimise under the deploy lock" "weekly agent; by hand when the store outgrows the disk"];
       forge-osa = ["languages/apple-tools.nix" "OSA syntax gate and the canonical comment-preserving AppleScript formatter" "on every AppleScript or JXA edit"];
@@ -156,7 +153,6 @@
       forge-python-overlay = ["languages/scientific-tools.nix" "build|link|unlink|status the nixpkgs python-module env into a uv venv" "when a venv needs the uncached nixpkgs python modules"];
       forge-receipts = ["shell-tools/browsers.nix" "Receipt plane: rows, DuckDB --sql/--verb over the event spine, registry --audit" "after any failed rail, and --audit after adding a receipt emitter"];
       forge-redeploy = ["shell-tools/forge-tools/deploy.nix" "Build, closure-diff, activate, receipt; the only sanctioned activation path" "after any modules/, overlays/, hosts/, or flake edit"];
-      forge-rhino-up = ["shell-tools/mcp-launchers.nix" "Bring the Rhino host up and prove its MCP listener registry" "before the first rhino-mcp-platform call of a session"];
       forge-scientific-env = ["languages/scientific-tools.nix" "Native build closure as pkg-config, cmake, and library search paths" "building a wheel-less sdist or resyncing the repo venv"];
       "forge-terminal-accept.sh" = ["home/scripts/terminal.nix" "Assert the WezTerm/Zellij/Yazi/Neovim mesh end to end; JSON receipt" "after any terminal-mesh, chord, or workspace row edit"];
       forge-webhook = ["shell-tools/webhook.nix" "Signed-event inbox listener over the typed source rows" "launchd owns it on Darwin; run by hand only to debug a delivery"];
@@ -168,30 +164,11 @@
     };
 
   # --- [REGISTER_JSON_PROJECTIONS]
-  # MCP rows sanitize at the seam — endpoint basename, key NAMES, runner, doctor family — never argv, token custody paths, or values; `sub` projects
-  # an optional sub-attrset onto its closed key family, null when absent.
-  sub = keys: v:
-    if v == null
-    then null
-    else keys // builtins.intersectAttrs keys v;
-  mcpRegister =
-    map (r: {
-      inherit (r) name transport;
-      endpoint = r.url or (baseNameOf r.command);
-      envKeys = r.envKeys or [];
-      clients = r.clients or ["claude" "codex"];
-      assertLevel = r.assertLevel or "full";
-      launcher = sub (lib.genAttrs ["kind" "pkg" "source"] (_: null)) (r.launcher or null);
-      codex = r.codex or null;
-      doctor = sub {execs = [];} (r.doctor or null);
-    })
-    fleet;
   registerJson = domain: rows: pkgs.writeText "forge-register-${domain}.json" (builtins.toJSON rows);
   registers = lib.mapAttrs registerJson {
     inherit naming;
     aliases = config.forge.registers.aliases;
     chords = config.forge.chords.register or [];
-    mcp = mcpRegister;
     receipts = receiptSources;
     tools = toolRows;
   };
@@ -209,7 +186,6 @@
       // lib.optionalAttrs (lib.length t > 2) {binds = lib.elemAt t 2;}) {
       aliases = [''.[] | [.alias, .category, .risk, .expansion, .desc] | @tsv'' "shell alias register"];
       chords = [''.[] | [.chord_id, .mods, .key, .label] | @tsv'' "chord register across consumers"];
-      mcp = [''.[] | [.name, .transport, (.launcher.kind // "remote"), .assertLevel] | @tsv'' "MCP fleet rows" ["ctrl-d:execute(${profileBin}/forge-mcp doctor | ${pkgs.less}/bin/less -R)"]];
       naming = [''.[] | [.slug, .source, .display, .domain] | @tsv'' "name policy rows"];
       tools = [''.[] | [.name, .when, .purpose] | @tsv'' "estate commands: what each owns and when to run it"];
     }

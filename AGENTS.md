@@ -29,8 +29,7 @@
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
 - The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
-- MCP and server launchers are Home Manager-installed wrappers: the `forge-*-mcp` fleet wrappers project from `modules/home/programs/shell-tools/mcp-launchers.nix` rows, while `nuget-mcp` lives in `modules/home/programs/languages/dev-tools.nix`.
-- Sibling-repo `nuget` skill and MCP configs invoke this launcher; launcher behavior is fixed here, never in a sibling repo.
+- MCP server launchers are Home Manager-installed wrappers projected from `modules/home/programs/shell-tools/mcp-launchers.nix` rows; Claude and Codex register them through their own configs (`claude mcp add`, `codex mcp add`, repo-scoped `.mcp.json` and `.codex/config.toml`), and launcher behavior is fixed here, never in a client config.
 
 ## [05]-[AGENT_RUNTIME]
 

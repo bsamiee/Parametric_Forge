@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/shell-tools/forge-tools/accept.nix
 # ----------------------------------------------------------------------------
 # First-switch and first-session acceptance choreography: one ordered, receipt-bearing rail from preflight through client/runtime checks, idempotent
-# and re-enterable from any step (--from/--only). Probes stay owner-local (forge-doctor lenses, forge-terminal-accept, forge-mcp doctor); this
+# and re-enterable from any step (--from/--only). Probes stay owner-local (forge-doctor lenses, forge-terminal-accept); this
 # owner orders and asserts. Key material is asserted by NAME only, never value.
 {
   pkgs,
@@ -19,7 +19,7 @@
     inputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.jq pkgs.findutils pkgs.zellij pkgs.flock forgeActivationSweep forgeDoctor forgeRedeploy];
     text = ''
       ${tl.statusFold}
-      declare -ra STEPS=(preflight switch replay outputs doctor zellij terminal fleet lanes relaunch)
+      declare -ra STEPS=(preflight switch replay outputs doctor zellij terminal lanes relaunch)
       usage() {
         printf 'Usage: forge-accept [--from STEP | --only STEP | --list]\n  steps: %s\n' "''${STEPS[*]}" >&2
         exit 64
@@ -226,26 +226,6 @@
           row PASS terminal "terminal harness pass=$p defer=$d (deferred rows run in the attached leg)"
         else
           row FAIL terminal "terminal harness rc=$rc pass=$p fail=$f defer=$d"
-        fi
-      }
-
-      step_fleet() {
-        command -v forge-mcp >/dev/null 2>&1 || {
-          row SKIP fleet-doctor "forge-mcp not on PATH"
-          return 0
-        }
-        local out rc=0 drc=0
-        out="$(forge-mcp doctor 2>&1)" || rc=$?
-        if [ "$rc" = 0 ]; then
-          row PASS fleet-doctor "all fleet wrappers resolve"
-        else
-          row FAIL fleet-doctor "failing rows: $(printf '%s\n' "$out" | { grep '^\[FAIL\]' || true; } | awk '{print $2}' | paste -sd' ' -)"
-        fi
-        forge-mcp drift >/dev/null 2>&1 || drc=$?
-        if [ "$drc" = 0 ]; then
-          row PASS fleet-drift "manifest matches both client registrations"
-        else
-          row FAIL fleet-drift "registration drift; run forge-mcp drift"
         fi
       }
 

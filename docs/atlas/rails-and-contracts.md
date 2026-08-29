@@ -13,7 +13,6 @@ Forge rails are `writeShellApplication` commands with shared locks and receipt-o
 |  [05]   | `forge-activation-sweep` | Root-owned in-the-way HM target detection and clear                     | `forge-tools/deploy.nix`    |
 |  [06]   | `forge-cleanup`          | Litter plan/apply and orphan sweep over a typed row registry            | `forge-tools/cleanup.nix`   |
 |  [07]   | `forge-provision`        | Docker/Compose DB estate: envelope, locks, generations, extension apply | `overlays/forge-provision/` |
-|  [08]   | `forge-mcp`              | MCP wrapper presence doctor and registration drift                      | `mcp-launchers.nix`         |
 
 Owner paths resolve under `modules/home/programs/shell-tools/` unless the row names a repo root. `forge-browse tools` indexes every packaged estate command with its owner file and the trigger that calls for it; the same rows project to `~/.config/forge/registers/tools.json`.
 
@@ -23,11 +22,11 @@ Darwin builds and switches locally; NixOS check is eval-only, build proves closu
 
 ## [03]-[FORGE_ACCEPT]
 
-`forge-accept --list` emits the ordered step vocabulary — `preflight switch replay outputs doctor zellij terminal fleet lanes relaunch` — and `--from STEP` or `--only STEP` selects into it. `preflight` gates `switch` through the flake root, the WezTerm cask pair, `nix.custom.conf`, the activation sweep, and the deploy lock.
+`forge-accept --list` emits the ordered step vocabulary — `preflight switch replay outputs doctor zellij terminal lanes relaunch` — and `--from STEP` or `--only STEP` selects into it. `preflight` gates `switch` through the flake root, the WezTerm cask pair, `nix.custom.conf`, the activation sweep, and the deploy lock.
 
 `replay` kickstarts the GUI secrets agent and diffs replayed key NAMES against the live GUI domain. `outputs` probes a clean-env interactive login shell for PATH single-ownership, compdump litter, and fzf warnings. `doctor` folds the `path`, `launchd`, and `parity` lenses into verdict rows, and `zellij` proves each live server postdates the generation, reaping only forge-owned zero-client sessions.
 
-`terminal` delegates to `forge-terminal-accept.sh`. `fleet` runs `forge-mcp doctor` (wrapper presence; stateless clients own protocol health) and `forge-mcp drift`. `lanes` compares expected secret key names across shell and GUI without values, and `relaunch` emits the operator instruction rows. Rows carry `ts / step / status / detail` and close with the folded result.
+`terminal` delegates to `forge-terminal-accept.sh`. `lanes` compares expected secret key names across shell and GUI without values, and `relaunch` emits the operator instruction rows. Rows carry `ts / step / status / detail` and close with the folded result.
 
 ## [04]-[FORGE_DOCTOR]
 

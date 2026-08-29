@@ -212,7 +212,6 @@
       ["browsers" "${st}/browsers.nix" "toml" "roles" "bound"]
       ["posting" "${st}/posting.nix" "yaml" "roles palette" "bound"]
       ["process-compose" "${st}/process-compose.nix" "yaml" "roles palette" "bound"]
-      ["mcp-cells" "${st}/mcp-launchers.nix" "zjstatus-pipe" "roles icons" "bound"]
       ["glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap"]
       ["zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap"]
       ["zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap"]

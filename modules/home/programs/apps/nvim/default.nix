@@ -334,12 +334,6 @@
       ft = "json";
     }
     {
-      id = "mcp-doctor";
-      label = "forge-mcp doctor";
-      argv = ["forge-mcp" "doctor"];
-      mode = "scratch";
-    }
-    {
       id = "receipts-redeploy";
       label = "Redeploy receipts (tail)";
       argv = ["tail" "-n" "40" "${home}/Library/Logs/forge-redeploy.receipts.log"];

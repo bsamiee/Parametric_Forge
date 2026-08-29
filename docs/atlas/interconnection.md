@@ -54,15 +54,15 @@ New capability lands as a row on the owning table, never a new file. Each axis h
 |  [03]   | GUI apps              | `modules/home/programs/apps/default.nix` | a karabiner/linearmouse/nvim/wezterm/yazi/zellij import        |
 |  [04]   | Shell, git, and peers | the matching `*/default.nix` roster      | a package row on that axis table                               |
 |  [05]   | DB clients            | `languages/db-tools.nix`                 | a wrapped client row                                           |
-|  [06]   | MCP fleet             | `shell-tools/mcp-fleet.nix`              | a manifest row                                                 |
+|  [06]   | MCP launchers         | `shell-tools/mcp-launchers.nix`          | a launcher row                                                 |
 |  [07]   | Environment variables | `environments/default.nix`               | a row on the env owner                                         |
 
 - [04]: axis families: shell, git, container, language, media, nix tools
 - [05]: client row: Postgres 18 clients, DuckDB, SQLite/SQLean, linters
-- [06]: manifest row fields: transport, command/url, env-key names, probe, launcher, Codex fields
+- [06]: launcher row fields: kind, name, pkg, bin, prelude, ensureArgs, runtimePath, platforms
 - [07]: env owner axes: core, shell, languages, development, apps, containers, media
 
-MCP manifest changes fan through `mcp-launchers.nix`, fleet serialization, generated wrappers, owned client projections, health probes, and drift checks. Required client rows gate startup admission.
+A launcher row builds one wrapper binary; Claude and Codex register it through their own configs, so a row change never touches client state.
 
 ## [07]-[RUNTIME_SEAMS]
 

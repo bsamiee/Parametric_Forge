@@ -1,6 +1,6 @@
 # Parametric Forge
 
-Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, MCP fleet, SSH estate, provisioning, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
+Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, MCP launchers, SSH estate, provisioning, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
 
 ## [01]-[LAYOUT]
 
@@ -91,9 +91,9 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 
 Doppler owns project and service configuration; 1Password owns local operator and session custody. Home Manager resolves the mode-600 session cache during activation. Process-specific Doppler consumers invoke `doppler run` or `doppler secrets download` explicitly. Read names with `doppler secrets --project <p> --config <c> --only-names`; add a key in its owning config and wire its process consumer. Topology mutates only through `services/topology.ts` rows. `secrets` owns the custody law.
 
-## [07]-[MCP_FLEET]
+## [07]-[MCP_LAUNCHERS]
 
-`modules/home/programs/shell-tools/mcp-fleet.nix` owns the fleet manifest: each row declares transport, spawn line or endpoint, environment names, ecosystem runner, auth, clients, and host admission. Every switch reconciles host-filtered rows into Claude and Codex while preserving client-private state. `uvx` resolves Python servers, `pnpm dlx` resolves npm servers, `dnx` resolves NuGet, Yak owns Rhino, and providers own remote servers. `forge-mcp doctor` proves wrappers; `forge-mcp drift` proves projections. One row adds or extends a server.
+`modules/home/programs/shell-tools/mcp-launchers.nix` owns the launcher wrappers: one row per Home Manager-installed binary that resolves its upstream package at spawn — `uvx` for Python servers, `pnpm dlx` for npm servers — and execs it under the client's stdio pipe. Registration is client-owned: `claude mcp add` and `codex mcp add` write the user configs, and a repo-scoped server lands in that repo's `.mcp.json` and `.codex/config.toml`. Yak owns the Rhino router and providers own remote servers; neither needs a wrapper.
 
 ## [08]-[SSH_ESTATE]
 
@@ -101,7 +101,7 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
-`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable pipeline from preflight through fleet and credential-lane checks to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
+`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable pipeline from preflight through terminal and credential-lane checks to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
 
 `forge-doctor <lens> [--json]` is the read-only machine doctor standing behind that rail, one lens per question: `path` classifies PATH owners and cross-owner shadows, `launchd` reconciles declared plists against the live `launchctl` table, `parity` diffs the generation's home-files against live `$HOME`, and `updates` projects a currency board from existing receipts. Each lens emits one typed row stream rendering both the human table and `--json`, and drift exits nonzero.
 
@@ -116,7 +116,7 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 - [DOTNET_AEC]: Nix-managed dotnet SDKs (8/9/10); `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 - [PROTOBUF]: `protoc` and the `grpc` plugin set (`grpc_csharp_plugin`, `grpc_python_plugin`) are machine-owned and unpinned, and `protoc-gen-jsonschema` (Buf's JSON Schema 2020-12 emitter, an overlay source-build riding its nvfetcher pin) sits beside them on PATH; the `buf` driver that invokes them stays pinned in the consuming repo's own package manager, never installed here.
 - [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Rasm campaign work enters through its own assay rail; direct calls are Forge-level debugging.
-- [MCP_LAUNCHERS]: `nuget-mcp` (.NET 10) and the fleet wrappers are Home Manager-installed; sibling-repo MCP configs invoke them — launcher behavior is fixed here, never in a sibling.
+- [MCP_LAUNCHERS]: the launcher wrappers are Home Manager-installed; client MCP configs invoke them — launcher behavior is fixed here, never in a client config.
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
@@ -172,7 +172,6 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 - Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
-- Fleet: `forge-mcp reconcile claude`, `forge-mcp reconcile codex`, `forge-mcp doctor`, and `forge-mcp drift` after any fleet or client change.
 - Discovery: `forge-browse tools` indexes every packaged command with its owner file and its trigger; bare `forge-browse` lists the register domains, and `forge-receipts --verb`/`--sql`/`--audit` queries the receipt plane every rail writes.
 
 MCP launchers resolve server currency through their ecosystem runners at spawn. Every other family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.

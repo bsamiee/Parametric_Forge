@@ -1,6 +1,6 @@
 # [TOPOLOGY]
 
-The coupling map: editing a `[SURFACE]` obligates its `[OBLIGATED_COUNTERPARTS]` in the same change. Heavy workflow runs re-prove rows against the live tree — a row whose coupling no longer exists is culled in the same pass, and a coupling discovered mid-run lands as a new row. Rows list only hand-edited counterparts: surfaces the switch projects from their rows — `forge-mcp reconcile`/`drift`, the scheduled maintenance and sweep agents, the `forge-accept` lanes — never appear here.
+The coupling map: editing a `[SURFACE]` obligates its `[OBLIGATED_COUNTERPARTS]` in the same change. Heavy workflow runs re-prove rows against the live tree — a row whose coupling no longer exists is culled in the same pass, and a coupling discovered mid-run lands as a new row. Rows list only hand-edited counterparts: surfaces the switch projects from their rows — the scheduled maintenance and sweep agents, the `forge-accept` lanes — never appear here.
 
 ## [01]-[ROWS]
 
