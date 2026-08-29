@@ -159,7 +159,7 @@ in rec {
       updateEngine = "nvfetcher";
       retention = "git-history";
       projection.overlay = "new";
-      consumers = ["node-tools" "pnpm_11" "mcp-launchers"];
+      consumers = ["node-tools" "pnpm_11"];
       description = "Node.js official binary distribution";
       homepage = "https://nodejs.org/";
       mainProgram = "node";
@@ -178,7 +178,7 @@ in rec {
       retention = "git-history";
       projection.overlay = "override";
       overlayReason = "the `pnpm` attr routes every consumer through the 11 line riding nodejs-bin_26";
-      consumers = ["node-tools" "mcp-launchers"];
+      consumers = ["node-tools"];
       description = "Fast, disk-space-efficient Node package manager";
       homepage = "https://pnpm.io/";
       mainProgram = "pnpm";

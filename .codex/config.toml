@@ -1,7 +1,0 @@
-# Project-scoped Codex MCP servers (trusted project only); the wrapper is a Home Manager-installed launcher from mcp-launchers.nix.
-[mcp_servers.nixos]
-command = "mcp-nixos"
-args = []
-default_tools_approval_mode = "approve"
-startup_timeout_sec = 30
-tool_timeout_sec = 180

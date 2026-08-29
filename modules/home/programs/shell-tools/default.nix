@@ -54,7 +54,6 @@ in {
     ./forge-tools
     ./fzf.nix
     ./jnv.nix
-    ./mcp-launchers.nix
     ./mise.nix
     ./pik.nix
     ./posting.nix

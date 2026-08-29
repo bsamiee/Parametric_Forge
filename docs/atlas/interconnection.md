@@ -54,15 +54,13 @@ New capability lands as a row on the owning table, never a new file. Each axis h
 |  [03]   | GUI apps              | `modules/home/programs/apps/default.nix` | a karabiner/linearmouse/nvim/wezterm/yazi/zellij import        |
 |  [04]   | Shell, git, and peers | the matching `*/default.nix` roster      | a package row on that axis table                               |
 |  [05]   | DB clients            | `languages/db-tools.nix`                 | a wrapped client row                                           |
-|  [06]   | MCP launchers         | `shell-tools/mcp-launchers.nix`          | a launcher row                                                 |
-|  [07]   | Environment variables | `environments/default.nix`               | a row on the env owner                                         |
+|  [06]   | Environment variables | `environments/default.nix`               | a row on the env owner                                         |
 
 - [04]: axis families: shell, git, container, language, media, nix tools
 - [05]: client row: Postgres 18 clients, DuckDB, SQLite/SQLean, linters
-- [06]: launcher row fields: kind, name, pkg, bin, prelude, ensureArgs, runtimePath, platforms
-- [07]: env owner axes: core, shell, languages, development, apps, containers, media
+- [06]: env owner axes: core, shell, languages, development, apps, containers, media
 
-A launcher row builds one wrapper binary; Claude and Codex register it through their own configs, so a row change never touches client state.
+MCP servers carry no Forge row: Claude and Codex register each one with its upstream command through their own configs.
 
 ## [07]-[RUNTIME_SEAMS]
 

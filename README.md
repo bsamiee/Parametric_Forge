@@ -1,6 +1,6 @@
 # Parametric Forge
 
-Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, MCP launchers, SSH estate, provisioning, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
+Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, SSH estate, provisioning, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
 
 ## [01]-[LAYOUT]
 
@@ -38,7 +38,7 @@ Parametric_Forge/
 │       │   ├── mac-tools/
 │       │   ├── media-tools/
 │       │   ├── nix-tools/
-│       │   ├── shell-tools/       # CLI kernels, MCP launchers, SSH, secrets
+│       │   ├── shell-tools/       # CLI kernels, SSH, secrets
 │       │   └── zsh/
 │       └── scripts/               # Integration and analysis kernels
 ├── overlays/                      # Manifest-folded package admissions
@@ -91,9 +91,9 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 
 Doppler owns project and service configuration; 1Password owns local operator and session custody. Home Manager resolves the mode-600 session cache during activation. Process-specific Doppler consumers invoke `doppler run` or `doppler secrets download` explicitly. Read names with `doppler secrets --project <p> --config <c> --only-names`; add a key in its owning config and wire its process consumer. Topology mutates only through `services/topology.ts` rows. `secrets` owns the custody law.
 
-## [07]-[MCP_LAUNCHERS]
+## [07]-[MCP_SERVERS]
 
-`modules/home/programs/shell-tools/mcp-launchers.nix` owns the launcher wrappers: one row per Home Manager-installed binary that resolves its upstream package at spawn — `uvx` for Python servers, `pnpm dlx` for npm servers — and execs it under the client's stdio pipe. Registration is client-owned: `claude mcp add` and `codex mcp add` write the user configs, and a repo-scoped server lands in that repo's `.mcp.json` and `.codex/config.toml`. Yak owns the Rhino router and providers own remote servers; neither needs a wrapper.
+MCP servers are client-owned, never Forge-owned: `claude mcp add` and `codex mcp add` register each server with its upstream command (`npx -y <pkg>`, `uvx <pkg>`, or the Yak-installed Rhino router binary) in `~/.claude.json` and `~/.codex/config.toml`, and a repo-scoped server lands in that repo's `.mcp.json` and `.codex/config.toml`. Forge contributes only the runners (`node`, `uv`, `ast-grep`) and the op-injected token names the configs reference.
 
 ## [08]-[SSH_ESTATE]
 
@@ -116,7 +116,6 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 - [DOTNET_AEC]: Nix-managed dotnet SDKs (8/9/10); `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 - [PROTOBUF]: `protoc` and the `grpc` plugin set (`grpc_csharp_plugin`, `grpc_python_plugin`) are machine-owned and unpinned, and `protoc-gen-jsonschema` (Buf's JSON Schema 2020-12 emitter, an overlay source-build riding its nvfetcher pin) sits beside them on PATH; the `buf` driver that invokes them stays pinned in the consuming repo's own package manager, never installed here.
 - [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Rasm campaign work enters through its own assay rail; direct calls are Forge-level debugging.
-- [MCP_LAUNCHERS]: the launcher wrappers are Home Manager-installed; client MCP configs invoke them — launcher behavior is fixed here, never in a client config.
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
@@ -174,7 +173,7 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 - Discovery: `forge-browse tools` indexes every packaged command with its owner file and its trigger; bare `forge-browse` lists the register domains, and `forge-receipts --verb`/`--sql`/`--audit` queries the receipt plane every rail writes.
 
-MCP launchers resolve server currency through their ecosystem runners at spawn. Every other family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
+MCP servers resolve their own currency through `npx`/`uvx` at spawn. Every other family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
 
 ## [16]-[LICENSE]
 

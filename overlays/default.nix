@@ -400,7 +400,7 @@ in
         '';
     });
     # Binary CLI overlays carry a release tree, not the crate/source layout the matching python distributions patch and build from, so each
-    # python package pins back to its nixpkgs source-built lineage: duckdb is harlequin's engine, ruff the wheel the MCP fleet's closure carries.
+    # python package pins back to its nixpkgs source-built lineage: duckdb is harlequin's engine.
     pythonPackagesExtensions =
       (prev.pythonPackagesExtensions or [])
       ++ [

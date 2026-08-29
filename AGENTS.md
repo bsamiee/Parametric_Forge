@@ -23,13 +23,13 @@
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
 - `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
-- Nix option and package truth routes through the `nixos` MCP first, never recall; `CLAUDE.md` [03] carries the tool contract and its division of labor with `context7` and module source.
+- Nix option and package truth is probed against the locked inputs and module source, never recalled; `CLAUDE.md` [03] carries the division of labor with `search-context7`.
 - `forge-browse tools` renders every packaged estate command with its owner file and its trigger; `~/.config/forge/registers/tools.json` answers the same question without a TTY. Consult that register before hand-rolling a pipeline the estate already packages — `CLAUDE.md` [02] carries the load-bearing triggers for the maintenance rails.
 
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
 - The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
-- MCP server launchers are Home Manager-installed wrappers projected from `modules/home/programs/shell-tools/mcp-launchers.nix` rows; Claude and Codex register them through their own configs (`claude mcp add`, `codex mcp add`, repo-scoped `.mcp.json` and `.codex/config.toml`), and launcher behavior is fixed here, never in a client config.
+- MCP servers are client-owned: Claude and Codex register each one with its upstream command through `claude mcp add` / `codex mcp add` (repo-scoped rows in `.mcp.json` and `.codex/config.toml`); Forge ships only the runners and the token names those configs reference.
 
 ## [05]-[AGENT_RUNTIME]
 
