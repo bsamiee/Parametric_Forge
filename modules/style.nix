@@ -17,14 +17,12 @@ in {
   # Transient trees: never format/lint/search targets. Every consumer projects this one list — fmt discovery, machine tool fallbacks, editor settings
   # — so agent-harness folders (.claude, .codex) stay first-class work surfaces while their scratch/archive/cache interiors stay untouched.
   transientDirs = [".archive" "_archive" ".scratch" "scratch" "_tmp" "_TMP" ".tmp" ".cache" ".history" "node_modules" ".venv"];
-  # Workflow scripts are a top-level-await/return DSL only prettier's babel parser accepts (allowReturnOutsideFunction); biome excludes these trees
-  # by grammar and the workflow lane owns them with this config.
+  # Prettier config for the prose lane; the machine wrapper and the Home Manager config file both project it.
   prettierrc = {
     tabWidth = indent;
     printWidth = width;
     singleQuote = true;
   };
-  workflowScriptGlobs = [".claude/workflows/*.js" ".claude/skills/workflow-creator/assets/**/*.js"];
   # Machine-level editor law: the [*] block is the whole contract — per-repo .editorconfig files layer on top and win via nearest-first resolution.
   editorconfig = ''
     root = true

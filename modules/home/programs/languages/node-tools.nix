@@ -66,15 +66,13 @@ in {
   xdg.configFile = {
     "prettier/prettierrc.json".text = builtins.toJSON style.prettierrc;
     # Full house law: formatter + JS style + organize-imports assist, so config-less directories get the same quality as project law.
-    # Transient trees stay excluded even when passed explicitly (!! rows); workflow scripts are a top-level-await/return DSL no JS parser mode
-    # accepts, so they stay grammar-excluded, never policy-excluded.
+    # Transient trees stay excluded even when passed explicitly (!! rows).
     "biome/biome.json".text = builtins.toJSON {
       files = {
         ignoreUnknown = true;
         includes =
           ["**"]
-          ++ map (d: "!!**/${d}") style.transientDirs
-          ++ ["!!**/.claude/workflows/**" "!!**/workflow-creator/assets/**"];
+          ++ map (d: "!!**/${d}") style.transientDirs;
       };
       formatter = {
         enabled = true;

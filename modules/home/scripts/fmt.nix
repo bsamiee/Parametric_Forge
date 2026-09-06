@@ -24,7 +24,6 @@
         ["python"]='ruff|ruff format --|ruff format --check --'
         ["web"]='biome|biome format --write|biome format'
         ["prose"]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
-        ["workflow"]='prettier|prettier --log-level warn --write|prettier --log-level warn --check'
         ["yaml"]='yamlfmt|yamlfmt|yamlfmt -lint'
         ["lua"]='stylua|stylua --|stylua --check --'
         ["sql"]='sqruff|sqruff fix|sqruff lint'
@@ -116,13 +115,6 @@
             duckdb-*) _out=sql-duckdb ;;
           esac
         fi
-        # Workflow-DSL scripts (top-level await/return) reroute to the prettier lane: biome's grammar rejects them, prettier's babel parser does not.
-        # Quoted glob segments are deliberate: a bare slash-star byte pair reads as a Nix block comment to scc and poisons this file's own count.
-        if [[ "$_out" == web ]]; then
-          case "/$path" in
-            *"/.claude/workflows/"*.js | *"/workflow-creator/assets/"*.js) _out=workflow ;;
-          esac
-        fi
         if [[ -z "$_out" && -f "$path" && -r "$path" ]]; then
           local first=""
           IFS= read -r -n 256 first <"$path" || true
@@ -173,8 +165,6 @@
           ["obj/packages.lock.json"]="" ["npm-shrinkwrap.json"]=""
           ["sql/apply-postgres.sql"]=sql ["sql/duckdb-probe.sql"]=sql-duckdb
           ["sql/SQLite-probe.sql"]="" ["sql/duck.sql"]=sql
-          [".claude/workflows/estate.js"]=workflow
-          ["repo/.claude/skills/workflow-creator/assets/templates/loop.template.js"]=workflow
           [".claude/skills/coding-applescript/assets/examples/probe.js"]=web
         )
         local path got

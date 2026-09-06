@@ -130,18 +130,6 @@ _: {
         # sqlite SQL stays formatter-unowned until that dialect matures, and fmt's sql classification skips the same basenames.
         sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
         sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
-        # Workflow-DSL scripts ride prettier's babel parser (biome's grammar rejects top-level await/return); config bytes from the style owner.
-        prettier-workflow = {
-          command = "${forgePkgs.prettier}/bin/prettier";
-          options = [
-            "--log-level"
-            "warn"
-            "--config"
-            (toString (forgePkgs.writeText "prettierrc.json" (builtins.toJSON style.prettierrc)))
-            "--write"
-          ];
-          includes = style.workflowScriptGlobs;
-        };
         # stylua discovery is cwd/upward only; the row carries the house style so the sandboxed check needs no repo-root config file.
         stylua = {
           command = "${forgePkgs.stylua}/bin/stylua";

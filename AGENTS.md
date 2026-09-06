@@ -29,7 +29,7 @@
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
 - The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
-- MCP servers are client-owned: Claude and Codex register each one with its upstream command through `claude mcp add` / `codex mcp add` (repo-scoped rows in `.mcp.json` and `.codex/config.toml`); Forge ships only the runners and the token names those configs reference.
+- MCP servers are project-owned: each repository registers its servers with their upstream commands in its own `.mcp.json` and `.codex/config.toml`; Forge provisions no MCP server, package, wrapper, launcher, or credential directory.
 
 ## [05]-[AGENT_RUNTIME]
 

@@ -20,8 +20,6 @@
             "!**/.tmp",
             "!**/.cache",
             "!**/.history",
-            "!.claude/workflows",
-            "!.claude/skills/workflow-creator/assets",
             "!**/*.html"
         ]
     },
@@ -53,17 +51,6 @@
                     },
                     "suspicious": {
                         "noRedundantUseStrict": "off"
-                    }
-                }
-            }
-        },
-        {
-            "includes": [".claude/skills/workflow-creator/scripts/**"],
-            "linter": {
-                "rules": {
-                    "suspicious": {
-                        "noAssignInExpressions": "off",
-                        "noTemplateCurlyInString": "off"
                     }
                 }
             }

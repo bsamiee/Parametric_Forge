@@ -143,9 +143,6 @@ in {
       export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_API_TOKEN/token"
       export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
 
-      # Buf Schema Registry push/publish auth; a non-empty BUF_TOKEN outranks any netrc entry absolutely, so this row retires ~/.netrc custody.
-      export BUF_TOKEN="op://Tokens/BUF_TOKEN/token"
-
       # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
       export GH_TOKEN="op://Tokens/GITHUB_TOKEN/token"
       export GITHUB_TOKEN="op://Tokens/GITHUB_TOKEN/token"

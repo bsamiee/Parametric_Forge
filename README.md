@@ -93,7 +93,7 @@ Doppler owns project and service configuration; 1Password owns local operator an
 
 ## [07]-[MCP_SERVERS]
 
-MCP servers are client-owned, never Forge-owned: `claude mcp add` and `codex mcp add` register each server with its upstream command (`npx -y <pkg>`, `uvx <pkg>`, or the Yak-installed Rhino router binary) in `~/.claude.json` and `~/.codex/config.toml`, and a repo-scoped server lands in that repo's `.mcp.json` and `.codex/config.toml`. Forge contributes only the runners (`node`, `uv`, `ast-grep`) and the op-injected token names the configs reference.
+MCP servers are project-owned, never Forge-owned: each repository registers its servers with their upstream commands in its own `.mcp.json` and `.codex/config.toml`, and a machine-wide server rides the client's own user config. Forge provisions no MCP server, package, wrapper, launcher, credential directory, or `~/.claude.json` entry.
 
 ## [08]-[SSH_ESTATE]
 
@@ -173,7 +173,7 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 - Discovery: `forge-browse tools` indexes every packaged command with its owner file and its trigger; bare `forge-browse` lists the register domains, and `forge-receipts --verb`/`--sql`/`--audit` queries the receipt plane every rail writes.
 
-MCP servers resolve their own currency through `npx`/`uvx` at spawn. Every other family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
+Every family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
 
 ## [16]-[LICENSE]
 

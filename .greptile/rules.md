@@ -6,7 +6,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 
 - Fewer, deeper polymorphic surfaces beat many loose files. Optimization means collapsing types/options/functions into denser dispatch surfaces in the same file — never extraction, never capability loss. LOC is measured in lines, never bytes.
 - Parameterize ingress and egress. Hardcoded strings, repo paths, usernames, ports, or geometry numbers are defects; values are rows, parameters, or model-derived.
-- One owner per axis: docs/laws/projections.md declares the vocabulary owners (color, keybind, MCP server, tool admission, generated config); a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
+- One owner per axis: docs/laws/projections.md declares the vocabulary owners (color, keybind, tool admission, generated config); a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
 - Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.

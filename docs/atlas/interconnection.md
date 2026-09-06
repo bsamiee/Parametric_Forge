@@ -60,7 +60,7 @@ New capability lands as a row on the owning table, never a new file. Each axis h
 - [05]: client row: Postgres 18 clients, DuckDB, SQLite/SQLean, linters
 - [06]: env owner axes: core, shell, languages, development, apps, containers, media
 
-MCP servers carry no Forge row: Claude and Codex register each one with its upstream command through their own configs.
+MCP servers carry no Forge row: each project registers its servers with their upstream commands in its own `.mcp.json`.
 
 ## [07]-[RUNTIME_SEAMS]
 

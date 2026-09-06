@@ -106,11 +106,10 @@
           LESS = "-RFX";
           GH_CONFIG_DIR = "${xdgConfigHome}/gh";
           CLOUDSDK_CONFIG = "${xdgConfigHome}/gcloud";
-          WORKSPACE_MCP_CREDENTIALS_DIR = "${xdgCacheHome}/workspace-mcp";
           GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${xdgConfigHome}/gws";
           GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
           # One machine-wide playwright browsers pin: playwright/patchright default to ~/Library/Caches/ms-playwright, outside XDG.
-          # Cross-surface by necessity — repo test runs, launchd-spawned MCP servers, and interactive shells must resolve ONE cache,
+          # Cross-surface by necessity — repo test runs, launchd-domain processes, and interactive shells must resolve ONE cache,
           # or each surface downloads its own revision set.
           PLAYWRIGHT_BROWSERS_PATH = "${xdgCacheHome}/ms-playwright";
         }

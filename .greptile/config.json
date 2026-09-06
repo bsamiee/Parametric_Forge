@@ -43,7 +43,7 @@
         },
         {
             "id": "one-owner-per-axis",
-            "rule": "Extend the canonical owner: each vocabulary axis (color, keybind, MCP server, tool admission) has exactly one declaring owner per docs/laws/projections.md, and new capability lands as a row on that owner. A new singleton file or duplicated value for an owned axis is a defect.",
+            "rule": "Extend the canonical owner: each vocabulary axis (color, keybind, tool admission) has exactly one declaring owner per docs/laws/projections.md, and new capability lands as a row on that owner. A new singleton file or duplicated value for an owned axis is a defect.",
             "severity": "high",
             "enabled": true,
             "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
@@ -82,13 +82,6 @@
             "severity": "high",
             "enabled": true,
             "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
-        },
-        {
-            "id": "workflow-determinism",
-            "rule": "Workflow scripts are deterministic orchestration: schema-typed agent outputs, bounded loops, stage products written to disk with path receipts. Bare promises, unbounded polling, wall-clock branching, and subagents instructed to wait are defects.",
-            "severity": "medium",
-            "scope": [".claude/workflows/**"],
-            "enabled": true
         },
         {
             "id": "upstream-layout-guards",

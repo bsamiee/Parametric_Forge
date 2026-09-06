@@ -57,15 +57,6 @@
     pkgs.dotnet-sdk_9
     pkgs.dotnet-sdk_10
   ];
-  # dnx owns NuGet MCP-server resolution and RID selection; an unversioned package reference resolves the stable NuGet.org release at spawn, the
-  # fleet's own currency contract. CLI tools never ride this lane — they are manifest rows with generated pins.
-  dnxMcp = name: package:
-    pkgs.writeShellScriptBin name ''
-      export DOTNET_ROOT="${pkgs.dotnet-sdk_10}/share/dotnet"
-      exec ${pkgs.dotnet-sdk_10}/bin/dnx ${package} --source https://api.nuget.org/v3/index.json -- "$@"
-    '';
-  nuget-mcp = dnxMcp "nuget-mcp" "NuGet.Mcp.Server";
-  binlog-mcp = dnxMcp "binlog-mcp" "Microsoft.AITools.BinlogMcp";
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
   forge-install-antigravity-cli = pkgs.writeShellApplication {
     name = "forge-install-antigravity-cli";
@@ -201,11 +192,10 @@ in {
 
         # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
-        gws # Google Workspace CLI; scripted/batch companion to the google-workspace MCP
+        gws # Google Workspace CLI for scripted and batch Workspace administration
         pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv
       ]
-      ++ dataRoster
-      ++ [nuget-mcp binlog-mcp];
+      ++ dataRoster;
 
     # DOTNET_ROOT required for Roslyn and other SDK-discovery tools; re-evaluated on every rebuild, store path stays current.
     sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
