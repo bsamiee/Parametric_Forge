@@ -42,11 +42,8 @@
     ];
     pythonEnv =
       {
-        PYTEST_CACHE_DIR = "${xdgCacheHome}/pytest";
-        RUFF_CACHE_DIR = "${xdgCacheHome}/ruff";
         PYLINTHOME = "${xdgCacheHome}/pylint";
         NOX_CACHE_DIR = "${xdgCacheHome}/nox";
-        UV_CACHE_DIR = "${xdgCacheHome}/uv";
         UV_PYTHON_PREFERENCE = "only-system";
         UV_PYTHON_DOWNLOADS = "never";
         PYTHONDONTWRITEBYTECODE = "1";
@@ -108,10 +105,6 @@
           CLOUDSDK_CONFIG = "${xdgConfigHome}/gcloud";
           GOOGLE_WORKSPACE_CLI_CONFIG_DIR = "${xdgConfigHome}/gws";
           GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
-          # One machine-wide playwright browsers pin: playwright/patchright default to ~/Library/Caches/ms-playwright, outside XDG.
-          # Cross-surface by necessity — repo test runs, launchd-domain processes, and interactive shells must resolve ONE cache,
-          # or each surface downloads its own revision set.
-          PLAYWRIGHT_BROWSERS_PATH = "${xdgCacheHome}/ms-playwright";
         }
         // lib.optionalAttrs isDarwin {
           HOMEBREW_PREFIX = "/opt/homebrew";

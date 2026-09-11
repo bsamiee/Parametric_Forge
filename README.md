@@ -8,6 +8,7 @@ This regenerable topology maps the repository's owning entry points.
 
 ```text codemap
 Parametric_Forge/
+├── Casks/                         # Vendor GUI packages absent from Homebrew's catalog
 ├── flake.nix                      # Flake inputs, systems, outputs
 ├── flake.lock
 ├── flake-modules/                 # Outputs, checks, formatter, development shell
@@ -81,6 +82,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 
 - `modules/common/` carries what both OSes consume identically: Nix settings and the toolchain env vocabulary. `host.os` selects the OS branch from the static host context without entering the package fixpoint.
 - `modules/darwin/` carries system-scope macOS state: defaults, security (sudoers NOPASSWD allowlist, TCC adjacency), fonts, and the Homebrew bridge. Homebrew carries GUI/proprietary bundles nixpkgs cannot ship; nix-darwin's Brewfile installs missing roster entries while native Homebrew owns metadata, versions, and cleanup. Uninstall/zap stays off so operator installs survive.
+- `Casks/` owns vendor GUI packages absent from Homebrew's main catalog; `modules/darwin/homebrew/` projects their installation through the `bsamiee/forge` tap.
 - `modules/nixos/` carries the generic VPS baseline: boot and disko, static addressing projected from the host-context network row, key-only SSH, declarative users, and routine Nix maintenance. Work reaches the server through its native `ssh vps` host; no local mount, persistent tunnel, or project service is implied. Nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes here.
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: each overlay owns its version, source hash (`nix-prefetch-github`), and build; the flake-level overlay composes them. Admission requires a real consumer now — never anticipatory packaging.

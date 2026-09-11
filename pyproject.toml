@@ -28,7 +28,7 @@ dependencies = [
     "httpx",                  # typed HTTP boundary
     "lxml",                   # XML/HTML processing
     "networkx",               # graph checks (mermaid validation)
-    "playwright",             # headless render probes (browsers ride PLAYWRIGHT_BROWSERS_PATH)
+    "playwright",             # headless render probes (browsers ride the calling project's mise env or the Playwright default cache)
     "psutil",                 # process inspection (html-studio serve)
     "ruamel-yaml",            # round-trip YAML editing
     "tinycss2",               # CSS token parsing

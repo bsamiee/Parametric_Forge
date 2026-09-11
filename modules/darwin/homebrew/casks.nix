@@ -67,7 +67,10 @@ _: {
     "font-qahiri"
 
     # --- [ADOBE_CREATIVE_SUITE]
-    "zxpinstaller"
+    {
+      name = "bsamiee/forge/aescripts-zxp-installer";
+      trusted = true;
+    }
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "hammerspoon" # Lua automation

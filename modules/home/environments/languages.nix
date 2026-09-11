@@ -54,8 +54,7 @@ in {
       # Shared Nix Chrome-for-Testing pin (owned by toolchain-env) so mmdc/puppeteer and the mermaid validator
       # never launch the real Chrome.app or an unstable downloaded shell.
       PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
-      # PLAYWRIGHT_BROWSERS_PATH rides toolchain-env's `all` class: launchd-domain processes and
-      # interactive shells must resolve the one machine-wide browsers pin, so a session-only row here
-      # would fork the cache per surface.
+      # PLAYWRIGHT_BROWSERS_PATH is never a machine-wide row: each project's `mise.toml` owns its own browser build, and the
+      # activated shell applies it inside that tree; a Playwright consumer packaged here (carbon) exports its own cache path.
     };
 }

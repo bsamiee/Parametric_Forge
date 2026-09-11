@@ -23,6 +23,10 @@
     "pynvim-python" = "uv-lane: uv tool shim";
     "python3.12" = "uv-lane: uv runtime shim";
     "python3.14" = "uv-lane: uv runtime shim";
+    verapdf = "admitted: upstream veraPDF CLI installation";
+    vg2pdf = "admitted: pnpm global vega-cli executable";
+    vg2png = "admitted: pnpm global vega-cli executable";
+    vg2svg = "admitted: pnpm global vega-cli executable";
     tree = "hm: generation link";
     loc = "hm: generation link";
   });

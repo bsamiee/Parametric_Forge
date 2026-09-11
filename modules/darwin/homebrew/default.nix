@@ -20,6 +20,14 @@ in {
   homebrew = {
     enable = mkDefault true;
 
+    # Forge supplies casks absent from Homebrew's catalog; trust stays scoped to each fully qualified cask row.
+    taps = [
+      {
+        name = "bsamiee/forge";
+        clone_target = "git@github.com:bsamiee/Parametric_Forge.git";
+      }
+    ];
+
     # --- [MAC_APP_STORE]
     masApps = {
       Drafts = 1435957248;
