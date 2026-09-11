@@ -36,6 +36,11 @@ fetch.url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/down
 src.cmd = "curl -fsSL 'https://gitlab.freedesktop.org/api/v4/projects/890/repository/tags?per_page=100' | jq -r '[.[].name | select(test(\"^[0-9]+[.][0-9]+[.][0-9]+$\"))] | sort_by(split(\".\") | map(tonumber)) | last'"
 fetch.url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/$ver/fontconfig-$ver.tar.xz"
 
+[design-geist-font]
+src.github = "vercel/geist-font"
+src.prefix = "v"
+fetch.url = "https://github.com/vercel/geist-font/releases/download/v$ver/geist-font-v$ver.zip"
+
 [design-utiluti]
 src.github = "scriptingosx/utiluti"
 src.prefix = "v"

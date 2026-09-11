@@ -413,6 +413,12 @@ final: prev: let
   jsonschemaRow = rowOf "protoc-gen-jsonschema";
   jsonschemaSource = generatedSources.${jsonschemaRow.sourcePin};
   sourceRecipes = {
+    geist-font = old: {
+      # The native font installer consumes srcs; retain it and unpack the official release archive without rewriting font programs.
+      src = null;
+      srcs = [generatedSources.${(rowOf "geist-font").sourcePin}.src];
+      nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
+    };
     nodejs-slim_26 = old: {
       # The native builder's test closes over its original version; keep the test tied to the selected source runtime.
       passthru =

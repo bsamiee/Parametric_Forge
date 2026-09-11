@@ -156,6 +156,7 @@ in rec {
     };
     imagemagick = designSource "imagemagick" "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
     fontconfig = designSource "fontconfig" "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
+    geist-font = designSource "geist-font" "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
     harfbuzz = designSource "harfbuzz" "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
     poppler-utils-current =
       (designSource "poppler" "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)

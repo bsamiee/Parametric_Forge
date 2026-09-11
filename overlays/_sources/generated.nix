@@ -79,6 +79,14 @@
       sha256 = "sha256-T3tVSjjN94wDP2ZsiHHzdJ4UoJT2Wgf2MMke0LQ9NeM=";
     };
   };
+  design-geist-font = {
+    pname = "design-geist-font";
+    version = "1.7.2";
+    src = fetchurl {
+      url = "https://github.com/vercel/geist-font/releases/download/v1.7.2/geist-font-v1.7.2.zip";
+      sha256 = "sha256-f8gA0qxrkoRIlRluUEGspV2BTBXbcMRPebO4OrgrBOI=";
+    };
+  };
   design-ghostscript = {
     pname = "design-ghostscript";
     version = "gs10080/ghostscript-10.08.0.tar.xz";

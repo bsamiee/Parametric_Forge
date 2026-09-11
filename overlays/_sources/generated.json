@@ -127,6 +127,21 @@
         },
         "version": "2.18.3"
     },
+    "design-geist-font": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-geist-font",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-f8gA0qxrkoRIlRluUEGspV2BTBXbcMRPebO4OrgrBOI=",
+            "type": "url",
+            "url": "https://github.com/vercel/geist-font/releases/download/v1.7.2/geist-font-v1.7.2.zip"
+        },
+        "version": "1.7.2"
+    },
     "design-ghostscript": {
         "cargoLock": null,
         "date": null,
