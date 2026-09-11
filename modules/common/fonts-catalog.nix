@@ -4,11 +4,28 @@
 # License       : MIT
 # Path          : modules/common/fonts-catalog.nix
 # ----------------------------------------------------------------------------
-# Cross-scope font-package catalog: the single family-truth surface both the home owner (names, roles, projections, manifest) and the darwin owner
-# (install list) fold. The attr name is the CoreText family; a family absent here is structurally uninstallable. `class`: static | variable | patched.
+# Font-package catalog for Home Manager installation and renderer roles. The attr name is the CoreText family; `class`: static | variable | patched.
 {pkgs}: let
+  inherit (pkgs) lib;
+  selectPaths = package: paths:
+    (pkgs.linkFarm "${package.pname}-${package.version}" (lib.genAttrs paths (path: "${package}/${path}"))).overrideAttrs (old: {
+      inherit (package) pname version meta;
+      buildCommand =
+        old.buildCommand
+        + ''
+          for path in ${lib.escapeShellArgs paths}; do
+            [[ -e "$out/$path" ]] || { echo "${package.pname}: selected font path missing: $path" >&2; exit 1; }
+          done
+        '';
+    });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
+  geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
+  # Typeface owns Google's newer Sans variable family. OTFs retain the distinct language/Condensed/Math coverage; selected variable TTFs omit
+  # duplicated static faces and upstream AppleDouble files without altering the original packages.
+  plex = selectPaths (pkgs.ibm-plex.override {
+    families = ["math" "mono-variable" "serif-variable" "sans-condensed" "sans-arabic" "sans-devanagari" "sans-hebrew" "sans-jp" "sans-kr" "sans-sc" "sans-tc" "sans-thai" "sans-thai-looped"];
+  }) (["share/fonts/opentype"] ++ lib.concatMap (family: map (style: "share/fonts/truetype/IBM Plex ${family} Var-${style}.ttf") ["Roman" "Italic"]) ["Mono" "Serif"]);
   # Closed two-register alphabets for terminal-bound render surfaces, owned here so the symbols family's shaping sample derives from the same
   # columns the theme owner mints glyphs from — one row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
   statusAlphabet = [
@@ -41,16 +58,16 @@
   ];
 in {
   "Geist Mono" = {
-    package = pkgs.geist-font;
-    file = "share/fonts/opentype/GeistMono-Regular.otf";
-    class = "static";
+    package = geist;
+    file = "share/fonts/truetype/GeistMono[wght].ttf";
+    class = "variable";
     roles = ["mono"];
     lineHeight = 0.95;
   };
   Geist = {
-    package = pkgs.geist-font;
-    file = "share/fonts/opentype/Geist-Regular.otf";
-    class = "static";
+    package = geist;
+    file = "share/fonts/truetype/Geist[wght].ttf";
+    class = "variable";
     roles = ["sans"];
   };
   Iosevka = {
@@ -67,10 +84,10 @@ in {
     roles = ["mono"];
     lineHeight = 1.0;
   };
-  "IBM Plex Mono" = {
-    package = pkgs.ibm-plex;
-    file = "share/fonts/opentype/IBMPlexMono-Regular.otf";
-    class = "static";
+  "IBM Plex Mono Var" = {
+    package = plex;
+    file = "share/fonts/truetype/IBM Plex Mono Var-Roman.ttf";
+    class = "variable";
     roles = ["mono"];
     lineHeight = 1.05;
   };

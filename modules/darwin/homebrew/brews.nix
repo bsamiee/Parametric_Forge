@@ -8,7 +8,6 @@
 _: {
   homebrew.brews = [
     # --- [SYSTEM_UTILITIES]
-    "defaultbrowser" # CLI tool for setting default browser
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
 

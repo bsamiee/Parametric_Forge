@@ -32,7 +32,7 @@ Darwin builds and switches locally; NixOS check is eval-only, build proves closu
 
 `forge-doctor LENS [--json]` dispatches on a catalog row naming the lens and its handler; an unlisted lens exits `64`, and every lens is read-only. One typed row stream renders both the human table and the `forge-doctor/v1` envelope, and any lens finding drift exits nonzero.
 
-`path` classifies each PATH segment by owner (`hm`, `system`, `nix`, `homebrew`, `local`, `macos`, `app`), reports cross-owner shadows where a later segment holds a different binary, proves the `MAGIC` seed is served by the store `file` rather than the macOS one, reads CLT health and brew posture, and inventories `~/.local/bin` against a named ruling per entry — an unruled entry reports `unadjudicated`.
+`path` classifies each PATH segment by owner (`hm`, `system`, `nix`, `homebrew`, `local`, `macos`, `app`), reports cross-owner shadows where a later segment holds a different binary, rejects a global `MAGIC` override so each native file/libmagic engine uses its matching database, reads CLT health and brew posture, and inventories `~/.local/bin` against a named ruling per entry — an unruled entry reports `unadjudicated`.
 
 `launchd` reconciles the declared plists in `~/Library/LaunchAgents` with the live `launchctl` table and classifies each label through prefix triage rows; an unmatched label reports `unclassified` and demands a row. `parity` walks the generation's `home-files` against live `$HOME` (store-linked, staged-equal, missing, drifted), finds broken store links across the managed roots, and asserts the Home Manager gc-root singleton. `updates` stays observation-only — flake-input age, the last deploy receipt, Homebrew outdated counts, uv tool count — never drift-scored.
 

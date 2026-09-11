@@ -11,6 +11,11 @@
     withLcevcdec = false;
     withFrei0r = false;
   };
+  # Cairo/raster belong to the complete CLI variant; enabling them on the core HarfBuzz attr creates the Cairo/Pango dependency cycle.
+  harfbuzzTools = pkgs.harfbuzz.override {
+    withCairo = true;
+    withRaster = true;
+  };
 in {
   imports = [
     ./glow.nix
@@ -25,12 +30,15 @@ in {
     pkgs.ffmpegthumbnailer # Lightweight video thumbnailer for Yazi preview (ffmpegthumbnailer.yazi)
     pkgs.glow # Config owned by glow.nix
     pkgs.imagemagick
+    harfbuzzTools.dev # hb-shape, hb-view, hb-subset and raster tools; one complete CLI owner
     pkgs.inkscape
     pkgs.mediainfo # Media container inspection for Yazi preview
     pkgs.mpv # Playback backend for media aliases
-    pkgs.pandoc
-    pkgs.poppler-utils # PDF utilities (pdfinfo, pdftotext) for Yazi preview
-    pkgs.qpdf
+    pkgs.pandoc-current
+    pkgs.poppler-utils-current # Current PDF utilities; app dependencies keep nixpkgs' compatible Poppler library.
     pkgs.resvg # SVG rendering for Yazi preview
+    pkgs.typst
+    pkgs.vega-cli
+    pkgs.verapdf-current # Complete official CLI; the overlay owns its private current Java runtime.
   ];
 }

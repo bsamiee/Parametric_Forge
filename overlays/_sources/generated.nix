@@ -71,6 +71,151 @@
       sha256 = "sha256-gfZFv/evrLHX5TSjAmc6ap45nCbAuNUGkb989BrfqhY=";
     };
   };
+  design-fontconfig = {
+    pname = "design-fontconfig";
+    version = "2.18.3";
+    src = fetchurl {
+      url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz";
+      sha256 = "sha256-T3tVSjjN94wDP2ZsiHHzdJ4UoJT2Wgf2MMke0LQ9NeM=";
+    };
+  };
+  design-ghostscript = {
+    pname = "design-ghostscript";
+    version = "gs10080/ghostscript-10.08.0.tar.xz";
+    src = fetchurl {
+      url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz";
+      sha256 = "sha256-wgSSvI67lsh/ouUqCSbhzajN6V1mFF4BiscT/tXaOM8=";
+    };
+  };
+  design-harfbuzz = {
+    pname = "design-harfbuzz";
+    version = "14.4.0";
+    src = fetchurl {
+      url = "https://github.com/harfbuzz/harfbuzz/releases/download/14.4.0/harfbuzz-14.4.0.tar.xz";
+      sha256 = "sha256-I1ftlmxs7Xv6cgsGQMAjEGWvARWPvqIVCT/6Fa7UQ3E=";
+    };
+  };
+  design-imagemagick = {
+    pname = "design-imagemagick";
+    version = "7.1.2-31";
+    src = fetchurl {
+      url = "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-31/ImageMagick-7.1.2-31.tar.xz";
+      sha256 = "sha256-FoqXELOo1p29IOsKNfFFsMDtNfB2svyY0+tX2qkZw3Y=";
+    };
+  };
+  design-mupdf = {
+    pname = "design-mupdf";
+    version = "1.28.3";
+    src = fetchurl {
+      url = "https://mupdf.com/downloads/archive/mupdf-1.28.3-source.tar.gz";
+      sha256 = "sha256-N8MgncDgb6TzeB7USDmtkzqeYUPrRzH5ngaSBHFbzvI=";
+    };
+  };
+  design-nodejs_26 = {
+    pname = "design-nodejs_26";
+    version = "26.8.2";
+    src = fetchurl {
+      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2.tar.xz";
+      sha256 = "sha256-NrN79e5NCSudnf8tGpCxRE+LRT7d9v+Wyr3ruX0y9B0=";
+    };
+  };
+  design-pandoc-aarch64-darwin = {
+    pname = "design-pandoc-aarch64-darwin";
+    version = "3.11";
+    src = fetchurl {
+      url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-arm64-macOS.zip";
+      sha256 = "sha256-FYBr7flRe/6tcuiP5qZpZjXDaR77tuFSFzRA6cW7ULQ=";
+    };
+  };
+  design-pandoc-aarch64-linux = {
+    pname = "design-pandoc-aarch64-linux";
+    version = "3.11";
+    src = fetchurl {
+      url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-arm64.tar.gz";
+      sha256 = "sha256-Vu1VZuxB0i7J7gcE5qwLmLoQLpI4Tv1TBhc6ItMUx5o=";
+    };
+  };
+  design-pandoc-x86_64-linux = {
+    pname = "design-pandoc-x86_64-linux";
+    version = "3.11";
+    src = fetchurl {
+      url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-amd64.tar.gz";
+      sha256 = "sha256-N+2zu89yL5IaAJlBv1h04uDAkmMibJtKLZgHiMsGKrY=";
+    };
+  };
+  design-poppler = {
+    pname = "design-poppler";
+    version = "26.09.0";
+    src = fetchurl {
+      url = "https://poppler.freedesktop.org/poppler-26.09.0.tar.xz";
+      sha256 = "sha256-gFnq22gFNAdo8TjEZbV/gWTJK0oHc8N+8DHqbA2Yey4=";
+    };
+  };
+  design-poppler-test-data = {
+    pname = "design-poppler-test-data";
+    version = "48b6219b84fc0a708040cb279d51095cc4e1c603";
+    src = fetchgit {
+      url = "https://gitlab.freedesktop.org/poppler/test.git";
+      rev = "48b6219b84fc0a708040cb279d51095cc4e1c603";
+      fetchSubmodules = false;
+      deepClone = false;
+      leaveDotGit = false;
+      sparseCheckout = [ ];
+      sha256 = "sha256-2eH4dZs2J0CeTWrXOYEHb0Xnpfa7tX8mi7AX2E9D41U=";
+    };
+    date = "2026-08-14";
+  };
+  design-qpdf = {
+    pname = "design-qpdf";
+    version = "12.4.1";
+    src = fetchurl {
+      url = "https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1.tar.gz";
+      sha256 = "sha256-8EWqJ3viNW/1OomoYilFlYKRF30kg6/CDt58iozThzw=";
+    };
+  };
+  design-temurin-aarch64-darwin = {
+    pname = "design-temurin-aarch64-darwin";
+    version = "jdk-26.0.2.1+1";
+    src = fetchurl {
+      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse";
+      name = "temurin-jdk-26.0.2.1+1-aarch64-darwin.tar.gz";
+      sha256 = "sha256-Y6lLO6BTCAY1NtYMsPm8hHkAowD8U2MMhu6j76eTE6Q=";
+    };
+  };
+  design-temurin-aarch64-linux = {
+    pname = "design-temurin-aarch64-linux";
+    version = "jdk-26.0.2.1+1";
+    src = fetchurl {
+      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse";
+      name = "temurin-jdk-26.0.2.1+1-aarch64-linux.tar.gz";
+      sha256 = "sha256-nhUnaBrkphUETIhDXSwan68f1ce6r5UUpKQgdggVAIc=";
+    };
+  };
+  design-temurin-x86_64-linux = {
+    pname = "design-temurin-x86_64-linux";
+    version = "jdk-26.0.2.1+1";
+    src = fetchurl {
+      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse";
+      name = "temurin-jdk-26.0.2.1+1-x86_64-linux.tar.gz";
+      sha256 = "sha256-NXcxFoKVVPs45qz5uSs7qLt4VlV8OriF4m59YejI4bA=";
+    };
+  };
+  design-utiluti = {
+    pname = "design-utiluti";
+    version = "1.5";
+    src = fetchurl {
+      url = "https://github.com/scriptingosx/utiluti/releases/download/v1.5/utiluti-1.5.pkg";
+      sha256 = "sha256-cBhLUejsABesbi3q4jntgmWJAlgpgttXSRLKiIT+Bh8=";
+    };
+  };
+  design-verapdf-cli = {
+    pname = "design-verapdf-cli";
+    version = "1.31.167";
+    src = fetchurl {
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.167/cli-1.31.167.jar";
+      sha256 = "sha256-spyBcL+9XNuJ6UGDfDywq3kgID0Ifw3zK4EkYxcuNTQ=";
+    };
+  };
   duckdb-aarch64-darwin = {
     pname = "duckdb-aarch64-darwin";
     version = "1.5.5";
@@ -97,26 +242,26 @@
   };
   nodejs-bin_26-aarch64-darwin = {
     pname = "nodejs-bin_26-aarch64-darwin";
-    version = "26.7.0";
+    version = "26.8.2";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-darwin-arm64.tar.xz";
-      sha256 = "sha256-WV0vk04IG4KWHRpf1BxtvQxalS2ei+W0Vmq3VEJpaNI=";
+      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.xz";
+      sha256 = "sha256-9Y5QRLk4oxdBhN5Krx0rv8//gS6IIg/wjpIhwJ9chnc=";
     };
   };
   nodejs-bin_26-aarch64-linux = {
     pname = "nodejs-bin_26-aarch64-linux";
-    version = "26.7.0";
+    version = "26.8.2";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-arm64.tar.xz";
-      sha256 = "sha256-r8egBAGEhQkqyJhbgXsNVoRHK9lHLgtX0quIc35QCQ0=";
+      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.xz";
+      sha256 = "sha256-gdjw/eqdzTv9z+r8X4NZwVHwl+mICwAHwGRcpnDQeXE=";
     };
   };
   nodejs-bin_26-x86_64-linux = {
     pname = "nodejs-bin_26-x86_64-linux";
-    version = "26.7.0";
+    version = "26.8.2";
     src = fetchurl {
-      url = "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-x64.tar.xz";
-      sha256 = "sha256-mCqiTdi+TIicaoqzN93/OwiWZFsg9COTVugFUsFid+4=";
+      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.xz";
+      sha256 = "sha256-QOHTIlwcmumiZxyY7LmFfk1VVQJjlPNIZFZ2eYhA1cU=";
     };
   };
   nuget-dotnet-counters = {

@@ -87,7 +87,7 @@
 
   # --- [RECEIPT_SOURCE_REGISTER]
   # Declared receipt emitters at $HOME-relative paths that may not exist yet; tuple grammar "kind[|stem[|emitter]]" defaults stem=kind and
-  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row says json (JSONL). Query plane and audit verb dispatch on the rows
+  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row supplies a different path or says json (JSONL). Query plane and audit verb dispatch on the rows
   # — an unregistered emitter is invisible to both; --audit flags it.
   osPath = darwin: linux:
     if host.os == "darwin"
@@ -105,8 +105,14 @@
   receiptSources =
     map (r: {grain = "kv";} // r)
     (
-      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "terminal-accept||forge-terminal-accept.sh" "doctor" "fonts||forge-project-fonts"]
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "terminal-accept||forge-terminal-accept.sh" "doctor"]
       ++ [
+        {
+          kind = "default-applications";
+          path = "Library/Logs/design-tools/default-applications.receipts.log";
+          emitter = "forge-default-applications";
+          grain = "kv";
+        }
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
           kind = "rsync-mv";
@@ -140,6 +146,7 @@
       forge-browse = ["shell-tools/browsers.nix" "fzf browser over every register domain, with read-only previews" "to find an alias, chord, name ruling, or command"];
       forge-cleanup = ["shell-tools/forge-tools/cleanup.nix" "plan/apply/sweep over the typed litter registry, trash-first" "plan on demand, apply only on a proved plan; sweep is the hourly agent"];
       forge-console = ["shell-tools/posting.nix" "Posting TUI over the service collections, credentials materialized at launch" "to exercise a service endpoint by hand"];
+      forge-default-applications = ["mac-tools/default-applications.nix" "Native file and URL handlers with exact bundle/path readback" "apply after an application migration; check after activation or a native update"];
       forge-doctor = ["shell-tools/forge-tools/doctor.nix" "One machine doctor: path, launchd, parity, updates lenses; --json per lens" "before blaming the estate for a shadowed binary, dead agent, HOME drift, or staleness"];
       "forge-edit.sh" = ["home/scripts/terminal.nix" "Editor handoff: routes a path into the tab's Neovim RPC socket, or a fresh instance" "as $EDITOR; the yazi opener calls it directly"];
       forge-font-doctor = ["home/fonts.nix" "CoreText registration proof per manifest role; --json rows, fontconfig held to Pango consumers" "when a glyph renders wrong or a font fails to enumerate"];
@@ -320,7 +327,7 @@
           grep -qxF "$found" <<<"$registered" \
             || { note FAIL "$(basename "$found")" "unregistered receipt emitter: ''${found/#"$HOME"/\~}"; rc=1; }
         done < <({
-          find "$HOME/Library/Logs" -maxdepth 1 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
+          find "$HOME/Library/Logs" -maxdepth 2 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
           find "''${XDG_STATE_HOME:-$HOME/.local/state}" -maxdepth 2 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
         } | sort)
         if [ "$render" = json ]; then

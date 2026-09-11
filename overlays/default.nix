@@ -146,6 +146,79 @@ final: prev: let
   };
 
   recipes = {
+    utiluti = _: {
+      dontUnpack = true;
+      nativeBuildInputs = [prev.xar prev.pbzx prev.cpio];
+      installPhase = ''
+        runHook preInstall
+        xar -xf "$src"
+        [ -f utiluti.pkg/Payload ] || { echo "utiluti: package payload layout changed" >&2; exit 1; }
+        mkdir extracted
+        pbzx -n utiluti.pkg/Payload | (cd extracted && cpio -idm)
+        [ -x extracted/usr/local/bin/utiluti ] || { echo "utiluti: executable absent" >&2; exit 1; }
+        [ -f extracted/usr/local/share/man/man1/utiluti.1 ] || { echo "utiluti: manual absent" >&2; exit 1; }
+        install -Dm755 extracted/usr/local/bin/utiluti "$out/bin/utiluti"
+        install -Dm644 extracted/usr/local/share/man/man1/utiluti.1 "$out/share/man/man1/utiluti.1"
+        runHook postInstall
+      '';
+    };
+    pandoc-current = _: {
+      nativeBuildInputs = [prev.unzip] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [prev.gmp prev.zlib prev.stdenv.cc.cc.lib];
+      installPhase = ''
+        runHook preInstall
+        [ -x bin/pandoc ] || { echo "pandoc: release executable layout changed" >&2; exit 1; }
+        [ -d share/man ] || { echo "pandoc: release manual layout changed" >&2; exit 1; }
+        mkdir -p "$out"
+        cp -R bin share "$out/"
+        runHook postInstall
+      '';
+    };
+    verapdf-current = _: {
+      dontUnpack = true;
+      dontStrip = true;
+      nativeBuildInputs = [prev.makeWrapper];
+      installPhase = ''
+        runHook preInstall
+        install -Dm644 "$src" "$out/share/verapdf.jar"
+        makeWrapper ${lib.getExe final.temurin-jre-current} "$out/bin/verapdf" --add-flags "-Dapp.home=$out/bin -jar $out/share/verapdf.jar"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/verapdf";
+    };
+    temurin-jre-current = {finalAttrs, ...}: {
+      nativeBuildInputs = [prev.makeWrapper] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [
+        prev.alsa-lib
+        prev.cups
+        prev.fontconfig
+        prev.freetype
+        prev.libx11
+        prev.libxext
+        prev.libxi
+        prev.libxrender
+        prev.libxtst
+        prev.zlib
+        prev.stdenv.cc.cc.lib
+      ];
+      dontStrip = true;
+      installPhase = ''
+        runHook preInstall
+        runtime=${
+          if prev.stdenv.hostPlatform.isDarwin
+          then "Contents/Home"
+          else "."
+        }
+        [ -x "$runtime/bin/java" ] || { echo "temurin: JRE release layout changed" >&2; exit 1; }
+        mkdir -p "$out/lib/openjdk" "$out/bin"
+        cp -R "$runtime/". "$out/lib/openjdk/"
+        makeWrapper "$out/lib/openjdk/bin/java" "$out/bin/java"
+        runHook postInstall
+      '';
+      passthru.home = "${finalAttrs.finalPackage}/lib/openjdk";
+    };
     # Flat single-binary release: no archive, the fetched file IS the tool.
     biome = _: {
       dontUnpack = true;
@@ -339,13 +412,103 @@ final: prev: let
   astGrepSource = generatedSources.${astGrepRow.sourcePin};
   jsonschemaRow = rowOf "protoc-gen-jsonschema";
   jsonschemaSource = generatedSources.${jsonschemaRow.sourcePin};
+  sourceRecipes = {
+    nodejs-slim_26 = old: {
+      # The native builder's test closes over its original version; keep the test tied to the selected source runtime.
+      passthru =
+        (removeAttrs old.passthru ["updateScript"])
+        // {
+          tests =
+            old.passthru.tests
+            // {
+              version = prev.testers.testVersion {
+                package = final.nodejs-slim_26;
+                version = "v${final.nodejs-slim_26.version}";
+              };
+            };
+        };
+    };
+    imagemagick = old: {
+      configureFlags = (old.configureFlags or []) ++ ["--enable-hdri=yes" "--with-quantum-depth=16" "--with-lcms=yes"];
+      postInstallCheck =
+        (old.postInstallCheck or "")
+        + ''
+          features="$($out/bin/magick -version)"
+          [[ "$features" == *Q16-HDRI* && "$features" == *lcms* ]] || { echo "ImageMagick: required Q16-HDRI/LCMS support absent" >&2; exit 1; }
+        '';
+    };
+    harfbuzz = old: {
+      # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack.
+      mesonFlags = (map (flag: lib.replaceStrings ["-Dgraphite="] ["-Dgraphite2="] flag) (old.mesonFlags or [])) ++ [(lib.mesonEnable "gpu_demo" false)];
+    };
+    poppler-utils-current = old: let
+      testData = generatedSources.${(rowOf "poppler-utils-current").testDataPin}.src;
+      testFonts = final.makeFontsConf {
+        fontDirectories = [(final.noto-fonts.override {variants = ["Noto Sans"];}) final.noto-fonts-cjk-sans-static];
+        impureFontDirectories = [];
+        includes = [];
+      };
+    in {
+      # The sole old nixpkgs patch is merged in 26.09; HarfBuzz is now required for font subsetting.
+      patches = [];
+      buildInputs = old.buildInputs ++ [final.harfbuzz];
+      # The new font-subsetting checks require August's form fixture and explicit Latin/Japanese fallback fonts.
+      preConfigure = lib.replaceStrings [(toString old.passthru.testData)] [(toString testData)] old.preConfigure;
+      # Nixpkgs' consumer tests close over its top-level Poppler. Retaining them here would test 26.06 while presenting the result as 26.09 coverage.
+      passthru = (removeAttrs old.passthru ["tests" "updateScript"]) // {inherit testData;};
+      disallowedReferences = map (ref:
+        if ref == old.passthru.testData
+        then testData
+        else ref)
+      old.disallowedReferences;
+      preCheck =
+        (old.preCheck or "")
+        + ''
+          export FONTCONFIG_FILE=${testFonts}
+          export XDG_CACHE_HOME="$TMPDIR/fontconfig-cache"
+          mkdir -p "$XDG_CACHE_HOME"
+        '';
+    };
+    qpdf = old: {
+      # Completion checks require bind/compgen/progcomp; stdenv's stripped Bash is not an interactive shell.
+      nativeCheckInputs = (old.nativeCheckInputs or []) ++ [final.bashInteractive final.zsh];
+      cmakeFlags = (old.cmakeFlags or []) ++ ["-DREQUIRE_SHELLS=ON"];
+      preCheck =
+        (old.preCheck or "")
+        + ''
+          export PATH=${lib.makeBinPath [final.bashInteractive final.zsh]}:$PATH
+        '';
+    };
+    mupdf = old: {
+      postInstall = lib.replaceStrings [old.version] [(rowOf "mupdf").version] old.postInstall;
+    };
+  };
+  mkSourceRelease = name: _: let
+    row = rowOf name;
+    source = generatedSources.${row.sourcePin};
+    base =
+      if name == "imagemagick"
+      then prev.imagemagick.override {lcms2Support = true;}
+      else prev.${row.sourcePackage};
+  in
+    base.overrideAttrs (old:
+      {
+        inherit (row) version;
+        inherit (source) src;
+        passthru = removeAttrs (old.passthru or {}) ["updateScript"];
+      }
+      // (sourceRecipes.${name} or (_: {})) old);
 in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
   # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
+  // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // lib.mapAttrs mkNugetTool nugetRows
   // lib.genAttrs betaPolicy.nativeMembers betaNativeMember
   // {
+    vega-cli = prev.vega-cli.override {
+      buildNpmPackage = prev.buildNpmPackage.override {nodejs = final.nodejs_26;};
+    };
     # nixpkgs 1.8.12 derives the install rpath by gluing CMAKE_INSTALL_PREFIX (dev) onto the already-absolute ALEMBIC_LIB_INSTALL_DIR (lib),
     # stamping a dev-prefixed LC_RPATH into the lib dylib; that back-reference closes a dev<->lib output cycle Darwin's registration refuses, felling
     # the whole vtk/openusd/OCP chain above it. Every load command already resolves by absolute store path, so the rpath is dead weight and fixup

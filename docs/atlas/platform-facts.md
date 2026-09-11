@@ -30,6 +30,10 @@ TCC is reset-only through `tccutil`; the estate writes no `TCC.db` rows and ship
 
 `darwin/settings/security.nix` owns the NOPASSWD allowlist and the exact deploy-rail rows `forge-redeploy` consumes. Live sudoers state must match that file before a switch.
 
+macOS 26.4 and newer can require native confirmation when changing a file-type handler. `forge-default-applications apply` changes only mismatched rows and verifies both bundle identity and exact application path; coordinate foreground confirmation before activation. `check` performs the same readback without mutation. utiluti's batch `manage` command can print per-row errors while exiting successfully, so it is not the activation mechanism.
+
+Filename suffixes are not necessarily independent types. `.typ` now resolves to its own dynamic type and receives an explicit editor association; an older Oracle SQL declaration also advertises that suffix and must never be assigned as if it were Typst-only. `.ts` resolves to MPEG transport streams, and `.vg.json` shares JSON. Those use explicit editor handoff; no broad JSON, XML, or public-data handler is imposed. Photoshop/CAD `.pat` and shell/Photoshop `.csh` remain native-import resources rather than global association rules.
+
 ## [04]-[BASH_GNU_BSD]
 
 `/bin/bash` is Apple bash `3.2`; the Home Manager profile bash (`/etc/profiles/per-user/$USER/bin/bash`) is `5.x`. Bash-only snippets run through `bash -lc`, a bash heredoc, or a bash-shebang executable.

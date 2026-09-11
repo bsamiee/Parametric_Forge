@@ -7,6 +7,6 @@
 # macOS-specific tool configurations
 {...}: {
   imports = [
-    ./duti.nix
+    ./default-applications.nix
   ];
 }

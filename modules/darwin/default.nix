@@ -7,7 +7,6 @@
 # Darwin module aggregator
 {...}: {
   imports = [
-    ./fonts.nix
     ./homebrew
     ./settings
   ];

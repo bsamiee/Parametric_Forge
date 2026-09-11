@@ -33,16 +33,63 @@ let
     aarch64-linux = "duckdb-aarch64-linux";
     x86_64-linux = "duckdb-x86_64-linux";
   };
-  nodePins = pinFamily {
-    aarch64-darwin = "nodejs-bin_26-aarch64-darwin";
-    aarch64-linux = "nodejs-bin_26-aarch64-linux";
-    x86_64-linux = "nodejs-bin_26-x86_64-linux";
-  };
+  nodePins = let
+    binaries = pinFamily {
+      aarch64-darwin = "nodejs-bin_26-aarch64-darwin";
+      aarch64-linux = "nodejs-bin_26-aarch64-linux";
+      x86_64-linux = "nodejs-bin_26-x86_64-linux";
+    };
+  in
+    assert binaries.version == generatedPins.design-nodejs_26.version; binaries;
   sqleanPins = pinFamily {
     aarch64-darwin = "sqlean-aarch64-darwin";
     aarch64-linux = "sqlean-aarch64-linux";
     x86_64-linux = "sqlean-x86_64-linux";
   };
+  pandocPins = pinFamily {
+    aarch64-darwin = "design-pandoc-aarch64-darwin";
+    aarch64-linux = "design-pandoc-aarch64-linux";
+    x86_64-linux = "design-pandoc-x86_64-linux";
+  };
+  temurinPins = pinFamily {
+    aarch64-darwin = "design-temurin-aarch64-darwin";
+    aarch64-linux = "design-temurin-aarch64-linux";
+    x86_64-linux = "design-temurin-x86_64-linux";
+  };
+  veraPdfPins = pinFamily {
+    aarch64-darwin = "design-verapdf-cli";
+    aarch64-linux = "design-verapdf-cli";
+    x86_64-linux = "design-verapdf-cli";
+  };
+  designSource = name: license: homepage: description: consumers: overlayReason: let
+    pin = "design-${name}";
+    release = generatedPins.${pin}.version;
+  in
+    {
+      upstream = homepage;
+      inherit license homepage description consumers;
+      sourcePackage = name;
+      sourcePin = pin;
+      version =
+        if name == "ghostscript"
+        then builtins.head (builtins.match "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz" release)
+        else release;
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      patchFamily = "source-substitute";
+      cacheClass = "source-built-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay =
+        if overlayReason == null
+        then "new"
+        else "override";
+    }
+    // (
+      if overlayReason == null
+      then {}
+      else {inherit overlayReason;}
+    );
   # NuGet global-tool admission: one generated pin per registry id carries the newest stable release and the nupkg hash; the nupkg is an immutable
   # archive NuGet serves byte-identical from the flat container and the v2 endpoint, so the pin's hash proves the builder's fetch. The attr name
   # is the installed executable; `nugetId` is the registry id the builder installs.
@@ -90,6 +137,106 @@ in rec {
   # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
+    nodejs-slim_26 = (designSource "nodejs_26" "mit" "https://nodejs.org/" "Current Node 26 build runtime for native npm packages" ["media-tools:vega-cli"] "Vega's native Canvas build requires the current Node source headers and nixpkgs npm hooks; the public Node executable remains the existing binary owner") // {sourcePackage = "nodejs-slim_26";};
+    vega-cli = {
+      upstream = "nixpkgs:vega-cli";
+      versionPolicy = "nixpkgs";
+      sourceKind = "nixpkgs";
+      license = "bsd3";
+      patchFamily = "none";
+      cacheClass = "source-built-local";
+      updateEngine = "nixpkgs-follows";
+      retention = "git-history";
+      projection.overlay = "override";
+      overlayReason = "Vega's Canvas addon and its CLI are built and run through the selected Node 26 runtime";
+      consumers = ["media-tools"];
+      description = "Vega chart export to editable SVG, PDF, and PNG";
+      homepage = "https://vega.github.io/vega/";
+      mainProgram = "vg2svg";
+    };
+    imagemagick = designSource "imagemagick" "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
+    fontconfig = designSource "fontconfig" "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
+    harfbuzz = designSource "harfbuzz" "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
+    poppler-utils-current =
+      (designSource "poppler" "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
+      // {
+        sourcePackage = "poppler-utils";
+        testDataPin = "design-poppler-test-data";
+      };
+    mupdf = designSource "mupdf" "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
+    qpdf = designSource "qpdf" "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] "all publication PDF transformations use the current parser and writer";
+    ghostscript = designSource "ghostscript" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
+
+    utiluti = {
+      upstream = "github:scriptingosx/utiluti";
+      version = generatedPins.design-utiluti.version;
+      assets.aarch64-darwin = pinAsset "design-utiluti";
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "asl20";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["mac-tools"];
+      description = "Native macOS file and URL application associations";
+      homepage = "https://github.com/scriptingosx/utiluti";
+      mainProgram = "utiluti";
+    };
+
+    pandoc-current = {
+      upstream = "github:jgm/pandoc";
+      inherit (pandocPins) version assets;
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "gpl2Plus";
+      patchFamily = "auto-patchelf";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["media-tools"];
+      description = "Universal document converter";
+      homepage = "https://pandoc.org/";
+      mainProgram = "pandoc";
+    };
+
+    verapdf-current = {
+      upstream = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/";
+      inherit (veraPdfPins) version assets;
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "mpl20"; # The unmodified upstream JAR retains the alternative GPLv3+ license and third-party notices.
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["media-tools"];
+      description = "Current veraPDF conformance inspection with a private Java runtime";
+      homepage = "https://verapdf.org/";
+      mainProgram = "verapdf";
+    };
+
+    temurin-jre-current = {
+      upstream = "github:adoptium/temurin26-binaries";
+      version = builtins.substring 4 (builtins.stringLength temurinPins.version) temurinPins.version;
+      inherit (temurinPins) assets;
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "gpl2"; # OpenJDK also grants the Classpath exception; its original legal files ship with the runtime.
+      patchFamily = "auto-patchelf";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      retention = "git-history";
+      projection.overlay = "new";
+      consumers = ["media-tools:verapdf-current"];
+      description = "Private current Temurin Java runtime for veraPDF";
+      homepage = "https://adoptium.net/";
+      mainProgram = "java";
+    };
+
     biome = {
       upstream = "github:biomejs/biome";
       inherit (biomePins) version assets;

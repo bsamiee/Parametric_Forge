@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/home/fonts.nix
 # ----------------------------------------------------------------------------
-# Estate font owner: the cross-scope family catalog, typography roles, fallback chains, per-surface typography rows, and renderer projections. Every
-# type consumer interpolates these rows; no consumer carries a private family, size, leading, or weight. The darwin module folds the same catalog into
-# its install list; this owner names families and drives renderers — it never reads config.fonts.packages.
+# Estate font owner: package installation, typography roles, fallback chains, per-surface typography rows, and renderer projections.
+# Home Manager's native Darwin target copies package fonts into ~/Library/Fonts/HomeManager; no second font installer is needed.
 {
   host,
   lib,
@@ -14,8 +13,7 @@
   ...
 }: let
   # --- [FAMILY_CATALOG]
-  # The cross-scope catalog (modules/common/fonts-catalog.nix) is the single family-truth surface; the darwin owner folds the same rows into its
-  # install list, so a catalog family absent from the install set is structurally impossible. The manifest derivation opens each representative file
+  # The catalog supplies both the installed packages and renderer families. The manifest derivation opens each representative file
   # with fonttools and fails the build on name-table disagreement (parity at build time). `class`: static | variable | patched. `sample` overrides text.
   catalog = import ../common/fonts-catalog.nix {inherit pkgs;};
 
@@ -120,25 +118,31 @@
   '';
 
   # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
-  # Rows: payload parity against the darwin projection manifest, CoreText registration through system_profiler enumeration, per-role presence,
+  # Rows: payload parity against Home Manager's native generation, CoreText registration through system_profiler enumeration, per-role presence,
   # and the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.
   forgeFontDoctor = pkgs.writeShellApplication {
     name = "forge-font-doctor";
-    runtimeInputs = [pkgs.jq pkgs.coreutils];
+    runtimeInputs = [pkgs.jq pkgs.coreutils pkgs.rsync];
     text = ''
       manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
-      payload="$HOME/Library/Fonts/.forge-fonts-manifest"
+      payload="$HOME/Library/Fonts/.home-manager-fonts-version"
       # Admission gate: the manifest crosses once, shape-asserted — a missing or torn projection fails typed, never as a raw jq slurpfile error.
       jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
         printf 'forge-font-doctor: manifest missing or malformed: %s\n' "$manifest" >&2
         exit 66
       }
-      if [[ -f $payload ]]; then
-        payload_result=ok
-        payload_detail="$(wc -l <"$payload") managed files projected"
+      if [[ -f $payload && -d "$(<"$payload")/share/fonts" && -d "$HOME/Library/Fonts/HomeManager" ]]; then
+        changes=$(rsync -acnL --chmod=u+w --delete --out-format='%n' "$(<"$payload")/share/fonts/" "$HOME/Library/Fonts/HomeManager/")
+        if [[ -z $changes ]]; then
+          payload_result=ok
+          payload_detail="native Home Manager font projection matches its generation"
+        else
+          payload_result=fail
+          payload_detail="native Home Manager font projection differs from its generation"
+        fi
       else
         payload_result=fail
-        payload_detail="darwin projection manifest missing"
+        payload_detail="native Home Manager font generation or projection missing"
       fi
       # One projection: CoreText enumeration joins the manifest role chain in a single jq pass over the system_profiler snapshot. A dead profiler
       # degrades typed — an empty snapshot fails every CoreText row, never the kernel. One row stream renders both the human table and --json.
@@ -193,8 +197,7 @@ in {
   };
 
   config = {
-    # The doctor probes CoreText and the ~/Library/Fonts payload — Darwin-only.
-    home.packages = lib.optionals (host.os == "darwin") [forgeFontDoctor];
+    home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog) ++ lib.optionals (host.os == "darwin") [forgeFontDoctor];
     xdg.configFile."forge/fonts/manifest.json".source = manifestJson;
   };
 }

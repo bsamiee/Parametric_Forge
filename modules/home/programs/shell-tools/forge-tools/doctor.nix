@@ -23,10 +23,6 @@
     "pynvim-python" = "uv-lane: uv tool shim";
     "python3.12" = "uv-lane: uv runtime shim";
     "python3.14" = "uv-lane: uv runtime shim";
-    verapdf = "admitted: upstream veraPDF CLI installation";
-    vg2pdf = "admitted: pnpm global vega-cli executable";
-    vg2png = "admitted: pnpm global vega-cli executable";
-    vg2svg = "admitted: pnpm global vega-cli executable";
     tree = "hm: generation link";
     loc = "hm: generation link";
   });
@@ -58,7 +54,7 @@
     {
       lens = "path";
       handler = "lens_path";
-      desc = "PATH owner classes, cross-owner shadows, MAGIC seed, CLT health, brew posture, ~/.local/bin rulings";
+      desc = "PATH owner classes, cross-owner shadows, native file database isolation, CLT health, brew posture, ~/.local/bin rulings";
     }
     {
       lens = "launchd";
@@ -169,13 +165,13 @@ in {
             fi
           done
         done
-        # Seed case: MAGIC pins a store magic database; the serving binary must be the store file, never /usr/bin/file 5.41 (v20-magic rejection).
+        # Each file/libmagic build owns its database. A global override also reaches macOS's explicit /usr/bin/file consumers.
         local f_bin f_owner clt cltv
         f_bin="$(command -v file || true)"
         f_owner="$(owner_of "''${f_bin:-/dev/null}")"
-        if [ -n "''${MAGIC:-}" ] && [ "$f_owner" = macos ]; then
+        if [ -n "''${MAGIC:-}" ]; then
           mismatches=$((mismatches + 1))
-          printf 'family=file-magic\tstate=mismatch\tfile=%s\tmagic=%s\tfix=install pkgs.file beside the MAGIC export\n' "$f_bin" "''${MAGIC}"
+          printf 'family=file-magic\tstate=mismatch\tfile=%s\tmagic=%s\tfix=remove the global MAGIC override; each native engine supplies its matching database\n' "$f_bin" "''${MAGIC}"
         else
           printf 'family=file-magic\tstate=ok\tfile=%s\towner=%s\n' "''${f_bin:-absent}" "$f_owner"
         fi

@@ -39,7 +39,7 @@ _: {
     # --- [DEVELOPMENT]
     "codex" # Official OpenAI CLI cask
     "visual-studio-code"
-    "typeface" # Font management
+    # Typeface Beta is installed and updated through its native vendor channel.
     "sf-symbols" # Apple's symbol library
 
     # --- [MEDIA_ENTERTAINMENT]

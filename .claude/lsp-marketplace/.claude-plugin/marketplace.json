@@ -17,9 +17,9 @@
             "description": "Roslyn language server for C# (.cs/.csx)"
         },
         {
-            "name": "tsgo-lsp",
-            "source": "./tsgo-lsp",
-            "description": "TypeScript 7 language server (typescript@7 upstream; nixpkgs typescript-go ships the tsgo binary) (.ts/.tsx/.js)"
+            "name": "typescript-lsp",
+            "source": "./typescript-lsp",
+            "description": "TypeScript 7 native language server for TypeScript and JavaScript"
         },
         {
             "name": "bash-lsp",

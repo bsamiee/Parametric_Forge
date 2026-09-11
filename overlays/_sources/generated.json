@@ -112,6 +112,266 @@
         },
         "version": "7.9.3.1.1"
     },
+    "design-fontconfig": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-fontconfig",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-T3tVSjjN94wDP2ZsiHHzdJ4UoJT2Wgf2MMke0LQ9NeM=",
+            "type": "url",
+            "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz"
+        },
+        "version": "2.18.3"
+    },
+    "design-ghostscript": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-ghostscript",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-wgSSvI67lsh/ouUqCSbhzajN6V1mFF4BiscT/tXaOM8=",
+            "type": "url",
+            "url": "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz"
+        },
+        "version": "gs10080/ghostscript-10.08.0.tar.xz"
+    },
+    "design-harfbuzz": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-harfbuzz",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-I1ftlmxs7Xv6cgsGQMAjEGWvARWPvqIVCT/6Fa7UQ3E=",
+            "type": "url",
+            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.4.0/harfbuzz-14.4.0.tar.xz"
+        },
+        "version": "14.4.0"
+    },
+    "design-imagemagick": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-imagemagick",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FoqXELOo1p29IOsKNfFFsMDtNfB2svyY0+tX2qkZw3Y=",
+            "type": "url",
+            "url": "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-31/ImageMagick-7.1.2-31.tar.xz"
+        },
+        "version": "7.1.2-31"
+    },
+    "design-mupdf": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-mupdf",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-N8MgncDgb6TzeB7USDmtkzqeYUPrRzH5ngaSBHFbzvI=",
+            "type": "url",
+            "url": "https://mupdf.com/downloads/archive/mupdf-1.28.3-source.tar.gz"
+        },
+        "version": "1.28.3"
+    },
+    "design-nodejs_26": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-nodejs_26",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-NrN79e5NCSudnf8tGpCxRE+LRT7d9v+Wyr3ruX0y9B0=",
+            "type": "url",
+            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2.tar.xz"
+        },
+        "version": "26.8.2"
+    },
+    "design-pandoc-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-pandoc-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FYBr7flRe/6tcuiP5qZpZjXDaR77tuFSFzRA6cW7ULQ=",
+            "type": "url",
+            "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-arm64-macOS.zip"
+        },
+        "version": "3.11"
+    },
+    "design-pandoc-aarch64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-pandoc-aarch64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Vu1VZuxB0i7J7gcE5qwLmLoQLpI4Tv1TBhc6ItMUx5o=",
+            "type": "url",
+            "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-arm64.tar.gz"
+        },
+        "version": "3.11"
+    },
+    "design-pandoc-x86_64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-pandoc-x86_64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-N+2zu89yL5IaAJlBv1h04uDAkmMibJtKLZgHiMsGKrY=",
+            "type": "url",
+            "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-amd64.tar.gz"
+        },
+        "version": "3.11"
+    },
+    "design-poppler": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-poppler",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-gFnq22gFNAdo8TjEZbV/gWTJK0oHc8N+8DHqbA2Yey4=",
+            "type": "url",
+            "url": "https://poppler.freedesktop.org/poppler-26.09.0.tar.xz"
+        },
+        "version": "26.09.0"
+    },
+    "design-poppler-test-data": {
+        "cargoLock": null,
+        "date": "2026-08-14",
+        "extract": null,
+        "name": "design-poppler-test-data",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "deepClone": false,
+            "fetchSubmodules": false,
+            "leaveDotGit": false,
+            "name": null,
+            "rev": "48b6219b84fc0a708040cb279d51095cc4e1c603",
+            "sha256": "sha256-2eH4dZs2J0CeTWrXOYEHb0Xnpfa7tX8mi7AX2E9D41U=",
+            "sparseCheckout": [],
+            "type": "git",
+            "url": "https://gitlab.freedesktop.org/poppler/test.git"
+        },
+        "version": "48b6219b84fc0a708040cb279d51095cc4e1c603"
+    },
+    "design-qpdf": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-qpdf",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-8EWqJ3viNW/1OomoYilFlYKRF30kg6/CDt58iozThzw=",
+            "type": "url",
+            "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.1/qpdf-12.4.1.tar.gz"
+        },
+        "version": "12.4.1"
+    },
+    "design-temurin-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-temurin-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": "temurin-jdk-26.0.2.1+1-aarch64-darwin.tar.gz",
+            "sha256": "sha256-Y6lLO6BTCAY1NtYMsPm8hHkAowD8U2MMhu6j76eTE6Q=",
+            "type": "url",
+            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse"
+        },
+        "version": "jdk-26.0.2.1+1"
+    },
+    "design-temurin-aarch64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-temurin-aarch64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": "temurin-jdk-26.0.2.1+1-aarch64-linux.tar.gz",
+            "sha256": "sha256-nhUnaBrkphUETIhDXSwan68f1ce6r5UUpKQgdggVAIc=",
+            "type": "url",
+            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse"
+        },
+        "version": "jdk-26.0.2.1+1"
+    },
+    "design-temurin-x86_64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-temurin-x86_64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": "temurin-jdk-26.0.2.1+1-x86_64-linux.tar.gz",
+            "sha256": "sha256-NXcxFoKVVPs45qz5uSs7qLt4VlV8OriF4m59YejI4bA=",
+            "type": "url",
+            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse"
+        },
+        "version": "jdk-26.0.2.1+1"
+    },
+    "design-utiluti": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-utiluti",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-cBhLUejsABesbi3q4jntgmWJAlgpgttXSRLKiIT+Bh8=",
+            "type": "url",
+            "url": "https://github.com/scriptingosx/utiluti/releases/download/v1.5/utiluti-1.5.pkg"
+        },
+        "version": "1.5"
+    },
+    "design-verapdf-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-verapdf-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-spyBcL+9XNuJ6UGDfDywq3kgID0Ifw3zK4EkYxcuNTQ=",
+            "type": "url",
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.167/cli-1.31.167.jar"
+        },
+        "version": "1.31.167"
+    },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -166,11 +426,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-WV0vk04IG4KWHRpf1BxtvQxalS2ei+W0Vmq3VEJpaNI=",
+            "sha256": "sha256-9Y5QRLk4oxdBhN5Krx0rv8//gS6IIg/wjpIhwJ9chnc=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-darwin-arm64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.xz"
         },
-        "version": "26.7.0"
+        "version": "26.8.2"
     },
     "nodejs-bin_26-aarch64-linux": {
         "cargoLock": null,
@@ -181,11 +441,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-r8egBAGEhQkqyJhbgXsNVoRHK9lHLgtX0quIc35QCQ0=",
+            "sha256": "sha256-gdjw/eqdzTv9z+r8X4NZwVHwl+mICwAHwGRcpnDQeXE=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-arm64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.xz"
         },
-        "version": "26.7.0"
+        "version": "26.8.2"
     },
     "nodejs-bin_26-x86_64-linux": {
         "cargoLock": null,
@@ -196,11 +456,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-mCqiTdi+TIicaoqzN93/OwiWZFsg9COTVugFUsFid+4=",
+            "sha256": "sha256-QOHTIlwcmumiZxyY7LmFfk1VVQJjlPNIZFZ2eYhA1cU=",
             "type": "url",
-            "url": "https://nodejs.org/dist/v26.7.0/node-v26.7.0-linux-x64.tar.xz"
+            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.xz"
         },
-        "version": "26.7.0"
+        "version": "26.8.2"
     },
     "nuget-dotnet-counters": {
         "cargoLock": null,

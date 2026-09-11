@@ -58,7 +58,7 @@ in {
     prettier # Code formatter (house-config fallback wrapper)
     biome # TS/JS/JSON/CSS formatter+linter (house-config fallback wrapper)
     pkgs.tailwindcss # Utility-first CSS framework
-    pkgs.typescript-go # TypeScript 7 (`typescript@7` upstream identity); nixpkgs still ships the dev snapshot as `tsgo` — a package-drift row until stable TS7 packaging lands
+    pkgs.typescript # TypeScript 7 native compiler and language server
     pkgs.dts-lsp # TypeScript declaration navigation for API catalogue work
     pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH
   ];

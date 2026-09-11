@@ -151,14 +151,14 @@
         };
       };
     };
-    # TypeScript 7 (`typescript@7` upstream identity); nixpkgs typescript-go still ships the dev snapshot binary as `tsgo` — a package-drift row.
-    tsgo = {
-      cmd = ["tsgo" "--lsp" "-stdio"];
+    # TypeScript 7 uses the native tsc executable for compilation and LSP.
+    typescript = {
+      cmd = ["tsc" "--lsp" "-stdio"];
       filetypes = ["typescript" "typescriptreact" "javascript" "javascriptreact"];
       root_markers = ["tsconfig.json" "package.json" ".git"];
       settings = {};
       claude = {
-        plugin = "tsgo-lsp";
+        plugin = "typescript-lsp";
         extensions = {
           ".ts" = "typescript";
           ".tsx" = "typescriptreact";
@@ -212,7 +212,7 @@
         extensions.".toml" = "toml";
       };
     };
-    # Biome's LSP proxy: the editor attaches it beside tsgo for lint diagnostics on every Biome language; the Claude lane claims only the
+    # Biome's LSP proxy: the editor attaches it beside TypeScript for lint diagnostics on every Biome language; the Claude lane claims only the
     # extensions no other row owns (JSON, JSONC, CSS) because Claude Code starts one server per extension, first registered wins.
     biome = {
       cmd = ["biome" "lsp-proxy"];

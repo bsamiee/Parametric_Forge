@@ -1,5 +1,78 @@
 # Pin-source declarations for every nvfetcher-engine manifest row; `nvfetcher -o overlays/_sources` advances the complete family.
 
+# Design renderers, native application routing, and the Node source/runtime pin family; update with --filter '^(design-|nodejs-bin_26-)'.
+[design-imagemagick]
+src.github = "ImageMagick/ImageMagick"
+fetch.url = "https://github.com/ImageMagick/ImageMagick/releases/download/$ver/ImageMagick-$ver.tar.xz"
+
+[design-harfbuzz]
+src.github = "harfbuzz/harfbuzz"
+fetch.url = "https://github.com/harfbuzz/harfbuzz/releases/download/$ver/harfbuzz-$ver.tar.xz"
+
+[design-poppler]
+src.webpage = "https://poppler.freedesktop.org/"
+src.regex = "poppler-([0-9]+\\.[0-9]+\\.[0-9]+)\\.tar\\.xz"
+fetch.url = "https://poppler.freedesktop.org/poppler-$ver.tar.xz"
+
+[design-poppler-test-data]
+src.git = "https://gitlab.freedesktop.org/poppler/test.git"
+fetch.git = "https://gitlab.freedesktop.org/poppler/test.git"
+
+[design-mupdf]
+src.github_tag = "ArtifexSoftware/mupdf"
+src.include_regex = "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+fetch.url = "https://mupdf.com/downloads/archive/mupdf-$ver-source.tar.gz"
+
+[design-qpdf]
+src.github = "qpdf/qpdf"
+src.prefix = "v"
+fetch.url = "https://github.com/qpdf/qpdf/releases/download/v$ver/qpdf-$ver.tar.gz"
+
+[design-ghostscript]
+src.cmd = "curl -fsSL https://api.github.com/repos/ArtifexSoftware/ghostpdl-downloads/releases/latest | jq -r '. as $r | .assets[].name | select(startswith(\"ghostscript-\") and endswith(\".tar.xz\")) | $r.tag_name + \"/\" + .'"
+fetch.url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/$ver"
+
+[design-fontconfig]
+src.cmd = "curl -fsSL 'https://gitlab.freedesktop.org/api/v4/projects/890/repository/tags?per_page=100' | jq -r '[.[].name | select(test(\"^[0-9]+[.][0-9]+[.][0-9]+$\"))] | sort_by(split(\".\") | map(tonumber)) | last'"
+fetch.url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/$ver/fontconfig-$ver.tar.xz"
+
+[design-utiluti]
+src.github = "scriptingosx/utiluti"
+src.prefix = "v"
+fetch.url = "https://github.com/scriptingosx/utiluti/releases/download/v$ver/utiluti-$ver.pkg"
+
+[design-verapdf-cli]
+src.webpage = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/maven-metadata.xml"
+src.regex = "<latest>([0-9]+\\.[0-9]+\\.[0-9]+)</latest>"
+fetch.url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/$ver/cli-$ver.jar"
+
+[design-pandoc-aarch64-darwin]
+src.github = "jgm/pandoc"
+fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-arm64-macOS.zip"
+
+[design-pandoc-x86_64-linux]
+src.github = "jgm/pandoc"
+fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-amd64.tar.gz"
+
+[design-pandoc-aarch64-linux]
+src.github = "jgm/pandoc"
+fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-arm64.tar.gz"
+
+[design-temurin-aarch64-darwin]
+src.github = "adoptium/temurin26-binaries"
+fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/mac/aarch64/jre/hotspot/normal/eclipse"
+url.name = "temurin-$ver-aarch64-darwin.tar.gz"
+
+[design-temurin-x86_64-linux]
+src.github = "adoptium/temurin26-binaries"
+fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/linux/x64/jre/hotspot/normal/eclipse"
+url.name = "temurin-$ver-x86_64-linux.tar.gz"
+
+[design-temurin-aarch64-linux]
+src.github = "adoptium/temurin26-binaries"
+fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/linux/aarch64/jre/hotspot/normal/eclipse"
+url.name = "temurin-$ver-aarch64-linux.tar.gz"
+
 [ast-grep-upstream]
 src.github = "ast-grep/ast-grep"
 fetch.github = "ast-grep/ast-grep"
@@ -35,22 +108,20 @@ src.github = "duckdb/duckdb"
 src.prefix = "v"
 fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-amd64.zip"
 
+[design-nodejs_26]
+src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
+fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver.tar.xz"
+
 [nodejs-bin_26-aarch64-darwin]
-src.github_tag = "nodejs/node"
-src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
-src.prefix = "v"
+src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
 fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-darwin-arm64.tar.xz"
 
 [nodejs-bin_26-aarch64-linux]
-src.github_tag = "nodejs/node"
-src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
-src.prefix = "v"
+src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
 fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-arm64.tar.xz"
 
 [nodejs-bin_26-x86_64-linux]
-src.github_tag = "nodejs/node"
-src.include_regex = "^v26\\.[0-9]+\\.[0-9]+$"
-src.prefix = "v"
+src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
 fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-x64.tar.xz"
 
 [pnpm_11]
