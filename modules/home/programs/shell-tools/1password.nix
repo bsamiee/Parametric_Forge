@@ -108,24 +108,37 @@ in {
           exit 1
         fi
 
-        # Resolve tokens from 1Password into a mode-600 cache; temp lives in the target directory so the publish rename stays same-filesystem.
-        echo "Injecting secrets from 1Password vault..." >&2
-        mkdir -p "$(dirname "$cache_file")"
-        tmp_file="$(mktemp "$cache_file.XXXXXX")"
-        if ${pkgs._1password-cli}/bin/op inject -f -i "$template_file" -o "$tmp_file" >/dev/null; then
-          chmod 600 "$tmp_file"
-          mv -f "$tmp_file" "$cache_file"
-          echo "Tokens cached" >&2
+        # Content gate: op inject needs a 1Password biometric unlock, and HM activation runs under a fresh session each switch, so the CLI's
+        # tty-scoped authorization never caches — every switch would fire Touch ID. The template is a store symlink whose realpath changes only
+        # when tokenRows does, and the cache carries that realpath as its own first-line comment (a no-op when the cache is sourced), so an
+        # ordinary switch that left the secret set alone reads its own provenance and never unlocks 1Password.
+        marker="# forge-op-template: $(readlink -f "$template_file")"
+        if [[ -s "$cache_file" && "$(head -n1 "$cache_file")" == "$marker" ]]; then
+          echo "Secret template unchanged; skipping op inject" >&2
         else
-          echo "WARNING: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
-          rm -f "$tmp_file"
-          if [[ ! -f "$cache_file" ]]; then
-            touch "$cache_file"
-            chmod 600 "$cache_file"
+          # Resolve tokens from 1Password into a mode-600 cache; temp lives in the target directory so the publish rename stays same-filesystem.
+          # The marker leads the file, then the exports (a brace group's status is op inject's, so a failed unlock still short-circuits).
+          echo "Injecting secrets from 1Password vault..." >&2
+          mkdir -p "$(dirname "$cache_file")"
+          tmp_file="$(mktemp "$cache_file.XXXXXX")"
+          if {
+            printf '%s\n' "$marker"
+            ${pkgs._1password-cli}/bin/op inject -f -i "$template_file"
+          } >"$tmp_file"; then
+            chmod 600 "$tmp_file"
+            mv -f "$tmp_file" "$cache_file"
+            echo "Tokens cached" >&2
+          else
+            echo "WARNING: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
+            rm -f "$tmp_file"
+            if [[ ! -f "$cache_file" ]]; then
+              touch "$cache_file"
+              chmod 600 "$cache_file"
+            fi
           fi
         fi
 
-        # GUI replay: restart the RunAtLoad agent so GUI apps pick up the just-written cache on this switch instead of at next login.
+        # GUI replay: restart the RunAtLoad agent so GUI apps pick up the current cache on this switch instead of at next login.
         /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets" >/dev/null 2>&1 || true
       '';
     };
