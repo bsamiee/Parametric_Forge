@@ -11,11 +11,19 @@
     withLcevcdec = false;
     withFrei0r = false;
   };
-  # Cairo/raster belong to the complete CLI variant; enabling them on the core HarfBuzz attr creates the Cairo/Pango dependency cycle.
-  harfbuzzTools = pkgs.harfbuzz.override {
-    withCairo = true;
-    withRaster = true;
-  };
+  # Cairo/raster belong to the complete CLI variant; enabling them on the core HarfBuzz attr creates the Cairo/Pango dependency cycle. Only bin/
+  # reaches the profile — the dev output also carries headers and pkg-config files. The shaping oracle stays on base harfbuzz (home/fonts.nix).
+  harfbuzzTools = let
+    hb = pkgs.harfbuzz.override {
+      withCairo = true;
+      withRaster = true;
+    };
+  in
+    pkgs.runCommand "harfbuzz-tools-${hb.version}" {inherit (hb) meta;} ''
+      mkdir -p $out/bin
+      ln -st $out/bin ${hb.dev}/bin/hb-*
+      [ -e $out/bin/hb-view ] || { echo "harfbuzz drift: hb-view missing from the cairo build" >&2; exit 1; }
+    '';
 in {
   imports = [
     ./glow.nix
@@ -30,7 +38,7 @@ in {
     pkgs.ffmpegthumbnailer # Lightweight video thumbnailer for Yazi preview (ffmpegthumbnailer.yazi)
     pkgs.glow # Config owned by glow.nix
     pkgs.imagemagick
-    harfbuzzTools.dev # hb-shape, hb-view, hb-subset and raster tools; one complete CLI owner
+    harfbuzzTools # hb-view/hb-raster plus the base tools; the manifest oracle stays on base harfbuzz
     pkgs.inkscape
     pkgs.mediainfo # Media container inspection for Yazi preview
     pkgs.mpv # Playback backend for media aliases

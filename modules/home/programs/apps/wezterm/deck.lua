@@ -365,18 +365,10 @@ local function key_actions(launcher, quick_select)
 end
 
 function M.apply(config)
-    -- Fonts: font-owner rows (modules/home/fonts.nix), constructor-bound; leading travels per mono family, never as one global value.
-    local function font_spec(f)
-        return f.weight and { family = f.family, weight = f.weight } or f.family
-    end
-    local families = {}
-    local primary = rows.font.chain[1] and rows.font.chain[1].family
-    for _, f in ipairs(rows.font.chain) do
-        families[#families + 1] = font_spec(f)
-    end
-    config.font = wezterm.font_with_fallback(families)
+    -- Fonts: font-owner rows (modules/home/fonts.nix); the chain is a family list and the leading is the terminal surface's one value.
+    config.font = wezterm.font_with_fallback(rows.font.chain)
     config.font_size = rows.font.size
-    config.line_height = rows.font.line_heights[primary] or rows.font.default_line_height
+    config.line_height = rows.font.line_height
     config.harfbuzz_features = rows.font.harfbuzz_features
 
     -- Nightly-gated scalar rows. The auth-sock pin routes every mux-spawned pane and SSH domain through the

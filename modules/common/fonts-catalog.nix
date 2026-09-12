@@ -9,7 +9,7 @@
   inherit (pkgs) lib;
   selectPaths = package: paths:
     (pkgs.linkFarm "${package.pname}-${package.version}" (lib.genAttrs paths (path: "${package}/${path}"))).overrideAttrs (old: {
-      inherit (package) pname version meta;
+      inherit (package) meta;
       buildCommand =
         old.buildCommand
         + ''
@@ -21,8 +21,8 @@
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
   geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
-  # Typeface owns Google's newer Sans variable family. OTFs retain the distinct language/Condensed/Math coverage; selected variable TTFs omit
-  # duplicated static faces and upstream AppleDouble files without altering the original packages.
+  # Typeface owns Google's newer Sans variable family. The OTF directory installs the language/Condensed/Math static coverage for the design
+  # apps (no estate role reads them); the selected variable TTFs omit the duplicated Mono/Serif static faces and upstream AppleDouble files.
   plex = selectPaths (pkgs.ibm-plex.override {
     families = ["math" "mono-variable" "serif-variable" "sans-condensed" "sans-arabic" "sans-devanagari" "sans-hebrew" "sans-jp" "sans-kr" "sans-sc" "sans-tc" "sans-thai" "sans-thai-looped"];
   }) (["share/fonts/opentype"] ++ lib.concatMap (family: map (style: "share/fonts/truetype/IBM Plex ${family} Var-${style}.ttf") ["Roman" "Italic"]) ["Mono" "Serif"]);

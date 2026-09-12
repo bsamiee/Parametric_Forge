@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications, and fonts not available in nixpkgs.
+# Homebrew GUI applications, and the design-app fonts that land system-wide in /Library/Fonts (Apple-proprietary faces stay cask-only).
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]

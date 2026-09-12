@@ -5,7 +5,8 @@
 # Path          : modules/home/fonts.nix
 # ----------------------------------------------------------------------------
 # Estate font owner: package installation, typography roles, fallback chains, per-surface typography rows, and renderer projections.
-# Home Manager's native Darwin target copies package fonts into ~/Library/Fonts/HomeManager; no second font installer is needed.
+# Home Manager's unconditional Darwin target unions share/fonts across every home.packages entry and rsyncs real files into
+# ~/Library/Fonts/HomeManager (CoreText ignores symlinked fonts); no second font installer is needed.
 {
   host,
   lib,
@@ -18,33 +19,27 @@
   catalog = import ../common/fonts-catalog.nix {inherit pkgs;};
 
   # --- [ROLES_CHAINS_SURFACES_FEATURES]
-  # Roles are the swap surface: one family per role, scripts ordered by shaping preference. The mono chain is the only fallback expression on macOS —
-  # fontconfig is inert against CoreText and Chromium renderers. Emoji is system-owned (Apple Color Emoji) and is never a role or a package row.
-  roles = {
+  # Roles are the swap surface: one family per role, scripts ordered by shaping preference. Every role family must be a catalog row — a typo
+  # fails at eval, never at runtime in the doctor. The mono chain is the fallback expression CoreText and Chromium renderers read; fontconfig is
+  # inert against them. Emoji is system-owned (Apple Color Emoji): a chain member so WezTerm's bundled Noto Color Emoji never wins, never a package row.
+  roles = lib.throwIf (!(lib.all (f: catalog ? ${f}) (lib.flatten (lib.attrValues roles')))) "forge.fonts: a role names a family absent from the catalog" roles';
+  roles' = {
     mono = "Geist Mono";
     sans = "Geist";
     symbols = "Symbols Nerd Font Mono";
     scripts = ["Scheherazade New" "Noto Naskh Arabic" "Noto Sans Arabic"];
   };
-  chains.mono = [roles.mono roles.symbols] ++ roles.scripts;
+  chains.mono = [roles.mono roles.symbols] ++ roles.scripts ++ lib.optional (host.os == "darwin") "Apple Color Emoji";
 
-  # Per-mono-family terminal leading, folded from catalog rows: 0.95 is tuned for Geist and clips Monaspace/JetBrains descenders; below 1.0 is
-  # family-proven only. Projected to WezTerm's per-family line_heights; the terminal surface's default_line_height governs any family without a row.
-  familyLeading = lib.mapAttrs (_: row: row.lineHeight) (lib.filterAttrs (_: row: row ? lineHeight) catalog);
-
-  # Per-surface typography table: each surface binds a family role, size (px), leading (unitless), and weight — the sole owner of every type fact.
-  # Every renderer projection folds from its surface row; no consumer carries a private family, size, leading, or weight. Positional constructor keeps
-  # rows single-line (alejandra explodes multi-key attrset literals); weightBold defaults bold and only the terminal surface reads it.
-  mkSurface = family: size: leading: weight: {
-    inherit family size leading weight;
-    weightBold = "bold";
-  };
+  # Per-surface typography table: each surface binds a family role, size (px), and leading (unitless) — the sole owner of every type fact. The
+  # terminal leading is the mono family's own catalog row (0.95 is tuned for Geist and clips Monaspace/JetBrains descenders; below 1.0 is
+  # family-proven only), so a role swap carries its leading with it. Positional constructor keeps rows single-line (alejandra explodes
+  # multi-key attrset literals).
+  mkSurface = family: size: leading: {inherit family size leading;};
   surfaces = {
-    terminal = mkSurface "mono" 13.0 1.0 "normal";
-    editor = mkSurface "mono" 13.0 1.5 "normal";
-    screenshot = mkSurface "mono" 16.0 1.4 "normal";
-    proof = mkSurface "sans" 14.0 1.5 "normal";
-    label = mkSurface "mono" 13.0 1.0 "normal";
+    terminal = mkSurface "mono" 13.0 catalog.${roles.mono}.lineHeight;
+    screenshot = mkSurface "mono" 16.0 1.4;
+    proof = mkSurface "sans" 14.0 1.5;
   };
 
   # CSS projectors: px size and rounded-percent leading single-source the unit forms consumers previously hardcoded (F5's numeric-vs-% disagreement).
@@ -118,11 +113,13 @@
   '';
 
   # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
-  # Rows: payload parity against Home Manager's native generation, CoreText registration through system_profiler enumeration, per-role presence,
-  # and the Electron lane note. fc-* stays a separate Pango-only lane, never mixed.
+  # Rows: payload parity against the active generation's font env (the marker is Home Manager's own symlink into the live generation, so it
+  # can never name a stale one; only the copied payload can drift), then per-role CoreText registration proven from the Home Manager payload
+  # path itself (system_profiler enumerates every registered file with its path and enabled/valid state on macOS 26) — a same-named family
+  # registered from elsewhere, such as Adobe's user-owned font store, never satisfies a role row.
   forgeFontDoctor = pkgs.writeShellApplication {
     name = "forge-font-doctor";
-    runtimeInputs = [pkgs.jq pkgs.coreutils pkgs.rsync];
+    runtimeInputs = [pkgs.jq pkgs.coreutils pkgs.rsync pkgs.gawk];
     text = ''
       manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
       payload="$HOME/Library/Fonts/.home-manager-fonts-version"
@@ -148,17 +145,16 @@
       # degrades typed — an empty snapshot fails every CoreText row, never the kernel. One row stream renders both the human table and --json.
       snapshot="$(/usr/sbin/system_profiler SPFontsDataType -json 2>/dev/null || true)"
       [[ -n $snapshot ]] || snapshot='{}'
-      report="$(jq -c --slurpfile m "$manifest" --arg pr "$payload_result" --arg pd "$payload_detail" '
-          ([.SPFontsDataType[]?.typefaces[]?.family] | unique) as $registered
+      report="$(jq -c --slurpfile m "$manifest" --arg pr "$payload_result" --arg pd "$payload_detail" --arg hm "$HOME/Library/Fonts/HomeManager/" '
+          ([.SPFontsDataType[]? | select((.path | startswith($hm)) and .enabled == "yes" and .valid == "yes")
+            | .typefaces[]? | select(.enabled == "yes" and .valid == "yes") | .family] | unique) as $registered
           | ($m[0].roles | [to_entries[].value] | flatten | unique) as $families
           | {schema: "forge-font-doctor/v1",
              rows: ([{surface: "payload", result: $pr, detail: $pd}]
                + [$families[] | {
                    surface: "coretext:\(.)",
                    result: (if IN($registered[]) then "ok" else "fail" end),
-                   detail: (if IN($registered[]) then "registered" else "not enumerated by system_profiler" end)}]
-               + [{surface: "electron", result: "note", detail: "Chromium reads CoreText post-restart; the rendered receipt is the VS Code capture lane"},
-                  {surface: "fontconfig", result: "note", detail: "fc-* serves Pango-class consumers only; CoreText rows above are Darwin truth"}])}' <<<"$snapshot")"
+                   detail: (if IN($registered[]) then "registered from the Home Manager payload" else "not enumerated from ~/Library/Fonts/HomeManager" end)}])}' <<<"$snapshot")"
       if [[ "''${1:-}" == "--json" ]]; then
         jq . <<<"$report"
       else
@@ -176,17 +172,16 @@ in {
       # The manifest's one public channel is the xdg projection every kernel reads.
       inherit catalog roles chains surfaces features;
       projections = {
-        # WezTerm rows (terminal surface): deck.lua walks the chain and applies per-family leading.
+        # WezTerm rows (terminal surface): deck.lua walks the chain; the leading is the terminal surface's one value.
         luaFont = {
-          chain = map (f: {family = f;}) chains.mono;
+          chain = chains.mono;
           inherit (surfaces.terminal) size;
-          line_heights = familyLeading;
-          default_line_height = surfaces.terminal.leading;
+          line_height = surfaces.terminal.leading;
           harfbuzz_features = features.harfbuzz;
         };
         # CSS stacks carry a generic fallback; the sans stack falls through to the mono chain.
         cssMono = lib.concatStringsSep ", " (chains.mono ++ ["monospace"]);
-        fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.label.size)}pt";
+        fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.terminal.size)}pt";
         # Screenshot (carbon) and proof (theme HTML) CSS: one font shorthand plus the two scalar CSS forms the consumers previously hardcoded.
         proofFont = "${cssSize "proof"}/${cssLeading "proof"} ${cssSansStack}";
         screenshotSize = cssSize "screenshot";

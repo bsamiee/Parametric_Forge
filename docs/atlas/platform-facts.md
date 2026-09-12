@@ -4,7 +4,7 @@ macOS reality the estate is built against: the invariants and quirks an agent ne
 
 ## [01]-[SCOPE_BOUNDARIES]
 
-Declaring scope bounds each fact. `modules/darwin` owns system defaults, security, fonts, and Homebrew; `modules/home` owns user launchd agents, environments, programs, and XDG. Home Manager LaunchAgents mutate user state while system defaults mutate machine state. Recurring machine work is declared as `com.parametric-forge.<name>` beside its surface.
+Declaring scope bounds each fact. `modules/darwin` owns system defaults, security, and Homebrew; `modules/home` owns fonts, user launchd agents, environments, programs, and XDG. Home Manager LaunchAgents mutate user state while system defaults mutate machine state. Recurring machine work is declared as `com.parametric-forge.<name>` beside its surface.
 
 ## [02]-[LAUNCHD_GRAMMAR]
 
