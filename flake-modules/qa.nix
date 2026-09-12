@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : flake-modules/qa.nix
 # ----------------------------------------------------------------------------
-# Flake checks: formatting, Nix static analysis, and public-output build smoke.
+# Flake checks: Nix static analysis, jq syntax, both hosts' evals, and public-output build smoke; treefmt-nix lands its own `treefmt` check.
 {self, ...}: {
   perSystem = {
     config,
@@ -58,8 +58,6 @@
     checks =
       hostEvals
       // {
-        formatting = config.treefmt.build.check self;
-
         nix-static = forgePkgs.runCommand "forge-nix-static" {nativeBuildInputs = [forgePkgs.deadnix forgePkgs.statix];} ''
           deadnix --fail ${nixSources}
           statix check ${nixSources}

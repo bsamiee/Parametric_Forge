@@ -170,7 +170,7 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 
 ## [15]-[MAINTENANCE]
 
-- Format: `nix fmt -- --check` — full proof: `nix flake check`.
+- Format: `nix fmt -- --ci` — full proof: `nix flake check`.
 - Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.

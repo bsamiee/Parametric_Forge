@@ -57,29 +57,27 @@ _: {
       ];
     };
 
-    formatter = forgePkgs.writeShellApplication {
-      name = "forge-fmt";
-      runtimeInputs = [config.treefmt.build.wrapper];
-      text = ''
-        args=()
-        for arg in "$@"; do
-          if [[ "$arg" == "--check" ]]; then
-            args+=("--ci")
-          else
-            args+=("$arg")
-          fi
-        done
-        exec treefmt "''${args[@]}"
-      '';
-    };
-
+    # treefmt-nix owns the formatter and the `treefmt` flake check natively; `nix fmt -- --ci` is the proving spelling.
     treefmt = {
-      flakeCheck = false;
-      projectRootFile = "flake.nix";
       settings.excludes = ["overlays/_sources/**"];
       # Rows carry the house style (4-space indent, 150 width) explicitly: the sandboxed formatting check cannot see machine-level XDG tool configs.
       programs = {
         alejandra.enable = true;
+        # Native rows generate the config file and pin --config-path, which is what keeps the sandboxed check independent of any repo-root or
+        # XDG config; simplify stays off because -s rewrites code, not layout.
+        stylua = {
+          enable = true;
+          settings = {
+            indent_type = "Spaces";
+            indent_width = style.indent;
+            column_width = style.width;
+          };
+        };
+        shfmt = {
+          enable = true;
+          indent_size = style.indent;
+          simplify = false;
+        };
         # The repo-root biome.json is the single law for treefmt, the PATH wrapper, and the VSCode extension. The row must carry its bytes:
         # treefmt-nix always pins --config-path, which disables biome's own root discovery, and an out-of-row config never busts the cache.
         biome = {
@@ -120,22 +118,12 @@ _: {
           includes = ["*.yaml" "*.yml"];
           excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
         };
-        shfmt = {
-          command = "${forgePkgs.shfmt}/bin/shfmt";
-          options = ["-w" "-i" (toString style.indent) "-ci"];
-          includes = ["*.sh"];
-        };
+        shfmt.options = ["-ci"];
         # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql` anchors at the tree root and matches nothing nested. No sqlite
         # row: sqruff's sqlite dialect rewrites virtual-table module arguments (float[2] -> float [2]), which extensions parse verbatim, so
         # sqlite SQL stays formatter-unowned until that dialect matures, and fmt's sql classification skips the same basenames.
         sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
         sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
-        # stylua discovery is cwd/upward only; the row carries the house style so the sandboxed check needs no repo-root config file.
-        stylua = {
-          command = "${forgePkgs.stylua}/bin/stylua";
-          options = ["--indent-type" "Spaces" "--indent-width" (toString style.indent) "--column-width" (toString style.width)];
-          includes = ["*.lua"];
-        };
       };
     };
   };
