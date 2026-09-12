@@ -105,14 +105,8 @@
   receiptSources =
     map (r: {grain = "kv";} // r)
     (
-      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "terminal-accept||forge-terminal-accept.sh" "doctor"]
+      map kvSource ["redeploy" "maintenance|nix-maintenance" "brew-maintenance" "orphan-sweep" "activation-sweep" "accept" "browse" "workspace" "wezterm||wezterm command deck" "zellij" "terminal-accept||forge-terminal-accept.sh" "doctor" "default-applications"]
       ++ [
-        {
-          kind = "default-applications";
-          path = "Library/Logs/design-tools/default-applications.receipts.log";
-          emitter = "forge-default-applications";
-          grain = "kv";
-        }
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
           kind = "rsync-mv";
@@ -150,7 +144,6 @@
       forge-doctor = ["shell-tools/forge-tools/doctor.nix" "One machine doctor: path, launchd, parity, updates lenses; --json per lens" "before blaming the estate for a shadowed binary, dead agent, HOME drift, or staleness"];
       "forge-edit.sh" = ["home/scripts/terminal.nix" "Editor handoff: routes a path into the tab's Neovim RPC socket, or a fresh instance" "as $EDITOR; the yazi opener calls it directly"];
       forge-font-doctor = ["home/fonts.nix" "CoreText registration proof per manifest role; --json rows, fontconfig held to Pango consumers" "when a glyph renders wrong or a font fails to enumerate"];
-      forge-fmt = ["flake-modules/tooling.nix" "Repo treefmt wrapper behind nix fmt; --check maps to --ci" "on every touched repo file; nix flake check gates it"];
       forge-git-doctor = ["git-tools/default.nix" "Resolved git identity, signing rows, op-agent key service, fsmonitor health" "when a commit fails to sign or fsmonitor stalls"];
       forge-install-antigravity-cli = ["languages/dev-tools.nix" "Install or refresh the Antigravity CLI into ~/.local/bin" "when agy is absent or outdated"];
       forge-brew-maintenance = ["shell-tools/forge-tools/brew.nix" "Homebrew pass: update, upgrades, the wezterm@nightly greedy-latest refresh, autoremove, cleanup" "daily agent; by hand when brew outdated or the nightly stamp lags"];
@@ -327,7 +320,7 @@
           grep -qxF "$found" <<<"$registered" \
             || { note FAIL "$(basename "$found")" "unregistered receipt emitter: ''${found/#"$HOME"/\~}"; rc=1; }
         done < <({
-          find "$HOME/Library/Logs" -maxdepth 2 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
+          find "$HOME/Library/Logs" -maxdepth 1 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
           find "''${XDG_STATE_HOME:-$HOME/.local/state}" -maxdepth 2 \( -name '*.receipts.log' -o -name '*.receipts.jsonl' \) 2>/dev/null || true
         } | sort)
         if [ "$render" = json ]; then

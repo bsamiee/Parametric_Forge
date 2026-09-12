@@ -48,7 +48,8 @@
       pass=0 warn=0 fail=0 instruct=0 skip=0
 
       row() {
-        append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" || true
+        append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" \
+          || printf 'forge-accept: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
         printf '%s | %-22s | %s\n' "$(mark "$1")" "$2" "$3" >&2
         case "$1" in
           PASS) pass=$((pass + 1)) ;;

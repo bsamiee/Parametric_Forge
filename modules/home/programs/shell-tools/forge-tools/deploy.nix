@@ -214,9 +214,11 @@
             ;;
           switch)
             if [ "$(uname -s)" = "Linux" ] && [ -z "$target_host" ]; then
-              nh os switch --hostname "$host" "$forge_root"
+              system_path="$(banked nix build --no-link --print-out-paths "$forge_root#$attr")"
               build_s=$((EPOCHSECONDS - t0))
-              system_path="$(readlink -f /run/current-system)"
+              t1=$EPOCHSECONDS
+              nh os switch --hostname "$host" "$forge_root"
+              activate_s=$((EPOCHSECONDS - t1))
             else
               [ -n "$target_host" ] || {
                 printf 'forge-redeploy: --switch --os nixos from Darwin needs --target-host\n' >&2
@@ -234,6 +236,7 @@
               activate_s=$((EPOCHSECONDS - t1))
               build_s=$((EPOCHSECONDS - t0))
             fi
+            push_cache "$system_path"
             result="ok"
             printf 'forge-redeploy: switch ok os=nixos host=%s target=%s system=%s\n' \
               "$host" "''${target_host:-local}" "$system_path"

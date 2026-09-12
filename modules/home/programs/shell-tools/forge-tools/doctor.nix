@@ -118,8 +118,8 @@ in {
       result=ok
       brew_bin="${tl.brewExpr}"
 
-      # PATH and binary provenance: owner classification per PATH segment, cross-owner shadow detection on resolved targets, the file/MAGIC seed
-      # case, CLT health, brew posture, and the ~/.local/bin decision inventory.
+      # PATH and binary provenance: owner classification per PATH segment, cross-owner shadow detection on resolved targets, the file/libmagic override
+      # rejection, CLT health, brew posture, and the ~/.local/bin decision inventory.
       # shellcheck disable=SC2329  # dispatched through the catalog handler row
       lens_path() {
         local shadows=0 mismatches=0 unadjudicated=0
@@ -137,7 +137,7 @@ in {
         }
         # Cross-owner shadow scan: a later PATH segment holding a DIFFERENT binary under a DIFFERENT owner class than the winning segment.
         declare -A win
-        local segs d f n w wo so wt st
+        local segs d f n w wo so wt st sanctioned
         IFS=: read -ra segs < <(printf '%s\n' "$PATH")
         for d in "''${segs[@]}"; do
           [ -d "$d" ] || continue
@@ -335,8 +335,11 @@ in {
         }
         flake_lock="${tl.forgeRootExpr}/flake.lock"
         if [ -f "$flake_lock" ]; then
-          oldest="$(jq -r '. as $l | [$l.nodes.root.inputs[] | $l.nodes[.].locked.lastModified? // empty] | min' "$flake_lock")"
-          printf 'family=flake-inputs\toldest_input_age_days=%s\n' "$(((EPOCHSECONDS - oldest) / 86400))"
+          if oldest="$(jq -er '. as $l | [$l.nodes.root.inputs[] | $l.nodes[.].locked.lastModified? // empty] | min' "$flake_lock")"; then
+            printf 'family=flake-inputs\toldest_input_age_days=%s\n' "$(((EPOCHSECONDS - oldest) / 86400))"
+          else
+            printf 'family=flake-inputs\tstate=unreadable\n'
+          fi
         else
           printf 'family=flake-inputs\tstate=absent\n'
         fi
