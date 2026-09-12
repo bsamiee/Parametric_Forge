@@ -47,7 +47,7 @@ in {
         wvous-tr-corner = mkDefault 1;
         wvous-bl-corner = mkDefault 1;
         wvous-br-corner = mkDefault 1;
-        # Pin sources: Drafts is masApp-declared; Claude and ChatGPT are intentional manual installs.
+        # Pin sources: Drafts is masApp-declared; Claude, ChatGPT, and the Adobe suite (Creative Cloud installer-owned) are intentional manual installs.
         persistent-apps = mkDefault [
           {
             spacer = {
@@ -63,6 +63,11 @@ in {
           "/Applications/Claude.app"
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
+          "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app"
+          "/Applications/Adobe InDesign 2026 (Beta)/Adobe InDesign 2026 (Beta).app"
+          "/Applications/Adobe Photoshop (Beta)/Adobe Photoshop (Beta).app"
+          "/Applications/Adobe Illustrator (Beta)/Adobe Illustrator.app"
+          "/Applications/Adobe Acrobat DC/Adobe Acrobat.app"
         ];
         persistent-others = mkDefault [];
       };
