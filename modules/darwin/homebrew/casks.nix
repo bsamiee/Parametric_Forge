@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications, and the design-app fonts that land system-wide in /Library/Fonts (Apple-proprietary faces stay cask-only).
+# Homebrew GUI applications, and the Apple-proprietary faces (no nixpkgs source) that font casks install into ~/Library/Fonts. Google OFL
+# families live in the operator design-tools store (Typeface-indexed), never here.
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]
@@ -59,12 +60,8 @@ _: {
     "suspicious-package" # .pkg inspector
 
     # --- [FONTS]
-    "font-playfair-display"
     "font-sf-pro" # Apple proprietary
     "font-sf-arabic" # Apple proprietary
-    "font-markazi-text"
-    "font-reem-kufi"
-    "font-qahiri"
 
     # --- [ADOBE_CREATIVE_SUITE]
     {

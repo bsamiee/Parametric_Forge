@@ -19,13 +19,7 @@
         '';
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
-  notoMono = pkgs.noto-fonts.override {variants = ["NotoSansMono"];};
   geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
-  # Typeface owns Google's newer Sans variable family. The OTF directory installs the language/Condensed/Math static coverage for the design
-  # apps (no estate role reads them); the selected variable TTFs omit the duplicated Mono/Serif static faces and upstream AppleDouble files.
-  plex = selectPaths (pkgs.ibm-plex.override {
-    families = ["math" "mono-variable" "serif-variable" "sans-condensed" "sans-arabic" "sans-devanagari" "sans-hebrew" "sans-jp" "sans-kr" "sans-sc" "sans-tc" "sans-thai" "sans-thai-looped"];
-  }) (["share/fonts/opentype"] ++ lib.concatMap (family: map (style: "share/fonts/truetype/IBM Plex ${family} Var-${style}.ttf") ["Roman" "Italic"]) ["Mono" "Serif"]);
   # Closed two-register alphabets for terminal-bound render surfaces, owned here so the symbols family's shaping sample derives from the same
   # columns the theme owner mints glyphs from — one row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
   statusAlphabet = [
@@ -69,34 +63,6 @@ in {
     file = "share/fonts/truetype/Geist[wght].ttf";
     class = "variable";
     roles = ["sans"];
-  };
-  Iosevka = {
-    package = pkgs.iosevka-bin;
-    file = "share/fonts/truetype/Iosevka-Regular.ttc";
-    class = "static";
-    roles = ["mono"];
-    lineHeight = 1.0;
-  };
-  Hack = {
-    package = pkgs.hack-font;
-    file = "share/fonts/truetype/Hack-Regular.ttf";
-    class = "static";
-    roles = ["mono"];
-    lineHeight = 1.0;
-  };
-  "IBM Plex Mono Var" = {
-    package = plex;
-    file = "share/fonts/truetype/IBM Plex Mono Var-Roman.ttf";
-    class = "variable";
-    roles = ["mono"];
-    lineHeight = 1.05;
-  };
-  "Noto Sans Mono" = {
-    package = notoMono;
-    file = "share/fonts/noto/NotoSansMono.ttf";
-    class = "variable";
-    roles = ["mono"];
-    lineHeight = 1.0;
   };
   "Symbols Nerd Font Mono" = {
     package = pkgs.nerd-fonts.symbols-only;
