@@ -15,8 +15,8 @@
   pkgs,
   ...
 }: let
-  # Dual-receipt emit fold (receipts.nix).
-  receiptsFold = import ../../../../common/receipts.nix;
+  # Receipt grammar owner (receipts.nix): the dual-receipt emit fold.
+  receipts = import ../../../../common/receipts.nix;
   # ONE list-sessions parse shared with every consumer (wezterm's lifecycle join reads the same rows).
   sessionRowsJq = import ./session-rows.nix;
   # Display-time grammar rows (theme owner): human stamps collapse to HH:MM local same-day, dd/mm HH:MM otherwise.
@@ -96,7 +96,7 @@
             ${fzfArgsBash}
 
             receipt_surface="forge-zellij"
-            ${receiptsFold}
+            ${receipts.fold}
             emit_receipt() { # $1=verb $2=row_kind $3=row_id $4=action $5=result $6=exit $7=duration_ms
               local ts row
               TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"

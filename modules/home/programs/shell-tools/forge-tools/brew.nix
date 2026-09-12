@@ -38,8 +38,8 @@
       power="-" lock="-" update="-" upgrade="-" nightly="-" nightly_from="-" nightly_to="-" autoremove="-" cleanup="-"
       result="fail"
       emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tpower=%s\tlock=%s\tupdate=%s\tupgrade=%s\tnightly=%s\tnightly_from=%s\tnightly_to=%s\tautoremove=%s\tcleanup=%s\tresult=%s' \
-          "$ts" "$mode" "$power" "$lock" "$update" "$upgrade" "$nightly" "$nightly_from" "$nightly_to" "$autoremove" "$cleanup" "$result")"
+        persist_receipt "$(printf 'mode=%s\tpower=%s\tlock=%s\tupdate=%s\tupgrade=%s\tnightly=%s\tnightly_from=%s\tnightly_to=%s\tautoremove=%s\tcleanup=%s\tresult=%s' \
+          "$mode" "$power" "$lock" "$update" "$upgrade" "$nightly" "$nightly_from" "$nightly_to" "$autoremove" "$cleanup" "$result")"
       }
       trap emit_receipt EXIT
 

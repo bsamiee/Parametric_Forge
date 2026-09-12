@@ -20,7 +20,7 @@
   naming = config.forge.registers.naming;
   sshHosts = config.forge.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
-  receiptsFold = import ../../../../common/receipts.nix;
+  receipts = import ../../../../common/receipts.nix;
   sessionRowsJq = import ../zellij/session-rows.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
@@ -453,7 +453,7 @@
       receipt_log="''${FORGE_WORKSPACE_RECEIPT_LOG:-$HOME/Library/Logs/forge-workspace.receipts.log}"
       receipt_surface="forge-workspace"
       provider="''${FORGE_SPACE_PROVIDER:-none}"
-      ${receiptsFold}
+      ${receipts.fold}
 
       usage() { printf 'Usage: forge-workspace [SLUG] | --list | --json | --warm\n'; }
 

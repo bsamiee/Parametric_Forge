@@ -48,7 +48,7 @@
       pass=0 warn=0 fail=0 instruct=0 skip=0
 
       row() {
-        append_receipt "$(printf 'ts=%s\tstep=%s\tstatus=%s\tdetail=%s' "$ts" "$2" "$1" "$3")" \
+        append_receipt "$(printf 'step=%s\tstatus=%s\tdetail=%s' "$2" "$1" "$3")" \
           || printf 'forge-accept: WARNING receipt not persisted to %s\n' "$receipt_log" >&2
         printf '%s | %-22s | %s\n' "$(mark "$1")" "$2" "$3" >&2
         case "$1" in
@@ -254,7 +254,7 @@
       }
 
       mkdir -p "''${receipt_log%/*}"
-      printf 'forge-accept: run ts=%s from=%s only=%s\n' "$ts" "''${from:-first}" "''${only:-all}" >&2
+      printf 'forge-accept: run=%s from=%s only=%s\n' "$run" "''${from:-first}" "''${only:-all}" >&2
       started="false"
       for s in "''${STEPS[@]}"; do
         if [ -n "$only" ]; then
@@ -267,8 +267,8 @@
       done
       result=ok
       [ "$fail" = 0 ] || result=fail
-      persist_receipt "$(printf 'ts=%s\tsummary=pass:%s,warn:%s,fail:%s,instruct:%s,skip:%s\tresult=%s' \
-        "$ts" "$pass" "$warn" "$fail" "$instruct" "$skip" "$result")"
+      persist_receipt "$(printf 'summary=pass:%s,warn:%s,fail:%s,instruct:%s,skip:%s\tresult=%s' \
+        "$pass" "$warn" "$fail" "$instruct" "$skip" "$result")"
       [ "$result" = ok ]
     '';
   };

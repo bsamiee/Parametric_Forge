@@ -14,7 +14,7 @@
   pkgs,
   ...
 }: let
-  tl = import ./lib.nix {inherit config lib pkgs;};
+  tl = import ./lib.nix {inherit config host lib pkgs;};
   deploy = import ./deploy.nix {inherit lib pkgs tl;};
   brew = import ./brew.nix {inherit pkgs tl;};
   cleanup = import ./cleanup.nix {inherit config lib pkgs tl;};

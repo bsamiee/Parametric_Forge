@@ -8,12 +8,18 @@
 # verdict mark.
 {
   config,
+  host,
   lib,
   pkgs,
 }: let
-  receiptsFold = import ../../../../common/receipts.nix;
+  receipts = import ../../../../common/receipts.nix;
+  isDarwin = host.os == "darwin";
+  # One receipt-path grammar (receipts.nix): every kernel, reader, and register spells an emitter's log through this derivation, never by hand.
+  receiptPath = receipts.receiptPath {inherit lib isDarwin;};
   inherit (config.forge.theme) roles icons;
 in {
+  inherit receiptPath;
+
   # Env-overridable path defaults named once: every kernel interpolates these instead of respelling the literals.
   forgeRootExpr = "\${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}";
   brewExpr = "\${FORGE_BREW:-/opt/homebrew/bin/brew}";
@@ -21,7 +27,7 @@ in {
 
   # Platform ps dispatch: /bin/ps is a Darwin fact; NixOS gets procps by store path so a manual run on the Linux host degrades typed, never 127.
   psBin =
-    if pkgs.stdenv.hostPlatform.isDarwin
+    if isDarwin
     then "/bin/ps"
     else "${pkgs.procps}/bin/ps";
 
@@ -63,18 +69,17 @@ in {
     fi
   '';
 
-  # One builder owns the shared tool rail: UTC stamp, per-tool receipt-log override (FORGE_<NAME>_RECEIPT_LOG), and the dual-receipt fold — every
-  # persist_receipt row lands as one TSV line plus a JSONL sibling with identical keys. storePath prepends the Determinate profile so every
-  # nix/nix-env call (incl. nh's) resolves the daemon-matched client.
+  # One builder owns the shared tool rail: the run-start stamp (`run`, a join key and filename token — never a receipt ts, which the fold stamps
+  # per row at emit), the per-tool receipt log (receiptPath), and the dual-receipt fold — every persist_receipt row lands as one TSV line plus a
+  # JSONL sibling with identical keys. storePath prepends the Determinate profile so every nix/nix-env call (incl. nh's) resolves the
+  # daemon-matched client.
   mkTool = {
     name,
     inputs ? [],
     receiptName ? name,
     storePath ? false,
     text,
-  }: let
-    envKey = "FORGE_${lib.toUpper (lib.replaceStrings ["-"] ["_"] (lib.removePrefix "forge-" receiptName))}_RECEIPT_LOG";
-  in
+  }:
     pkgs.writeShellApplication {
       inherit name;
       runtimeInputs = lib.unique (inputs ++ [pkgs.jq]);
@@ -83,10 +88,11 @@ in {
           export PATH="/nix/var/nix/profiles/default/bin:$PATH"
         ''
         + ''
-          TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-          receipt_log="''${${envKey}:-$HOME/Library/Logs/${receiptName}.receipts.log}"
+          # shellcheck disable=SC2034  # run-start stamp consumed by the kernels that key filenames or envelopes on the run
+          TZ=UTC0 printf -v run '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
+          receipt_log="${(receiptPath receiptName).expr}"
           receipt_surface="${receiptName}"
-          ${receiptsFold}
+          ${receipts.fold}
           # An unwritable log must never fail a trap or mask a landed run.
           persist_receipt() {
             append_receipt "$1" \

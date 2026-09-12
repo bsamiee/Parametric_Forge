@@ -343,7 +343,7 @@ in {
         else
           printf 'family=flake-inputs\tstate=absent\n'
         fi
-        printf 'family=deploy\t%s\n' "$(tail_receipt "$HOME/Library/Logs/forge-redeploy.receipts.log")"
+        printf 'family=deploy\t%s\n' "$(tail_receipt "${(tl.receiptPath "forge-redeploy").expr}")"
         if [ -x "$brew_bin" ]; then
           formulae="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --quiet 2>/dev/null | wc -l | tr -d ' ')"
           casks="$(HOMEBREW_NO_AUTO_UPDATE=1 "$brew_bin" outdated --cask --quiet 2>/dev/null | wc -l | tr -d ' ')"
@@ -359,7 +359,7 @@ in {
       "$handler" >"$work/rows"
       if [ "$as_json" = 1 ]; then
         # One typed row stream renders both surfaces: k=v tokens become JSON object fields, identical keys on both renders.
-        jq -Rcs --arg ts "$ts" --arg lens "$lens" --arg result "$result" '{
+        jq -Rcs --arg ts "$run" --arg lens "$lens" --arg result "$result" '{
           schema: "forge-doctor/v1", ts: $ts, lens: $lens, result: $result,
           rows: (split("\n") | map(select(length > 0) | split("\t")
             | map(select(test("^[^=]+=")) | capture("^(?<key>[^=]+)=(?<value>.*)$")) | from_entries))
@@ -367,8 +367,8 @@ in {
       else
         cat "$work/rows"
       fi
-      persist_receipt "$(printf 'ts=%s\tlens=%s\trows=%s\tresult=%s' \
-        "$ts" "$lens" "$(grep -c . "$work/rows" || true)" "$result")"
+      persist_receipt "$(printf 'lens=%s\trows=%s\tresult=%s' \
+        "$lens" "$(grep -c . "$work/rows" || true)" "$result")"
       [ "$result" = ok ]
     '';
   };

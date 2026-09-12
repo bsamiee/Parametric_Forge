@@ -90,8 +90,8 @@
       mux="''${ZELLIJ_SESSION_NAME:+zellij}"
       result="fail"
       emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tos=%s\thost=%s\ttarget=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
-          "$ts" "$mode" "$os" "$host" "''${target_host:--}" "$system_path" "$gen_live" "$eval_s" "$build_s" "$activate_s" \
+        persist_receipt "$(printf 'mode=%s\tos=%s\thost=%s\ttarget=%s\tsystem=%s\tgen=%s\teval_s=%s\tbuild_s=%s\tactivate_s=%s\tdiff_lines=%s\tpush=%s\tverify=%s\tkickstart=%s\tcurrent=%s\tmux=%s\tresult=%s' \
+          "$mode" "$os" "$host" "''${target_host:--}" "$system_path" "$gen_live" "$eval_s" "$build_s" "$activate_s" \
           "$diff_lines" "$push" "$verify" "$kickstart" \
           "$current" "''${mux:-none}" "$result")"
       }
@@ -323,8 +323,8 @@
       gc_s="-" optimise_s="-"
       result="fail"
       emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tpower=%s\tlock=%s\ttrim=%s\tgc=%s\tgc_s=%s\toptimise=%s\toptimise_s=%s\tresult=%s' \
-          "$ts" "$mode" "$power" "$lock" "$trim" "$gc" "$gc_s" "$optimise" "$optimise_s" "$result")"
+        persist_receipt "$(printf 'mode=%s\tpower=%s\tlock=%s\ttrim=%s\tgc=%s\tgc_s=%s\toptimise=%s\toptimise_s=%s\tresult=%s' \
+          "$mode" "$power" "$lock" "$trim" "$gc" "$gc_s" "$optimise" "$optimise_s" "$result")"
       }
       trap emit_receipt EXIT
 
@@ -383,8 +383,8 @@
       esac
       findings=0 cleared="-" result="fail"
       emit_receipt() {
-        persist_receipt "$(printf 'ts=%s\tmode=%s\tfindings=%s\tcleared=%s\tresult=%s' \
-          "$ts" "$mode" "$findings" "$cleared" "$result")"
+        persist_receipt "$(printf 'mode=%s\tfindings=%s\tcleared=%s\tresult=%s' \
+          "$mode" "$findings" "$cleared" "$result")"
       }
       tmpdir="$(mktemp -d "''${TMPDIR:-/tmp}/forge-activation-sweep.XXXXXX")"
       trap 'emit_receipt; rm -rf "$tmpdir"' EXIT

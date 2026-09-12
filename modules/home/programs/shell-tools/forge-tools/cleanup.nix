@@ -75,7 +75,7 @@ in {
     text = ''
       rows_json='${cleanupRows}'
       state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/forge-cleanup"
-      run_ts="''${ts//[-:]/}"
+      run_ts="''${run//[-:]/}"
       work="$(mktemp -d)"
       trap 'rm -rf "$work" "''${prune_tmp:-}"' EXIT
       usage() { echo "usage: forge-cleanup plan | apply [plan-file] | sweep [--report-only]" >&2; exit 64; }
@@ -366,8 +366,8 @@ in {
           printf '# name\tkind\tstate\tcount\tkb\taction\tsafe\tdetail\n'
           while IFS= read -r row; do detect_row "$row"; done < <(jq -c '.[]' "$rows_json")
         } | tee "$plan_file"
-        persist_receipt "$(printf 'ts=%s\tverb=plan\tfindings=%s\treceipt=%s\tresult=ok' \
-          "$ts" "$(grep -cv '^#' "$plan_file" || true)" "$plan_file")"
+        persist_receipt "$(printf 'verb=plan\tfindings=%s\treceipt=%s\tresult=ok' \
+          "$(grep -cv '^#' "$plan_file" || true)" "$plan_file")"
       }
 
       cmd_apply() {
@@ -449,8 +449,8 @@ in {
         apply_failed="$(grep -c $'\tfailed\tpid=' "$apply_file" || true)"
         apply_result=ok
         [ "$apply_failed" = 0 ] || apply_result=partial
-        persist_receipt "$(printf 'ts=%s\tverb=apply\tapplied=%s\tfailed=%s\tplan=%s\treceipt=%s\tresult=%s' \
-          "$ts" "$(grep -c 'outcome=applied' "$apply_file" || true)" "$apply_failed" "$plan_file" "$apply_file" "$apply_result")"
+        persist_receipt "$(printf 'verb=apply\tapplied=%s\tfailed=%s\tplan=%s\treceipt=%s\tresult=%s' \
+          "$(grep -c 'outcome=applied' "$apply_file" || true)" "$apply_failed" "$plan_file" "$apply_file" "$apply_result")"
         [ "$apply_result" = ok ]
       }
 
@@ -480,8 +480,8 @@ in {
         read -r killed reported gone failed < <(awk -F '\t' 'NR > 1 {c[$2]++} END {printf "%d %d %d %d\n", c["killed"] + 0, c["report"] + 0, c["gone"] + 0, c["failed"] + 0}' "$sweep_file")
         sweep_result=ok
         [ "$failed" = 0 ] || sweep_result=partial
-        persist_receipt "$(printf 'ts=%s\tverb=sweep\tkilled=%s\treported=%s\tgone=%s\tfailed=%s\treport_only=%s\treceipt=%s\tresult=%s' \
-          "$ts" "$killed" "$reported" "$gone" "$failed" "$report_only" "$sweep_file" "$sweep_result")"
+        persist_receipt "$(printf 'verb=sweep\tkilled=%s\treported=%s\tgone=%s\tfailed=%s\treport_only=%s\treceipt=%s\tresult=%s' \
+          "$killed" "$reported" "$gone" "$failed" "$report_only" "$sweep_file" "$sweep_result")"
         [ "$sweep_result" = ok ]
       }
 

@@ -14,8 +14,12 @@
   ...
 }: let
   inherit (config.forge.theme) roles;
-  # Shared dual-receipt emit fold (receipts.nix).
-  receiptsFold = import ../../../common/receipts.nix;
+  # Receipt grammar owner (receipts.nix): the dual-receipt emit fold and the per-OS receipt-path derivation.
+  receipts = import ../../../common/receipts.nix;
+  receiptPath = receipts.receiptPath {
+    inherit lib;
+    isDarwin = host.os == "darwin";
+  };
   # Receipt-query vocabulary (forge-receipts is the sole substantive consumer): ONE ordered column vector derives both the jq spine projection and the
   # spineColumnsSql schema clause; every column lands VARCHAR so a thin or single-kind corpus never splits a column's inferred type. session_id joins on
   # the zellij session name, else the emitter's own session id. A new column is one vector entry, plus an override row only when it computes.
@@ -87,19 +91,16 @@
 
   # --- [RECEIPT_SOURCE_REGISTER]
   # Declared receipt emitters at $HOME-relative paths that may not exist yet; tuple grammar "kind[|stem[|emitter]]" defaults stem=kind and
-  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row supplies a different path or says json (JSONL). Query plane and audit verb dispatch on the rows
-  # — an unregistered emitter is invisible to both; --audit flags it.
-  osPath = darwin: linux:
-    if host.os == "darwin"
-    then darwin
-    else linux;
+  # emitter=forge-<stem>; grain is kv (TSV k=v) unless a literal row supplies a different path or says json (JSONL); paths ride receiptPath so the
+  # register and the emitters spell one grammar per OS. Query plane and audit verb dispatch on the rows — an unregistered emitter is invisible to
+  # both; --audit flags it.
   kvSource = s: let
     p = lib.splitString "|" s ++ ["" ""];
     at = i: d: lib.findFirst (v: v != "") d [(lib.elemAt p i)];
     stem = at 1 (lib.head p);
   in {
     kind = lib.head p;
-    path = "Library/Logs/forge-${stem}.receipts.log";
+    path = (receiptPath "forge-${stem}").rel;
     emitter = at 2 "forge-${stem}";
   };
   receiptSources =
@@ -110,7 +111,7 @@
         # rsync-mv emits JSONL only, at a per-OS path (rsync.nix).
         {
           kind = "rsync-mv";
-          path = osPath "Library/Logs/forge-rsync-mv.receipts.jsonl" ".local/state/parametric-forge/rsync-mv.receipts.jsonl";
+          path = "${lib.removeSuffix ".log" (receiptPath "forge-rsync-mv").rel}.jsonl";
           emitter = "rsync-mv.sh";
           grain = "json";
         }
@@ -391,7 +392,7 @@
       # Polymorphic register browser: one entrypoint dispatches on the catalog; previews are read-only evidence; one typed receipt per browse run.
       catalog="${catalogJson}"
       self="''${BASH_SOURCE[0]}"
-      receipt_log="''${FORGE_BROWSE_RECEIPT_LOG:-$HOME/Library/Logs/forge-browse.receipts.log}"
+      receipt_log="${(receiptPath "forge-browse").expr}"
       ${fzfArgsBash}
       usage() {
         printf 'Usage: forge-browse [DOMAIN] | --json [DOMAIN] | --preview DOMAIN ID | --list-domains\n'
@@ -429,7 +430,7 @@
       }
 
       receipt_surface="forge-browse"
-      ${receiptsFold}
+      ${receipts.fold}
       emit_receipt() { # $1=domain $2=query $3=row_id $4=selection $5=action $6=result $7=exit $8=duration_ms
         local ts row q sel
         TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"

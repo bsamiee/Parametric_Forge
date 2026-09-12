@@ -70,7 +70,7 @@
     (app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"])
   ];
   roster = pkgs.writeText "forge-default-applications.json" (builtins.toJSON applications);
-  receiptsFold = import ../../../common/receipts.nix;
+  receipts = import ../../../common/receipts.nix;
   command = pkgs.writeShellApplication {
     name = "forge-default-applications";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.utiluti];
@@ -79,16 +79,15 @@
       [[ $# -le 1 && ( $mode == apply || $mode == check ) ]] || { echo 'usage: forge-default-applications [apply|check]' >&2; exit 2; }
       receipt_log=${lib.escapeShellArg "${config.home.homeDirectory}/Library/Logs/forge-default-applications.receipts.log"}
       receipt_surface="forge-default-applications"
-      ${receiptsFold}
+      ${receipts.fold}
       changed=0
       checked=0
       skipped=0
       failures=0
       declare -A skip=()
       finish() {
-        local result=$1 ts
-        TZ=UTC0 printf -v ts '%(%Y-%m-%dT%H:%M:%SZ)T' "$EPOCHSECONDS"
-        append_receipt "$(printf 'ts=%s\tverb=%s\tchecked=%s\tchanged=%s\tskipped=%s\tfailures=%s\tresult=%s' "$ts" "$mode" "$checked" "$changed" "$skipped" "$failures" "$result")"
+        local result=$1
+        append_receipt "$(printf 'verb=%s\tchecked=%s\tchanged=%s\tskipped=%s\tfailures=%s\tresult=%s' "$mode" "$checked" "$changed" "$skipped" "$failures" "$result")"
       }
       trap 'association_status=$?; if (( association_status == 0 )); then finish ok; else finish failed; fi' EXIT
       # Preflight every destination before changing any handler. Nested Adobe helpers are part of the intended bundle. An application that is
