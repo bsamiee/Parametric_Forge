@@ -5,7 +5,8 @@
 # Path          : modules/home/programs/shell-tools/bundle-apps.nix
 # ----------------------------------------------------------------------------
 # macOS agent-identity owner: one bundleApps row per background agent projects the Applications/<display>.app Info.plist (so Login Items & Extensions
-# resolves launchd AssociatedBundleIdentifiers to a real name instead of the "/bin/sh" basename) and one LaunchServices registration batch.
+# resolves launchd AssociatedBundleIdentifiers to a real name instead of the "/bin/sh" basename), one LaunchServices registration batch, and the
+# `forgeAgent` fold every com.parametric-forge.<name> launchd row is built from.
 {
   config,
   lib,
@@ -22,8 +23,29 @@ in {
     };
   };
 
-  config = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    home.file =
+  config = {
+    # One launchd-agent grammar: label, argv, background class, one dual log per agent, and the identity bundle (its own name unless a shared
+    # bundle row, such as forge-nix-automation, is named); every other key (schedule, KeepAlive, RunAtLoad, ThrottleInterval) rides as given.
+    _module.args.forgeAgent = {
+      name,
+      argv,
+      bundle ? name,
+      ...
+    } @ row: {
+      enable = true;
+      config =
+        {
+          Label = "com.parametric-forge.${name}";
+          ProgramArguments = argv;
+          ProcessType = "Background";
+          StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+          StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+          AssociatedBundleIdentifiers = ["com.parametric-forge.${bundle}"];
+        }
+        // removeAttrs row ["name" "argv" "bundle"];
+    };
+
+    home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
       lib.mapAttrs' (
         ident: display:
           lib.nameValuePair "Applications/${display}.app/Contents/Info.plist" {
@@ -39,16 +61,17 @@ in {
             };
           }
       )
-      cfg;
+      cfg
+    );
 
     # lsregister -f is idempotent; a missing app or binary is a silent no-op so activation never fails on this cosmetic identity surface.
-    home.activation.registerForgeBundleApps = lib.hm.dag.entryAfter ["linkGeneration"] ''
+    home.activation.registerForgeBundleApps = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["linkGeneration"] ''
       lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
       for app in ${lib.concatMapStringsSep " " (d: ''"$HOME/Applications/${d}.app"'') (lib.attrValues cfg)}; do
         if [ -d "$app" ] && [ -x "$lsregister" ]; then
           "$lsregister" -f "$app" || true
         fi
       done
-    '';
+    '');
   };
 }

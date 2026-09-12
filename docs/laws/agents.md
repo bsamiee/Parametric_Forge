@@ -15,4 +15,4 @@ Machine-surface law extending `design.md` onto supervised service agents: launch
 [DUAL_OS_ROWS]:
 - Law: One row registry projects both supervisors — launchd agents on Darwin, lingering systemd user services on Linux — running the identical packaged body; launchd attributes stay platform-gated, and both OS toplevels evaluate green as the gate for every row change.
 - Rejected: Darwin-only service definitions for dual-OS capabilities, forked supervisor bodies per platform, top-level attribute names depending on `pkgs` inside the platform gate.
-- Example: `launchd.agents = lib.mapAttrs' mkAgent rows;` beside `systemd.user.services = lib.mapAttrs' mkService rows;`
+- Example: `launchd.agents.<name> = forgeAgent { name; argv; ... }` (the `bundle-apps.nix` fold every `com.parametric-forge.<name>` row is built from) beside `systemd.user.services = lib.mapAttrs' mkService rows;`

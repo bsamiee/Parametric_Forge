@@ -7,12 +7,36 @@
 # 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI secret replay
 {
   config,
+  forgeAgent,
   lib,
   pkgs,
   inputs,
   ...
 }: let
   opCache = "${config.xdg.configHome}/hm-op-session.sh";
+  # op-injected token rows: NAME -> null (the default item+field, Tokens/NAME/token) | "ITEM/field" override. ANTHROPIC_API_KEY stays excluded —
+  # Claude Code OAuth owns that auth. gh prefers GH_TOKEN; GITHUB_TOKEN is the fallback other tools read. GH_PROJECTS_TOKEN is a classic PAT
+  # (fine-grained PATs do not reach the Projects API).
+  tokenRows = {
+    GREPTILE_API_KEY = null;
+    CODERABBIT_API_KEY = null;
+    OP_SERVICE_ACCOUNT_TOKEN = null;
+    GOOGLE_OAUTH_CLIENT_ID = "GOOGLE_OAUTH_CLIENT_ID/credential";
+    GOOGLE_OAUTH_CLIENT_SECRET = "GOOGLE_OAUTH_CLIENT_SECRET/credential";
+    GOOGLE_WORKSPACE_CLI_CLIENT_ID = "GOOGLE_OAUTH_CLIENT_ID/credential";
+    GOOGLE_WORKSPACE_CLI_CLIENT_SECRET = "GOOGLE_OAUTH_CLIENT_SECRET/credential";
+    RHINO_TOKEN = null;
+    EXA_API_KEY = null;
+    PERPLEXITY_API_KEY = null;
+    TAVILY_API_KEY = null;
+    CACHIX_AUTH_TOKEN = null;
+    HOSTINGER_API_TOKEN = null;
+    CONTEXT7_API_KEY = null;
+    ILLUSTRATOR_MCP_TOKEN = null;
+    GH_TOKEN = "GITHUB_TOKEN/token";
+    GITHUB_TOKEN = null;
+    GH_PROJECTS_TOKEN = null;
+  };
   # Replay constants as rows: one declaration owns name AND value; the export block and the replay-manifest name set both derive from it.
   replayRows = {
     CLOUDSDK_CONFIG = "${config.xdg.configHome}/gcloud";
@@ -22,7 +46,7 @@
   # GUI-session replay writes the op cache into the launchd domain; a missing name clears its stale GUI value.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
-    runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
+    runtimeInputs = [pkgs.coreutils];
     text = ''
       # shellcheck source=/dev/null
       [ ! -f "${opCache}" ] || . "${opCache}"
@@ -42,9 +66,7 @@
           # stale GUI values at replay instead of leaving them pinned until logout.
           /bin/launchctl unsetenv "$k" || true
         fi
-      done < <({
-      [ ! -f "${opCache}" ] || awk 'match($0, /^export [A-Za-z_][A-Za-z0-9_]*/) {print substr($0, 8, RLENGTH - 7)}' "${opCache}"
-      printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") (lib.attrNames replayRows)}; } | sort -u)
+      done < <(printf '%s\n' ${lib.concatMapStringsSep " " (c: "\"${c}\"") (lib.attrNames (tokenRows // replayRows))} | sort -u)
       chmod 600 "$names_tmp"
       mv -f "$names_tmp" "${config.xdg.cacheHome}/forge-secrets/gui-replay.names"
       trap - EXIT
@@ -126,30 +148,12 @@ in {
     '';
 
     # --- [SECRET_TEMPLATE]
-    "op/env.template".text = ''
-      # API keys resolved during rebuild via "op inject"; ANTHROPIC_API_KEY stays excluded — Claude Code OAuth owns that auth.
-      export GREPTILE_API_KEY="op://Tokens/GREPTILE_API_KEY/token"
-      export CODERABBIT_API_KEY="op://Tokens/CODERABBIT_API_KEY/token"
-      export OP_SERVICE_ACCOUNT_TOKEN="op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token"
-      export GOOGLE_OAUTH_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
-      export GOOGLE_OAUTH_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
-      export GOOGLE_WORKSPACE_CLI_CLIENT_ID="op://Tokens/GOOGLE_OAUTH_CLIENT_ID/credential"
-      export GOOGLE_WORKSPACE_CLI_CLIENT_SECRET="op://Tokens/GOOGLE_OAUTH_CLIENT_SECRET/credential"
-      export RHINO_TOKEN="op://Tokens/RHINO_TOKEN/token"
-      export EXA_API_KEY="op://Tokens/EXA_API_KEY/token"
-      export PERPLEXITY_API_KEY="op://Tokens/PERPLEXITY_API_KEY/token"
-      export TAVILY_API_KEY="op://Tokens/TAVILY_API_KEY/token"
-      export CACHIX_AUTH_TOKEN="op://Tokens/CACHIX_AUTH_TOKEN/token"
-      export HOSTINGER_API_TOKEN="op://Tokens/HOSTINGER_API_TOKEN/token"
-      export CONTEXT7_API_KEY="op://Tokens/CONTEXT7_API_KEY/token"
-
-      # GitHub CLI (gh prefers GH_TOKEN, GITHUB_TOKEN is fallback for other tools)
-      export GH_TOKEN="op://Tokens/GITHUB_TOKEN/token"
-      export GITHUB_TOKEN="op://Tokens/GITHUB_TOKEN/token"
-
-      # GitHub Projects (Classic PAT required - fine-grained PATs don't support Projects API)
-      export GH_PROJECTS_TOKEN="op://Tokens/GH_PROJECTS_TOKEN/token"
-    '';
+    # Resolved during rebuild via "op inject"; every row folds from tokenRows so a new secret is one name, never a re-spelled op:// path.
+    "op/env.template".text = lib.concatLines (lib.mapAttrsToList (name: ref: ''export ${name}="op://Tokens/${
+        if ref == null
+        then "${name}/token"
+        else ref
+      }"'') tokenRows);
   };
 
   # --- [GUI_SESSION_SECRETS]
@@ -159,16 +163,9 @@ in {
 
   # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the cache file is race-prone (launchd.plist(5)), and the cache writer
   # already owns the deterministic replay trigger.
-  launchd.agents.gui-op-secrets = {
-    enable = true;
-    config = {
-      Label = "com.parametric-forge.gui-op-secrets";
-      ProgramArguments = ["${guiOpSecrets}/bin/gui-op-secrets"];
-      RunAtLoad = true;
-      ProcessType = "Background";
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-gui-op-secrets.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-gui-op-secrets.log";
-      AssociatedBundleIdentifiers = ["com.parametric-forge.gui-op-secrets"];
-    };
+  launchd.agents.gui-op-secrets = forgeAgent {
+    name = "gui-op-secrets";
+    argv = ["${guiOpSecrets}/bin/gui-op-secrets"];
+    RunAtLoad = true;
   };
 }

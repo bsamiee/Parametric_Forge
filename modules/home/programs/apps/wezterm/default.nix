@@ -9,6 +9,7 @@
 # validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
 {
   config,
+  forgeAgent,
   forgeToolchainEnvFor,
   lib,
   pkgs,
@@ -617,18 +618,11 @@ in {
     # Warm rail: at login the warm workspace rows resurrect or create their sessions in the background, so the first interactive attach is instant;
     # every warm emits a forge-workspace receipt. Row-gated: the agent exists only while a warm row does.
     forge.bundleApps = lib.mkIf (warmSlugs != []) {forge-workspace-warm = "Forge Workspace Warm";};
-    launchd.agents.forge-workspace-warm = lib.mkIf (warmSlugs != []) {
-      enable = true;
-      config = {
-        Label = "com.parametric-forge.forge-workspace-warm";
-        ProgramArguments = ["${forgeWorkspace}/bin/forge-workspace" "--warm"];
-        RunAtLoad = true;
-        ProcessType = "Background";
-        StandardOutPath = "${homeDir}/Library/Logs/forge-workspace-warm.log";
-        StandardErrorPath = "${homeDir}/Library/Logs/forge-workspace-warm.log";
-        AssociatedBundleIdentifiers = ["com.parametric-forge.forge-workspace-warm"];
-      };
-    };
+    launchd.agents.forge-workspace-warm = lib.mkIf (warmSlugs != []) (forgeAgent {
+      name = "forge-workspace-warm";
+      argv = ["${forgeWorkspace}/bin/forge-workspace" "--warm"];
+      RunAtLoad = true;
+    });
 
     xdg.configFile."wezterm" = {
       source = configDir;

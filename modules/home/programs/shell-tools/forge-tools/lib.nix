@@ -4,18 +4,16 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/forge-tools/lib.nix
 # ----------------------------------------------------------------------------
-# Shared vocabulary for the forge-tools kernels: the receipt-bearing tool builder, named path defaults, the AC/lock gate, the acceptance verdict
-# mark, and the launchd agent fold.
+# Shared vocabulary for the forge-tools kernels: the receipt-bearing tool builder, named path defaults, the AC/lock gate, and the acceptance
+# verdict mark.
 {
   config,
   lib,
   pkgs,
 }: let
   receiptsFold = import ../../../../common/receipts.nix;
-  logs = "${config.home.homeDirectory}/Library/Logs";
-  bundleId = "com.parametric-forge.forge-nix-automation";
   inherit (config.forge.theme) roles icons;
-in rec {
+in {
   # Env-overridable path defaults named once: every kernel interpolates these instead of respelling the literals.
   forgeRootExpr = "\${FORGE_ROOT:-$HOME/Documents/99.Github/Parametric_Forge}";
   brewExpr = "\${FORGE_BREW:-/opt/homebrew/bin/brew}";
@@ -98,19 +96,4 @@ in rec {
         ''
         + text;
     };
-
-  # Scheduled-agent fold: one Login Items identity (the automation bundle), one log per agent, schedule and argv as the only per-row facts.
-  mkAgent = name: schedule: argv: {
-    enable = true;
-    config =
-      {
-        Label = "com.parametric-forge.${name}";
-        ProgramArguments = argv;
-        ProcessType = "Background";
-        StandardOutPath = "${logs}/${name}.log";
-        StandardErrorPath = "${logs}/${name}.log";
-        AssociatedBundleIdentifiers = [bundleId];
-      }
-      // schedule;
-  };
 }

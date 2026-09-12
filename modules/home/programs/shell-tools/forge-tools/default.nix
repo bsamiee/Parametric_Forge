@@ -8,6 +8,7 @@
 # scheduled agents.
 {
   config,
+  forgeAgent,
   host,
   lib,
   pkgs,
@@ -45,30 +46,34 @@ in {
   # governs store maintenance, the Homebrew pass, and the orphan sweep.
   forge.bundleApps.forge-nix-automation = "Forge Nix Automation";
 
-  launchd.agents = {
+  # Every scheduled row shares the automation bundle identity; schedule and argv are the only per-row facts.
+  launchd.agents = let
+    scheduled = name: argv: schedule:
+      forgeAgent {
+        inherit name argv;
+        bundle = "forge-nix-automation";
+        StartCalendarInterval = schedule;
+      };
+  in {
     # Weekly off-peak cadence; the shared flock serializes against deploys.
-    forge-nix-maintenance = tl.mkAgent "forge-nix-maintenance" {
-      StartCalendarInterval = [
-        {
-          Weekday = 6;
-          Hour = 12;
-          Minute = 0;
-        }
-      ];
-    } ["${deploy.forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"];
+    forge-nix-maintenance = scheduled "forge-nix-maintenance" ["${deploy.forgeNixMaintenance}/bin/forge-nix-maintenance" "--scheduled"] [
+      {
+        Weekday = 6;
+        Hour = 12;
+        Minute = 0;
+      }
+    ];
 
     # Daily pre-dawn Homebrew pass (the WezTerm nightly is a nightly); Darwin-only because Homebrew is, and AC-gated like every scheduled leg.
-    forge-brew-maintenance = lib.mkIf (host.os == "darwin") (tl.mkAgent "forge-brew-maintenance" {
-      StartCalendarInterval = [
-        {
-          Hour = 5;
-          Minute = 30;
-        }
-      ];
-    } ["${brew.forgeBrewMaintenance}/bin/forge-brew-maintenance" "--scheduled"]);
+    forge-brew-maintenance = lib.mkIf (host.os == "darwin") (scheduled "forge-brew-maintenance" ["${brew.forgeBrewMaintenance}/bin/forge-brew-maintenance" "--scheduled"] [
+      {
+        Hour = 5;
+        Minute = 30;
+      }
+    ]);
 
     # Hourly orphan sweep (calendar trigger for wake coalescing): evidence-gated reaping of agent-lane litter — ppid-1 tty-less orphans only;
     # kill classes are allowlisted rows, everything ambiguous stays receipt-only.
-    forge-orphan-sweep = tl.mkAgent "forge-orphan-sweep" {StartCalendarInterval = [{Minute = 0;}];} ["${cleanup.forgeCleanup}/bin/forge-cleanup" "sweep"];
+    forge-orphan-sweep = scheduled "forge-orphan-sweep" ["${cleanup.forgeCleanup}/bin/forge-cleanup" "sweep"] [{Minute = 0;}];
   };
 }

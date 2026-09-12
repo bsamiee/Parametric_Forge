@@ -10,6 +10,7 @@
 # consumer reads that standing listener's receipt ledger in place rather than standing up a second listener.
 {
   config,
+  forgeAgent,
   lib,
   pkgs,
   ...
@@ -183,17 +184,10 @@ in {
   };
 
   # Standing listener: KeepAlive restarts a crashed webhook, the throttle bounds crash loops, and dual logs land beside the other forge agents.
-  launchd.agents.forge-webhook = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    enable = true;
-    config = {
-      Label = "com.parametric-forge.forge-webhook";
-      ProgramArguments = ["${runner}/bin/forge-webhook"];
-      KeepAlive = true;
-      ThrottleInterval = 30;
-      ProcessType = "Background";
-      StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-webhook.log";
-      StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-webhook.log";
-      AssociatedBundleIdentifiers = ["com.parametric-forge.forge-webhook"];
-    };
-  };
+  launchd.agents.forge-webhook = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (forgeAgent {
+    name = "forge-webhook";
+    argv = ["${runner}/bin/forge-webhook"];
+    KeepAlive = true;
+    ThrottleInterval = 30;
+  });
 }
