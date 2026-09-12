@@ -61,7 +61,8 @@ let
     aarch64-linux = "design-verapdf-cli";
     x86_64-linux = "design-verapdf-cli";
   };
-  designSource = name: license: homepage: description: consumers: overlayReason: let
+  # `versionFrom`: a regex whose first group is the version when the publisher's release tag is path-shaped; null when the tag is already bare.
+  designSource = name: versionFrom: license: homepage: description: consumers: overlayReason: let
     pin = "design-${name}";
     release = generatedPins.${pin}.version;
   in
@@ -70,10 +71,18 @@ let
       inherit license homepage description consumers;
       sourcePackage = name;
       sourcePin = pin;
-      version =
-        if name == "ghostscript"
-        then builtins.head (builtins.match "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz" release)
-        else release;
+      version = let
+        matched =
+          builtins.match (
+            if versionFrom == null
+            then "(.*)"
+            else versionFrom
+          )
+          release;
+      in
+        if matched == null
+        then null
+        else builtins.head matched;
       versionPolicy = "fast";
       sourceKind = "source-build";
       patchFamily = "source-substitute";
@@ -137,7 +146,7 @@ in rec {
   # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
-    nodejs-slim_26 = (designSource "nodejs_26" "mit" "https://nodejs.org/" "Current Node 26 build runtime for native npm packages" ["media-tools:vega-cli"] "Vega's native Canvas build requires the current Node source headers and nixpkgs npm hooks; the public Node executable remains the existing binary owner") // {sourcePackage = "nodejs-slim_26";};
+    nodejs-slim_26 = (designSource "nodejs_26" null "mit" "https://nodejs.org/" "Current Node 26 build runtime for native npm packages" ["media-tools:vega-cli"] "Vega's native Canvas build requires the current Node source headers and nixpkgs npm hooks; the public Node executable remains the existing binary owner") // {sourcePackage = "nodejs-slim_26";};
     vega-cli = {
       upstream = "nixpkgs:vega-cli";
       versionPolicy = "nixpkgs";
@@ -154,19 +163,19 @@ in rec {
       homepage = "https://vega.github.io/vega/";
       mainProgram = "vg2svg";
     };
-    imagemagick = designSource "imagemagick" "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
-    fontconfig = designSource "fontconfig" "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
-    geist-font = designSource "geist-font" "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
-    harfbuzz = designSource "harfbuzz" "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
+    imagemagick = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
+    fontconfig = designSource "fontconfig" null "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
+    geist-font = designSource "geist-font" null "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
+    harfbuzz = designSource "harfbuzz" null "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
     poppler-utils-current =
-      (designSource "poppler" "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
+      (designSource "poppler" null "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
       // {
         sourcePackage = "poppler-utils";
         testDataPin = "design-poppler-test-data";
       };
-    mupdf = designSource "mupdf" "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
-    qpdf = designSource "qpdf" "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] "all publication PDF transformations use the current parser and writer";
-    ghostscript = designSource "ghostscript" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
+    mupdf = designSource "mupdf" null "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
+    qpdf = designSource "qpdf" null "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] "all publication PDF transformations use the current parser and writer";
+    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\.tar\.xz" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
 
     utiluti = {
       upstream = "github:scriptingosx/utiluti";

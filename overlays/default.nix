@@ -27,6 +27,8 @@ final: prev: let
     assert lib.assertMsg (!(row.projection ? overlay) || lib.elem row.projection.overlay voc.overlayModes) "${name}: projection.overlay '${row.projection.overlay or ""}' outside vocabulary";
     assert lib.assertMsg (lib.licenses ? ${row.license}) "${name}: license '${row.license}' not a lib.licenses key";
     assert lib.assertMsg (lib.all (f: row ? ${f}) ["description" "homepage"]) "${name}: package row missing description/homepage — every admission identifies what it admits and where it came from";
+    assert lib.assertMsg (row ? consumers && row.consumers != []) "${name}: admission row names no consumer — a package is admitted only with a real consumer now (topology [07])";
+    assert lib.assertMsg (!(row ? version) || row.version != null) "${name}: version resolved to null — versionFrom did not match the generated pin's release tag";
     assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason";
     assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers";
     # A source-build row names one generated pin, or — where the publisher emits a per-OS source tree — one pin per system under `sourcePins`;
