@@ -78,7 +78,7 @@ Rulings derive from principles, not precedent lists. These axes resolve each new
 
 ## [04]-[DETERMINATE_NIX]
 
-This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, and NixOS rides the thin determinate module with `nix.settings`. GC and store maintenance run on demand: `sudo nix-env -p /nix/var/nix/profiles/system --delete-generations old`, then `nix-collect-garbage -d` and `nix store optimise`.
+This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, and NixOS rides the thin determinate module with `nix.settings`. GC and store maintenance run on demand: `sudo -H nix-env -p /nix/var/nix/profiles/system --delete-generations old`, then `nix-collect-garbage -d` and `nix store optimise`.
 
 ## [05]-[MODULE_BOUNDARIES]
 
