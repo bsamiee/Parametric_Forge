@@ -34,11 +34,10 @@ in {
     };
 
     # --- [ACTIVATION_BEHAVIOR]
-    # Activation installs missing roster rows; native Homebrew commands own metadata, versions, and operator-installed rows.
-    onActivation.extraEnv = {
-      HOMEBREW_NO_ANALYTICS = mkDefault "1";
-      HOMEBREW_NO_ENV_HINTS = mkDefault "1";
-      XDG_CONFIG_HOME = mkDefault "/Users/${config.system.primaryUser}/.config";
-    };
+    # Activation installs missing roster rows; native Homebrew commands own metadata, versions, and operator-installed rows. `brew bundle`
+    # runs under sudo without the session environment; XDG_CONFIG_HOME points Homebrew at the same user configuration directory the shell
+    # uses, where its own brew.env (the one owner of every HOMEBREW_* setting) and the tap trust store trust.json live (under ~/.homebrew when
+    # the variable is unset).
+    onActivation.extraEnv.XDG_CONFIG_HOME = "${config.users.users.${config.system.primaryUser}.home}/.config";
   };
 }

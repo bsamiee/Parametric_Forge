@@ -6,45 +6,37 @@
 # ----------------------------------------------------------------------------
 # Media tool inventory; imports carry real configuration only.
 {pkgs, ...}: let
+  # HarfBuzz's command-line shapers. nixpkgs passes no `utilities` meson option and disables the cairo backend, so the library package's bin
+  # output (outputBin = "dev") ships empty; hb-view renders through cairo, so both land here. They ride their own build of the same source
+  # rather than the overlay's row, because every consumer that links libharfbuzz would otherwise carry cairo in its closure.
+  harfbuzzTools = (pkgs.harfbuzz.override {withCairo = true;}).overrideAttrs (prev: {
+    mesonFlags = prev.mesonFlags ++ [(pkgs.lib.mesonEnable "utilities" true)];
+  });
   # nixpkgs lcevcdec fails to link on Darwin, and frei0r-plugins pulls libdrm (linux-only); keep FFmpeg otherwise full.
   ffmpegForge = pkgs.ffmpeg-full.override {
     withLcevcdec = false;
     withFrei0r = false;
   };
-  # Cairo/raster belong to the complete CLI variant; enabling them on the core HarfBuzz attr creates the Cairo/Pango dependency cycle. Only bin/
-  # reaches the profile — the dev output also carries headers and pkg-config files. The shaping oracle stays on base harfbuzz (home/fonts.nix).
-  harfbuzzTools = let
-    hb = pkgs.harfbuzz.override {
-      withCairo = true;
-      withRaster = true;
-    };
-  in
-    pkgs.runCommand "harfbuzz-tools-${hb.version}" {inherit (hb) meta;} ''
-      mkdir -p $out/bin
-      ln -st $out/bin ${hb.dev}/bin/hb-*
-      [ -e $out/bin/hb-view ] || { echo "harfbuzz drift: hb-view missing from the cairo build" >&2; exit 1; }
-    '';
 in {
   imports = [
     ./glow.nix
   ];
 
+  # Yazi's documented dependency set (ffmpeg video thumbnails, poppler PDF, resvg SVG, ImageMagick raster, Chafa as the adapter of last resort
+  # inside the Zellij popup) resolves by bare name on PATH; the rows below are those tools.
   home.packages = [
     pkgs.ascii-image-converter
-    pkgs.chafa # Terminal graphics fallback for Yazi image preview
-    pkgs.djvulibre # DjVu document support for djvu-view.yazi
-    pkgs.exiftool # Media metadata read/write for Yazi audio preview
+    pkgs.chafa # Yazi image adapter where no graphics protocol passes through
+    pkgs.exiftool # Metadata read/write across image, video, PDF, and font containers
     ffmpegForge
-    pkgs.ffmpegthumbnailer # Lightweight video thumbnailer for Yazi preview (ffmpegthumbnailer.yazi)
     pkgs.glow # Config owned by glow.nix
+    harfbuzzTools.dev # hb-shape and hb-view: shaping traces and specimen rendering; harfbuzz seats its utilities in the dev output
     pkgs.imagemagick
-    harfbuzzTools # hb-view/hb-raster plus the base tools; the manifest oracle stays on base harfbuzz
-    pkgs.inkscape
-    pkgs.mediainfo # Media container inspection for Yazi preview
+    pkgs.mediainfo # Yazi `inspect` opener row
     pkgs.mpv # Playback backend for media aliases
     pkgs.pandoc-current
     pkgs.poppler-utils-current # Current PDF utilities; app dependencies keep nixpkgs' compatible Poppler library.
-    pkgs.resvg # SVG rendering for Yazi preview
+    pkgs.resvg # SVG rendering for Yazi preview and the mermaid validator
     pkgs.typst
     pkgs.vega-cli
     pkgs.verapdf-current # Complete official CLI; the overlay owns its private current Java runtime.

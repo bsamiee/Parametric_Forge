@@ -8,11 +8,10 @@
 
 require("conform").setup({
     formatters_by_ft = require("forge.tools").format,
-    -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save) and the builtin csharpier
-    -- probes cwd-dependent, session-cached `dotnet csharpier`; pin the profile binaries the estate fmt router's lanes own.
+    -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save); pin the profile binary the
+    -- estate fmt router's lane owns. C# has no lane here either: `dotnet format` owns .cs through the project rails.
     formatters = {
         prettier = { command = "prettier" },
-        csharpier = { command = "csharpier", args = { "format" } },
     },
     format_on_save = {
         timeout_ms = 1500,

@@ -22,8 +22,6 @@ Per-agent quirks a plist read does not explain live in their owner modules; the 
 - [01]: `KeepAlive.SuccessfulExit=true` restarts it after `colima stop`; the default exit timeout SIGKILLs VM teardown, so teardown needs the declared `ExitTimeOut`.
 - [02]: upstream HM label, not estate grammar; a `com.parametric-forge.*` label search misses the live agent.
 
-`Forge Nix Automation.app` is one shared BTM identity for the maintenance and orphan-sweep jobs; splitting it fragments the scheduled jobs into opaque Login Items rows.
-
 ## [03]-[TCC_SUDO]
 
 TCC is reset-only through `tccutil`; the estate writes no `TCC.db` rows and ships no PPPC profile on this unmanaged host, so first agent launches require live macOS approval prompts. Post-activation switches on `DevToolsSecurity` and puts the primary user in `_developer`. `sudo_local` PAM has Touch ID enabled with Watch ID and reattach false: a plain `sudo` from any shell — interactive or not — pops the biometric prompt on the user's screen, so root fixes stay available and `sudo -n` (which suppresses the prompt) never proves root unreachable.
@@ -44,8 +42,8 @@ BSD/GNU tool divergence is handled by probe-then-fallback. `forge-provision` car
 
 Colima owns the Docker runtime, XDG data home, current context, and launchd lifecycle. Its launchd profile declares writable home and `/tmp/colima` mounts because background starts omit implicit mounts. GUI launchd jobs receive `DOCKER_HOST`, `COLIMA_HOME`, and `DOCKER_CONFIG`; `programs.docker-cli` owns the helper-free config. `forge-provision` resolves `DOCKER_HOST`, then `DOCKER_CONTEXT`, then the Colima socket and rejects foreign Darwin endpoints unless explicitly admitted. Apple Container remains additive.
 
-## [06]-[DEPLOY_LOCKS_ACTIVATION]
+## [06]-[DEPLOY_AND_ACTIVATION]
 
-`forge-redeploy` is the only sanctioned activation path, and deploy/maintenance jobs serialize through `${FORGE_REDEPLOY_LOCK:-$HOME/.cache/forge-redeploy.lock}`. `forge-redeploy` rejects any post-activation profile whose `/run/current-system` differs from the built store path.
+`forge-redeploy` is the only sanctioned activation path, and it rejects any post-activation profile whose `/run/current-system` differs from the built store path.
 
-Two activation traps have owned recovery rails. Installer-written `/etc/nix/nix.custom.conf` blocks Determinate activation; the deploy rail moves it aside through an exact sudoers row. Stale root-owned Home Manager store hardlinks under `.config`, `.local/share`, `.local/state`, `.hammerspoon`, and `Library/LaunchAgents` block user-mode backup/relink; `forge-activation-sweep [--clear]` detects the topmost root-owned entries with `find -uid 0 -prune` and clears them in one sudo batch. `forge-provision` runs a parallel generation model — `gen-<epoch>-<srandom>` ids, a `.staging-<id>` dir, and an atomic `current` symlink publish that refuses a non-symlink `current`.
+Two activation traps bite a switch. Installer-written `/etc/nix/nix.custom.conf` blocks Determinate activation; the deploy rail moves it aside through an exact sudoers row. Stale root-owned Home Manager store hardlinks under `.config`, `.local/share`, `.local/state`, and `Library/LaunchAgents` block user-mode backup/relink; `sudo find <root> -uid 0 -prune -print` names the topmost offenders for one `sudo rm -rf` batch. `forge-provision` runs a parallel generation model — `gen-<epoch>-<srandom>` ids, a `.staging-<id>` dir, and an atomic `current` symlink publish that refuses a non-symlink `current`.

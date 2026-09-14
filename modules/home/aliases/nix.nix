@@ -10,8 +10,6 @@
     ["drs" "forge-redeploy --switch" "Check, build, diff, switch"]
     ["drb" "forge-redeploy --build" "Check and build"]
     ["drc" "forge-redeploy --check-only" "Check config and build proof"]
-    ["ngc" "forge-nix-maintenance" "Generation trim + GC + optimise" "destructive"]
-    ["nbrew" "forge-brew-maintenance" "Homebrew update + upgrades + nightly refresh + cleanup"]
   ];
   flake = [
     ["nfu" "nix flake update && nix flake check --all-systems --no-build && nix flake check" "Update all inputs + validate"]

@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
-# Network diagnostic tool combining traceroute and ping
+# Network diagnostic tool combining traceroute and ping. Rows land under the sections trippy reads (`trip --print-config-template`); every
+# strategy, tui, and binding default stays upstream, so only the resolver family and the theme carry rows.
 {
   config,
   pkgs,
@@ -15,16 +16,11 @@
   tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
-    # --- [TRACING_CONFIGURATION]
-    addr-family = "system";
-    max-ttl = 64;
-    icmp-extensions = false;
+    # --- [STRATEGY]
+    # The OS resolver's first answer decides the family; the upstream default tries IPv4 before IPv6 regardless of what the resolver returned.
+    strategy.addr-family = "system";
 
-    # --- [TUI_CONFIGURATION]
-    tui-max-samples = 256;
-    tui-max-flows = 64;
-
-    # --- [THEME_CONFIGURATION_ESTATE_PALETTE_TOKENS]
+    # --- [THEME_COLORS]
     # Selected chart series ride the focus fill; borders read the canonical ui.border; dialogs sit on the raised surface.
     theme-colors = {
       bg-color = roles.surface.base.hex;
@@ -62,126 +58,6 @@
       info-bar-bg-color = roles.surface.raised.hex;
       info-bar-text-color = roles.text.primary.hex;
     };
-
-    # --- [KEY_BINDINGS]
-    bindings = [
-      {
-        command = "toggle-help";
-        keys = "h";
-      }
-      {
-        command = "toggle-help-alt";
-        keys = "?";
-      }
-      {
-        command = "toggle-settings";
-        keys = "s";
-      }
-      {
-        command = "toggle-settings-tui";
-        keys = "t";
-      }
-      {
-        command = "toggle-settings-trace";
-        keys = "T";
-      }
-      {
-        command = "toggle-settings-dns";
-        keys = "r";
-      }
-      {
-        command = "toggle-settings-geoip";
-        keys = "g";
-      }
-      {
-        command = "toggle-settings-bindings";
-        keys = "b";
-      }
-      {
-        command = "toggle-settings-theme";
-        keys = "y";
-      }
-      {
-        command = "toggle-settings-columns";
-        keys = "o";
-      }
-      {
-        command = "next-hop";
-        keys = "down,j";
-      }
-      {
-        command = "previous-hop";
-        keys = "up,k";
-      }
-      {
-        command = "next-trace";
-        keys = "right,l";
-      }
-      {
-        command = "previous-trace";
-        keys = "left,H";
-      }
-      {
-        command = "next-hop-address";
-        keys = ".,>";
-      }
-      {
-        command = "previous-hop-address";
-        keys = ",";
-      }
-      {
-        command = "address-mode-ip";
-        keys = "i";
-      }
-      {
-        command = "address-mode-host";
-        keys = "n";
-      }
-      {
-        command = "address-mode-both";
-        keys = "B";
-      }
-      {
-        command = "toggle-freeze";
-        keys = "ctrl+f";
-      }
-      {
-        command = "toggle-chart-maximized";
-        keys = "m";
-      }
-      {
-        command = "chart-zoom-in";
-        keys = "=";
-      }
-      {
-        command = "chart-zoom-out";
-        keys = "-";
-      }
-      {
-        command = "clear-trace-data";
-        keys = "ctrl+r";
-      }
-      {
-        command = "clear-dns-cache";
-        keys = "ctrl+k";
-      }
-      {
-        command = "clear-selection";
-        keys = "esc";
-      }
-      {
-        command = "toggle-as-info";
-        keys = "z";
-      }
-      {
-        command = "toggle-hop-details";
-        keys = "d";
-      }
-      {
-        command = "quit";
-        keys = "q";
-      }
-    ];
   };
 in {
   home.packages = [pkgs.trippy];

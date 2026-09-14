@@ -42,8 +42,8 @@ Machine-surface law extending `design.md` onto the Nix module graph: modules, ov
 - Rejected: Kitchen-sink lambda args, `with pkgs;` at file level, hardcoded executable paths, PATH-sensitive commands, string interpolation before package ownership is fixed.
 - Example: `command = "${pkgs.coreutils}/bin/true"; args = lib.escapeShellArgs row.args;`
 
-[KERNELS_AND_RECEIPTS]:
-- Law: Host mutation lives in named `writeShellApplication` kernels, and every Nix-produced command emits structured receipt fields — input owner, derived path, action, status, proof surface.
+[KERNELS]:
+- Law: Host mutation lives in named `writeShellApplication` kernels, and every Nix-produced command names its input owner, derived path, and action in its own output.
 - Rejected: Evaluation-time shell guessing, shell fragments spread across config, build or activation output that only prints success text.
 - Example: `pkgs.writeShellApplication { name = "shape"; runtimeInputs = [ pkgs.jq ]; text = script; }`
 

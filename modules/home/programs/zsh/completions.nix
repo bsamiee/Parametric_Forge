@@ -4,64 +4,34 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/completions.nix
 # ----------------------------------------------------------------------------
-# Completion owner: generator rows written atomically at activation, one fingerprint-keyed compinit that never rescans per shell, data-driven
-# zstyle rows, and the fzf-tab completion UI. A new completion is a row here.
+# Completion owner: the fpath surface (profile and package site-functions, Homebrew's on Darwin), one fingerprint-keyed compinit that never
+# rescans per shell, data-driven zstyle rows, and the fzf-tab completion UI. Every completion file ships with its package: the Nix profile
+# holds _atuin, _op, _zellij, and the rest; Homebrew's site-functions holds _wezterm and _container.
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
-  brewPrefix = "/opt/homebrew";
-
-  # Generator rows: `version` is the staleness key — a Nix store path for store-owned tools, a runtime
-  # probe for host apps. `gate` skips a row when the host binary is absent.
-  generators = [
-    {
-      name = "zellij";
-      version = "${pkgs.zellij}";
-      command = "${pkgs.zellij}/bin/zellij setup --generate-completion zsh";
-    }
-    {
-      name = "atuin";
-      version = "${pkgs.atuin}";
-      command = "${pkgs.atuin}/bin/atuin gen-completions --shell zsh";
-    }
-    {
-      name = "op";
-      version = "${pkgs._1password-cli}";
-      command = "${pkgs._1password-cli}/bin/op completion zsh";
-    }
-    {
-      name = "wezterm";
-      version = "$(${brewPrefix}/bin/wezterm --version)";
-      command = "${brewPrefix}/bin/wezterm shell-completion --shell zsh";
-      gate = "[[ -x ${brewPrefix}/bin/wezterm ]]";
-    }
-    {
-      name = "container";
-      version = "$(${brewPrefix}/bin/container --version)";
-      command = "${brewPrefix}/bin/container --generate-completion-script zsh";
-      gate = "[[ -x ${brewPrefix}/bin/container ]]";
-    }
-  ];
+  inherit (config.forge.theme) palette projections;
 
   # Package rows whose share/zsh/site-functions precede compinit on fpath.
   completionPackages = [pkgs.zsh-completions];
+  siteFunctions =
+    map (p: "${p}/share/zsh/site-functions") completionPackages
+    ++ ["/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions"]
+    ++ lib.optional (host.os == "darwin") "/opt/homebrew/share/zsh/site-functions";
 
-  # Dump key: the full pre-compinit fpath surface — generator rows, completion packages, sourced-plugin srcs, and the profile package set. The
-  # per-user profile site-functions dir is pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without
-  # /etc/profiles/per-user) otherwise permanently misses home.packages completions under compinit -C. Any change retires every old dump at
-  # activation; compinit -C rebuilds once per fingerprint, never per shell.
+  # Dump key: the pre-compinit fpath surface — completion packages, sourced-plugin srcs, and the profile package set. The per-user profile
+  # site-functions dir is pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without /etc/profiles/per-user)
+  # otherwise permanently misses home.packages completions under compinit -C. Any change retires every old dump at activation; compinit -C
+  # rebuilds once per fingerprint, never per shell.
   fingerprint = builtins.substring 0 12 (builtins.hashString "sha256"
-    (builtins.toJSON (map (g: g.version) generators
-      ++ map toString (completionPackages
-        ++ map (p: p.src) config.programs.zsh.plugins
-        ++ config.home.packages))));
+    (builtins.toJSON (map toString (completionPackages
+      ++ map (p: p.src) config.programs.zsh.plugins
+      ++ config.home.packages))));
 
-  compDir = "${config.xdg.dataHome}/zsh/completions";
-  verDir = "${config.xdg.dataHome}/zsh/.completion-versions";
   cacheDir = "${config.xdg.cacheHome}/zsh";
 
   # File-kind completion colors: theme truecolor per type, consumed by both zsh complist and fzf-tab's colorize path. A new file kind is one row.
@@ -83,7 +53,7 @@
     "st=${tc palette.orange}"
   ];
 
-  # zstyle rows: `value` lands verbatim after the key. Completion behavior, carapace bridge spacing, and fzf-tab UI are one vocabulary.
+  # zstyle rows: `value` lands verbatim after the key. Completion behavior and the fzf-tab UI are one vocabulary.
   styles = [
     {
       context = ":completion:*";
@@ -136,27 +106,19 @@
       value = "'${listColors}'";
     }
     {
-      context = ":carapace:*";
-      key = "nospace";
-      value = "true";
-    }
-    {
       context = ":fzf-tab:*";
       key = "fzf-flags";
-      # Palette lands here explicitly: fzf-tab clears FZF_DEFAULT_OPTS for its child fzf, so the completion UI must carry the theme tokens itself.
-      value = lib.concatStringsSep " " [
-        "--height=80%"
-        "--layout=reverse"
-        "--border=sharp"
-        "--highlight-line"
-        "--prompt='❯ '"
-        "--pointer='❯'"
-        "--marker='✓'"
-        "--color=fg:${palette.foreground.hex},fg+:${palette.background.hex},bg:${palette.background.hex},bg+:${palette.cyan.hex},selected-fg:${palette.background.hex},selected-bg:${palette.cyan.hex}"
-        "--color=hl:${palette.green.hex},hl+:${palette.magenta.hex},info:${palette.comment.hex},marker:${palette.green.hex},prompt:${palette.magenta.hex},pointer:${palette.magenta.hex}"
-        "--color=gutter:${palette.background.hex},header:${palette.comment.hex},border:${palette.cyan.hex},separator:${palette.pink.hex},scrollbar:${palette.pink.hex}"
-        "--color=preview-fg:${palette.foreground.hex},preview-scrollbar:${palette.pink.hex},label:${palette.magenta.hex},query:${palette.foreground.hex}"
-      ];
+      # fzf-tab clears FZF_DEFAULT_OPTS for its child fzf, so the completion UI carries the theme owner's fzf color vocabulary itself.
+      value = lib.concatStringsSep " " ([
+          "--height=80%"
+          "--layout=reverse"
+          "--border=sharp"
+          "--highlight-line"
+          "--prompt='❯ '"
+          "--pointer='❯'"
+          "--marker='✓'"
+        ]
+        ++ projections.fzfColorRows);
     }
     {
       context = ":fzf-tab:*";
@@ -192,67 +154,23 @@
 
   zstyleLines = lib.concatMapStringsSep "\n" (r: "zstyle '${r.context}' ${r.key} ${r.value}") styles;
 
-  # Activation writer: atomic per-row regeneration keyed on `version`, then retirement of dumps from earlier completion file sets.
-  completionWriter = pkgs.writeShellApplication {
-    name = "forge-zsh-completions";
+  # Activation: retire dumps from earlier fingerprints and the pre-fingerprint generations that dumped into ZDOTDIR.
+  dumpRetirement = pkgs.writeShellApplication {
+    name = "forge-zsh-compdump-retire";
     runtimeInputs = [pkgs.coreutils pkgs.findutils];
     text = ''
-      comp_dir=${lib.escapeShellArg compDir}
-      ver_dir=${lib.escapeShellArg verDir}
       cache_dir=${lib.escapeShellArg cacheDir}
-      mkdir -p "$comp_dir" "$ver_dir" "$cache_dir"
-
-      # Orphaned mktemp files from an interrupted prior run are litter.
-      find "$comp_dir" -maxdepth 1 -name '.forge-*' -delete
-
-      regen() {
-        local name="$1" version="$2" tmp
-        shift 2
-        local ver_file="$ver_dir/$name"
-        if [[ -f "$comp_dir/_$name" && -f "$ver_file" && "$(<"$ver_file")" == "$version" ]]; then
-          return 0
-        fi
-        tmp="$(mktemp "$comp_dir/.forge-$name.XXXXXX")"
-        # Empty output on exit 0 is a broken generator, never a completion file.
-        if "$@" >"$tmp" 2>/dev/null && [[ -s "$tmp" ]]; then
-          mv -f "$tmp" "$comp_dir/_$name"
-          printf '%s\n' "$version" >"$ver_file"
-        else
-          rm -f "$tmp"
-        fi
-      }
-
-      # One owner: rows earn membership per run — gate-false rows retire below exactly like files outside the table.
-      managed=" ${lib.concatMapStringsSep " " (g: g.name) (builtins.filter (g: !(g ? gate)) generators)} "
-
-      ${lib.concatMapStringsSep "\n" (
-          g:
-            if g ? gate
-            then "if ${g.gate}; then\n        regen ${g.name} \"${g.version}\" ${g.command}\n        managed+=\"${g.name} \"\n      fi"
-            else "regen ${g.name} \"${g.version}\" ${g.command}"
-        )
-        generators}
-
-      for f in "$comp_dir"/_*; do
-        [[ -e "$f" ]] || continue
-        name="''${f##*/_}"
-        if [[ "$managed" != *" $name "* ]]; then
-          rm -f "$f" "$ver_dir/$name"
-        fi
-      done
-
+      mkdir -p "$cache_dir"
       find "$cache_dir" -maxdepth 1 -name 'zcompdump-*' ! -name '*-${fingerprint}*' -delete
-      # Pre-fingerprint generations dumped into ZDOTDIR; those dumps are litter.
       rm -f ${lib.escapeShellArg config.programs.zsh.dotDir}/.zcompdump*
     '';
   };
 in {
   home.activation.forgeZshCompletions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${completionWriter}/bin/forge-zsh-completions
+    run ${dumpRetirement}/bin/forge-zsh-compdump-retire
   '';
 
   programs.zsh = {
-    enableCompletion = true;
     # -C trusts the fingerprint-keyed dump: activation owns invalidation, so no interactive shell ever pays the fpath rescan or compaudit walk.
     completionInit = ''
       autoload -U compinit
@@ -267,9 +185,8 @@ in {
     initContent = lib.mkMerge [
       (lib.mkOrder 400 ''
         # --- [FPATH_PREINIT]
-        [[ -d "${cacheDir}" ]] || command mkdir -p -- "${cacheDir}"
         export ZSH_COMPDUMP="${cacheDir}/zcompdump-''${ZSH_VERSION}-${fingerprint}"
-        fpath=("${compDir}" ${lib.concatMapStringsSep " " (p: "${p}/share/zsh/site-functions") completionPackages} "/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions" $fpath)
+        fpath=(${lib.concatMapStringsSep " " (d: "\"${d}\"") siteFunctions} $fpath)
       '')
 
       (lib.mkOrder 550 ''
@@ -279,7 +196,9 @@ in {
 
       (lib.mkOrder 580 ''
         # --- [FZF_TAB_SOURCE]
-        # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of completion; the fzf-flags row above is the whole completion-UI surface.
+        # No use-fzf-default-opts: global FZF_DEFAULT_OPTS previews stay out of completion; the fzf-flags row above is the whole completion-UI
+        # surface. Sourced before fzf's own init (910) so fzf captures fzf-tab's ^I widget as fzf_default_completion: plain Tab lands in fzf-tab,
+        # the ** trigger keeps fzf path completion.
         source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
       '')
     ];

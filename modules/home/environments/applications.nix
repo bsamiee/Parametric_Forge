@@ -7,10 +7,7 @@
 # User application environment variables
 {config, ...}: {
   home.sessionVariables = {
-    # --- [WEZTERM]
-    WEZTERM_CONFIG_DIR = "${config.xdg.configHome}/wezterm";
-    WEZTERM_RUNTIME_DIR = "${config.xdg.stateHome}/wezterm";
-    WEZTERM_LOG_DIR = "${config.xdg.stateHome}/wezterm";
+    # WezTerm carries no row: it reads $XDG_CONFIG_HOME/wezterm and keeps its runtime and logs under ~/.local/share/wezterm by construction.
 
     # --- [ZELLIJ]
     ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";

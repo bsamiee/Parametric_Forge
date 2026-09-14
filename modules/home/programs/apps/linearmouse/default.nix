@@ -29,10 +29,15 @@
 # an array would be a disjunction, and app-only scope would drag the trackpad in) and disables both smoothed axes, which
 # takes the hi-res normalizer out of passthrough so micro-ticks re-coalesce to detent-scale discrete events; vertical
 # distance 1 then makes a detent exactly one line — one zoom step at Rhino's own zoom scale factor. launchd owns login
-# start.
-{pkgs, ...}: let
+# start. schema.json is the upstream schema of the installed release (the `linearmouse` cask row), the same version the
+# `$schema` row names.
+{
+  forgeAgent,
+  pkgs,
+  ...
+}: let
   settings = {
-    "$schema" = "https://schema.linearmouse.app/0.11.4-beta.5";
+    "$schema" = "https://schema.linearmouse.app/0.12.0-beta.4";
     schemes = [
       {
         "if".device.category = "mouse";
@@ -103,14 +108,14 @@
 in {
   xdg.configFile."linearmouse/linearmouse.json".source = validated;
 
-  launchd.agents.linearmouse = {
-    enable = true;
-    config = {
-      Label = "com.parametric-forge.linearmouse";
-      ProgramArguments = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];
-      RunAtLoad = true;
-      ProcessType = "Interactive";
-      LimitLoadToSessionType = "Aqua";
-    };
+  # Login start through the estate agent grammar (label, dual log, identity bundle) with the GUI rows: Interactive class and the Aqua session,
+  # since `open` needs the login-window session; `open` exits once the app is launched, so the row is one-shot.
+  forge.bundleApps.linearmouse = "Forge LinearMouse";
+  launchd.agents.linearmouse = forgeAgent {
+    name = "linearmouse";
+    argv = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];
+    RunAtLoad = true;
+    ProcessType = "Interactive";
+    LimitLoadToSessionType = "Aqua";
   };
 }

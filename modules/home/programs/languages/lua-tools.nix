@@ -29,7 +29,7 @@
 in {
   home.packages = [
     # --- [LUA_RUNTIME_PACKAGE_MANAGEMENT]
-    pkgs.lua5_4 # Standard Lua 5.4 (required for SbarLua compatibility)
+    pkgs.lua5_4 # Lua 5.4 runtime; luarocks and luacheck ride it
     pkgs.luarocks # Lua package manager
 
     # --- [CODE_QUALITY_TOOLS]

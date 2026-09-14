@@ -12,7 +12,6 @@ _: {
 
     options = [
       "--cmd=cd" # Replace cd command entirely
-      "--hook=pwd" # Score directories on directory changes (default)
     ];
   };
 }

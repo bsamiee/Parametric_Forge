@@ -49,23 +49,6 @@ local handlers = {
         wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
     end,
 
-    -- Domain attach shaping: one launch receipt per attach.
-    ["gui-attached"] = function(domain)
-        deck.receipt({ action = "attach", domain = domain:name(), result = "ok" })
-    end,
-
-    -- Bell rings land one background-classified receipt row (a watched pane's bell is already seen); audible_bell is Disabled, so this arm is the surface.
-    ["bell"] = function(window, pane)
-        local background = not window:is_focused() or pane:pane_id() ~= window:active_pane():pane_id()
-        deck.receipt({
-            action = "bell",
-            pane_id = pane:pane_id(),
-            domain = pane:get_domain_name(),
-            background = background,
-            result = "ok",
-        })
-    end,
-
     -- Outer facts only: key table, sync state, non-local domain. Agent/quota cells and location live on the zellij zjstatus bar — the one top
     -- bar; this strip surfaces only when a second WezTerm tab raises the tab bar.
     ["update-status"] = function(window, pane)
@@ -117,17 +100,6 @@ local handlers = {
     -- Command deck rows land in the native palette without replacing it; the deck builds the entry table once per generation and this replays it.
     ["augment-command-palette"] = function()
         return deck.palette
-    end,
-
-    -- forge://<register-domain>[/...] opens the register browser float scoped to the domain (forge-browse takes one DOMAIN argument).
-    ["open-uri"] = function(_, _, uri)
-        local domain = uri:match("^forge://([%w-]+)")
-        local browse = domain and deck.commands["browse-registers"]
-        if not browse then
-            return
-        end
-        deck.spawn_float({ id = browse.id, float = browse.float, args = { browse.args[1], domain } })
-        return false
     end,
 }
 

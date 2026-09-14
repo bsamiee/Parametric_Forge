@@ -12,20 +12,24 @@
   lib,
   ...
 }: let
-  # One row per mode class; the activation script is a fold over the rows. 700: SSH key/socket custody. 755: PATH bins (toolchain-env vectors),
-  # media/doc tool homes wired by environments/media.nix env keys, and history homes for tools that never create their target directory
-  # (sqlite3 SQLITE_HISTORY, less LESSHISTFILE — both env rows in environments/shell.nix).
+  # One row per mode class; the activation script is a fold over the rows. 700: SSH key/socket custody, the 1Password CLI config dir
+  # (shell-tools/1password.nix links the secret template into it) and the operator-private LaunchAgents dir home-manager installs plists into on
+  # Darwin. 755: PATH bins (toolchain-env vectors), media/doc tool homes
+  # wired by environments/media.nix env keys, and the history home of the one tool that never creates its target directory (sqlite3, the
+  # SQLITE_HISTORY session row of modules/common/toolchain-env.nix).
   dirRows = {
-    "700" = [
-      "${config.home.homeDirectory}/.ssh"
-      "${config.home.homeDirectory}/.ssh/sockets"
-    ];
+    "700" =
+      [
+        "${config.home.homeDirectory}/.ssh"
+        "${config.home.homeDirectory}/.ssh/sockets"
+        "${config.xdg.configHome}/op"
+      ]
+      ++ lib.optional (host.os == "darwin") "${config.home.homeDirectory}/Library/LaunchAgents";
     "755" = [
       "${config.home.homeDirectory}/.local/bin"
       "${config.home.homeDirectory}/bin"
       "${config.xdg.stateHome}/ffmpeg"
       "${config.xdg.stateHome}/sqlite"
-      "${config.xdg.stateHome}/less"
       "${config.xdg.cacheHome}/ImageMagick"
       "${config.xdg.configHome}/ImageMagick"
       "${config.xdg.dataHome}/pandoc"
@@ -49,7 +53,8 @@ in {
   };
 
   # chmod runs on every activation, not only creation: mkdir -pm leaves a pre-existing loose directory untouched, and the 700 class is custody.
-  home.activation.forgeDirRows = lib.hm.dag.entryAfter ["writeBoundary"] (
+  # The rows precede linkGeneration and setupLaunchAgents, which otherwise create the directories they populate at the default mode.
+  home.activation.forgeDirRows = lib.hm.dag.entryBetween ["linkGeneration" "setupLaunchAgents"] ["writeBoundary"] (
     lib.concatStringsSep "\n" (
       lib.mapAttrsToList (mode: dirs: "mkdir -p ${lib.escapeShellArgs dirs} && chmod ${mode} ${lib.escapeShellArgs dirs}") dirRows
     )

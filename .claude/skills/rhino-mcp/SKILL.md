@@ -1,7 +1,7 @@
 ---
 name: rhino-mcp
 description: >-
-    Drives a live Rhino session: host bring-up via `forge-rhino-up` or on-demand slot spawn,
+    Drives a live Rhino session: on-demand slot spawn or adoption of a user-started Rhino,
     slot lifecycle, RhinoCommon scripting in C# and Python, `.3dm` open/save, scene and
     selection queries, layer materials, camera framing, cost-bounded viewport capture, and
     Grasshopper2 canvas authoring. Use when working within Rhino for code development, or dedicated
@@ -13,7 +13,7 @@ description: >-
 
 `rhino-mcp-platform`, a USER-scope stdio server in `~/.claude.json` running the `rhino-mcp-router` binary, proxies each `mcp__rhino-mcp-platform__*` call to a per-document loopback HTTP listener inside the targeted Rhino "slot". Every document-touching tool binds to that slot's `RhinoDoc`, never `RhinoDoc.ActiveDoc`. All outputs are JSON strings (viewport adds a JPEG block). The router runs directly on the client's stdio pipe: it spawns a Rhino host on demand, adopts a user-started session through its slot lifecycle, and exits on client disconnect.
 
-`forge-rhino-up` (idempotent, splash-free) brings up a visible Rhino the router adopts.
+A Rhino the user starts from `/Applications/RhinoBETA.app` advertises itself and the router adopts it on the next `list_slots`; `spawn_slot` launches one otherwise.
 
 ## [01]-[SLOT_LIFECYCLE]
 

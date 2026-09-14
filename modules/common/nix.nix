@@ -7,11 +7,7 @@
 # Determinate Nix custom settings; /etc/nix/nix.conf stays Determinate-owned. One settings vocabulary, two projections: Darwin rides
 # determinateNix customSettings, NixOS rides the thin determinate module plus nix.settings — both land the values in /etc/nix/nix.custom.conf at
 # switch. The OS branch keys on the static host context, never on pkgs (module fixpoint safety).
-{
-  host,
-  lib,
-  ...
-}: let
+{host, ...}: let
   gib = n: n * 1024 * 1024 * 1024;
 
   # Local admin group per OS.
@@ -24,6 +20,11 @@
   # ssl-cert-file here — auth rides determinateNixd.authentication rows.
   customSettings = {
     trusted-users = ["root"] ++ adminGroups.${host.os};
+
+    # --- [USER_DIRECTORIES]
+    # Profile, defexpr, and channel links under $XDG_STATE_HOME/nix instead of ~/.nix-profile, ~/.nix-defexpr, and ~/.nix-channels; nix-daemon.sh
+    # reads the state link when it exists, and the per-user package profile already lives in /etc/profiles (useUserPackages).
+    use-xdg-base-directories = true;
 
     # --- [PERFORMANCE]
     max-substitution-jobs = 32;
@@ -43,8 +44,8 @@
 
     # --- [STORE_MANAGEMENT]
     # Client-side pressure floor backing the determinate-nixd automatic GC.
-    min-free = lib.mkDefault (gib 5);
-    max-free = lib.mkDefault (gib 50);
+    min-free = gib 5;
+    max-free = gib 50;
 
     # --- [CACHE_CONFIGURATION]
     # Determinate appends FlakeHub/installer caches via extra-* in nix.conf.
@@ -67,7 +68,7 @@
       determinateNix = {
         enable = true;
 
-        # Background GC is determinate-nixd-owned (free-space targeted); the forge-nix-maintenance agent owns generation retention and optimise.
+        # Background GC is determinate-nixd-owned (free-space targeted); generation retention and optimise are manual (`nix-collect-garbage -d`, `nix store optimise`).
         determinateNixd.garbageCollector.strategy = "automatic";
 
         inherit customSettings;
@@ -80,9 +81,6 @@
 in
   {
     # --- [NIXPKGS_CONFIGURATION]
-    nixpkgs.config = {
-      allowUnfree = true;
-      allowBroken = false;
-    };
+    nixpkgs.config.allowUnfree = true;
   }
   // osProjections.${host.os}

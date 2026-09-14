@@ -14,7 +14,7 @@
   ...
 }: let
   toLua = lib.generators.toLua {};
-  home = config.home.homeDirectory;
+  manifest = import ../../../../../overlays/manifest.nix;
   flakeRoot = config.forge.lsp.flakeRoot;
   stateHome = config.xdg.stateHome;
 
@@ -55,21 +55,10 @@
   ];
   treesitter = pkgs.vimPlugins.nvim-treesitter.withPlugins (p: map (n: p.${n}) grammars);
 
-  # Plugin admissions ride overlays/manifest.nix extensions.nvim-plugins rows; a new plugin is one name here plus its setup owner in lua/plugins/.
+  # The plugin set derives from overlays/manifest.nix extensions.nvim-plugins: each row's `attr` resolves in pkgs.vimPlugins, so a new plugin is
+  # one manifest row plus its setup owner in lua/plugins/. nvim-treesitter alone is replaced by the grammar-carrying build above.
   plugins =
-    lib.genAttrs [
-      "dracula-vim"
-      "snacks-nvim"
-      "nvim-treesitter-textobjects"
-      "conform-nvim"
-      "nvim-lint"
-      "gitsigns-nvim"
-      "lualine-nvim"
-      "grug-far-nvim"
-      "render-markdown-nvim"
-      "overseer-nvim"
-      "trouble-nvim"
-    ] (name: pkgs.vimPlugins.${name})
+    lib.mapAttrs (_: row: pkgs.vimPlugins.${row.attr}) manifest.extensions.nvim-plugins.rows
     // {nvim-treesitter = treesitter;};
 
   # One Lua fact inventory serves lua_ls settings (any workspace root, the repo sources included) and the generated .luarc.json in the config dir.
@@ -82,7 +71,7 @@
   # optional settings override, optional lifecycle rows startupTimeout/shutdownTimeout/maxRestarts in milliseconds and counts) the health
   # surface proves against .claude/lsp-marketplace — command/args derive from `cmd` at projection, so the tracked .lsp.json is a copy of the
   # generated row and any hand edit there is drift. A plugin's tracked file change bumps its plugin.json version: Claude Code pins the
-  # installed cache to that version and refreshes it only on a bump (the activation row below runs the refresh).
+  # installed cache to that version and refreshes it only on a bump (`claude plugin update <plugin>@forge-lsp`, an operator step).
   # Commands are bare names resolving through the Forge per-user profile — never per-project shells (tool-resolution policy).
   servers = {
     nixd = rec {
@@ -333,12 +322,6 @@
       mode = "scratch";
       ft = "json";
     }
-    {
-      id = "receipts-redeploy";
-      label = "Redeploy receipts (tail)";
-      argv = ["tail" "-n" "40" "${home}/Library/Logs/forge-redeploy.receipts.log"];
-      mode = "scratch";
-    }
   ];
 
   toolFacts = {
@@ -350,7 +333,6 @@
       })
       plugins;
     inherit grammars;
-    provider.python3 = "${home}/.local/bin/pynvim-python";
     format =
       {
         nix = ["alejandra"];
@@ -361,7 +343,6 @@
         toml = ["taplo"];
         yaml = ["yamlfmt"];
         sql = ["sqruff"];
-        cs = ["csharpier"];
       }
       // lib.genAttrs
       ["css" "html" "javascript" "javascriptreact" "json" "jsonc" "markdown" "typescript" "typescriptreact"]
@@ -406,20 +387,15 @@
 
   genLuaModule = value: "-- Generated from the Forge Nix owner (apps/nvim/default.nix).\nreturn ${toLua value}\n";
 in {
-  # defaultEditor projects EDITOR and VISUAL as nvim into home.sessionVariables.
+  # defaultEditor projects EDITOR and VISUAL as nvim into home.sessionVariables. withPython3 makes the wrapper build a store-owned
+  # python3.withPackages [pynvim] host and seat it as vim.g.python3_host_prog ahead of every user Lua file.
   programs.neovim = {
     enable = true;
     defaultEditor = true;
+    withPython3 = true;
     initLua = builtins.readFile ./init.lua;
     plugins = lib.attrValues plugins;
   };
-
-  # Python provider through the uv tool lane: pynvim's own interpreter shim, isolated from ambient virtualenvs — never ambient discovery.
-  home.activation.pynvimProvider = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    [ -x "$HOME/.local/bin/pynvim-python" ] \
-      || run ${pkgs.uv}/bin/uv tool install pynvim >/dev/null 2>&1 \
-      || echo "pynvim provider install deferred; :checkhealth forge proves the lane" >&2
-  '';
 
   # Recursive tree link merges tracked sources with generated fact modules in one home-files derivation; new tracked Lua files deploy with zero rows.
   xdg.configFile = {
@@ -440,7 +416,9 @@ in {
     "nvim/lua/forge/tools.lua".text = genLuaModule toolFacts;
     "nvim/lua/forge/chords.lua".text = genLuaModule config.forge.chords.nvim.rows;
     # Claude marketplace parity projection: identity rows the health surface compares against <flake_root>/.claude/lsp-marketplace/<plugin>/
-    # .lsp.json. command/args are one fact — the server `cmd` row — projected here.
+    # .lsp.json. command/args are one fact — the server `cmd` row — projected here. Registering the marketplace and installing a plugin are
+    # operator decisions per scope (`claude plugin marketplace add`, `claude plugin install <plugin>@forge-lsp --scope user|project`), never
+    # an activation side effect; `:checkhealth forge` proves the state.
     "forge/lsp/claude-marketplace.json".text = builtins.toJSON (
       lib.mapAttrs' (_: row:
         lib.nameValuePair row.claude.plugin ({
@@ -453,31 +431,4 @@ in {
       servers
     );
   };
-
-  # Claude Code consumes the marketplace only once registered; installing a plugin is an operator decision per scope
-  # (`claude plugin install <plugin>@forge-lsp --scope user|project`), never an activation side effect. Directory marketplaces copy each
-  # installed plugin into ~/.claude/plugins/cache and refresh that copy only on `plugin update`, so this row converges what IS installed:
-  # register the marketplace when absent, update an installed plugin whose cached .lsp.json differs from the tracked file. The claude binary
-  # is a native install outside Nix; its absence defers the row, and `:checkhealth forge` proves the state.
-  home.activation.claudeLspPlugins = lib.hm.dag.entryAfter ["writeBoundary"] (let
-    plugins = lib.concatStringsSep " " (lib.mapAttrsToList (_: row: row.claude.plugin) servers);
-  in ''
-    claude_bin="$HOME/.local/bin/claude"
-    market="${flakeRoot}/.claude/lsp-marketplace"
-    if [ -x "$claude_bin" ] && [ -d "$market" ]; then
-      known="$HOME/.claude/plugins/known_marketplaces.json"
-      installed="$HOME/.claude/plugins/installed_plugins.json"
-      if ! ${pkgs.jq}/bin/jq -e '."forge-lsp"' "$known" >/dev/null 2>&1; then
-        run "$claude_bin" plugin marketplace add "$market" >/dev/null 2>&1 || echo "forge-lsp marketplace registration deferred" >&2
-      fi
-      for plugin in ${plugins}; do
-        cached="$(${pkgs.jq}/bin/jq -r --arg id "$plugin@forge-lsp" '.plugins[$id][0].installPath // empty' "$installed" 2>/dev/null)"
-        if [ -n "$cached" ] && ! cmp -s "$cached/.lsp.json" "$market/$plugin/.lsp.json"; then
-          run "$claude_bin" plugin update "$plugin@forge-lsp" >/dev/null 2>&1 || echo "$plugin@forge-lsp update deferred" >&2
-        fi
-      done
-    else
-      echo "claude binary or lsp-marketplace absent; Claude LSP plugin reconcile deferred" >&2
-    fi
-  '');
 }

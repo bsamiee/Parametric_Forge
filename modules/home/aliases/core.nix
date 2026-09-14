@@ -97,7 +97,6 @@
     ["bw" "sudo bandwhich" "Bandwidth monitor" "sudo"]
     ["speedtestl" "speedtest --accept-license" "Ookla speed test, license pre-accepted"]
     ["lssh" "sshs" "Interactive SSH picker"]
-    ["whs" "forge-webhook -verbose" "Foreground webhook listener with verbose logs (boot the launchd agent out first)"]
     ["ports" "sudo lsof -iTCP -sTCP:LISTEN -n -P" "List listening TCP ports" "sudo"]
   ];
   screenshot = [

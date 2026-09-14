@@ -57,9 +57,7 @@ in {
     pkgs.pnpm_11 # Sole package-manager verb on PATH; major-pinned for store-format stability
     prettier # Code formatter (house-config fallback wrapper)
     biome # TS/JS/JSON/CSS formatter+linter (house-config fallback wrapper)
-    pkgs.tailwindcss # Utility-first CSS framework
     pkgs.typescript # TypeScript 7 native compiler and language server
-    pkgs.dts-lsp # TypeScript declaration navigation for API catalogue work
     pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH
   ];
 

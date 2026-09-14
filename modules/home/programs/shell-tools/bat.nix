@@ -13,19 +13,14 @@
   programs.bat = {
     enable = true;
 
+    # Rows differ from bat's defaults (style drops snip, wrap is auto upstream); Nix, JSON with comments, and Jenkinsfiles map natively.
     config = {
       theme = "forge-dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
-      paging = "auto";
 
-      map-syntax = [
-        "*.nix:Nix"
-        ".envrc:Bash"
-        "*.jenkinsfile:Groovy"
-        "*.jsonc:JSON"
-      ];
+      map-syntax = [".envrc:Bash"];
     };
 
     # Owner-generated tmTheme; the activation cache build exposes it to bat and, through the bat cache, to delta's syntax-theme.

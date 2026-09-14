@@ -54,7 +54,6 @@ if [[ -f "$forge_provision_share/forge-provision.sh" && -d "$forge_provision_sha
         printf 'forge-provision: source-tree execution is unsupported; use the packaged command.\n'
         printf '  Installed command: forge-provision <command>\n'
         printf '  From the Forge repo: nix run .#forge-provision -- <command>\n'
-        printf '  From a consumer repo: use that repo'\''s provision rail, for example uv run python -m tools.assay provision <verb>\n'
     } >&2
     exit 126
 fi
@@ -217,7 +216,6 @@ endpoint_lock_owned=false
 heartbeat_pid=0
 foreground_child_pid=0
 declare -a json_warnings=()
-declare -a compose_command=()
 declare -a parsed_args=()
 declare -a port_lock_dirs=()
 declare -a auto_port_blacklist=()
@@ -1329,7 +1327,6 @@ pid_looks_like_forge_provision() {
     local pid="$1"
     [[ "$pid" =~ ^[0-9]+$ ]] || return 1
     kill -0 "$pid" 2>/dev/null || return 1
-    command -v ps >/dev/null 2>&1 || return 0
     local command_line
     command_line="$(ps -p "$pid" -o command= 2>/dev/null || printf forge-provision)"
     [[ "$command_line" == *forge-provision* ]]
@@ -1767,20 +1764,6 @@ require_mutating_docker() {
     apply_docker_endpoint
 }
 
-select_compose_command() {
-    ((${#compose_command[@]} > 0)) && return 0
-    local version
-    if docker compose version >/dev/null 2>&1; then
-        compose_command=(docker compose)
-    elif command -v docker-compose >/dev/null 2>&1; then
-        version="$(docker-compose version --short 2>/dev/null || true)"
-        [[ "$version" =~ ^v?([2-9]|[1-9][0-9])\. ]] || die "Docker Compose v2 is required; docker-compose reported version=${version:-unknown}"
-        compose_command=(docker-compose)
-    else
-        die "Docker Compose v2 is unavailable; expected docker compose or docker-compose"
-    fi
-}
-
 forward_foreground_child() {
     local signal="$1"
     ((foreground_child_pid > 0)) || return 0
@@ -1802,10 +1785,9 @@ docker_compose_file() {
     local old_parallel="${COMPOSE_PARALLEL_LIMIT-}"
     local had_parallel=false
     [[ -v COMPOSE_PARALLEL_LIMIT ]] && had_parallel=true
-    select_compose_command
     export COMPOSE_PARALLEL_LIMIT="$compose_parallel_limit"
     local rc=0
-    run_foreground_child "${compose_command[@]}" -f "$compose" --project-name "$project_name" "$@" || rc=$?
+    run_foreground_child docker-compose -f "$compose" --project-name "$project_name" "$@" || rc=$?
     if [[ "$had_parallel" == true ]]; then
         export COMPOSE_PARALLEL_LIMIT="$old_parallel"
     else
@@ -1816,13 +1798,7 @@ docker_compose_file() {
 
 # Diagnostic-only probe: never routes through die, which would corrupt a capturing envelope.
 docker_compose_version() {
-    if docker compose version >/dev/null 2>&1; then
-        docker compose version --short 2>/dev/null || printf 'unavailable'
-    elif command -v docker-compose >/dev/null 2>&1; then
-        docker-compose version --short 2>/dev/null || printf 'unavailable'
-    else
-        printf 'unavailable'
-    fi
+    docker-compose version --short 2>/dev/null || printf 'unavailable'
 }
 
 # Typed doctor verdict: endpoint policy, CLI presence, socket existence, and server reachability remain distinct facts.

@@ -23,7 +23,7 @@
         },
         {
             "path": "docs/laws/kernels.md",
-            "description": "Shell kernel law: bash/jq division, catalog dispatch, JSON envelope rails, receipts, locks, fork discipline",
+            "description": "Shell kernel law: bash/jq division, catalog dispatch, JSON envelope rails, locks, fork discipline",
             "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]
         },
         {
@@ -53,11 +53,11 @@
         },
         {
             "path": "docs/atlas/interconnection.md",
-            "description": "Seam map: config.forge.* option hinges, runtime contracts (receipts, terminal mesh, XDG projections), owner tables \u2014 the blast radius a cross-module change must honor"
+            "description": "Seam map: config.forge.* option hinges, runtime contracts (terminal mesh, XDG projections, session fabric), owner tables \u2014 the blast radius a cross-module change must honor"
         },
         {
             "path": "docs/atlas/rails-and-contracts.md",
-            "description": "Estate rails and contract surfaces: forge-* command rails, receipts, provision envelopes, registers"
+            "description": "Estate rails and contract surfaces: forge-* command rails, provision envelopes, DB container catalog"
         },
         {
             "path": "docs/standards/style-guide.md",

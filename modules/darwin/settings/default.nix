@@ -7,8 +7,6 @@
 # Darwin settings aggregator
 {...}: {
   imports = [
-    ./input.nix
-    ./interface.nix
     ./security.nix
     ./system.nix
   ];

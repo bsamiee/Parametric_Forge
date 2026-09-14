@@ -130,7 +130,7 @@ in {
         repo_root_style = "bold accent";
         repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
         format = "[$path]($style)[$read_only]($read_only_style) ";
-        substitutions."~/Documents/99.Github" = "${glyph.github} ";
+        substitutions."~/Developer" = "${glyph.github} ";
       };
 
       # --- [GIT_MODULES]

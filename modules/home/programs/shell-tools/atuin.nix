@@ -22,45 +22,34 @@ in {
 
   programs.atuin = {
     enable = true;
-    enableZshIntegration = false;
+    # HM evals `atuin init zsh` at order 1000: after fzf (910, whose ^R binding is off), so Atuin owns ^R and the up arrow.
+    enableZshIntegration = true;
     daemon.enable = true; # launchd-managed: fast writes plus in-memory daemon-fuzzy search
 
+    # Rows here differ from Atuin's documented defaults; the database and key sit at their XDG defaults under ~/.local/share/atuin.
     settings = {
-      db_path = "${config.xdg.dataHome}/atuin/history.db";
-      key_path = "${config.xdg.dataHome}/atuin/key";
+      logs.dir = "${config.xdg.stateHome}/atuin/logs"; # the daemon's default log root is the hard-coded ~/.atuin/logs
       # History remains local until a new sync owner is deliberately configured.
       auto_sync = false;
       update_check = false;
-      timezone = "local"; # system TZ via the TZ env var
+      # Unset, `atuin init zsh` binds `?` on an empty line to the Hub-backed `atuin ai inline`, whose first-run chooser writes this row into the
+      # read-only config on "Disable ? Keybind"; the declared row keeps `?` a self-insert.
+      ai.enabled = false;
       search_mode = "daemon-fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "workspace";
       filter_mode_shell_up_key_binding = "global"; # Up arrow shows all history, not just current session
       ctrl_n_shortcuts = true;
-      disable_up_arrow = false;
       workspaces = true;
       style = "full";
       inline_height = 50;
       invert = true; # Search bar at top, matching fzf layout
-      prefers_reduced_motion = false;
-      preview = {
-        strategy = "fixed"; # Prevents UI jumping
-        max_height = 6;
-      };
-      show_preview = true;
-      show_help = true;
-      show_tabs = true;
-      exit_mode = "return-original";
+      preview.strategy = "fixed"; # Prevents UI jumping
+      max_preview_height = 6;
       keymap_mode = "auto";
-      word_jump_mode = "emacs";
       word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
       scroll_context_lines = 2;
       enter_accept = true;
-      network_timeout = 30;
-      network_connect_timeout = 5;
-      local_timeout = 5;
-      secrets_filter = true;
-      store_failed = true;
       # Secrets and destructive host commands only; short/common commands are retrieval material and stay recorded.
       history_filter = [
         "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -)(\\s|$)"
@@ -76,19 +65,13 @@ in {
         ".*/target/release/.*"
       ];
       history_format = "{time} {directory} ❯ {command}";
-      keys = {
-        scroll_exits = false;
-        exit_past_line_start = true;
-        accept_past_line_end = true;
-      };
+      keys.scroll_exits = false;
       stats = {
         common_prefix = ["sudo" "time" "nohup"];
         common_subcommands = ["git" "cargo" "pnpm" "docker" "kubectl"];
         ignored_commands = ["ls" "cd" "pwd" "exit" "clear" "history"];
       };
-      theme = {
-        name = "dracula";
-      };
+      theme.name = "dracula";
     };
 
     # Dracula theme through the HM theme owner; atuin ships only autumn and marine natively.

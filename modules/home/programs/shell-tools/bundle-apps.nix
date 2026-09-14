@@ -25,7 +25,7 @@ in {
 
   config = {
     # One launchd-agent grammar: label, argv, background class, one dual log per agent, and the identity bundle (its own name unless a shared
-    # bundle row, such as forge-nix-automation, is named); every other key (schedule, KeepAlive, RunAtLoad, ThrottleInterval) rides as given.
+    # bundle row is named); every other key (schedule, KeepAlive, RunAtLoad, ThrottleInterval) rides as given.
     _module.args.forgeAgent = {
       name,
       argv,
@@ -45,6 +45,7 @@ in {
         // removeAttrs row ["name" "argv" "bundle"];
     };
 
+    # Each identity bundle registers with LaunchServices on the generation that changed its Info.plist (onChange).
     home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
       lib.mapAttrs' (
         ident: display:
@@ -59,19 +60,13 @@ in {
               LSUIElement = true;
               LSBackgroundOnly = true;
             };
+            onChange = ''
+              lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
+              run "$lsregister" -f "$HOME/Applications/${display}.app"
+            '';
           }
       )
       cfg
     );
-
-    # lsregister -f is idempotent; a missing app or binary is a silent no-op so activation never fails on this cosmetic identity surface.
-    home.activation.registerForgeBundleApps = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (lib.hm.dag.entryAfter ["linkGeneration"] ''
-      lsregister="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-      for app in ${lib.concatMapStringsSep " " (d: ''"$HOME/Applications/${d}.app"'') (lib.attrValues cfg)}; do
-        if [ -d "$app" ] && [ -x "$lsregister" ]; then
-          "$lsregister" -f "$app" || true
-        fi
-      done
-    '');
   };
 }

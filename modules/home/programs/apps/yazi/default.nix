@@ -14,6 +14,7 @@
   ...
 }: let
   tomlFormat = pkgs.formats.toml {};
+  manifest = import ../../../../../overlays/manifest.nix;
   vfsRows = tomlFormat.generate "yazi-vfs" {
     sftp =
       lib.mapAttrs (_: row: {
@@ -261,19 +262,16 @@ in {
     package = yaziPkg;
     initLua = builtins.readFile ./init.lua + remoteBadgeLua;
 
-    # Store-owned plugin rows, no runtime fetching: nixpkgs `yaziPlugins` is the packaged substrate, and augment-command
-    # pins upstream HEAD directly since nixpkgs omits it.
-    plugins = {
-      inherit (pkgs.yaziPlugins) full-border toggle-pane jump-to-char mount piper git smart-filter mime-ext duckdb zoom;
-
-      # Semantic command layer: open/quit/tab/paste/archive/scroll behaviors
-      augment-command = pkgs.fetchFromGitHub {
-        owner = "hankertrix";
-        repo = "augment-command.yazi";
-        rev = "dd2d6cf07f81cef543e37883352e30b91634ec86";
-        hash = "sha256-sB2t3Gg+WdPG6OE8pD6VovD+x9nN21Jn8XydZZdTqCg=";
-      };
-    };
+    # Store-owned plugins, no runtime fetching: the set derives from overlays/manifest.nix extensions.yazi-plugins — a row with `attr` resolves in
+    # nixpkgs `yaziPlugins`, a row with owner/repo/rev/hash is a pinned upstream tree nixpkgs omits.
+    plugins =
+      lib.mapAttrs (
+        _: row:
+          if row ? attr
+          then pkgs.yaziPlugins.${row.attr}
+          else pkgs.fetchFromGitHub {inherit (row) owner repo rev hash;}
+      )
+      manifest.extensions.yazi-plugins.rows;
 
     # Popup-first configuration with deterministic editor handoff; every table below is a typed row set, rendered to yazi.toml at build.
     settings = {

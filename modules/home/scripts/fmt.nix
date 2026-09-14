@@ -53,8 +53,7 @@
       )
       # Package-manager-owned basenames whose extension routes to a lane: the npm lockfile trio plus npm-shrinkwrap ride the web lane, and
       # pnpm rewrites its workspace/lock pair in its own layout — formatting any is corruption or churn. A .lock-extension lockfile needs no row:
-      # .lock owns no lane, so it skips already. C# has no lane: csharpier hard-codes Allman braces against the estate K&R editorconfig law
-      # — dotnet format owns .cs through the project rails.
+      # .lock owns no lane, so it skips already. C# has no lane: dotnet format owns .cs through the project rails.
       declare -Ar _DENY_BASE=(
         ["pnpm-lock.yaml"]=1 ["package-lock.json"]=1 ["packages.lock.json"]=1
         ["npm-shrinkwrap.json"]=1 ["pnpm-workspace.yaml"]=1
@@ -370,7 +369,7 @@
         runner="''${lrow[2]%% *}"
         if ! command -v "$runner" >/dev/null 2>&1 && ! declare -F "$runner" >/dev/null; then
           lane_state[$lane]=missing
-          ((strict)) && status=1 || true
+          ((strict)) && status=1
           continue
         fi
         # Lane-shell stderr rides the lane's output capture: a KILL-escalated tool's job-death notice lands in the FAIL snippet, not on fmt's stderr.

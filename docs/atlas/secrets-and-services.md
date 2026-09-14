@@ -4,18 +4,18 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 
 ## [01]-[CUSTODY_CLASSES]
 
-| [INDEX] | [CLASS]                    | [ORIGIN]                                             | [MOVEMENT]              | [BOUNDARY]        |
-| :-----: | :------------------------- | :--------------------------------------------------- | :---------------------- | :---------------- |
-|  [01]   | User CLI Doppler token     | `doppler login` ambient auth                         | `env -u` strip          | one CLI identity  |
-|  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row                    | `driver.ts --reveal`    | read-only grant   |
-|  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`                | `op read`, else ambient | driver child only |
-|  [04]   | GitHub IaC PAT             | `op://Tokens/GITHUB_TOKEN/token`                     | `op read`, else ambient | provider env only |
-|  [05]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault              | 1Password agent         | public key only   |
+| [INDEX] | [CLASS]                    | [ORIGIN]                                | [MOVEMENT]                 | [BOUNDARY]        |
+| :-----: | :------------------------- | :-------------------------------------- | :------------------------- | :---------------- |
+|  [01]   | User CLI Doppler token     | `doppler login` ambient auth            | `env -u` strip             | one CLI identity  |
+|  [02]   | Config service token       | Pulumi `doppler.ServiceToken` row       | `driver.ts --reveal`       | read-only grant   |
+|  [03]   | IaC admin token            | `op://Tokens/DOPPLER_IAC_TOKEN/token`   | `op read`, else ambient    | driver child only |
+|  [04]   | GitHub IaC PAT             | `GITHUB_TOKEN` in `agent-runtime/dev`   | Doppler read, else ambient | provider env only |
+|  [05]   | 1Password personal custody | `Forge SSH Key` in the `Personal` vault | 1Password agent            | public key only   |
 
-- [01]: User CLI Doppler token: one local CLI identity, never serialized into receipts or client configs.
+- [01]: User CLI Doppler token: one local CLI identity, never serialized into logs or client configs.
 - [02]: Config service token: output secret `token:<project>/<config>/<name>`, revealed on demand through `driver.ts outputs <name> --reveal`; each read-only grant stays bound to one config.
 - [03]: IaC admin token: `op read` unless ambient `DOPPLER_TOKEN` exists, injected as Pulumi Automation env; only the driver child process receives the unwrapped token.
-- [04]: GitHub IaC PAT: `op read` unless ambient `GITHUB_TOKEN` exists, injected into `@pulumi/github`; provider env only, repository resources stay protected.
+- [04]: GitHub IaC PAT: `doppler secrets get GITHUB_TOKEN` from `agent-runtime/dev` under the IaC admin token unless ambient `GITHUB_TOKEN` or `GH_TOKEN` exists, injected into `@pulumi/github`; provider env only, repository resources stay protected.
 - [05]: 1Password personal custody: 1Password SSH agent socket and `op-ssh-sign`; private key never enters repo files, only the public key and allowed signer are projected.
 
 ## [02]-[LOCAL_SESSION_CUSTODY]
@@ -24,9 +24,9 @@ Home Manager resolves `~/.config/op/env.template` through `op inject` during act
 
 ## [03]-[SERVICES_IAC]
 
-`services/` owns the Doppler topology and GitHub settings as typed Pulumi rows over `@pulumiverse/doppler`, `@pulumi/github`, and `@pulumi/pulumi` — not per-repo YAML. Topology rows cover the Doppler and GitHub resource families; `estate.ts` folds them into resources. An `origin: "adopt"` row imports an existing resource only under `--adopt`; an `origin: "mint"` row creates fresh. The driver is `node driver.ts preview|up|refresh [--adopt] [--target=...]`, `outputs [name] [--reveal]`, and `scopes apply|doctor|strict`; Pulumi state is a local file backend under XDG state with a passphrase secrets provider.
+`services/` owns the Doppler topology and GitHub settings as typed Pulumi rows over `@pulumiverse/doppler`, `@pulumi/github`, and `@pulumi/pulumi` — not per-repo YAML. Topology rows cover the Doppler and GitHub resource families; `estate.ts` folds them into resources. `origin: "adopt"` rows import an existing resource only under `--adopt`; `origin: "mint"` rows create fresh. `node driver.ts` runs `preview|up|refresh [--adopt] [--target=...]`, `outputs [name] [--reveal]`, `scopes apply|doctor|strict`, `reviewers`, and `apps`; Pulumi state is a local file backend under XDG state with a passphrase secrets provider.
 
-`topology.ts` maps the `Parametric_Forge` and `Rasm` directories to Doppler configs. `scopes apply` projects those rows with `doppler configure set` and removes stray scopes under the declared root.
+`topology.ts` maps the `Parametric_Forge` directory to its Doppler config; a consumer repository owns its own Doppler rows in its own program. `scopes apply` projects those rows with `doppler configure set` and removes stray scopes under the declared root.
 
 ## [04]-[SSH_GIT_SIGNING]
 
@@ -38,4 +38,4 @@ Home Manager resolves `~/.config/op/env.template` through `op inject` during act
 
 ## [06]-[GITHUB_AS_CODE]
 
-Pulumi rows adopt GitHub settings for `Parametric_Forge` and `Rasm`. Merge hygiene disables merge commits and wikis, enables squash and rebase merges, and deletes merged branches. `topology.ts` and `estate.ts` own the desired state; outside changes drift until the next adopt.
+Pulumi rows adopt GitHub settings for `Parametric_Forge`; the app-installation census names `Rasm` and `Parametric_Portal` only as repositories an installation selects. Merge hygiene disables merge commits and wikis, enables squash and rebase merges, and deletes merged branches. `topology.ts` and `estate.ts` own the desired state; outside changes drift until the next adopt.

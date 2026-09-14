@@ -214,20 +214,6 @@
     ["-" ''Resize "Decrease";'']
     ["p" "TogglePaneInGroup;" null ["pane group toggle/mark" "Super Alt Ctrl p / g" 220]]
     ["g" "ToggleGroupMarking;"]
-    {
-      t = ["b" null null ["register browser" 160] ["browse" 40]];
-      gap = true;
-      body = runFloat ["forge-browse"] popupGeometry.browse;
-    }
-    {
-      t = ["s" null null ["workspace graph" 162] ["graph" 45]];
-      body = runFloat ["forge-zellij" "graph"] popupGeometry.graph;
-    }
-    {
-      # Cheatsheet-only discoverability: the ribbon stays inside ~160 columns.
-      t = ["w" null null ["watch panels" 164]];
-      body = runFloat ["forge-zellij" "watch"] popupGeometry.watchPicker;
-    }
   ];
 
   # Layer-keyed bind vocabulary: every per-layer projection folds over this attrset, so a new leader layer is one `layers` row plus one entry here.

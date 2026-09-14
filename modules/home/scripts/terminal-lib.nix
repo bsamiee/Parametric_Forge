@@ -5,18 +5,16 @@
 # Path          : modules/home/scripts/terminal-lib.nix
 # ----------------------------------------------------------------------------
 # Shared vocabulary for the terminal rail: pane-identity jq predicates, the bounded-retry and process-deadline owners, the admitted-snapshot
-# kernel, the DDS client-id projection, and the runtime-root derivation. The production kernels (terminal.nix) and the acceptance harness
-# (terminal-accept.nix) read these single bindings, so dispatch and its proof can never diverge.
+# kernel, the DDS client-id projection, and the runtime-root derivation. Every terminal.nix kernel reads these single bindings.
 {lib}: let
-  # One popup-identity vocabulary — production dispatch, caller dismissal, and the acceptance harness share this exact jq row predicate, so the harness
-  # can never miss a production identity. terminal_command is the spawn command (invoked_with), so exec inside the pane never breaks rediscovery.
+  # One popup-identity vocabulary — production dispatch and caller dismissal share this exact jq row predicate. terminal_command is the spawn command (invoked_with), so exec inside the pane never breaks rediscovery.
   yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
 
   # One self-row vocabulary: (panes snapshot, $self) -> this pane's row; every kernel resolves its own pane through this exact projection.
   selfRow = ''[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0]'';
 
-  # One live-row vocabulary: (panes snapshot, $id, $tab) -> count of live terminal rows with that id in that tab; the registry-hit gate and the
-  # acceptance harness join registry rows to live panes through this exact predicate.
+  # One live-row vocabulary: (panes snapshot, $id, $tab) -> count of live terminal rows with that id in that tab; the registry-hit gate joins
+  # registry rows to live panes through this exact predicate.
   liveInTab = ''[.[] | select((.is_plugin | not) and ((.id | tostring) == $id) and (.tab_id == $tab) and (.exited | not))] | length'';
 
   # One bounded-retry owner: every startup race, RPC probe, DDS bind wait, and snapshot flap in the rail polls through this single loop.
@@ -75,11 +73,11 @@
     fi
   '';
 
-  # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit id; the popup body, dispatcher, and acceptance harness all pipe
+  # One DDS client-id derivation: (session, pane_id) -> deterministic 6-digit id; the popup body and dispatcher both pipe
   # `printf '%s:%s' session pane` through this exact projection.
   cidPipeline = ''cksum | gawk '{ print ($1 % 899999) + 100000 }' '';
 
-  # One runtime-root derivation for every rail script and the harness: RPC sockets, the dispatch lock, surfaced markers, and DDS state live in a
+  # One runtime-root derivation for every rail script: RPC sockets, the dispatch lock, surfaced markers, and DDS state live in a
   # canonical per-user private namespace. Every destructive target is admitted only as a strict descendant of this root.
   runtimeBaseSh = ''
     runtime_base_raw="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/forge-edit"

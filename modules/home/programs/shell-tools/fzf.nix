@@ -11,8 +11,8 @@
 in {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = false; # Manual init in zsh/init.nix (before Atuin for proper Ctrl+R)
-    tmux.enableShellIntegration = false;
+    # HM sources `fzf --zsh` at order 910: after fzf-tab (580), so ^I keeps fzf-tab behind the ** trigger, and before atuin (1000).
+    enableZshIntegration = true;
 
     # --- [DEFAULT_CONFIGURATION]
     defaultCommand = fdFiles;
@@ -23,7 +23,6 @@ in {
       ++ [
         "--border=sharp"
         # Border labels are widget-scoped below; forgit rows carry theirs in environments/shell.nix.
-        "--border-label-pos=0"
         # UI elements: BMP-only glyphs — PUA codepoints fail fzf width validation
         "--prompt='❯ '"
         "--marker='✓'"
@@ -58,7 +57,9 @@ in {
       ];
     };
 
-    # --- [CTRL_R_COMMAND_HISTORY]
-    historyWidget.options = []; # Ctrl-R history disabled — Atuin owns it
+    # --- [CTRL_R_OWNER]
+    # An empty history command exports FZF_CTRL_R_COMMAND="" ahead of `fzf --zsh`, whose documented opt-out skips the ^R binding: Atuin is the
+    # one owner of history search instead of rebinding over fzf.
+    historyWidget.command = "";
   };
 }

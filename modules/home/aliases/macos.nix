@@ -8,9 +8,9 @@
 {
   dev = [
     ["rhproject" "dotnet new rhino -sample" "Rhino plugin template"]
-    ["ghproject" "dotnet new grasshopper -sample" "Grasshopper template"]
+    ["ghproject" "dotnet new gh2 -sample" "Grasshopper 2 plugin template"]
     ["yakb" "yak build" "Package Rhino plugins"]
-    ["rhcode" "rhinocode" "Rhino script compiler"]
+    ["rhcode" "rhinocode" "RhinoCode command line"]
   ];
   macos = [
     ["awake" "caffeinate -dims" "Prevent sleep"]

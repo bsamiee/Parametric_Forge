@@ -23,11 +23,6 @@ const _projects = [
         description: 'macOS machine and Home Manager toolchain secrets',
         origin: 'adopt',
     },
-    {
-        slug: 'rasm',
-        description: 'Rasm repo and service secrets',
-        origin: 'adopt',
-    },
 ] as const satisfies ReadonlyArray<{
     readonly slug: string;
     readonly description: string;
@@ -73,7 +68,6 @@ const _configs = [
         name: 'dev_machine',
         origin: 'adopt',
     },
-    { project: 'rasm', environment: 'dev', name: 'dev_repo', origin: 'adopt' },
 ] as const satisfies ReadonlyArray<_BranchRow>;
 
 // A config coordinate resolves to a root config (same-slug as its environment) or a declared branch config of the same project.
@@ -102,37 +96,16 @@ const _tokens = [
 >;
 
 // Machine directory-scope rows: the replacement for every per-repo doppler.yaml, applied idempotently via `doppler configure set`.
-const _scopeRoot = '/Users/bardiasamiee/Documents/99.Github';
+// The root and each dir are home-relative; driver.ts joins them onto the operator home once, so no user name rides a row.
+const _scopeRoot = 'Developer';
 
 const _scopes = [
     {
-        dir: `${_scopeRoot}/Parametric_Forge`,
+        dir: 'Parametric_Forge',
         project: 'parametric-forge',
         config: 'dev_machine',
     },
-    { dir: `${_scopeRoot}/Rasm`, project: 'rasm', config: 'dev_repo' },
-] as const satisfies ReadonlyArray<
-    _Coordinate & {
-        readonly dir: `${typeof _scopeRoot}/${string}`;
-    }
->;
-
-// Doppler mandates HTTPS delivery (the url type carries it) and signs each delivery with the brokered secret (secretSource
-// names the custody coordinate the driver resolves at apply time); no secret names ride the wire, delivery
-// is at-least-once, and the consumer owns idempotency. The payload event derives in estate.ts as
-// `<project>.<firstEnabledConfig>.secrets.update`, and the provider ships no webhook import, so every row is mint by construction.
-type _WebhookRow = {
-    [P in _ProjectSlug]: {
-        readonly project: P;
-        readonly slug: string;
-        readonly url: `https://${string}`;
-        readonly enabledConfigs: readonly [_ConfigName<P>, ...ReadonlyArray<_ConfigName<P>>];
-        readonly secretSource: _Coordinate & { readonly name: string };
-        readonly origin: 'mint';
-    };
-}[_ProjectSlug];
-
-const _webhooks: ReadonlyArray<_WebhookRow> = [];
+] as const satisfies ReadonlyArray<_Coordinate & { readonly dir: string }>;
 
 // GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from estate.ts; branch rulesets are removed, so main takes direct pushes.
 const _owner = 'bsamiee';
@@ -143,11 +116,6 @@ const _repositories = [
         description: 'My Nix based repo for NixOS/Darwin configuration, dotfiles, and more',
         origin: 'adopt',
     },
-    {
-        name: 'Rasm',
-        description: 'AEC/design-geometry workspace',
-        origin: 'adopt',
-    },
 ] as const satisfies ReadonlyArray<{
     readonly name: string;
     readonly description: string;
@@ -156,7 +124,8 @@ const _repositories = [
 
 type _RepositoryName = (typeof _repositories)[number]['name'];
 
-type _AppRepositoryName = _RepositoryName | 'Parametric_Portal';
+// Repositories an installation selects that own their settings in their own Pulumi program, named here for the census alone.
+type _AppRepositoryName = _RepositoryName | 'Parametric_Portal' | 'Rasm';
 
 type _AppInstallationRow = {
     readonly identity: string;
@@ -314,7 +283,6 @@ const Topology = {
     tokens: _tokens,
     scopeRoot: _scopeRoot,
     scopes: _scopes,
-    webhooks: _webhooks,
     owner: _owner,
     repositories: _repositories,
     appInstallations: _appInstallations,
@@ -330,7 +298,6 @@ declare namespace Topology {
     type Config = (typeof _configs)[number];
     type Token = (typeof _tokens)[number];
     type Scope = (typeof _scopes)[number];
-    type Webhook = (typeof _webhooks)[number];
     type Repository = (typeof _repositories)[number];
     type AppInstallation = (typeof _appInstallations)[number];
     type Ruleset = _RulesetRow;

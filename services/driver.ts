@@ -5,7 +5,7 @@
 // Path          : services/driver.ts
 // ----------------------------------------------------------------------------
 // Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering only the
-// Pulumi passphrase and Doppler IaC credential. GitHub and webhook credentials resolve from Doppler. Zero YAML on disk: the project
+// Pulumi passphrase and Doppler IaC credential. The GitHub credential resolves from Doppler. Zero YAML on disk: the project
 // manifest synthesizes into the workspace temp dir. Also owns the machine scope and reviewer receipts. Exports nothing; runMain terminates.
 
 import { createHash } from 'node:crypto';
@@ -22,6 +22,10 @@ import { Topology } from './topology.ts';
 
 const PROJECT = 'forge-services';
 const STACK = 'estate';
+
+// Host seam: the home-relative scope rows resolve onto the operator home once, here, so topology.ts carries no machine path.
+const _scopeRoot = path.join(homedir(), Topology.scopeRoot);
+const _scopes = Arr.map(Topology.scopes, (row) => ({ ...row, dir: path.join(_scopeRoot, row.dir) }));
 
 const _reviewerSlugs = {
     coderabbit: 'coderabbitai',
@@ -112,21 +116,6 @@ const _dopplerSecret = (token: Redacted.Redacted<string>, project: string, confi
         (raw) => Redacted.make(raw.trim()),
     );
 
-// Webhook signing secrets broker from their Doppler custody rows; each stays Redacted until estate.ts supplies the engine's secret input.
-const _webhookSecrets = (token: Redacted.Redacted<string>) =>
-    Effect.map(
-        Effect.forEach(
-            Topology.webhooks,
-            (row) =>
-                Effect.map(
-                    _dopplerSecret(token, row.secretSource.project, row.secretSource.config, row.secretSource.name),
-                    (secret) => [row.slug, secret] as const,
-                ),
-            { concurrency: 2 },
-        ),
-        Record.fromEntries,
-    );
-
 // nonEmptyString: an empty exported override means unset, per XDG semantics.
 const _settings = Config.all({
     passphraseRef: Config.nonEmptyString('FORGE_SERVICES_PASSPHRASE_REF').pipe(
@@ -173,15 +162,9 @@ const _openStack = (flags: Flags) =>
             concurrency: 2,
         });
         const backendUrl = `file://${cfg.stateDir}`;
-        const [githubToken, webhookSecrets] = yield* Effect.all(
-            [
-                _githubToken(
-                    Option.orElse(cfg.githubToken, () => cfg.ghToken),
-                    Effect.succeed(token),
-                ),
-                _webhookSecrets(token),
-            ],
-            { concurrency: 2 },
+        const githubToken = yield* _githubToken(
+            Option.orElse(cfg.githubToken, () => cfg.ghToken),
+            Effect.succeed(token),
         );
         return yield* Effect.tryPromise({
             // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
@@ -190,7 +173,7 @@ const _openStack = (flags: Flags) =>
                     {
                         stackName: STACK,
                         projectName: PROJECT,
-                        program: estate(flags, webhookSecrets),
+                        program: estate(flags),
                     },
                     {
                         projectSettings: {
@@ -254,14 +237,14 @@ const _scopeTable = Effect.flatMap(_shell('doppler', 'configure', '--all', '--js
 const _resolved = (dir: string) =>
     Effect.flatMap(_shell('doppler', 'configure', 'get', 'project', 'config', '--json', '--scope', dir), Schema.decodeUnknown(_ScopePair));
 
-const _declaredDirs: HashSet.HashSet<string> = HashSet.fromIterable(Arr.map(Topology.scopes, (row) => row.dir));
+const _declaredDirs: HashSet.HashSet<string> = HashSet.fromIterable(Arr.map(_scopes, (row) => row.dir));
 
 const _strayScopes = Effect.map(_scopeTable, (table) =>
     pipe(
         table,
         Record.filter(
             (entry, dir) =>
-                dir.startsWith(`${Topology.scopeRoot}/`) &&
+                dir.startsWith(`${_scopeRoot}/`) &&
                 !HashSet.has(_declaredDirs, dir) &&
                 (Record.has(entry, 'enclave.project') || Record.has(entry, 'enclave.config')),
         ),
@@ -271,11 +254,8 @@ const _strayScopes = Effect.map(_scopeTable, (table) =>
 
 const _strayYaml = Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
-    const entries = yield* fs.readDirectory(Topology.scopeRoot);
-    const candidates = [
-        path.join(Topology.scopeRoot, 'doppler.yaml'),
-        ...Arr.map(entries, (entry) => path.join(Topology.scopeRoot, entry, 'doppler.yaml')),
-    ];
+    const entries = yield* fs.readDirectory(_scopeRoot);
+    const candidates = [path.join(_scopeRoot, 'doppler.yaml'), ...Arr.map(entries, (entry) => path.join(_scopeRoot, entry, 'doppler.yaml'))];
     // Plain files under scopeRoot yield ENOTDIR on the probe; absence either way.
     return yield* Effect.filter(candidates, (candidate) => Effect.orElseSucceed(fs.exists(candidate), () => false), { concurrency: 8 });
 });
@@ -283,7 +263,7 @@ const _strayYaml = Effect.gen(function* () {
 const _doctor = Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
     const rows = yield* Effect.forEach(
-        Topology.scopes,
+        _scopes,
         (row) =>
             Effect.gen(function* () {
                 const present = yield* fs.exists(row.dir);
@@ -310,7 +290,7 @@ const _doctor = Effect.gen(function* () {
 // Applies declared rows for existing directories, then unsets stray scopeRoot rows; scope `/`, tokens, and the CLI config file stay untouched.
 const _applyScopes = Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
-    const rows = yield* Effect.filter(Topology.scopes, (row) => fs.exists(row.dir), { concurrency: 4 });
+    const rows = yield* Effect.filter(_scopes, (row) => fs.exists(row.dir), { concurrency: 4 });
     yield* Effect.forEach(
         rows,
         (row) => _shell('doppler', 'configure', 'set', `project=${row.project}`, `config=${row.config}`, '--scope', row.dir),
@@ -442,7 +422,7 @@ const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
                                       required: false,
                                   } satisfies ReviewerRepo)
                                 : Effect.map(
-                                      _artifactHash(path.join(Topology.scopeRoot, repository.name), row.artifacts),
+                                      _artifactHash(path.join(_scopeRoot, repository.name), row.artifacts),
                                       (proof): ReviewerRepo => ({
                                           repo: repository.name,
                                           configurationApplicable: proof.applicable,

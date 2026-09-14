@@ -52,12 +52,8 @@
   };
   # Data-lane admissions from the package manifest (CSV -> xan; relational/Parquet -> DuckDB).
   dataRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "data");
-  dotnet-combined = pkgs.dotnetCorePackages.combinePackages [
-    pkgs.dotnet-sdk_8
-    pkgs.dotnet-sdk_9
-    pkgs.dotnet-sdk_10
-  ];
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
+  # First-install only: the vendor installer exits on a present binary, and agy self-updates in the background during its own runs.
   forge-install-antigravity-cli = pkgs.writeShellApplication {
     name = "forge-install-antigravity-cli";
     runtimeInputs = [
@@ -72,13 +68,9 @@
     text = ''
       target_dir="${antigravity-cli-bin-dir}"
       binary="$target_dir/agy"
+      [ -x "$binary" ] && exit 0
       mkdir -p "$target_dir"
       export PATH="$target_dir:$PATH"
-
-      if [ -x "$binary" ]; then
-        "$binary" update >/dev/null || printf '[WARN] agy update failed; keeping existing binary\n' >&2
-        exit 0
-      fi
 
       tmp="$(mktemp -d)"
       trap 'rm -rf "$tmp"' EXIT
@@ -153,41 +145,17 @@ in {
         # --- [JSON]
         jq # Lightweight command-line JSON processor
 
-        # --- [HTML_MARKUP]
-        validator-nu # W3C HTML5/SVG/CSS conformance validator (vnu); backs the html-studio gate
-
         # --- [GENERAL_DATA_TOOLS]
-        git-lfs # Required by Homebrew update-reset and repos with LFS-backed fixtures
         yq-go # YAML/JSON/TOML processor (yq)
-        miller # CSV/TSV/JSON processor
+        miller # CSV/TSV/JSON processor (mlr)
         qsv # High-performance CSV and tabular data toolkit
-        csvlens # Interactive CSV/TSV inspector
-        hurl # HTTP request/assertion runner for API probes
         typos # Fast source and docs typo checker
 
-        # --- [PROTOBUF]
-        protobuf # protoc; buf drives its built-in csharp generator and ships none of its own
-        grpc # grpc_csharp_plugin the C# service row runs (grpc_python_plugin rides the same derivation)
-        grpcurl # gRPC server reflection and request CLI
-        protoc-gen-jsonschema # JSON Schema 2020-12 emitter over the descriptor graph (overlay source-build); buf's `local:` row resolves it bare on PATH
-
         # --- [NET]
-        # Global tools resolve the combined SDK on PATH at runtime (overlay nuget-tool rows), so a project's global.json governs every invocation
-        # and no repo carries a .config/dotnet-tools.json of its own; `dotnet <verb>` reaches each `dotnet-<verb>` through PATH.
-        dotnet-combined
-        csharpier # C# formatter; reads project .csharpierrc/.editorconfig
-        dotnet-ef # EF Core design-time CLI (migrations, scaffold, dbcontext optimize); overlay row rides the EF patch line
-        dotnet-outdated # NuGet dependency currency report and upgrade over Directory.Packages.props
-        dotnet-trace # EventPipe trace collect/convert (speedscope, chromium)
-        dotnet-counters # live EventCounter/Meter monitor for a running process
-        dotnet-dump # process dump capture and SOS analysis
-        dotnet-gcdump # GC heap dump capture and report
-        dotnet-coverage # coverage collect/merge/convert; on Apple Silicon `collect` needs --include-files (static), dynamic instrumentation is x64-only
-        reportgenerator # coverage report renderer over cobertura/lcov (HTML, badges, markdown summaries)
-        dotnet-stryker # mutation testing over the Microsoft.Testing.Platform runner
-        sharpfuzz # coverage-guided fuzzing instrumentation for .NET assemblies
-        ilspycmd # .NET assembly decompiler for NuGet API catalogues (overlay row: release nupkg)
-        nuget-to-json # NuGet package metadata extraction
+        # No SDK and no .NET tool lands here: each repo's mise install owns the SDK its global.json pins, and a repo runs its tools through
+        # `dotnet dnx <id>`. The editor's C# server is the one machine-wide .NET consumer: the nixpkgs package hosts the server DLL on its own
+        # store runtime (useDotnetFromEnv wrapper over dotnetCorePackages.sdk_10_0.runtime), and project loading finds the SDK through `dotnet`
+        # on PATH — the mise shim, last PATH segment.
         roslyn-ls # C# LSP: Microsoft.CodeAnalysis.LanguageServer; the server rows in apps/nvim pass --stdio, --autoLoadProjects, and the log directory
 
         # --- [CLOUD_IAC]
@@ -196,8 +164,5 @@ in {
         pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv
       ]
       ++ dataRoster;
-
-    # DOTNET_ROOT required for Roslyn and other SDK-discovery tools; re-evaluated on every rebuild, store path stays current.
-    sessionVariables.DOTNET_ROOT = "${dotnet-combined}/share/dotnet";
   };
 }

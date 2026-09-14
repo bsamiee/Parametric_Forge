@@ -9,57 +9,6 @@
   manifest = import ../../../../overlays/manifest.nix;
   # Git-lane manifest admissions: git-cliff (changelog), mergiraf (structural merge driver; registration rides git.nix).
   gitRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "git");
-  # 1Password agent socket, HOME-relative; matches the IdentityAgent row in shell-tools/ssh.nix.
-  opAgentSock = "Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-  # Identity/signing/fsmonitor doctor: prints resolved identity, signing rows, op-agent key service, and fsmonitor health.
-  forge-git-doctor = pkgs.writeShellApplication {
-    name = "forge-git-doctor";
-    runtimeInputs = [pkgs.git pkgs.coreutils pkgs.openssh];
-    text = ''
-      case "''${1:-}" in
-        "")
-          printf '%-26s %s <%s>\n' "identity" "$(git config get user.name || echo UNSET)" "$(git config get user.email || echo UNSET)"
-          for key in user.signingkey commit.gpgsign tag.gpgsign gpg.format gpg.ssh.program gpg.ssh.allowedsignersfile; do
-            printf '%-26s %s\n' "$key" "$(git config get "$key" || echo UNSET)"
-          done
-          printf '%-26s %s\n' "gitleaks" "''${GITLEAKS_CONFIG:-UNSET}"
-          # A configured signer that is not executable fails every commit at sign time.
-          signer="$(git config get gpg.ssh.program || true)"
-          if [ -z "$signer" ]; then
-            printf '%-26s %s\n' "signer-binary" "UNSET (signing rows not deployed)"
-          elif [ -x "$signer" ]; then
-            printf '%-26s %s\n' "signer-binary" "executable"
-          else
-            printf '%-26s %s\n' "signer-binary" "MISSING at $signer (1Password.app absent or path stale)"
-          fi
-          # Signing goes live only when the op agent serves the configured key.
-          # Captured, never piped into grep -q: an early-exit grep SIGPIPEs ssh-add under pipefail and falsely reports the key unserved.
-          sock="$HOME/${opAgentSock}"
-          pubkey="$(git config get user.signingkey || true)"
-          pubkey="''${pubkey#key::}"
-          served=""
-          [ -S "$sock" ] && served="$(SSH_AUTH_SOCK="$sock" ssh-add -L 2>/dev/null || true)"
-          if [[ -n "$pubkey" && "$served" == *"$pubkey"* ]]; then
-            printf '%-26s %s\n' "op-agent" "serves signing key"
-          else
-            printf '%-26s %s\n' "op-agent" "signing key NOT served (agent off or vault item missing)"
-          fi
-          if git rev-parse --git-dir >/dev/null 2>&1; then
-            printf '%-26s %s\n' "fsmonitor" "$(git fsmonitor--daemon status 2>&1 || true)"
-          else
-            printf '%-26s %s\n' "fsmonitor" "outside a repository"
-          fi
-          ;;
-        --help | -h)
-          printf 'usage: forge-git-doctor\n'
-          ;;
-        *)
-          printf 'usage: forge-git-doctor\n' >&2
-          exit 2
-          ;;
-      esac
-    '';
-  };
 in {
   imports = [
     ./git.nix
@@ -73,7 +22,6 @@ in {
     [
       pkgs.git-quick-stats
       pkgs.difftastic
-      forge-git-doctor
     ]
     ++ gitRoster;
 }

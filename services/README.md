@@ -6,10 +6,10 @@ External SaaS desired state as typed Pulumi rows: `topology.ts` declares rows, `
 
 | [INDEX] | [PROVIDER]             | [OWNS]                                                                               |
 | :-----: | :--------------------- | :----------------------------------------------------------------------------------- |
-|  [01]   | `@pulumiverse/doppler` | Projects, environments, branch configs, service tokens, change-notification webhooks |
+|  [01]   | `@pulumiverse/doppler` | Projects, environments, branch configs, service tokens                               |
 |  [02]   | `@pulumi/github`       | Repository core and merge hygiene; the ruleset family is dormant                     |
 
-Pins follow the package schema, never registry-page text. `pulumi-command` is admitted as tactical last-mile glue only — it installs with its first real resource, never anticipatorily. Doppler `secretsSync` and service-account rows wait for a real consumer: Actions secret sync is rejected while zero workflows exist, and every webhook row names its live receiver. Cloudflare, Tailscale, Hostinger-bridge, and Cachix Deploy hold behind their annex tripwires.
+Pins follow the package schema, never registry-page text. `pulumi-command` is admitted as tactical last-mile glue only — it installs with its first real resource, never anticipatorily. Doppler `secretsSync`, webhook, and service-account rows wait for a real consumer: Actions secret sync is rejected while zero workflows exist, and no local receiver stands. Cloudflare, Tailscale, Hostinger-bridge, and Cachix Deploy hold behind their annex tripwires.
 
 ## [02]-[GITHUB_ROW_FAMILIES]
 
@@ -20,14 +20,14 @@ Pins follow the package schema, never registry-page text. `pulumi-command` is ad
 |  [03]   | Environments             | Estate deployment rows stay empty; GitHub-managed agent environments remain platform-owned                  |
 |  [04]   | Secret/variable rows     | Empty by ruling: zero workflow consumers; Actions secret sync rejected until a workflow names its exact set |
 |  [05]   | Access bindings          | Empty by ruling: sole-owner repos, account-level SSH identity; no collaborators, teams, or deploy keys      |
-|  [06]   | Surface rows             | Empty by ruling: no owned repo webhooks, Pages, releases, or GitHub-native config files                     |
+|  [06]   | Surface rows             | Empty by ruling: no owned repo hooks, Pages, releases, or GitHub-native config files                            |
 |  [07]   | GitHub App census        | Typed installation IDs and selection modes; browser-custodied because SSH cannot authenticate REST control  |
 
 A family leaves EMPTY the moment a real consumer exists; the row lands in `topology.ts`, never through `gh api`. `gh` is operator/discovery/breakglass only — durable GitHub state mutation through `gh api` is retired.
 
 ## [03]-[CREDENTIAL_CUSTODY]
 
-The driver brokers the Pulumi passphrase and Doppler IaC token from 1Password when ambient values are absent. `GITHUB_TOKEN` resolves from the ambient agent environment or `agent-runtime/dev` through the brokered Doppler credential; webhook signing secrets resolve from their Doppler custody rows at apply time. The universal ED25519 identity owns Git transport and commit signing only. GitHub App installation selection remains browser-custodied because GitHub exposes no SSH-authenticated REST control surface, and the estate admits no broad classic PAT for that boundary.
+The driver brokers the Pulumi passphrase and Doppler IaC token from 1Password when ambient values are absent. `GITHUB_TOKEN` resolves from the ambient agent environment or `agent-runtime/dev` through the brokered Doppler credential. The universal ED25519 identity owns Git transport and commit signing only. GitHub App installation selection remains browser-custodied because GitHub exposes no SSH-authenticated REST control surface, and the estate admits no broad classic PAT for that boundary.
 
 ## [04]-[REVIEWER_MATRIX]
 

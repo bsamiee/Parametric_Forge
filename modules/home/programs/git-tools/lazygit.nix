@@ -54,12 +54,16 @@ in {
       };
 
       git = {
-        # --- [PAGING_DELTA_RENDERS_INSIDE_LAZYGIT_PANES]
+        # --- [DIFF_RENDERER_DELTA_INSIDE_LAZYGIT_PANES]
         # Delta inherits its [delta] git-config options; --paging=never is the in-pane requirement and --navigate does not work inside lazygit.
-        pagers = [
+        # stdinFilter pipes `git diff --color=<colorArg>` through the command; lazygit 0.65 reads git.diffRenderers, and the retired git.pagers
+        # and git.paging spellings trigger its config migration, an in-place rewrite that cannot land on a store symlink.
+        diffRenderers = [
           {
+            type = "stdinFilter";
+            name = "delta";
             colorArg = "always";
-            pager = "delta --paging=never";
+            command = "delta --paging=never";
           }
         ];
 

@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/db-tools.nix
 # ----------------------------------------------------------------------------
-# Database and SQL tooling: clients, linters, analytics, and the terminal front doors (Harlequin IDE, sq source catalog, VisiData tabular workbench).
+# Database and SQL tooling: clients, linters, analytics, and the terminal front doors (Harlequin IDE, VisiData tabular workbench).
 {
   config,
   pkgs,
@@ -64,29 +64,16 @@ in {
   home.packages = with pkgs; [
     sqlite-interactive # Enhanced sqlite3 shell with line editing and metadata helpers
     sqlite-vec # Vector similarity extension for SQLite
-    sqlite-utils # Python-based CLI for SQLite database management
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
     duckdb # In-memory analytics database with SQL interface
     postgres18ForgeTools # PostgreSQL 18 client commands
-    pgroll # Online PostgreSQL schema migration CLI
-    pgloader # Data loading/migration into PostgreSQL
-    pgbadger # PostgreSQL log analyzer
-    parquet-tools # Parquet file inspector
-    minio-client # S3-compatible object storage CLI (mc)
-    s5cmd # Fast S3/object-store batch CLI
-    usql # Universal SQL CLI for cross-database interactive sessions
-    pgcli # Interactive PostgreSQL shell with completion
-    litecli # Interactive SQLite shell with completion
     sqruff # SQL linter/formatter (let-bound house-config fallback wrapper)
     pgformatter # PostgreSQL SQL formatter
-    pg_activity # PostgreSQL activity monitor
-    pgmetrics # PostgreSQL metric collection CLI
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgres-language-server # Postgres LSP; bundles postgrestools
     sqlite-forge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
     (harlequin.override {withBigQueryAdapter = false;}) # Terminal SQL IDE with duckdb/sqlite/postgres adapters
-    sq # Cross-source catalog/query bridge; sq.yml is a self-mutating source catalog (user state), credentials stay in keyring/env
     visidata # Interactive tabular workbench for CSV/parquet/JSON/directory sheets
   ];
 

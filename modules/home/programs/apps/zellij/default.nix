@@ -11,6 +11,8 @@
   pkgs,
   ...
 }: let
+  # Plugin admission rows (wasm url, hash, permissions) are the zellij-plugins lane of overlays/manifest.nix.
+  pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
   # zellij PermissionType vocabulary: typed grant rows seed the permission cache; a 1-row bar pane cannot render the interactive prompt.
   grantVocabulary = [
     "ReadApplicationState"
@@ -36,7 +38,6 @@ in {
     ./config.nix # Nix-generated main config
     ./themes/dracula.nix # Nix-generated Dracula theme
     ./layouts/default.nix # Shell-first layout with floating lazygit
-    ./ops.nix # Workspace graph, layout assets, watch rows, receipts
   ];
 
   options.programs.zellij = {
@@ -61,31 +62,6 @@ in {
           width = "84%";
           height = "86%";
         };
-        # Chord-launched pickers and panels (chords.nix + ops.nix consumers).
-        graph = {
-          x = "18%";
-          y = "12%";
-          width = "64%";
-          height = "72%";
-        };
-        watchPicker = {
-          x = "22%";
-          y = "18%";
-          width = "56%";
-          height = "56%";
-        };
-        watchPanel = {
-          x = "12%";
-          y = "10%";
-          width = "76%";
-          height = "78%";
-        };
-        browse = {
-          x = "20%";
-          y = "15%";
-          width = "60%";
-          height = "70%";
-        };
         # Toggle-dispatcher stub: a deliberately tiny short-lived pane that runs the popup dispatch logic and reaps itself.
         dispatcher = {
           x = "45%";
@@ -96,14 +72,11 @@ in {
       };
     };
 
-    # Permission manifest owner: one row per wasm, exact upstream grant names. Clearing the plugin cache revokes grants —
+    # Permission rows per wasm, exact upstream grant names, projected from the manifest lane. Clearing the plugin cache revokes grants —
     # activation reseeds rows, so a plugin upgrade (cache rebuild) and session resurrection stay distinct.
     pluginGrants = lib.mkOption {
       type = lib.types.attrsOf (lib.types.listOf (lib.types.enum grantVocabulary));
-      default = {
-        "zjstatus.wasm" = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
-        "zellij_forgot.wasm" = ["ReadApplicationState" "ChangeApplicationState"];
-      };
+      default = lib.mapAttrs' (name: row: lib.nameValuePair "${name}.wasm" row.permissions) pluginRows;
     };
   };
 
@@ -126,32 +99,24 @@ in {
         /^}/ { drop = 0 }
       '';
     in ''
-      run /bin/sh -c ${lib.escapeShellArg ''
+      run ${pkgs.runtimeShell} -c ${lib.escapeShellArg ''
         set -eu
         permsFile="${permsFile}"
         tmp="$permsFile.forge-tmp"
-        /bin/mkdir -p "''${permsFile%/*}"
+        ${pkgs.coreutils}/bin/mkdir -p "''${permsFile%/*}"
         if [ -f "$permsFile" ]; then
-          /usr/bin/awk -v dir="${plugDir}/" -v q='"' -f ${pruneAwk} "$permsFile" >"$tmp"
+          ${pkgs.gawk}/bin/awk -v dir="${plugDir}/" -v q='"' -f ${pruneAwk} "$permsFile" >"$tmp"
         else
           : >"$tmp"
         fi
-        /bin/cat ${grantBlocks} >>"$tmp"
-        /bin/mv "$tmp" "$permsFile"
+        ${pkgs.coreutils}/bin/cat ${grantBlocks} >>"$tmp"
+        ${pkgs.coreutils}/bin/mv "$tmp" "$permsFile"
       ''}
     '');
 
     # --- [PLUGIN_INSTALLATION]
-    # Every third-party wasm is file-owned and hash-pinned; aliases resolve through file: locations, so plugin load never depends on the network.
-    xdg.configFile = {
-      "zellij/plugins/zjstatus.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
-        hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
-      };
-      "zellij/plugins/zellij_forgot.wasm".source = pkgs.fetchurl {
-        url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
-        hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
-      };
-    };
+    # Every third-party wasm is file-owned and hash-pinned from its manifest row; aliases resolve through file: locations, so plugin load never
+    # depends on the network.
+    xdg.configFile = lib.mapAttrs' (name: row: lib.nameValuePair "zellij/plugins/${name}.wasm" {source = pkgs.fetchurl {inherit (row) url hash;};}) pluginRows;
   };
 }

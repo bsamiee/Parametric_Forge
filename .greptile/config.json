@@ -50,7 +50,7 @@
         },
         {
             "id": "shell-app-bar",
-            "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh including .claude hooks — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, and embed no repo paths, usernames, or magic values. An '|| true' survives only as a pipefail rail where non-zero exit is an expected data condition (probe no-match, vanished process, torn tail line of a live-appended file); an '|| true' that hides a real failure class is a defect. Literal associative-array subscripts are quoted (shfmt rewrites bare hyphenated keys as arithmetic, corrupting dispatch tables). Receipts trail the action they attest: state= transitions per landed step, result= only after the final step.",
+            "rule": "Shell bodies — packaged via writeShellApplication or standalone .sh — declare runtimeInputs where packaged, use set -euo pipefail, pass shellcheck without directives, and embed no repo paths, usernames, or magic values. An '|| true' survives only as a pipefail rail where non-zero exit is an expected data condition (probe no-match, vanished process, torn tail line of a live-appended file); an '|| true' that hides a real failure class is a defect. Literal associative-array subscripts are quoted (shfmt rewrites bare hyphenated keys as arithmetic, corrupting dispatch tables).",
             "severity": "medium",
             "scope": ["modules/**", "overlays/**", "flake-modules/**", ".claude/**"],
             "enabled": true
@@ -78,7 +78,7 @@
         },
         {
             "id": "seam-drift",
-            "rule": "Cross-module seams are single-owner projections mapped in docs/atlas/interconnection.md. A change touching an owner surface mapped there must land with its consumers verified; a consumer-side literal that re-derives an owner value, a renamed field only one side knows about, or a new kernel hand-rolling an owned grammar (receipt paths, launchd labels, envelope keys) is drift. When an owner gains a new vocabulary family, every consumer projection block is grepped and extended in the same change - a family present in the owner but absent from one projection is an invisible fork.",
+            "rule": "Cross-module seams are single-owner projections mapped in docs/atlas/interconnection.md. A change touching an owner surface mapped there must land with its consumers verified; a consumer-side literal that re-derives an owner value, a renamed field only one side knows about, or a new kernel hand-rolling an owned grammar (launchd labels, envelope keys) is drift. When an owner gains a new vocabulary family, every consumer projection block is grepped and extended in the same change - a family present in the owner but absent from one projection is an invisible fork.",
             "severity": "high",
             "enabled": true,
             "scope": ["**/*.nix", "modules/**", "overlays/**", "flake-modules/**", "hosts/**"]

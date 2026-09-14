@@ -209,13 +209,12 @@
       ["pik" "${st}/pik.nix" "toml" "roles" "bound"]
       ["trippy" "${st}/trippy.nix" "toml" "roles palette" "bound"]
       ["tlrc" "${st}/tlrc.nix" "toml" "palette" "bound"]
-      ["browsers" "${st}/browsers.nix" "toml" "roles" "bound"]
       ["posting" "${st}/posting.nix" "yaml" "roles palette" "bound"]
       ["process-compose" "${st}/process-compose.nix" "yaml" "roles palette" "bound"]
       ["glow" "modules/home/programs/media-tools/glow.nix" "json" "-" "gap"]
-      ["zsh-syntax-highlighting" "modules/home/programs/zsh" "env" "-" "gap"]
-      ["zsh-autosuggestions" "modules/home/programs/zsh" "env" "-" "gap"]
-      ["you-should-use" "modules/home/programs/zsh" "env" "-" "gap"]
+      ["zsh-syntax-highlighting" "modules/home/programs/zsh/options.nix" "env" "roles palette" "bound"]
+      ["zsh-autosuggestions" "modules/home/programs/zsh/options.nix" "env" "roles" "bound"]
+      ["you-should-use" "modules/home/programs/zsh/plugins.nix" "env" "roles" "bound"]
       ["macos-accent" "modules/darwin/settings" "defaults" "-" "gap"]
       ["mermaid-html-studio" ".claude/skills" "css" "-" "gap"]
       ["dock-controlcenter" "system-owned" "-" "-" "defer"]
@@ -446,7 +445,7 @@
       sameDay = "%H:%M";
       dated = "%d/%m %H:%M";
     };
-    # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, register browsers, ops pickers).
+    # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, fzf-tab).
     # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip estate-wide.
     inherit fzfColorRows;
     # Per-command fzf argument vocabulary: colors plus the chrome every generated script carries per invocation (scripts never assume the

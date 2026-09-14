@@ -369,25 +369,22 @@ in {
         // Core Zellij options referencing the shared Parametric Forge theme
 
         // --- [CORE_CONFIGURATION]
+        // Rows differ from zellij's documented defaults. default_shell stays: its default is $SHELL, which WezTerm strips from its own
+        // environment (env-bootstrap) before spawning the server.
         theme                       "dracula"
         default_shell               "zsh"
-        default_layout              "default"
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true
-        mouse_mode                  true
-        pane_frames                 true
         // 0.45 moved the frame default to "titles" (a title line, no gap) and stacks to a pinned list; both pins keep the windowed panes and the
         // classic stack the swap layouts were tuned on.
         pane_frame_style            "full"
         stacked_pane_list           false
-        session_serialization       true
         serialize_pane_viewport     true
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
-        // Host web stance: server off, sharing disabled until reverse-proxy + token-lifecycle rows exist (annex-gated exposure).
-        web_server                  false
+        // Host web stance: sharing disabled until reverse-proxy + token-lifecycle rows exist (annex-gated exposure); the server is off by default.
         web_sharing                 "disabled"
 
         // --- [PLUGIN_ALIASES]

@@ -7,6 +7,7 @@
 # Git identity, op-backed SSH signing, workflow settings, delta + difftastic
 {
   config,
+  host,
   lib,
   pkgs,
   ...
@@ -15,32 +16,31 @@
   inherit (config.forge.theme) roles projections;
   # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
   git = projections.gitHex;
-  # One universal identity; the unified estate key ("Forge SSH Key" in the Private vault) authenticates and signs. op-ssh-sign resolves it by
-  # public key through the 1Password agent seam in shell-tools/1password.nix.
+  # One universal identity; the unified estate key ("Forge SSH Key" in the Private vault, the first hosts/context.nix authorized key without its
+  # comment) authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
     name = "Bardia Samiee";
     email = "b.samiee93@gmail.com";
-    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS";
+    publicKey = lib.concatStringsSep " " (lib.take 2 (lib.splitString " " (lib.head host.ssh.authorizedKeys)));
   };
   # Principal table for local `git log --show-signature` verification.
   trustedPrincipals = [identity.email];
 in {
-  # Git trust material lives beside the git config, not in xdg.nix.
-  xdg.configFile."git/allowed_signers".text =
-    lib.concatMapStrings
-    (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
-    trustedPrincipals;
-
   programs.git = {
     enable = true;
     lfs.enable = true;
 
-    # Darwin alone carries the op agent and signer binary; VPS commits keep signing off instead of faulting.
+    # Darwin alone carries the op agent and signer binary; VPS commits keep signing off instead of faulting. allowedSigners lands the
+    # $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
     signing =
       {
         key = "key::${identity.publicKey}";
         format = "ssh";
         signByDefault = isDarwin;
+        allowedSigners =
+          lib.concatMapStrings
+          (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
+          trustedPrincipals;
       }
       // lib.optionalAttrs isDarwin {
         signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
@@ -133,8 +133,6 @@ in {
       column.ui = "auto"; # Multi-column output for branch/tag lists
       tag.sort = "version:refname"; # Sort tags as semantic versions
 
-      gpg.ssh.allowedSignersFile = "${config.xdg.configHome}/git/allowed_signers";
-
       commit.verbose = true;
       rerere.enabled = true;
       help.autocorrect = "prompt"; # Never auto-runs a guessed command in agent lanes
@@ -145,9 +143,9 @@ in {
     enable = true;
     enableGitIntegration = true;
 
+    # Rows differ from delta's defaults (`delta --show-config` under an empty HOME); the tmTheme rides bat's cache.
     options = {
       navigate = true;
-      light = false;
       side-by-side = true;
 
       # Line numbers: minus/plus lanes carry the owner git-state hues.
@@ -173,7 +171,6 @@ in {
 
       # Commit/blame styles
       commit-decoration-style = "bold box ul";
-      commit-style = "raw";
 
       # Blame configuration
       blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
@@ -198,7 +195,6 @@ in {
 
       # Advanced diff features
       word-diff-regex = "\\w+|[^[:space:]]";
-      max-line-distance = "0.6";
       whitespace-error-style = "magenta reverse";
       relative-paths = true;
       default-language = "txt";
@@ -210,7 +206,6 @@ in {
       wrap-right-prefix-symbol = "…";
 
       # UI elements
-      keep-plus-minus-markers = false;
       syntax-theme = "forge-dracula"; # Owner-generated bat theme; delta reads the bat cache
       true-color = "always";
       zero-style = "dim syntax";

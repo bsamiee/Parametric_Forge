@@ -36,7 +36,7 @@
 
   jq = "${pkgs.jq}/bin/jq";
 
-  # App-owned CLI beside the running Karabiner: lints the exact rule bytes before they reach the live config. Absent only before first cask install.
+  # App-owned CLI beside the running Karabiner (the casks.nix row): lints the exact rule bytes before they reach the live config.
   karabinerCli = "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli";
 
   # Karabiner writes its own GUI and runtime state back into karabiner.json, so the declarative document owns only complex_modifications.rules and the
@@ -89,11 +89,9 @@ in {
     refuse_symlink "${cfgDir}/karabiner.json"
     refuse_symlink "${assetDir}/parametric-forge-chords.json"
 
-    if [ -x ${lib.escapeShellArg karabinerCli} ]; then
-      if ! lint="$(${lib.escapeShellArg karabinerCli} --lint-complex-modifications ${stagedAssetJson} 2>&1)"; then
-        echo "karabiner: chord rules failed lint: $lint" >&2
-        exit 1
-      fi
+    if ! lint="$(${lib.escapeShellArg karabinerCli} --lint-complex-modifications ${stagedAssetJson} 2>&1)"; then
+      echo "karabiner: chord rules failed lint: $lint" >&2
+      exit 1
     fi
 
     ${stageFile "${cfgDir}/karabiner.json" ''

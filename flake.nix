@@ -10,10 +10,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # Slow-scientific pin: the python-overlay env (vtk, openusd, OCCT+VTK, OCP — hours of uncached compile) rides this rev, so a nixpkgs move never
-    # repays that lane. The rev in the URL is the pin — `nix flake update` leaves it — and it advances only by deliberate edit to the locked nixpkgs
-    # rev, with `forge-python-overlay build` paying the rebuild once and pushing it to the forge cache (atlas [09]-[UPDATE_SEQUENCE]).
-    nixpkgs-sci.url = "github:NixOS/nixpkgs/c8f90650c15282fa8656a041bfbbd2403997a9a7";
 
     # No nixpkgs follows: pinning against Forge nixpkgs causes FlakeHub cache misses.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
@@ -47,16 +43,6 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    shell-plugins = {
-      url = "github:1Password/shell-plugins";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = inputs @ {
@@ -78,9 +64,7 @@
 
       flake =
         {
-          # rust-overlay lands ahead of the Forge fold so the rust-toolchain row resolves `rust-bin` from its own `prev`; consumers keep taking
-          # one `overlays.default`.
-          overlays.default = inputs.nixpkgs.lib.composeManyExtensions [inputs.rust-overlay.overlays.default (import ./overlays)];
+          overlays.default = import ./overlays;
         }
         // import ./hosts {inherit inputs nix-darwin home-manager;};
     };

@@ -20,7 +20,7 @@
 
   # --- [ROLES_CHAINS_SURFACES_FEATURES]
   # Roles are the swap surface: one family per role, scripts ordered by shaping preference. Every role family must be a catalog row — a typo
-  # fails at eval, never at runtime in the doctor. The mono chain is the fallback expression CoreText and Chromium renderers read; fontconfig is
+  # fails at eval, never at runtime. The mono chain is the fallback expression CoreText and Chromium renderers read; fontconfig is
   # inert against them. Emoji is system-owned (Apple Color Emoji): a chain member so WezTerm's bundled Noto Color Emoji never wins, never a package row.
   roles = lib.throwIf (!(lib.all (f: catalog ? ${f}) (lib.flatten (lib.attrValues roles')))) "forge.fonts: a role names a family absent from the catalog" roles';
   roles' = {
@@ -111,59 +111,6 @@
        '. + {roles: $roles, chains: $chains, surfaces: $surfaces, features: $features}' \
        ${fontManifest}/families.json >$out
   '';
-
-  # --- [FORGE_FONT_DOCTOR_MANIFEST_VS_OBSERVED_PROOF]
-  # Rows: payload parity against the active generation's font env (the marker is Home Manager's own symlink into the live generation, so it
-  # can never name a stale one; only the copied payload can drift), then per-role CoreText registration proven from the Home Manager payload
-  # path itself (system_profiler enumerates every registered file with its path and enabled/valid state on macOS 26) — a same-named family
-  # registered from elsewhere, such as Adobe's user-owned font store, never satisfies a role row.
-  forgeFontDoctor = pkgs.writeShellApplication {
-    name = "forge-font-doctor";
-    runtimeInputs = [pkgs.jq pkgs.coreutils pkgs.rsync pkgs.gawk];
-    text = ''
-      manifest="''${XDG_CONFIG_HOME:-$HOME/.config}/forge/fonts/manifest.json"
-      payload="$HOME/Library/Fonts/.home-manager-fonts-version"
-      # Admission gate: the manifest crosses once, shape-asserted — a missing or torn projection fails typed, never as a raw jq slurpfile error.
-      jq -e '(.families | type == "object") and (.roles | type == "object")' "$manifest" >/dev/null 2>&1 || {
-        printf 'forge-font-doctor: manifest missing or malformed: %s\n' "$manifest" >&2
-        exit 66
-      }
-      if [[ -f $payload && -d "$(<"$payload")/share/fonts" && -d "$HOME/Library/Fonts/HomeManager" ]]; then
-        changes=$(rsync -acnL --chmod=u+w --delete --out-format='%n' "$(<"$payload")/share/fonts/" "$HOME/Library/Fonts/HomeManager/")
-        if [[ -z $changes ]]; then
-          payload_result=ok
-          payload_detail="native Home Manager font projection matches its generation"
-        else
-          payload_result=fail
-          payload_detail="native Home Manager font projection differs from its generation"
-        fi
-      else
-        payload_result=fail
-        payload_detail="native Home Manager font generation or projection missing"
-      fi
-      # One projection: CoreText enumeration joins the manifest role chain in a single jq pass over the system_profiler snapshot. A dead profiler
-      # degrades typed — an empty snapshot fails every CoreText row, never the kernel. One row stream renders both the human table and --json.
-      snapshot="$(/usr/sbin/system_profiler SPFontsDataType -json 2>/dev/null || true)"
-      [[ -n $snapshot ]] || snapshot='{}'
-      report="$(jq -c --slurpfile m "$manifest" --arg pr "$payload_result" --arg pd "$payload_detail" --arg hm "$HOME/Library/Fonts/HomeManager/" '
-          ([.SPFontsDataType[]? | select((.path | startswith($hm)) and .enabled == "yes" and .valid == "yes")
-            | .typefaces[]? | select(.enabled == "yes" and .valid == "yes") | .family] | unique) as $registered
-          | ($m[0].roles | [to_entries[].value] | flatten | unique) as $families
-          | {schema: "forge-font-doctor/v1",
-             rows: ([{surface: "payload", result: $pr, detail: $pd}]
-               + [$families[] | {
-                   surface: "coretext:\(.)",
-                   result: (if IN($registered[]) then "ok" else "fail" end),
-                   detail: (if IN($registered[]) then "registered from the Home Manager payload" else "not enumerated from ~/Library/Fonts/HomeManager" end)}])}' <<<"$snapshot")"
-      if [[ "''${1:-}" == "--json" ]]; then
-        jq . <<<"$report"
-      else
-        jq -r '.rows[] | [.surface, .result, .detail] | @tsv' <<<"$report" \
-          | awk -F'\t' 'BEGIN{printf "%-34s %-6s %s\n","SURFACE","RESULT","DETAIL"}{printf "%-34s %-6s %s\n",$1,$2,$3}'
-      fi
-      jq -e '.rows | any(.result == "fail") | not' <<<"$report" >/dev/null
-    '';
-  };
 in {
   options.forge.fonts = lib.mkOption {
     type = lib.types.raw;
@@ -192,7 +139,7 @@ in {
   };
 
   config = {
-    home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog) ++ lib.optionals (host.os == "darwin") [forgeFontDoctor];
+    home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
     xdg.configFile."forge/fonts/manifest.json".source = manifestJson;
   };
 }

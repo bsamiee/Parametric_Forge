@@ -78,7 +78,7 @@
     };
   };
 
-  # Store hygiene: timer-driven GC (the Darwin forge-nix-maintenance analogue).
+  # Store hygiene: timer-driven GC (Darwin runs its GC by hand).
   nix.gc = {
     automatic = true;
     dates = "weekly";

@@ -10,13 +10,13 @@
 - Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
 - Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
-- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Documents-99-Github-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas the docs corpus omits.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas the docs corpus omits.
 
 ## [02]-[ESTATE_PROPAGATION]
 
-- `.claude/hooks/` and `.claude/scripts/` are Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`.
+- `.claude/scripts/` is Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`.
 - Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally byte-copy to `~/.codex/skills/`. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
-- The byte-copied set spans `.claude/{skills,hooks,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
+- The byte-copied set spans `.claude/{skills,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
 
 ## [03]-[NIX_SHELL_EXECUTION]
 
@@ -24,7 +24,6 @@
 - `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
 - Nix option and package truth is probed against the locked inputs and module source, never recalled; `CLAUDE.md` [03] carries the division of labor with `search-context7`.
-- `forge-browse tools` renders every packaged estate command with its owner file and its trigger; `~/.config/forge/registers/tools.json` answers the same question without a TTY. Consult that register before hand-rolling a pipeline the estate already packages — `CLAUDE.md` [02] carries the load-bearing triggers for the maintenance rails.
 
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
@@ -42,10 +41,10 @@
 
 ## [06]-[DEPLOY_SEAM]
 
-- Any change to a module, overlay, or launcher lands through `forge-redeploy --switch` and proves through `forge-accept`; an edited `.nix` file without a switch is invisible to the running estate.
+- Any change to a module, overlay, or launcher lands through `forge-redeploy --switch`; an edited `.nix` file without a switch is invisible to the running estate.
 - A file created in the working tree is `git add --intent-to-add`ed before its first build — untracked files are invisible to the git-filtered flake source, and a dirty-tree build silently packages without them.
 - Shared-home module edits prove both hosts before landing: the Darwin system build and `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
-- `forge-doctor` diagnoses a machine that misbehaves after a switch, before anyone theorizes about it: `parity` reads generation-versus-`$HOME` drift, `launchd` reads the declared-versus-live agent census, `path` reads binary provenance and cross-owner shadows. Every lens is read-only, so it opens the investigation rather than closing it.
+- Probe a machine that misbehaves after a switch before theorizing about it: `readlink /run/current-system` reads generation-versus-`$HOME` drift, `launchctl list | grep parametric-forge` the live agent census against the declared set, `which -a <bin>` binary provenance and cross-owner shadows. Every probe is read-only, so it opens the investigation rather than closing it.
 - Forge deploys the generic `vps` NixOS host over SSH (`forge-redeploy --os nixos --host vps --target-host <ssh>`). Its baseline exposes only SSH; workloads and ingress require explicit owners.
 
 ## [07]-[REVIEW_GUIDELINES]

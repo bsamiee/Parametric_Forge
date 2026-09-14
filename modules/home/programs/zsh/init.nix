@@ -4,11 +4,12 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
-# Interactive init: session secrets, tool widget wiring, final widget ordering.
+# Interactive init rows outside a tool's own Home Manager integration: session secrets, fzf's completion hooks, the post-atuin suggestion
+# override, mise activation last, and the transient prompt. Tool inits ride their HM orders: compinit 570, fzf-tab 580, autosuggestions 700,
+# zoxide 851, fzf 910, plugins 950, starship/atuin/carapace/nix-index 1000, aliases 1100, syntax highlighting 1200.
 {
   config,
   lib,
-  pkgs,
   ...
 }: {
   programs.zsh.initContent = lib.mkMerge [
@@ -17,6 +18,7 @@
       [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
 
       # --- [FZF_COMPGEN_PATH_DIR]
+      # fzf's documented hooks for ** completion: fd honors the ignore estate where fzf's built-in walker would not.
       _fzf_compgen_path() {
         fd --hidden --follow --exclude .git . "$1"
       }
@@ -24,33 +26,12 @@
       _fzf_compgen_dir() {
         fd --type d --hidden --follow --exclude .git . "$1"
       }
-
-      # --- [TOOL_INTEGRATION]
-      # Atuin's generated init calls `atuin` by bare name; the alias pins it to the store path. Zoxide needs no twin — its HM integration
-      # emits full-path init itself. batman MANPAGER/MANROFFOPT are static session-env rows, so no per-shell export-env fork.
-      alias atuin="${pkgs.atuin}/bin/atuin"
-
     '')
 
-    (lib.mkOrder 650 ''
-      # --- [FZF_KEYBINDINGS]
-      # FZF restores the read-only 'zle' option and emits harmless errors, so stderr is suppressed; keybindings still register. fzf captures the
-      # fzf-tab ^I widget as fzf_default_completion, so plain Tab falls through to fzf-tab and the ** trigger keeps fzf path completion.
-      if [[ $options[zle] = on ]]; then
-        source <(fzf --zsh) 2>/dev/null
-      fi
-    '')
-
-    (lib.mkOrder 720 ''
-      # --- [ATUIN_HISTORY_INIT]
-      if [[ $options[zle] = on ]]; then
-        eval "$(${pkgs.atuin}/bin/atuin init zsh)"
-      fi
-    '')
-
-    (lib.mkOrder 730 ''
-      # Atuin remains the Ctrl-R/up-arrow history owner; inline suggestions use zsh-native synchronous history after every widget wrapper sources.
-      typeset -ga ZSH_AUTOSUGGEST_STRATEGY
+    (lib.mkOrder 1010 ''
+      # --- [SUGGESTION_SOURCE]
+      # `atuin init zsh` prepends its own strategy to ZSH_AUTOSUGGEST_STRATEGY and documents overriding it after the init line: Atuin owns
+      # Ctrl-R and up-arrow, inline suggestions stay on zsh's native history; async fetching is disabled the documented way, after the plugin sources.
       ZSH_AUTOSUGGEST_STRATEGY=(history)
       unset ZSH_AUTOSUGGEST_USE_ASYNC
     '')
@@ -85,6 +66,13 @@
         add-zsh-hook precmd _forge-transient-save
         add-zle-hook-widget zle-line-finish _forge-transient-apply
       fi
+    '')
+
+    (lib.mkOrder 2000 ''
+      # --- [MISE_ACTIVATE]
+      # Last line of the interactive config: mise documents that PATH edits made after activation outrank the tools it manages
+      # (settings, activate_aggressive), so nothing follows this hook.
+      eval "$(${lib.getExe config.programs.mise.package} activate zsh)"
     '')
   ];
 }

@@ -9,10 +9,7 @@
   imports = [./nixd.nix];
 
   # Command-not-found with the pre-built package database; comma rides the same database.
-  programs.nix-index = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+  programs.nix-index.enable = true;
   programs.nix-index-database.comma.enable = true;
 
   home.packages = [

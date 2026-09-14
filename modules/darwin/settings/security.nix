@@ -4,14 +4,8 @@
 # License       : MIT
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
-# Security, PAM, certificates, and firewall configuration for Darwin.
-{
-  lib,
-  config,
-  ...
-}: let
-  inherit (lib) mkDefault;
-in {
+# Developer-tool authorization, Touch ID for sudo, and the sudoers allowlist for Darwin.
+{config, ...}: {
   # Debugger/developer-tool authorization without per-launch prompts: developer mode plus _developer membership are idempotent root activations. TCC
   # stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
   system.activationScripts.postActivation.text = ''
@@ -21,34 +15,8 @@ in {
       || /usr/sbin/dseditgroup -o edit -t user -a ${config.system.primaryUser} _developer
   '';
 
-  # --- [SECURITY_CONFIGURATION]
-  security = {
-    # --- [PAM_AUTHENTICATION]
-    pam.services.sudo_local = {
-      enable = mkDefault true;
-      touchIdAuth = mkDefault true;
-      watchIdAuth = mkDefault false;
-      reattach = mkDefault false;
-    };
-    # --- [CERTIFICATE_MANAGEMENT]
-    pki = {
-      installCACerts = mkDefault true;
-      certificateFiles = [];
-      certificates = [];
-      caCertificateBlacklist = [];
-    };
-  };
-  # --- [SYSTEM_SECURITY_CONFIGURATION]
-  # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative), and Siri/Apple
-  # Intelligence disablement is Settings-owned on Tahoe — neither surface carries a truthful defaults row.
-  system.defaults = {
-    # --- [APPLICATION_SECURITY]
-    CustomUserPreferences = {
-      "com.apple.dt.Xcode" = {
-        DVTTextEditorTrimTrailingWhitespace = mkDefault false;
-      };
-    };
-  };
+  # --- [PAM_AUTHENTICATION]
+  security.pam.services.sudo_local.touchIdAuth = true;
   # --- [SUDOERS_CONFIGURATION]
   security.sudo = {
     extraConfig = ''
@@ -76,7 +44,7 @@ in {
       %admin ALL=(root) NOPASSWD: ^/nix/store/[a-z0-9]{32}-darwin-system-[^/]+/sw/bin/darwin-rebuild$ activate
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env ^-p /nix/var/nix/profiles/system --set /nix/store/[a-z0-9]{32}-darwin-system-[^[:space:]/]+$
 
-      # Maintenance rail: current-only system-generation policy (exact args)
+      # Generation retention (exact args): agents trim the system profile by hand after a switch lands
       %admin ALL=(root) NOPASSWD: /nix/var/nix/profiles/default/bin/nix-env -p /nix/var/nix/profiles/system --delete-generations old
 
       # Determinate custom-config adoption: move the installer-written real file aside so activation's /etc collision guard passes (module owns the symlink)

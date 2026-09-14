@@ -338,7 +338,7 @@ banned-module-level-imports = [
 "typing.TypeVarTuple".msg = "Use PEP 695 variadic type parameters — TypeVarTuple is legacy syntax."
 "typing.cast".msg = "Use TypeGuard/TypeIs, validated adapters, or pattern narrowing; cast erases checker evidence."
 "typing.NamedTuple".msg = "Use pydantic BaseModel(frozen=True) or msgspec.Struct(frozen=True) — NamedTuple lacks runtime validation."
-"typing.no_type_check".msg = "Rasm type gates are mandatory — use a typed boundary adapter or refine the signature instead."
+"typing.no_type_check".msg = "Type gates are mandatory, use a typed boundary adapter or refine the signature."
 "typing.Optional".msg = "Use Result/Option for fallibility; use T | None only for non-fallible absence."
 "typing_extensions.Any".msg = "Use precise type parameters or object at validated boundaries; Any requires explicit boundary justification."
 "typing_extensions.cast".msg = "Use TypeGuard/TypeIs, validated adapters, or pattern narrowing; cast erases checker evidence."

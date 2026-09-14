@@ -11,7 +11,7 @@
   lib,
   ...
 }: let
-  flakeRoot = "${host.user.home}/Documents/99.Github/Parametric_Forge";
+  flakeRoot = "${host.user.home}/Developer/Parametric_Forge";
   # git+file:// forces the git-tree fetcher (never walks .git), so nixd's upstream fetchers skip the core.fsmonitor
   # unix socket at .git/fsmonitor--daemon.ipc that a plain-path copy would choke on.
   flake = ''(builtins.getFlake "git+file://${flakeRoot}")'';

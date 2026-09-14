@@ -2,7 +2,7 @@
     "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
     "name": "nixd-lsp",
     "displayName": "nixd (Nix)",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "nixd language server for Nix (.nix)",
     "author": {
         "name": "Bardia Samiee"

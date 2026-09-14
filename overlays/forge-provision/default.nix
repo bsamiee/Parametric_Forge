@@ -17,6 +17,7 @@
   lsof,
   runCommand,
   sqlite-forge,
+  unixtools,
   writeShellApplication,
 }: let
   src = lib.fileset.toSource {
@@ -41,6 +42,7 @@
       jq
       lsof
       sqlite-forge
+      unixtools.ps
     ];
     bashOptions = ["errexit" "errtrace" "nounset" "pipefail"];
     meta = {

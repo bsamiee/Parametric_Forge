@@ -11,7 +11,7 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so forge-brew-maintenance refreshes it with --greedy-latest.
+    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so `brew upgrade --greedy-latest wezterm@nightly` refreshes it.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
@@ -52,11 +52,11 @@ _: {
     "scrivener" # Writing tool
 
     # --- [QUICKLOOK_PLUGINS]
-    # Plugins below use the App Extension API (Sequoia-compatible); legacy .qlgenerator plugins are dead — Sequoia removed support entirely.
-    # .ts files are system-reserved (MPEG-2 UTI), so no QL plugin can override them.
+    # Plugins below use the App Extension API; legacy .qlgenerator plugins are dead since Sequoia. Each app registers its extension on
+    # its first launch, and .ts files are system-reserved (MPEG-2 UTI), so no QL plugin can override them.
     "syntax-highlight" # Source code: 150+ languages (py,js,cs,go,rust,nix,yaml,json,dockerfile,lua,etc.)
     "qlmarkdown" # Rendered markdown preview with GitHub-style formatting
-    "betterzip" # Archive preview
+    "betterzip" # Archive preview, Finder extension, and the betterzip command-line tool
     "suspicious-package" # .pkg inspector
 
     # --- [FONTS]
@@ -64,13 +64,9 @@ _: {
     "font-sf-arabic" # Apple proprietary
 
     # --- [ADOBE_CREATIVE_SUITE]
-    {
-      name = "bsamiee/forge/aescripts-zxp-installer";
-      trusted = true;
-    }
+    "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
-    "hammerspoon" # Lua automation
     "karabiner-elements" # Keyboard remapping
   ];
 }

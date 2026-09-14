@@ -14,24 +14,24 @@ Forge is the machine owner — cross-repo law. When a shell wrapper, PATH entry,
 |  [02]   | `config.forge.chords`       | `modules/home/programs/apps/chords.nix` | Key/mod change couples leader and popup bytes.                 |
 |  [03]   | `config.forge.ssh.*`        | `shell-tools/ssh.nix`                   | A host row fans to native SSH, WezTerm, and Yazi clients.      |
 |  [04]   | `config.forge.ignoreEstate` | `shell-tools/fd.nix`                    | One ignore taxonomy renders for every search/watch consumer.   |
-|  [05]   | `config.forge.registers.*`  | `aliases/`, `shell-tools/browsers.nix`  | Register rows project to `forge/registers/*.json` for pickers. |
+|  [05]   | `config.forge.registers.*`  | `aliases/`                              | One typed alias register folds every row into the zsh surface. |
 |  [06]   | `config.forge.fonts`        | `modules/home/fonts.nix`                | Font identity drives terminal, editor, and glyph render seams. |
 |  [07]   | `config.forge.lsp`          | `modules/home/programs/apps/nvim/`      | Server rows shared across editor surfaces.                     |
 
 - `config.forge.theme` shape: `{ palette, roles, ansi16, syntaxScopes, projections; }`
 - `config.forge.chords` shape: `{ layers, modes, register, nvim.rows, wezterm.rows, karabiner.rules, zellij.{ ... }; }`
-- `config.forge.chords` is defined under the darwin-gated `apps/` import: a both-OS consumer reads it only through an `or` default (`browsers.nix` chords register).
+- `config.forge.chords` is defined under the darwin-gated `apps/` import: a both-OS consumer reads it only through an `or` default.
 - `config.forge.ssh` shape: `{ hosts.<name>.{ name, user, hostName, aliases }, identityAgent; }`. `identityAgent` is the 1Password socket every remote client pins.
 
 ## [02]-[THEME_PROJECTION_WEB]
 
 `theme.nix` owns the palette as `mkColor`-lifted rows (uppercase hex with derived `r g b triple csv rgba`) and the semantic layers built on them: `roles`, `ansi16`, `syntaxScopes`, the tmTheme, and `projections` (`luaPalette`, `blameRamp`). It also writes the external artifacts `forge/theme/palette.json` and `forge/theme/forge-dracula.tmTheme`.
 
-Consumers never restate hex. WezTerm receives `projections.luaPalette` as `wezterm/palette.lua` and maps ANSI in `appearance.lua`; Zellij status rows and the component theme read palette tokens; Yazi points syntect at the owner tmTheme; Neovim writes `forge/palette.lua` and remaps Dracula highlights; bat sources the owner tmTheme and delta reuses the bat cache theme and the owner `blameRamp`. Tools needing color read the resolved option or an owner-emitted artifact — a private palette is the fork the eval-time single owner exists to prevent.
+Consumers never restate hex. WezTerm receives `projections.luaPalette` as a row of the generated `wezterm/rows.lua`, which `deck.lua` interprets for its ANSI map; Zellij status rows and the component theme read palette tokens; Yazi points syntect at the owner tmTheme; Neovim writes `forge/palette.lua` and remaps Dracula highlights; bat sources the owner tmTheme and delta reuses the bat cache theme and the owner `blameRamp`. Tools needing color read the resolved option or an owner-emitted artifact — a private palette is the fork the eval-time single owner exists to prevent.
 
 ## [03]-[CHORD_PROJECTION_WEB]
 
-`chords.nix` owns the physical layer grammar (Hyper, Super, caps dual-role), the mode table, the bind-row schema, and the render logic that emits `karabiner.rules` and the `zellij.*` KDL fragments. Karabiner reads `karabiner.rules` and writes active `karabiner.json`; Zellij reads `layers`/`modes`, renders hint ribbons from `zellij.ribbon`, and injects generated bind and entry KDL. Yazi's popup runtime reads `zellij.ids.yaziToggle`, and the acceptance harness converts `{key, mods}` to kitty CSI-u bytes. WezTerm reads `config.forge.chords.wezterm.rows` for its native left-Command layer; the rendered `keys.lua` and the chord owner's discoverability rows derive from the same rows.
+`chords.nix` owns the physical layer grammar (Hyper, Super, caps dual-role), the mode table, the bind-row schema, and the render logic that emits `karabiner.rules` and the `zellij.*` KDL fragments. Karabiner reads `karabiner.rules` and writes active `karabiner.json`; Zellij reads `layers`/`modes`, renders hint ribbons from `zellij.ribbon`, and injects generated bind and entry KDL. Yazi's popup runtime reads `zellij.ids.yaziToggle`, and id-tagged rows export `{key, mods}` as kitty CSI-u bitmasks for runtime injection. WezTerm reads `config.forge.chords.wezterm.rows` for its native left-Command layer; the key rows in the generated `rows.lua` and the chord owner's discoverability rows derive from the same rows.
 
 ## [04]-[HOST_CONTEXT_FACTORY]
 
@@ -41,7 +41,7 @@ Consumers never restate hex. WezTerm receives `projections.luaPalette` as `wezte
 
 `modules/common/toolchain-env.nix` (`forgeToolchainEnvFor`) is the single source of PATH vectors, scientific-env exports, and browser path. Its output is consumed by the shell environment, zsh config, the Darwin GUI launchd env (`darwin/settings/system.nix`), and WezTerm. A bad PATH vector makes shells, launchd agents, and GUI-launched subprocesses resolve different tools — the bug class where a command works in the terminal and fails under a GUI-launched agent.
 
-A sibling context-dispatch seam lives in `languages/python-tools.nix`: `python`, `python3`, `ruff`, `ty`, and `mypy` are project-first shims — inside a project root they exec the project's materialized `.venv` (or `$UV_PROJECT_ENVIRONMENT`), otherwise the store binary — so the interpreter a bare `python` binds to is a function of the caller's directory, not a fixed PATH entry. The shims never invoke `uv run`: an unsynced project falls through to the store binary, because an implicit `uv run` deadlocks against an external uv holding the project lock (uv sync's interpreter discovery execs the shim) and materializes the full dependency set as a side effect of incidental probes. Provisioning is explicit via `uv sync`. `FORGE_PYTHON_SHIM_BYPASS=1` forces the store interpreter when a shim resolves the wrong environment in a sibling repo.
+`languages/python-tools.nix` installs the machine interpreter and tools as plain PATH entries: `python3`, `ruff`, `ty`, and `mypy` resolve to the store binary from any directory. Inside a project, `mise activate` sources the `.venv` its `uv.lock` names (`python.uv_venv_auto`) ahead of them, so the project's interpreter and tools come from its tree, and a non-interactive caller reaches the same environment through `uv run`.
 
 ## [06]-[OWNER_TABLES]
 
@@ -66,10 +66,7 @@ MCP servers carry no Forge row: each project registers its servers with their up
 
 Beyond eval-time option hinges, these contracts bind processes at runtime across module boundaries; each side is edited only with the other in view.
 
-- [01]-[RECEIPTS]: every `forge-*` kernel persists TSV receipts to `~/Library/Logs/forge-<name>.receipts.log`, override key `FORGE_<NAME>_RECEIPT_LOG` (grammar minted by the `forge-tools/lib.nix` builder); `forge-receipts` discovers sources from `config.forge.registers.receiptSources` (rows carry `grain` — `kv` TSV or `json` JSONL). A new kernel that hand-rolls its receipt path is an `--audit` FAIL — invisible to browser and query plane alike.
-    - Queries run live on the plane: `--sql`/`--verb` run DuckDB over the normalized event spine, and `--audit` diffs registry rows against on-disk reality and fails on unregistered emitters.
-- [02]-[TERMINAL_MESH]: `apps/chords.nix` bind rows invoke `forge-yazi.sh toggle` (`scripts/terminal.nix`); the yazi opener invokes `forge-edit.sh %s`; the editor registry publishes `editor-tab-*.tsv` rows the dispatcher globs; `forge-terminal-accept.sh` asserts the whole mesh. A rename on any edge is a four-file edit proven by the acceptance run.
-- [03]-[XDG_PROJECTIONS]: agent-facing artifacts live at fixed projection paths — `~/.config/forge/registers/*.json` (browsers), `~/.config/forge/theme/palette.json` + `forge-dracula.tmTheme` (theme), `~/.local/state/forge/` (frozen zellij layout assets), `~/.cache/forge*/` (launcher prefixes). Consumers hardcode these paths by contract; moving one is an estate-wide grep, not a local edit.
-- [04]-[QA_HOOKS]: `flake-modules/qa.nix` invokes `fmt --self-test`/`--check` from `scripts/fmt.nix`; treefmt lanes and `fmt` share formatter ownership per extension — a file class both claim gets formatted twice, and a placeholder-bearing template neither may own (the `.sql.tpl` scar).
-- [05]-[SESSION_FABRIC]: one workspace row (`wezterm/default.nix`) carries picker entry, zellij session identity, cwd, float policy, and warm posture; `forge-terminal-accept.sh` R15/R16 assert the envelope.
-    - `deck.lua session_args` and `forge-workspace` both resolve frozen `~/.local/state/forge/zellij-layouts/<slug>.kdl` assets (`forge-zellij layout record`) before the default layout, and `forge-workspace --json` lifecycle and `forge-zellij state` (schema v2: classification, `serialized_ts`, `last` fabric receipt) parse the same `list-sessions` EXITED text.
+- [01]-[TERMINAL_MESH]: `apps/chords.nix` bind rows invoke `forge-yazi.sh toggle` (`scripts/terminal.nix`); the yazi opener invokes `forge-edit.sh %s`; the editor registry publishes `editor-tab-*.tsv` rows the dispatcher globs. Every edge rename lands across all of those owners in the same change.
+- [02]-[XDG_PROJECTIONS]: agent-facing artifacts live at fixed projection paths — `~/.config/forge/theme/palette.json` and `forge-dracula.tmTheme` carry the theme. Consumers hardcode these paths by contract; moving one is an estate-wide grep, not a local edit.
+- [03]-[QA_HOOKS]: `flake-modules/qa.nix` invokes `fmt --self-test`/`--check` from `scripts/fmt.nix`; treefmt lanes and `fmt` share formatter ownership per extension — a file class both claim gets formatted twice, and a placeholder-bearing template neither may own (the `.sql.tpl` scar).
+- [04]-[SESSION_FABRIC]: one workspace row (`wezterm/default.nix`) carries picker entry, zellij session identity, cwd, and float policy; `deck.lua` reads the row for its native workspace picker and derives the session arguments from it.

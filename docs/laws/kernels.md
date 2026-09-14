@@ -22,9 +22,9 @@ Machine-surface law extending `design.md` onto shell kernels: `writeShellApplica
 - Rejected: Inline paths, unquoted command strings, user or host literals, pattern-matched absolute paths.
 - Example: `mapfile -t args < <(jq -r '.args[]' "$row_file")`
 
-[RECEIPTS_AND_LOCKS]:
-- Law: State touches append one typed receipt row each — timestamp, command, target, derived identity, result — and mutation runs under one lock primitive with row-selected scope, timeout, and stale-owner recovery.
-- Rejected: Generic logs as proof, prose summaries as results, opportunistic lock files, per-command lock code, lockless mutation beside locked mutation.
+[LOCK_DISCIPLINE]:
+- Law: Mutation runs under one lock primitive with row-selected scope, timeout, and stale-owner recovery.
+- Rejected: Opportunistic lock files, per-command lock code, lockless mutation beside locked mutation.
 - Example: `exec {lock_fd}>"$lock"; flock -w "$wait_s" "$lock_fd"`
 
 [ADMITTED_SUBPROCESS]:
@@ -57,7 +57,3 @@ Machine-surface law extending `design.md` onto shell kernels: `writeShellApplica
 - Rejected: An `|| true` on a mutation or one that conflates a real failure class with the expected-empty case, an unrailed probe killing the kernel under `set -e` + `pipefail`, retry loops papering over a torn read the rail admits cleanly.
 - Example: `last="$(tail -1 "$feed" 2>/dev/null || true)"`
 
-[DUAL_RECEIPTS]:
-- Law: Mutating rails append a human TSV row and a JSONL sibling with identical envelope keys — `ts` and `surface` always, `result` on terminal receipts, `state` on transition receipts — and numerics enter the envelope as JSON numbers; doctor commands emit one typed row stream that renders both the human table and `--json`. A receipt trails the action it attests: multi-step rails emit `state=` transitions per landed step and `result=` only after the final step — a receipt written before its action is a standing lie under any downstream failure.
-- Rejected: Human-only receipts on mutation, JSON shapes that differ from the TSV fields, quoted-string numerics, per-command envelope dialects, presentation logic forked from probe logic.
-- Example: `jq -cn --arg ts "$ts" --arg surface "shape" --argjson rc "$rc" '{ts:$ts,surface:$surface,rc:$rc}' >>"${receipts%.log}.jsonl"`

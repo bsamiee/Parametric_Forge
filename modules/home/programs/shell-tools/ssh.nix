@@ -17,11 +17,11 @@
   hostContext = import ../../../../hosts/context.nix;
   inherit (hostContext) vps;
   sshHosts = {
-    vps = {
-      name = "vps";
+    ${vps.name} = {
+      inherit (vps) name;
       user = vps.user.name;
       inherit (vps.ssh) hostName;
-      aliases = ["vps"];
+      aliases = [vps.name];
     };
   };
   knownHostsFile = pkgs.writeText "forge-known-hosts" (lib.concatLines [

@@ -4,7 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/mac-tools/default-applications.nix
 # ----------------------------------------------------------------------------
-# One native association owner. Exact installed bundle identities and paths are checked before and after changes.
+# One native association owner. Exact installed bundle identities and paths are checked before and after changes. A row names the app that
+# opens the type: LaunchServices takes an app that never claims the type (Rhino for the CAD formats it imports) and an extension with no
+# system type (a dynamic UTI such as .sln) alike, and utiluti raises no per-type consent dialog on macOS 26.
 {
   config,
   lib,
@@ -56,40 +58,103 @@
     ] [])
     (app "com.adobe.Acrobat.Pro" "/Applications/Adobe Acrobat DC/Adobe Acrobat.app" ["pdf" "fdf" "xfdf" "pdx" "sequ"] [])
     (app "com.adobe.distiller" "/Applications/Adobe Acrobat DC/Acrobat Distiller.app" ["joboptions"] [])
-    (app "com.criminalbird.typeface.beta" "/Applications/Typeface-beta.app" ["otf" "ttf" "ttc" "otc" "woff" "woff2" "typeface-license" "typeface-backup"] [])
+    (app "com.criminalbird.typeface.beta" "/Applications/Typeface-beta.app" ["otf" "ttf" "ttc" "otc" "woff" "woff2" "dfont" "typeface-license" "typeface-backup"] [])
     (app "com.aescripts.ZXP-Installer" "/Applications/ZXP Installer.app" ["zxp" "ccx"] [])
     (app "com.apple.ColorSyncUtility" "/System/Applications/Utilities/ColorSync Utility.app" ["icc" "icm"] [])
     # .typ now resolves to its own dynamic type; never assign Oracle's older shared SQL declaration. .ts is MPEG transport; .vg.json shares JSON.
     # Do not broaden script editing into generic JSON/XML/data, or assign ambiguous Photoshop/CAD preset extensions.
-    (app "com.microsoft.VSCode" "/Applications/Visual Studio Code.app" ["txt" "md" "yaml" "yml" "nix" "lua" "py" "js" "jsx" "idjs" "psjs" "typ" "rs" "sh" "sql" "csv" "log"] [])
+    (app "com.microsoft.VSCode" "/Applications/Visual Studio Code.app" [
+      "txt"
+      "md"
+      "mdx"
+      "yaml"
+      "yml"
+      "nix"
+      "lua"
+      "py"
+      "js"
+      "jsx"
+      "idjs"
+      "psjs"
+      "typ"
+      "rs"
+      "sh"
+      "zsh"
+      "bash"
+      "rb"
+      "php"
+      "pl"
+      "c"
+      "h"
+      "cpp"
+      "hpp"
+      "kt"
+      "css"
+      "jsonc"
+      "json5"
+      "conf"
+      "bib"
+      "env"
+      "sql"
+      "csv"
+      "tsv"
+      "log"
+      "sln"
+      "slnx"
+      "props"
+      "targets"
+      "resolved"
+    ] [])
     (app "com.apple.Preview" "/System/Applications/Preview.app" ["jpg" "jpeg" "png" "gif" "webp" "heic" "heif" "avif" "jxl"] [])
     # lrcat-data is a catalog companion with role None, not a separately openable catalog.
     (app "com.adobe.LightroomClassicCC7" "/Applications/Adobe Lightroom Classic/Adobe Lightroom Classic.app" ["lrcat"] [])
-    (app "com.mcneel.rhinoceros.9" "/Applications/RhinoBETA.app" ["stl"] [])
+    # Rhino's own document types plus the formats its Import command reads (docs.mcneel.com/rhino/9 file formats index); dae, sat, and x3d
+    # are export-only there and stay with the system viewers.
+    (app "com.mcneel.rhinoceros.9" "/Applications/RhinoBETA.app" ["stl" "dwg" "dxf" "obj" "fbx" "ply" "step" "stp" "iges" "igs" "skp" "3ds" "wrl" "3mf" "dgn"] [])
+    # BetterZip's Archive Types tab claims the formats it lists; these three resolve through system type identifiers the tab cannot take
+    # (com.sun.web-application-archive, org.gnu.gnu-tar-archive, com.microsoft.cab). ePub stays unchecked there so calibre keeps the type.
+    (app "com.macitbetter.betterzip" "/Applications/BetterZip.app" ["war" "gtar" "cab"] [])
+    (app "net.kovidgoyal.calibre" "/Applications/calibre.app" ["epub"] [])
+    # The one media player Forge installs, projected by Home Manager as an app bundle.
+    (app "io.mpv" "${config.home.homeDirectory}/Applications/Home Manager Apps/mpv.app" [
+      "mp3"
+      "m4a"
+      "aac"
+      "wav"
+      "aiff"
+      "aif"
+      "caf"
+      "ogg"
+      "opus"
+      "mid"
+      "midi"
+      "mp4"
+      "m4v"
+      "mov"
+      "avi"
+      "wmv"
+      "mpg"
+      "mpeg"
+      "mts"
+      "m2ts"
+      "webm"
+    ] [])
+    (app "com.github.wez.wezterm" "/Applications/WezTerm.app" ["command" "tool"] [])
     (app "company.thebrowser.Browser" "/Applications/Arc.app" [] ["http" "ftp"])
     (app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"])
   ];
   roster = pkgs.writeText "forge-default-applications.json" (builtins.toJSON applications);
-  receipts = import ../../../common/receipts.nix;
   command = pkgs.writeShellApplication {
     name = "forge-default-applications";
-    runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.utiluti];
+    runtimeInputs = [pkgs.coreutils pkgs.flock pkgs.jq pkgs.utiluti];
     text = ''
       mode="''${1:-apply}"
       [[ $# -le 1 && ( $mode == apply || $mode == check ) ]] || { echo 'usage: forge-default-applications [apply|check]' >&2; exit 2; }
-      receipt_log=${lib.escapeShellArg "${config.home.homeDirectory}/Library/Logs/forge-default-applications.receipts.log"}
-      receipt_surface="forge-default-applications"
-      ${receipts.fold}
       changed=0
       checked=0
       skipped=0
       failures=0
       declare -A skip=()
-      finish() {
-        local result=$1
-        append_receipt "$(printf 'verb=%s\tchecked=%s\tchanged=%s\tskipped=%s\tfailures=%s\tresult=%s' "$mode" "$checked" "$changed" "$skipped" "$failures" "$result")"
-      }
-      trap 'association_status=$?; if (( association_status == 0 )); then finish ok; else finish failed; fi' EXIT
       # Preflight every destination before changing any handler. Nested Adobe helpers are part of the intended bundle. An application that is
       # not installed is a skipped row under apply — the activation runs under set -e and a renamed Beta bundle must never abort a switch —
       # and a hard failure under check, where the operator asked for the full roster.

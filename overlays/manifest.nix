@@ -5,7 +5,7 @@
 # Path          : overlays/manifest.nix
 # ----------------------------------------------------------------------------
 # Package-admission policy registry: rows own provenance, version policy, generated pin references, license, patch family, cache class, update
-# engine, retention, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
+# engine, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
 # `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
 let
@@ -88,7 +88,6 @@ let
       patchFamily = "source-substitute";
       cacheClass = "source-built-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay =
         if overlayReason == null
         then "new"
@@ -99,39 +98,17 @@ let
       then {}
       else {inherit overlayReason;}
     );
-  # NuGet global-tool admission: one generated pin per registry id carries the newest stable release and the nupkg hash; the nupkg is an immutable
-  # archive NuGet serves byte-identical from the flat container and the v2 endpoint, so the pin's hash proves the builder's fetch. The attr name
-  # is the installed executable; `nugetId` is the registry id the builder installs.
-  nugetTool = nugetId: license: homepage: description: let
-    pin = "nuget-${builtins.replaceStrings ["."] ["-"] nugetId}"; # a dotted id would nest as a TOML table, so the pin name flattens it
-  in {
-    upstream = "nuget:${nugetId}";
-    inherit nugetId license homepage description;
-    version = generatedPins.${pin}.version;
-    versionPolicy = "fast";
-    sourceKind = "nuget-tool";
-    assets.any = pinAsset pin;
-    patchFamily = "none";
-    cacheClass = "binary-only-local";
-    updateEngine = "nvfetcher";
-    retention = "git-history";
-    projection.overlay = "new";
-    consumers = ["dev-tools"];
-  };
   v = {
     openstudio = "3.11.0";
     energyplus = "26.1.0";
-    gcloud = "575.0.1";
-    ruff = "0.16.2";
-    rust = "1.97.1";
     osBuild = "241b8abb4d";
     epBuild = "6f2e40d102";
   };
 in rec {
   vocabulary = {
-    sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "nuget-tool" "extension-bundle" "nixpkgs" "repo"];
-    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "npm-tool-strip" "source-substitute"];
-    cacheClasses = ["upstream-cached" "forge-cache-hit" "source-built-local" "binary-only-local" "platform-unsupported"];
+    sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "nixpkgs" "repo"];
+    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "source-substitute"];
+    cacheClasses = ["forge-cache-hit" "source-built-local" "binary-only-local"];
     updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
     overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
@@ -139,8 +116,7 @@ in rec {
     rosters = ["data" "git" "monitors" "proof" "picker"];
     completionKinds = ["native" "landed" "none"]; # tool/package provides | owner config module wires | no completion surface
     themeCarriers = ["ansi" "env" "none" "tape" "toml"]; # how the admission consumes the estate palette
-    rowStates = ["current" "no_upstream_release" "hash_mismatch" "unsupported_platform" "patch_drift" "license_drift" "cache_miss" "consumer_conflict"];
-    retentionPolicies = ["git-history" "ledger"]; # superseded pins resurrect from repo history unless a generated ledger holds them
+    rowStates = ["current" "unsupported_platform"]; # ledger `resolved.state` values; a build-time drift is a failed build, never a ledger row
   };
 
   # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
@@ -155,7 +131,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "source-built-local";
       updateEngine = "nixpkgs-follows";
-      retention = "git-history";
       projection.overlay = "override";
       overlayReason = "Vega's Canvas addon and its CLI are built and run through the selected Node 26 runtime";
       consumers = ["media-tools"];
@@ -175,7 +150,7 @@ in rec {
       };
     mupdf = designSource "mupdf" null "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
     qpdf = designSource "qpdf" null "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] "all publication PDF transformations use the current parser and writer";
-    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\.tar\.xz" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
+    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
 
     utiluti = {
       upstream = "github:scriptingosx/utiluti";
@@ -187,7 +162,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "new";
       consumers = ["mac-tools"];
       description = "Native macOS file and URL application associations";
@@ -204,7 +178,6 @@ in rec {
       patchFamily = "auto-patchelf";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "new";
       consumers = ["media-tools"];
       description = "Universal document converter";
@@ -221,7 +194,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "new";
       consumers = ["media-tools"];
       description = "Current veraPDF conformance inspection with a private Java runtime";
@@ -235,11 +207,10 @@ in rec {
       inherit (temurinPins) assets;
       versionPolicy = "fast";
       sourceKind = "binary-archive";
-      license = "gpl2"; # OpenJDK also grants the Classpath exception; its original legal files ship with the runtime.
+      license = "gpl2Only"; # OpenJDK also grants the Classpath exception; its original legal files ship with the runtime.
       patchFamily = "auto-patchelf";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "new";
       consumers = ["media-tools:verapdf-current"];
       description = "Private current Temurin Java runtime for veraPDF";
@@ -257,7 +228,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "override";
       overlayReason = "nixpkgs source-builds biome behind the upstream release line; the attr override routes every consumer (node-tools wrapper, fmt router) through the official release binary";
       consumers = ["node-tools" "fmt"];
@@ -275,7 +245,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection = {
         overlay = "override";
         package = true;
@@ -314,7 +283,6 @@ in rec {
       patchFamily = "auto-patchelf-npm-tool-strip"; # Linux ELF admission plus pnpm-only npm/npx removal; corepack left the Node 26 distribution
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "new";
       consumers = ["node-tools" "pnpm_11"];
       description = "Node.js official binary distribution";
@@ -329,12 +297,13 @@ in rec {
       sourceKind = "npm-tarball";
       assets.any = pinAsset "pnpm_11";
       license = "mit";
-      patchFamily = "shebang-retarget"; # nixpkgs nodejs-slim aborts on a libuv kqueue EINTR assertion at Darwin teardown; Node 26 exits clean
+      # The builder seats its `nodejs-slim` argument into the entry shebangs; the override seats nodejs-bin_26 there because nixpkgs nodejs-slim
+      # aborts on a libuv kqueue EINTR assertion at Darwin teardown and Node 26 exits clean.
+      patchFamily = "shebang-retarget";
       cacheClass = "forge-cache-hit";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection.overlay = "override";
-      overlayReason = "the `pnpm` attr routes every consumer through the 11 line riding nodejs-bin_26";
+      overlayReason = "nixpkgs aliases `pnpm` to this attr, so the override routes every consumer through the pinned 11 line riding nodejs-bin_26";
       consumers = ["node-tools"];
       description = "Fast, disk-space-efficient Node package manager";
       homepage = "https://pnpm.io/";
@@ -350,7 +319,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection = {
         overlay = "new";
         package = true; # package-only: extension library set consumed by sqlite-forge
@@ -370,7 +338,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "source-built-local";
       updateEngine = "nvfetcher";
-      retention = "git-history";
       projection = {
         overlay = "new";
         package = true;
@@ -381,155 +348,6 @@ in rec {
       mainProgram = "ast-grep";
     };
 
-    # Generated pybind11 bindings over OCCT that no wheel reaches at the beta interpreter: upstream caps Requires-Python at <3.15 and its release
-    # wheels stop at cp314, while the same release publishes the whole generated C++ tree per OS. So the module builds from source against the
-    # nixpkgs OCCT whose version the pin already matches, and the overlay seats it into python315Packages for the python-overlay roster to take by
-    # attr name. The generated tree carries no CPython C-API of its own, delegating every interpreter fact to pybind11, so the reachable floor is a
-    # pybind11 fact here and never an upstream wheel fact.
-    cadquery-ocp = {
-      upstream = "github:CadQuery/OCP";
-      version = generatedPins.cadquery-ocp-aarch64-darwin.version;
-      # The publisher emits one generated binding tree per OS, whose Cocoa, Xw, and WNT modules differ, so the pin family keys by system.
-      sourcePins = {
-        aarch64-darwin = "cadquery-ocp-aarch64-darwin";
-        aarch64-linux = "cadquery-ocp-aarch64-linux";
-        x86_64-linux = "cadquery-ocp-x86_64-linux";
-      };
-      versionPolicy = "slow-scientific";
-      sourceKind = "source-build";
-      license = "asl20";
-      # pybind11 3.x compiles the GIL-held assert into every inc/dec-ref, and OCP parks its exception objects in function-local statics that outlive
-      # Py_Finalize, so the substitution leaks them deliberately and interpreter shutdown stops tripping that assert.
-      patchFamily = "source-substitute";
-      cacheClass = "forge-cache-hit";
-      updateEngine = "nvfetcher";
-      retention = "git-history";
-      projection.overlay = "new";
-      consumers = ["scientific-tools"];
-      description = "OCCT B-rep kernel bound to Python through pybind11, built from the release generated sources";
-      homepage = "https://github.com/CadQuery/OCP";
-    };
-
-    protoc-gen-jsonschema = {
-      upstream = "github:bufbuild/protoschema-plugins";
-      # Release tags carry the `v`; the generated pin keeps it because GitHub's archive URL resolves only the literal tag.
-      version = builtins.substring 1 (-1) generatedPins.protoc-gen-jsonschema.version;
-      sourcePin = "protoc-gen-jsonschema";
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      license = "asl20";
-      patchFamily = "source-substitute"; # `debug.ReadBuildInfo` reports `(devel)` outside a tagged checkout; the version literal lands at the source
-      cacheClass = "source-built-local";
-      updateEngine = "nvfetcher";
-      retention = "git-history";
-      projection = {
-        overlay = "new";
-        package = true;
-      };
-      consumers = ["dev-tools"];
-      description = "protoc plugin emitting JSON Schema 2020-12 over the descriptor graph with protovalidate rules folded in";
-      homepage = "https://github.com/bufbuild/protoschema-plugins";
-      mainProgram = "protoc-gen-jsonschema";
-    };
-
-    # .NET tool estate: every row installs through the same SDK-10 builder and resolves the estate's combined `dotnet` at runtime, so a project's
-    # global.json pin governs every tool invocation and no repo carries a tool manifest of its own.
-    dotnet-trace = nugetTool "dotnet-trace" "mit" "https://github.com/dotnet/diagnostics" "EventPipe trace collection and conversion (speedscope, chromium) for a running .NET process";
-    dotnet-counters = nugetTool "dotnet-counters" "mit" "https://github.com/dotnet/diagnostics" "Live EventCounter and Meter monitoring for a running .NET process";
-    dotnet-dump = nugetTool "dotnet-dump" "mit" "https://github.com/dotnet/diagnostics" "Process dump capture and SOS-driven analysis for .NET";
-    dotnet-gcdump = nugetTool "dotnet-gcdump" "mit" "https://github.com/dotnet/diagnostics" "GC heap dump capture and report for a running .NET process";
-    # Dynamic instrumentation is Windows/Linux-x64/macOS-x64 only (the engine ships macos/x64); on Apple Silicon `collect` needs `--include-files`
-    # (static instrumentation, all platforms), and `merge` converts/merges coverage, cobertura, and xml everywhere.
-    dotnet-coverage = nugetTool "dotnet-coverage" "unfree" "https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage" "Cross-platform code-coverage collection, merge, and format conversion (cobertura, xml, coverage)";
-    reportgenerator = nugetTool "dotnet-reportgenerator-globaltool" "asl20" "https://reportgenerator.io/" "Coverage report renderer over cobertura, lcov, and OpenCover inputs (HTML, badges, markdown, summaries)";
-    dotnet-stryker = nugetTool "dotnet-stryker" "asl20" "https://stryker-mutator.io/" "Mutation testing for .NET over the Microsoft.Testing.Platform runner";
-    sharpfuzz = nugetTool "sharpfuzz.commandline" "mit" "https://github.com/Metalnem/sharpfuzz" "AFL-style coverage-guided fuzzing instrumentation for .NET assemblies";
-    dotnet-ef =
-      nugetTool "dotnet-ef" "mit" "https://learn.microsoft.com/ef/core/cli/dotnet" "Entity Framework Core design-time CLI: migrations, scaffolding, compiled models, idempotent scripts"
-      // {
-        projection.overlay = "override";
-        overlayReason = "the tool version must ride the EF Core patch line the consumers pin; nixpkgs trails the release train";
-      };
-    ilspycmd =
-      nugetTool "ilspycmd" "mit" "https://github.com/icsharpcode/ILSpy" "ILSpy decompiler CLI for assemblies and NuGet API catalogues"
-      // {
-        projection.overlay = "override";
-        overlayReason = "nixpkgs source-builds two majors behind on the SDK-8 lane; the release nupkg carries current C# and .NET 10 metadata support";
-      };
-    google-cloud-sdk = {
-      upstream = "https://dl.google.com/dl/cloudsdk/channels/rapid";
-      version = v.gcloud;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
-      assets.aarch64-darwin = {
-        url = "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${v.gcloud}-darwin-arm.tar.gz";
-        hash = "sha256-YWtMiLjw4Gjo21arhjKd5Ip2kqqLsmz7IqYZm2oCclU=";
-      };
-      license = "free"; # ToS-bound vendor SDK; nixpkgs carries the same license class
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "override";
-      overlayReason = "nixpkgs lags the rapid channel on aarch64-darwin; other platforms keep the nixpkgs package (consumer policy)";
-      consumers = ["dev-tools" "gws"];
-      description = "Google Cloud SDK command line tools";
-      homepage = "https://cloud.google.com/sdk";
-      mainProgram = "gcloud";
-    };
-
-    ruff = {
-      upstream = "github:astral-sh/ruff";
-      version = v.ruff;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
-      # Each release tarball unpacks to a ruff-<triple>/ directory holding the single binary, so the asset hash covers the stripped tree.
-      assets = let
-        asset = triple: hash: {
-          url = "https://github.com/astral-sh/ruff/releases/download/${v.ruff}/ruff-${triple}.tar.gz";
-          fetch = "zip";
-          stripRoot = true;
-          inherit hash;
-        };
-      in {
-        aarch64-darwin = asset "aarch64-apple-darwin" "sha256-77f0LSuIoxz+9CMAy9V1FRNc036iLT1e97T37ZiGCZc=";
-        aarch64-linux = asset "aarch64-unknown-linux-musl" "sha256-UFKzCSYepL9vpYN9IsIW3SjJ1xdH0pwKEyR4bOm2yqs=";
-        x86_64-linux = asset "x86_64-unknown-linux-musl" "sha256-0USNs/z1hbOePY/H+EyFduSKYoEc2P2Nz0sQ+a8Scwc=";
-      };
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "override";
-      overlayReason = "every estate pyproject asserts a ruff required-version floor and refuses to run below it; the pinned nixpkgs ruff sits under that floor, so the attr override raises the treefmt row, the fmt router, the nvim diagnostic lane, and the installed profile as one; pythonPackagesExtensions pins the python ruff distribution back to the nixpkgs source-built lineage the release tree cannot patch";
-      consumers = ["python-tools" "fmt" "tooling" "nvim" "pythonPackages.ruff"];
-      description = "Ruff Python linter and formatter";
-      homepage = "https://docs.astral.sh/ruff/";
-      mainProgram = "ruff";
-    };
-
-    # A new attr, never an override of `rustc`/`cargo`: those re-key rustPlatform and source-rebuild every rust package in the set. rust-overlay
-    # owns the per-platform asset set and its hashes from upstream's channel manifests; the row owns the pinned channel version, which the
-    # scientific lane needs above the nixpkgs toolchain — current sdists declare `rust-version` floors that toolchain sits under.
-    rust-toolchain = {
-      upstream = "https://static.rust-lang.org/dist";
-      version = v.rust;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
-      license = "asl20"; # dual MIT/Apache-2.0 upstream; the row records the least-permissive member
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      retention = "git-history";
-      projection.overlay = "new";
-      profile = "minimal"; # rustc, cargo, rust-std — the sdist lane compiles and links, it never lints or formats
-      consumers = ["scientific-tools"];
-      description = "Pinned stable Rust toolchain for the native Python build lane";
-      homepage = "https://www.rust-lang.org/";
-      mainProgram = "rustc";
-    };
-
     carbon-now-cli = {
       upstream = "nixpkgs:carbon-now-cli";
       versionPolicy = "nixpkgs";
@@ -538,53 +356,12 @@ in rec {
       patchFamily = "source-substitute"; # Node 26 rejects `assert { type: 'json' }` import syntax; patched to `with`
       cacheClass = "source-built-local";
       updateEngine = "nixpkgs-follows";
-      retention = "git-history";
       projection.overlay = "override";
       overlayReason = "patch-only override of the nixpkgs package; update-notifier configstore state is disabled at admission (CA-9 residue policy)";
       consumers = ["carbon"];
       description = "Terminal-driven source-code image renderer";
       homepage = "https://github.com/mixn/carbon-now-cli";
       mainProgram = "carbon-now";
-    };
-
-    # Uncached-by-design python-module lane: nixpkgs python modules a uv venv cannot take from PyPI (no cp315 wheel, no sdist). The overlay fold
-    # builds python315.withPackages over `modules`; the forge-python-overlay kernel (scientific-tools.nix) realizes it on demand behind an
-    # XDG-state GC root and projects one .pth into a consumer venv. Never projection.package and never home.packages — the qa build smoke and
-    # every switch would otherwise source-build the whole uncached closure. The flake seats the attr from the nixpkgs-sci pin (slow-scientific):
-    # the lane rebuilds only when that pin advances, never on a nixpkgs move; CPython's C ABI freezes at beta 1, so the pinned modules keep loading
-    # in a venv over the moving python315 of the same minor.
-    forge-python-overlay-env = {
-      upstream = "nixpkgs-sci:python315Packages";
-      versionPolicy = "slow-scientific";
-      sourceKind = "nixpkgs";
-      license = "tost"; # openusd; vtk rides bsd3 — the row records the least-permissive member
-      patchFamily = "none";
-      cacheClass = "forge-cache-hit";
-      updateEngine = "nixpkgs-follows";
-      retention = "git-history";
-      projection.overlay = "new";
-      modules = ["vtk" "pyvista" "openusd" "cadquery-ocp"]; # python315Packages attrs folded into the env
-      probeImports = ["vtk" "pyvista" "pxr" "OCP"]; # import spellings `forge-python-overlay status <venv>` proves inside a linked venv
-      # CPython 3.15 is a beta interpreter, so the whole module set carries two upstream escapes the overlay fold owns once. Upstream suites assert
-      # 3.14-era diagnostics and clocks (parso, exceptiongroup, pure-eval, tornado, time-machine, hypothesis, mypy, zlib-ng all fail their own
-      # checkPhase here); dropping doCheck also drops nativeCheckInputs, pruning the test-only tail out of the uncached closure. PyO3 <= 0.27 refuses
-      # any interpreter past 3.14 outright (pydantic-core, rpds-py) and names the stable-ABI forward-compat escape in its own error text.
-      betaSet = {
-        pythonVersion = "3.15";
-        dropChecks = true;
-        env.PYO3_USE_ABI3_FORWARD_COMPATIBILITY = "1";
-        # cmake members of the closure reach stdenv.mkDerivation, never the python builders the escapes wrap, so their escapes name them here. Both
-        # ride one upstream fact: cmake's FindPython3 version list ends at 3.14, so `find_package(Python3 COMPONENTS Development)` — carrying no
-        # Interpreter component to derive a version from — resolves nothing under the beta interpreter. catalyst issues exactly that call in the config
-        # it exports, so its own ctest suite loses 22 of 40 sub-builds and every consumer dies at configure, taking adios2, vtk, and the env with it.
-        nativeMembers = ["catalyst"];
-        # 3.15 removes PyWeakref_GetObject, deprecated since 3.13. The members below still call it — openusd's tf holds four call sites across
-        # pyIdentity.cpp, pyFunction.h, and pyWeakObject.cpp — so a compile-time shim restores the borrowed-reference contract over PyWeakref_GetRef.
-        capiShimMembers = ["openusd"];
-      };
-      consumers = ["scientific-tools"];
-      description = "python315 module env exposed to uv venvs through forge-python-overlay";
-      homepage = "https://nixos.org/";
     };
 
     openstudio = {
@@ -601,7 +378,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "manual";
-      retention = "git-history";
       projection.overlay = "new";
       # Opt-runtime spec: the shared overlay recipe folds these layout, env, and wrapper facts into the derivation; a next platform
       # runtime is one row, never a new kernel file.
@@ -644,7 +420,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "binary-only-local";
       updateEngine = "manual";
-      retention = "git-history";
       projection.overlay = "new";
       runtime = {
         root = "opt/energyplus";
@@ -681,7 +456,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "source-built-local";
       updateEngine = "manual";
-      retention = "git-history";
       projection = {
         overlay = "new";
         package = true;
@@ -689,7 +463,7 @@ in rec {
         default = true;
       };
       kernel = true;
-      consumers = ["scripts" "nvim" "Rasm tools/assay"];
+      consumers = ["scripts" "nvim"];
       description = "Local PostgreSQL provisioning rail for the estate";
       homepage = "https://github.com/bardiasamiee/Parametric_Forge";
       mainProgram = "forge-provision";
@@ -703,7 +477,6 @@ in rec {
       patchFamily = "none";
       cacheClass = "source-built-local";
       updateEngine = "manual";
-      retention = "git-history";
       projection = {
         overlay = "new";
         package = true;
@@ -796,28 +569,6 @@ in rec {
       proof = "vhs --version";
       chords = ["record" "render"];
     };
-    television = {
-      attr = "television";
-      roster = "picker";
-      install = "ca1"; # CA-1 owns installation + generated channels; this row is the admission + pin authority
-      capability = "durable semantic channels (host polymorphism law); no Ctrl-R/Ctrl-T collisions with fzf/atuin/zoxide";
-      updateEngine = "nixpkgs-follows";
-      completion = "native";
-      themeCarrier = "toml";
-      proof = "tv --version";
-      chords = [];
-    };
-    gum = {
-      attr = "gum";
-      roster = "picker";
-      install = "ca1";
-      capability = "scalar prompts only (ledger 03); never a browser host";
-      updateEngine = "nixpkgs-follows";
-      completion = "native";
-      themeCarrier = "env";
-      proof = "gum --version";
-      chords = [];
-    };
     fzf = {
       attr = "fzf";
       roster = "picker";
@@ -838,14 +589,9 @@ in rec {
     (builtins.attrValues admissions);
 
   # Host-runtime extension registries: package-like assets consumed by a host. One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each
-  # carrying the security fields named in the vocabulary. Empty row sets are lanes with a declared source and no vetted admission yet. `requiredFields`
-  # is the lane's admission contract: the ledger fold rejects any row missing one, so an under-specified admission fails the build, never lands silent.
+  # carrying the security fields named in the vocabulary. `requiredFields` is the lane's admission contract: the ledger fold rejects any row missing
+  # one, so an under-specified admission fails the build, never lands silent.
   extensions = {
-    zellij-wasm = {
-      source = "fetchFromGitHub"; # pinned derivations + declarative permission-grant rows (CA-5 consumes)
-      requiredFields = ["license" "permissions"];
-      rows = {};
-    };
     wezterm-plugins = {
       source = "fetchFromGitHub"; # file:// store-path loads only (CA-4 consumes)
       requiredFields = ["license" "permissions"];
@@ -872,10 +618,37 @@ in rec {
         };
       };
     };
-    yazi-plugins = {
-      source = "nixpkgs:yaziPlugins"; # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes)
-      requiredFields = ["attr" "license"];
+    zellij-plugins = {
+      source = "fetchurl"; # one release wasm per row, hash-pinned into ~/.config/zellij/plugins; `permissions` seeds the grant cache (CA-7 consumes)
+      requiredFields = ["url" "hash" "license" "permissions"];
       rows = {
+        zjstatus = {
+          url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
+          hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
+          license = "MIT";
+          permissions = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
+        };
+        zellij_forgot = {
+          url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
+          hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
+          license = "MIT";
+          permissions = ["ReadApplicationState" "ChangeApplicationState"];
+        };
+      };
+    };
+    yazi-plugins = {
+      # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes): a row with `attr` resolves in nixpkgs yaziPlugins, a row with
+      # owner/repo/rev/hash pins an upstream tree nixpkgs omits.
+      source = "nixpkgs:yaziPlugins | fetchFromGitHub";
+      requiredFields = ["license"];
+      rows = {
+        augment-command = {
+          owner = "hankertrix";
+          repo = "augment-command.yazi";
+          rev = "dd2d6cf07f81cef543e37883352e30b91634ec86";
+          hash = "sha256-sB2t3Gg+WdPG6OE8pD6VovD+x9nN21Jn8XydZZdTqCg=";
+          license = "AGPL-3.0"; # semantic command layer: open/quit/tab/paste/archive/scroll behaviors
+        };
         full-border = {
           attr = "full-border";
           license = "MIT";
@@ -933,6 +706,18 @@ in rec {
         nvim-treesitter = {
           attr = "nvim-treesitter";
           license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
+        };
+        nvim-treesitter-textobjects = {
+          attr = "nvim-treesitter-textobjects";
+          license = "Apache-2.0"; # select/move/swap over the treesitter captures
+        };
+        gitsigns-nvim = {
+          attr = "gitsigns-nvim";
+          license = "MIT"; # gutter git state reading the theme's git glyph rows
+        };
+        lualine-nvim = {
+          attr = "lualine-nvim";
+          license = "MIT"; # statusline
         };
         # hmts-nvim stays unadmitted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
         # files; re-admits only on an upstream compatibility release.

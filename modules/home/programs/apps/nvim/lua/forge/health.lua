@@ -164,13 +164,6 @@ function M.check()
     else
         health.error("flake root missing: " .. tools.flake_root)
     end
-
-    health.start("python provider (uv tool lane)")
-    if vim.uv.fs_stat(tools.provider.python3) then
-        health.ok(tools.provider.python3)
-    else
-        health.warn("pynvim shim missing; activation row installs it: uv tool install pynvim")
-    end
 end
 
 return M

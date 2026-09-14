@@ -82,9 +82,9 @@
     }
     {
       name = "cachix-cache";
-      description = "bsamiee cache metadata; narinfo proof lives with forge-redeploy";
+      description = "${config.home.sessionVariables.CACHIX_CACHE} cache metadata";
       method = "GET";
-      url = "https://app.cachix.org/api/v1/cache/bsamiee";
+      url = "https://app.cachix.org/api/v1/cache/${config.home.sessionVariables.CACHIX_CACHE}";
       source = "machine";
       headers = [
         {

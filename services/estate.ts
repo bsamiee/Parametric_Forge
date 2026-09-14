@@ -10,9 +10,7 @@
 
 import * as github from '@pulumi/github';
 import type { CustomResourceOptions, Resource } from '@pulumi/pulumi';
-import { secret } from '@pulumi/pulumi';
 import * as doppler from '@pulumiverse/doppler';
-import { Redacted } from 'effect';
 import { Topology } from './topology.ts';
 
 declare namespace estate {
@@ -41,7 +39,7 @@ const _mergeHygiene = {
 } as const;
 
 const estate =
-    (f: estate.Flags, webhookSecrets: Readonly<Record<string, Redacted.Redacted<string>>> = {}) =>
+    (f: estate.Flags) =>
     // BOUNDARY ADAPTER: promise-native Pulumi registration program — statements and the JS Map registries live only inside this kernel.
     async (): Promise<Record<string, unknown>> => {
         // One fold owns every row family: key, import identity, dependency anchor, and constructor arrive as registration columns.
@@ -90,30 +88,6 @@ const estate =
                     },
                     options,
                 ),
-        });
-
-        // The signing secret arrives driver-brokered sealed from its Doppler custody row and unwraps only into the engine's secret input;
-        // an absent broker value plans the webhook unsigned-diff-free, and the payload event generates from the row's own coordinates;
-        // anchoring falls back to the environment when the first enabled config is a root.
-        void _registered(Topology.webhooks, {
-            key: (row) => row.slug,
-            importId: (row) => row.slug,
-            anchor: (row) => config.get(`${row.project}.${row.enabledConfigs[0]}`) ?? environment.get(`${row.project}.${row.enabledConfigs[0]}`),
-            make: (row, options) => {
-                const brokered = webhookSecrets[row.slug];
-                return new doppler.Webhook(
-                    row.slug,
-                    {
-                        project: row.project,
-                        url: row.url,
-                        enabled: true,
-                        enabledConfigs: [...row.enabledConfigs],
-                        payload: JSON.stringify({ event: `${row.project}.${row.enabledConfigs[0]}.secrets.update` }),
-                        ...(brokered === undefined ? {} : { secret: secret(Redacted.value(brokered)) }),
-                    },
-                    options,
-                );
-            },
         });
 
         // GitHub settings surface: the token rides the engine env (driver-brokered GITHUB_TOKEN); repositories carry protect so a row edit

@@ -65,12 +65,7 @@ coverage.xml
 coverage/
 htmlcov/
 *.lcov
-.approval_tests_temp/
 .benchmarks/
-
-# Verify
-*.received.*
-*.received/
 
 # --- [CACHES] -----------------------------------------------------------------
 
@@ -138,11 +133,6 @@ _tmp/
 .claude/settings.local.json
 .claude/worktrees/
 .playwright-mcp/
-
-# Gemini CLI auto-generated files (keep commands/ and extensions/ tracked)
-.gemini/telemetry.log
-.gemini/settings.json
-.gemini/.DS_Store
 
 # --- [SECRETS] ---------------------------------------------------------------
 

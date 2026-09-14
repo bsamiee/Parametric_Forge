@@ -8,7 +8,6 @@
 ## [02]-[WORKSPACE]
 
 - `scratch/<slug>/` homes campaign artifacts, one folder per campaign; the session scratchpad carries only throwaway files.
-- `workflows/*.js` mix `export const meta` with top-level `await`/`return` — a dialect no Biome mode parses; formatters never touch them.
 - `scripts/bootstrap-cli-tools.sh` provisions CLI tools on non-Forge hosts; default `check` reports, `apply` mutates via `CLAUDE_BOOTSTRAP_*` gates.
 
 ## [03]-[SKILL_FRONTMATTER]

@@ -5,10 +5,9 @@
 # Path          : modules/home/scripts/terminal.nix
 # ----------------------------------------------------------------------------
 # Yazi -> Zellij -> Neovim rail: popup dispatcher, RPC handoff, server owner. Pane targeting is ID-based via list-panes JSON; never ordinal focus.
-# The shared vocabulary lives in terminal-lib.nix and the acceptance harness in terminal-accept.nix; both read the one lib.
+# The shared vocabulary lives in terminal-lib.nix.
 {
   config,
-  host,
   lib,
   pkgs,
   ...
@@ -335,8 +334,6 @@
     '';
   };
 
-  forgeTerminalAccept = import ./terminal-accept.nix {inherit config host lib pkgs tl forgeNvim forgeEdit forgeYazi;};
-
   fzfDefaultOpts = lib.concatStringsSep " " (config.programs.fzf.defaultOptions or []);
   fzfDefaultCommand = config.programs.fzf.defaultCommand or "";
 
@@ -362,5 +359,5 @@
 in {
   imports = [../programs/apps/chords.nix];
 
-  home.packages = [forgeNvim forgeEdit forgeYazi yaziZoxideCdi forgeTerminalAccept];
+  home.packages = [forgeNvim forgeEdit forgeYazi yaziZoxideCdi];
 }

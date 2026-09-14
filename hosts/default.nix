@@ -44,7 +44,7 @@
         };
         programs.home-manager.enable = true;
 
-        # Disable manual generation to avoid builtins.toFile warnings
+        # No generated manual: option docs are read at source and through nixd
         manual = {
           html.enable = false;
           json.enable = false;

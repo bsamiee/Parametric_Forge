@@ -8,8 +8,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Parameterize ingress and egress. Hardcoded strings, repo paths, usernames, ports, or geometry numbers are defects; values are rows, parameters, or model-derived.
 - One owner per axis: docs/laws/projections.md declares the vocabulary owners (color, keybind, tool admission, generated config); a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
 - Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/forge-provision.
-- Deploy rail: forge-redeploy owns switch lifecycle with typed receipts and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
-- Receipts over narration: lifecycle commands emit typed receipt lines; scripts that print prose status instead of structured receipts are below the bar.
+- Deploy rail: forge-redeploy owns switch lifecycle and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua), so findings target suppressions and bypasses. Shellcheck directives, `noqa`, and `biome-ignore` demand ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
 - Coupling completeness: docs/laws/topology.md is the edit-coupling map — a diff touching a listed [SURFACE] without its obligated counterparts is incomplete; generalizable lessons land under the docs/laws/README.md admission law, never as ad-hoc doc edits.
@@ -18,7 +17,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 
 ## [02]-[UNIVERSAL_BAR]
 
-Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cases, or dispatch arms — never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material at full power. Everything ships agent-first: composable, receipt-bearing, self-describing. Collapse spam relentlessly.
+Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cases, or dispatch arms — never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material at full power. Everything ships agent-first: composable and self-describing. Collapse spam relentlessly.
 
 ## [03]-[REVIEW_PRIORITIES]
 

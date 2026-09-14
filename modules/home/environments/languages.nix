@@ -39,9 +39,8 @@ in {
       VD_DIR = "${config.xdg.stateHome}/visidata";
 
       # --- [NODE_PNPM_RAIL]
-      # pnpm is the sole package-manager verb on PATH; npm_config_* rows contain any vendored npm run under XDG,
-      # COREPACK_* rows neutralize transitive corepack calls (network off, strict pins, XDG cache).
-      PNPM_HOME = "${config.xdg.dataHome}/pnpm";
+      # pnpm is the sole package-manager verb on PATH (PNPM_HOME is a cross-surface row of modules/common/toolchain-env.nix); npm_config_* rows
+      # contain any vendored npm run under XDG, COREPACK_* rows neutralize transitive corepack calls (network off, strict pins, XDG cache).
       npm_config_cache = "${config.xdg.cacheHome}/npm";
       npm_config_userconfig = "${config.xdg.configHome}/npm/npmrc";
       npm_config_globalconfig = "${config.xdg.configHome}/npm/global-npmrc";
@@ -51,9 +50,7 @@ in {
       COREPACK_ENABLE_NETWORK = "0";
 
       # --- [HEADLESS_RENDER_PUPPETEER_PLAYWRIGHT_MERMAID]
-      # Shared Nix Chrome-for-Testing pin (owned by toolchain-env) so mmdc/puppeteer and the mermaid validator
-      # never launch the real Chrome.app or an unstable downloaded shell.
-      PUPPETEER_EXECUTABLE_PATH = toolchainEnv.puppeteerExecutablePath;
+      # PUPPETEER_EXECUTABLE_PATH is a cross-surface row of modules/common/toolchain-env.nix, which owns the headless shell pin.
       # PLAYWRIGHT_BROWSERS_PATH is never a machine-wide row: each project's `mise.toml` owns its own browser build, and the
       # activated shell applies it inside that tree; a Playwright consumer packaged here (carbon) exports its own cache path.
     };

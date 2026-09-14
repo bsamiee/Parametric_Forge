@@ -14,14 +14,6 @@
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   toml = pkgs.formats.toml {};
-  # Guard keeps the agent inert when the Homebrew binary is absent.
-  containerSystemStart = pkgs.writeShellApplication {
-    name = "container-system-start";
-    text = ''
-      [[ -x /opt/homebrew/bin/container ]] || exit 0
-      exec /opt/homebrew/bin/container system start --enable-kernel-install
-    '';
-  };
   # Apple Container startup config. `container system start` snapshots this into its app root and re-saves it, so the file must be a real
   # writable file — a store symlink fails the save and aborts the start.
   containerConfigToml = toml.generate "container-config.toml" {
@@ -44,11 +36,11 @@ in {
   launchd.agents.colima-default.config.ExitTimeOut = 300;
 
   # Apple Container autostart: `system start` registers the apiserver and helpers under the com.apple.container. launchd prefix and returns —
-  # no keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive.
+  # no keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive. The binary is the Homebrew `container` row of the same profile.
   launchd.agents.container-system = {
     enable = isDarwin;
     config = {
-      ProgramArguments = [(lib.getExe containerSystemStart)];
+      ProgramArguments = ["/opt/homebrew/bin/container" "system" "start" "--enable-kernel-install"];
       RunAtLoad = true;
     };
   };
@@ -86,12 +78,12 @@ in {
     };
   };
 
-  # Owns DOCKER_CONFIG and config.json on both platforms. NO credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent here;
-  # empty inline auths are correct for Colima + public images. currentContext is injected by the colima module when the profile is active;
-  # docker context meta stays Colima-owned — a store-owned meta.json breaks context creation.
+  # Owns DOCKER_CONFIG and config.json on both platforms under the module's XDG default ($XDG_CONFIG_HOME/docker at stateVersion 26.05). NO
+  # credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent here; empty inline auths are correct for Colima + public images.
+  # currentContext is injected by the colima module when the profile is active; docker context meta stays Colima-owned — a store-owned meta.json
+  # breaks context creation.
   programs.docker-cli = {
     enable = true;
-    configDir = "${config.xdg.configHome}/docker";
     settings.auths = {};
   };
 

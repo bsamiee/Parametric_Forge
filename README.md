@@ -18,9 +18,9 @@ Parametric_Forge/
 ├── modules/
 │   ├── common/                    # Shared Nix settings and toolchain environment
 │   ├── darwin/
-│   │   ├── settings/              # MacOS defaults, input, interface, security
+│   │   ├── settings/              # Root-scope macOS defaults, security, launchd environment
 │   │   └── homebrew/              # Homebrew bridge
-│   ├── nixos/                     # Boot, network, SSH, users, containers, services
+│   ├── nixos/                     # Boot, network, SSH, users, Nix maintenance
 │   └── home/
 │       ├── aliases/               # Shell alias registry
 │       ├── assets/
@@ -29,6 +29,7 @@ Parametric_Forge/
 │       ├── programs/
 │       │   ├── apps/
 │       │   │   ├── karabiner/     # Leader-chord keyboard layer
+│       │   │   ├── linearmouse/   # External-mouse schemes
 │       │   │   ├── nvim/          # Editor estate
 │       │   │   ├── wezterm/       # Terminal host
 │       │   │   ├── yazi/          # File manager
@@ -36,7 +37,8 @@ Parametric_Forge/
 │       │   ├── container-tools/
 │       │   ├── git-tools/
 │       │   ├── languages/         # Language toolchains
-│       │   ├── mac-tools/
+│       │   ├── mac-tools/         # Default applications
+│       │   │   └── defaults/      # User-scope macOS defaults
 │       │   ├── media-tools/
 │       │   ├── nix-tools/
 │       │   ├── shell-tools/       # CLI kernels, SSH, secrets
@@ -50,7 +52,7 @@ Parametric_Forge/
 │   ├── laws/                      # Estate design and machine law
 │   ├── stacks/                    # Language law
 │   └── standards/                 # Prose, formatting, information structure
-├── .claude/                       # Harness skills, hooks, workflows, LSP marketplace
+├── .claude/                       # Harness agents, commands, skills, scripts, LSP marketplace
 ├── .greptile/                     # Per-repo reviewer configuration
 └── .coderabbit.yaml               # Per-repo reviewer configuration
 ```
@@ -76,7 +78,7 @@ Rulings derive from principles, not precedent lists. These axes resolve each new
 
 ## [04]-[DETERMINATE_NIX]
 
-This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, and NixOS rides the thin determinate module with `nix.settings`. GC and store maintenance ride the `forge-nix-maintenance` agent, never ad-hoc `nix-collect-garbage`.
+This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and `/etc/nix/nix.conf` (`eval-cores`, `lazy-trees`, `netrc-file`, `ssl-cert-file`, `experimental-features`). `modules/common/nix.nix` declares only the custom settings the Determinate module writes to `/etc/nix/nix.custom.conf` — Determinate-owned keys are rejected there by construction. One settings vocabulary projects to both OSes: Darwin rides `determinateNix.customSettings`, and NixOS rides the thin determinate module with `nix.settings`. GC and store maintenance run on demand: `sudo nix-env -p /nix/var/nix/profiles/system --delete-generations old`, then `nix-collect-garbage -d` and `nix store optimise`.
 
 ## [05]-[MODULE_BOUNDARIES]
 
@@ -104,21 +106,18 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
-`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it locks against concurrent runs, builds, diffs the closure, activates, appends a receipt row (timings, generation, diff size), and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH. `forge-accept [--from STEP|--only STEP|--list]` is the post-switch acceptance rail: an ordered, resumable pipeline from preflight through terminal and credential-lane checks to relaunch, receipting pass/warn/fail per step — a switch is done when `forge-accept` exits ok, not when activation returns.
+`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it gates on `nix flake check`, builds the per-host toplevel, diffs the closure, activates, and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH.
 
-`forge-doctor <lens> [--json]` is the read-only machine doctor standing behind that rail, one lens per question: `path` classifies PATH owners and cross-owner shadows, `launchd` reconciles declared plists against the live `launchctl` table, `parity` diffs the generation's home-files against live `$HOME`, and `updates` projects a currency board from existing receipts. Each lens emits one typed row stream rendering both the human table and `--json`, and drift exits nonzero.
+Probe a machine that misbehaves after a switch before theorizing about it: `which -a <bin>` classifies PATH owners and cross-owner shadows, `launchctl list | grep com.parametric-forge` reconciles the declared agent set against the live table, and `readlink /run/current-system` reads the live generation against `$HOME`. Every probe is read-only, so it opens the investigation rather than closing it.
 
-`forge-cleanup plan|apply|sweep` drives the litter registry: `plan` writes a durable precheck receipt, `apply` trashes only plan-proved rows after re-detecting live state, and `sweep` is the hourly orphan lane. Registry rows carry standing policy no first-party tool expresses; storage questions are answered on demand with `dust -d 1 -n 20 -r ~` and each tool's own prune verb.
-
-Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. Scheduled nix rails double as manual commands and append receipts under `~/Library/Logs/forge-<name>.receipts.log`; a failed rail's receipt governs re-entry. Each new recurring job lands as one agent declaration.
+Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
 
 ## [10]-[TOOLCHAINS]
 
-- [PYTHON]: 3.15 GIL build; `uv`, `ruff`, `ty`, `mypy` resolve project-local versions first through the shim. `forge-scientific-env` exposes the native build closure — compilers, numeric, columnar, geospatial, messaging, artifact, and point-cloud library folds, each a named list in `languages/scientific-tools.nix` — as the pkg-config, cmake, and library search paths a wheel-less sdist builds against; `forge-python-overlay build|link <venv>|unlink <venv>|status [<venv>]` realizes the uncached nixpkgs python-module env (manifest row `forge-python-overlay-env`) behind an XDG-state GC root and projects it into a uv venv as one `.pth`.
+- [PYTHON]: 3.15 GIL build; `python3`, `uv`, `ruff`, `ty`, and `mypy` serve a shell outside a project, and a project's `mise.toml` and `uv.lock` own the interpreter and tools inside its tree. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `forge-runtime-dylibs` tree ctypes consumers dlopen by name.
 - [NODE_LUA_DB]: Node 26 via the Nix-owned official binary + pnpm pin; Lua with LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `forge-provision`.
-- [DOTNET_AEC]: Nix-managed dotnet SDKs (8/9/10); `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
-- [PROTOBUF]: `protoc` and the `grpc` plugin set (`grpc_csharp_plugin`, `grpc_python_plugin`) are machine-owned and unpinned, and `protoc-gen-jsonschema` (Buf's JSON Schema 2020-12 emitter, an overlay source-build riding its nvfetcher pin) sits beside them on PATH; the `buf` driver that invokes them stays pinned in the consuming repo's own package manager, never installed here.
-- [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Rasm campaign work enters through its own assay rail; direct calls are Forge-level debugging.
+- [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. That `dotnet` reaches PATH through the mise shim farm `toolchain-env.nix` appends as the last segment of the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
+- [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Direct calls are Forge-level debugging.
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
@@ -134,11 +133,11 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 |  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |
 |  [05]   | Python          | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                       |
 |  [06]   | Markdown        | `docs/standards/` prose owners; `prose_gate.py` (docgen skill) is the check + fix rail.                         |
-|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law; every scheduled rail receipts its own run.        |
+|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
 
 ## [13]-[GITHUB_AND_SERVICES]
 
-GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. GitHub App installation IDs and selection modes live in the same topology as a browser-custodied census: the universal SSH identity owns Git transport and commit signing, while GitHub exposes no SSH-authenticated REST control for app installation selection. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`); the `pr-loop` skill owns hosted-PR round-trips.
+GitHub repository settings for the estate (merge hygiene, rulesets, feature booleans) are `@pulumi/github` rows in `services/topology.ts`; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. GitHub App installation IDs and selection modes live in the same topology as a browser-custodied census: the universal SSH identity owns Git transport and commit signing, while GitHub exposes no SSH-authenticated REST control for app installation selection. Doppler projects, environments, branch configs, and service tokens live as rows in the same file. Code review rides CodeRabbit (`.coderabbit.yaml`) and Greptile (`.greptile/`); the `code-review` skill owns hosted-PR round-trips.
 
 ## [14]-[FRESH_MACHINE_BOOTSTRAP]
 
@@ -150,7 +149,7 @@ Everything lands declaratively with the first switch; only these steps are manua
 2. Sign into the 1Password app; enable Settings → Developer → SSH agent + CLI integration. GUI-only by vendor design; key custody syncs from the cloud — zero key handling.
     - Verify: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key
 3. Clone to the path the deploy rail resolves; the agent socket is explicit until the first switch projects `~/.ssh/config`.
-    - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Documents/99.Github/Parametric_Forge`
+    - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Developer/Parametric_Forge`
     - Verify: repo present at `FORGE_ROOT`
 4. Authenticate GitHub.
     - Command: `gh auth login` (keyring, SSH protocol)
@@ -159,11 +158,11 @@ Everything lands declaratively with the first switch; only these steps are manua
     - Command: `doppler login`
     - Verify: `doppler me`
 6. Grant the bootstrap terminal Full Disk Access (System Settings → Privacy & Security) — `universalaccess` defaults writes abort activation without it; move the grant to WezTerm after the first switch.
-    - Verify: the switch's `user defaults` phase passes without `Could not write domain com.apple.universalaccess`
+    - Verify: the switch's Home Manager `onChange` import of `com.apple.universalaccess` passes without `Could not write domain com.apple.universalaccess`
 7. First switch — installs the sudoers allowlist every later `forge-redeploy --switch` rides. Installer-written real files at `/etc/pam.d/sudo_local` or `/etc/nix/nix.custom.conf` trip the /etc collision guard: move each aside (`.before-nix-darwin`) and rerun.
     - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
     - Verify: `forge-redeploy --check-only`
-8. Approve the TCC/automation prompts macOS raises on first launches: Karabiner driver extension + Input Monitoring, Hammerspoon and LinearMouse Accessibility, and the 1Password autofill pair (AutoFill & Passwords → 1Password on, Apple Passwords off; Privacy & Security → Accessibility → 1Password).
+8. Approve the TCC/automation prompts macOS raises on first launches: Karabiner driver extension + Input Monitoring, LinearMouse Accessibility, and the 1Password autofill pair (AutoFill & Passwords → 1Password on, Apple Passwords off; Privacy & Security → Accessibility → 1Password).
     - Verify: affected agents run without prompting
 
 Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstraps each NixOS host from its `hosts/context.nix` row; day-2 uses the same rail with `--os nixos --target-host`.
@@ -171,12 +170,10 @@ Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstrap
 ## [15]-[MAINTENANCE]
 
 - Format: `nix fmt -- --ci` — full proof: `nix flake check`.
-- Acceptance: `forge-accept` after any `--switch`; `--from`/`--only` re-enter a failed step without replaying the pipeline.
 - Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
-- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[09]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
-- Discovery: `forge-browse tools` indexes every packaged command with its owner file and its trigger; bare `forge-browse` lists the register domains, and `forge-receipts --verb`/`--sql`/`--audit` queries the receipt plane every rail writes.
+- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[06]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 
-Every family moves through the ordered update sequence on demand; `forge-doctor updates` reads existing receipts, local Homebrew currency, and flake-input age.
+Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly && brew cleanup`.
 
 ## [16]-[LICENSE]
 

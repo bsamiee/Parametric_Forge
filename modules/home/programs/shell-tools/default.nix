@@ -44,14 +44,13 @@ in {
     ./bat.nix
     ./bundle-apps.nix
     ./bottom.nix
-    ./browsers.nix
     ./carapace.nix
     ./carbon.nix
     ./dust.nix
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
-    ./forge-tools
+    ./forge-redeploy.nix
     ./fzf.nix
     ./jnv.nix
     ./mise.nix
@@ -68,7 +67,6 @@ in {
     ./tlrc.nix
     ./trippy.nix
     ./watchexec.nix
-    ./webhook.nix
     ./xh.nix
     ./zoxide.nix
   ];
@@ -103,7 +101,6 @@ in {
       pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
       pkgs.ratchet # GitHub Actions version pinning
       pkgs.rich-cli # Rich terminal rendering
-      pkgs.ripgrep # Content search with upstream semantics
       (withDefaultFlag pkgs.sd "--across" "-A*|--across|-[!-]*A*") # Structural find and replace; patterns match across the whole input
       pkgs.sshs # Interactive SSH host picker
       pkgs.trash-cli # FreeDesktop trash suite
