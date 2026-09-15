@@ -5,9 +5,16 @@
 # Path          : modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
 # FZF configuration themed from the estate palette owner
-{config, ...}: let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   inherit (config.forge.theme) projections;
-  fdFiles = "fd --type f --hidden --follow --exclude .git";
+  # fd rides its store path: a Nix-side dependency of the fzf widgets, on no PATH outside a project.
+  fd = lib.getExe pkgs.fd;
+  fdFiles = "${fd} --type f --hidden --follow --exclude .git";
 in {
   programs.fzf = {
     enable = true;
@@ -50,7 +57,7 @@ in {
 
     # --- [ALT_C_DIRECTORY_NAVIGATION]
     changeDirWidget = {
-      command = "fd --type d --hidden --follow --exclude .git";
+      command = "${fd} --type d --hidden --follow --exclude .git";
       options = [
         "--border-label='[DIRECTORIES]'"
         "--preview='tree --level=2 --color=always --icons=always {}'"

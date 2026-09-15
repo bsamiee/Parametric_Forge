@@ -5,22 +5,6 @@
   fetchFromGitHub,
   dockerTools,
 }: {
-  ast-grep-upstream = {
-    pname = "ast-grep-upstream";
-    version = "0.45.2";
-    src = fetchFromGitHub {
-      owner = "ast-grep";
-      repo = "ast-grep";
-      rev = "0.45.2";
-      fetchSubmodules = false;
-      sha256 = "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA/6+qFFx5U=";
-    };
-    cargoLock."Cargo.lock" = {
-      lockFile = ./. + "/sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA_6+qFFx5U=/Cargo.lock";
-      outputHashes = {
-      };
-    };
-  };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
     version = "2.5.10";
@@ -220,38 +204,6 @@
     src = fetchurl {
       url = "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-amd64.zip";
       sha256 = "sha256-CMDKEXER/O3hQjnQCTeSNSvv3BdCGMNE0jLBMnlkPQU=";
-    };
-  };
-  nodejs-bin_26-aarch64-darwin = {
-    pname = "nodejs-bin_26-aarch64-darwin";
-    version = "26.8.2";
-    src = fetchurl {
-      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.xz";
-      sha256 = "sha256-9Y5QRLk4oxdBhN5Krx0rv8//gS6IIg/wjpIhwJ9chnc=";
-    };
-  };
-  nodejs-bin_26-aarch64-linux = {
-    pname = "nodejs-bin_26-aarch64-linux";
-    version = "26.8.2";
-    src = fetchurl {
-      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.xz";
-      sha256 = "sha256-gdjw/eqdzTv9z+r8X4NZwVHwl+mICwAHwGRcpnDQeXE=";
-    };
-  };
-  nodejs-bin_26-x86_64-linux = {
-    pname = "nodejs-bin_26-x86_64-linux";
-    version = "26.8.2";
-    src = fetchurl {
-      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.xz";
-      sha256 = "sha256-QOHTIlwcmumiZxyY7LmFfk1VVQJjlPNIZFZ2eYhA1cU=";
-    };
-  };
-  pnpm_11 = {
-    pname = "pnpm_11";
-    version = "11.24.0";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/pnpm/-/pnpm-11.24.0.tgz";
-      sha256 = "sha256-0eqyQzFyZhzDahjshfzpP3cdsZYnFzKcwB7JwoJMok8=";
     };
   };
   sqlean-aarch64-darwin = {

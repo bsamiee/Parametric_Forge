@@ -102,7 +102,7 @@ Every rewrite runs one sequence:
 3. Prove the fix through `test_match_code_rule` — the JSON carries `replacement` and `replacementOffsets`; the replacement must re-parse.
 4. Preview the tree diff: `ast-grep scan --inline-rules '<yaml>' <paths>` prints diffs and writes nothing; `--json` stays read-only even with `-U`.
 5. Apply with `-U` (`-U` overrides `-i`); nested matches rewrite outer-first, so re-run until zero changes — depth and idempotence prove together.
-6. Close with `fmt <target>`; comments never rewrite — sweep leftovers through [03]-[SEARCH] `regex`.
+6. Close with the repository's formatter (`nix fmt -- <target>` here); comments never rewrite — sweep leftovers through [03]-[SEARCH] `regex`.
 
 | [INDEX] | [REWRITE]      | [SHAPE]                                                                                                             |
 | :-----: | :------------- | :------------------------------------------------------------------------------------------------------------------ |

@@ -28,9 +28,6 @@ in {
       SHFMT_PATH = "shfmt";
       BASH_IDE_LOG_LEVEL = "info";
 
-      # --- [YAML_JSON]
-      YAMLLINT_CONFIG_FILE = "${config.xdg.configHome}/yamllint/config";
-
       # --- [DATABASE_FRONT_DOORS]
       # Harlequin discovers config through platformdirs (~/Library on darwin); pin it to XDG.
       HARLEQUIN_CONFIG_PATH = "${config.xdg.configHome}/harlequin/config.toml";
@@ -39,7 +36,7 @@ in {
       VD_DIR = "${config.xdg.stateHome}/visidata";
 
       # --- [NODE_PNPM_RAIL]
-      # pnpm is the sole package-manager verb on PATH (PNPM_HOME is a cross-surface row of modules/common/toolchain-env.nix); npm_config_* rows
+      # A project's mise.toml owns node and pnpm (PNPM_HOME is a cross-surface row of modules/common/toolchain-env.nix); npm_config_* rows
       # contain any vendored npm run under XDG, COREPACK_* rows neutralize transitive corepack calls (network off, strict pins, XDG cache).
       npm_config_cache = "${config.xdg.cacheHome}/npm";
       npm_config_userconfig = "${config.xdg.configHome}/npm/npmrc";

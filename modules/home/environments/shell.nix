@@ -23,7 +23,6 @@ in {
   # One vector for the session and the launchd domain; Home Manager prepends it to the inherited PATH, so a non-login shell (VS Code) resolves
   # the same order as a login shell.
   home.sessionPath = toolchainEnv.sessionPathEntries;
-  # pnpm installed via nix for PATH stability; PNPM_HOME is data/config only.
 
   # sessionEnv folds the class-gated pager/gcloud/gws vocabulary and the interactive man/bat/info rows; the rows below are session-only concerns
   # whose tool default is not already the declared path (zsh zle rows live in programs.zsh.localVariables, never the process environment).

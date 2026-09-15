@@ -1,0 +1,13 @@
+# --- [SETTINGS] -------------------------------------------------------------------------
+[settings]
+prereleases = true
+python.uv_venv_auto = "create|source"
+
+# --- [TOOLS] ----------------------------------------------------------------------------
+[tools]
+python = "3.15.0rc2"
+node = "latest"
+pnpm = "latest"
+uv = "latest"
+doppler = "latest"
+pulumi = "latest"

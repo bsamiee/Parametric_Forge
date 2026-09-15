@@ -7,7 +7,7 @@
 # Core register rows: system, files, monitoring, data, network, dev; desc/category/risk fields are row payload, not comment prose.
 {
   "1password" = [
-    ["opls" "op item list --format=json | jq -r '.[] | \"\\(.id) \\(.title)\"'" "List 1Password items"]
+    ["opls" "op item list" "List 1Password items"]
     ["opg" "op item get" "Get item details"]
     ["opr" "op run --" "Run with secrets injected"]
     ["opi" "op inject -i" "Inject secrets into template"]
@@ -49,7 +49,7 @@
     ["ls" "eza -la --header --no-user --time-style=relative" "Long listing via eza"]
     ["fda" "fd --hidden --no-ignore -a" "Find all files incl. hidden/ignored"]
     ["mkdir" "mkdir -pv" "Create parents verbosely"]
-    ["rsmv" "rsync-mv.sh" "Atomic move with directory cleanup"]
+    ["rcmv" "rclone move --delete-empty-src-dirs" "Move with emptied source directories removed"]
     ["yz" "forge-yazi.sh reveal" "Reveal a path in the tab's yazi popup (creates it when absent)"]
     ["yzd" "forge-yazi.sh cd" "Retarget the tab's yazi popup to a directory"]
     ["cpsp" "rsync -ahPSX --" "Sparse copy (VMs, disk images)"]
@@ -93,7 +93,7 @@
     ["PUT" "xh PUT" "RESTful PUT"]
     ["tripu" "trip --udp --target-port 33434" "UDP tracing for ECMP paths"]
     ["ohaj" "oha --no-tui --output-format json" "HTTP load run with JSON report"]
-    ["serve" "python3 -m http.server 8000" "Quick static server"]
+    ["serve" "rclone serve http --addr :8000 ." "Static server over the working directory"]
     ["bw" "sudo bandwhich" "Bandwidth monitor" "sudo"]
     ["speedtestl" "speedtest --accept-license" "Ookla speed test, license pre-accepted"]
     ["lssh" "sshs" "Interactive SSH picker"]

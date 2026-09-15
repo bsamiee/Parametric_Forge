@@ -28,7 +28,11 @@
 in {
   programs.git = {
     enable = true;
-    lfs.enable = true;
+    # The filter rows name a bare `git-lfs`: a project's mise.toml owns the client, so the filter runs inside a project and nowhere else.
+    lfs = {
+      enable = true;
+      package = null;
+    };
 
     # Darwin alone carries the op agent and signer binary; VPS commits keep signing off instead of faulting. allowedSigners lands the
     # $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
@@ -81,8 +85,8 @@ in {
 
       difftool = {
         prompt = false;
-        # GIT_EXTERNAL_DIFF calling convention: difft renders rename/mode data.
-        difftastic.cmd = ''difft "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"'';
+        # GIT_EXTERNAL_DIFF calling convention: difft renders rename/mode data. The store path is a Nix-side dependency; difft is on no PATH here.
+        difftastic.cmd = ''${lib.getExe pkgs.difftastic} "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"'';
       };
       pager.difftool = true;
       alias.dft = "difftool";

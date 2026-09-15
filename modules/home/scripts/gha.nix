@@ -19,7 +19,7 @@
       # --- [GATE_VOCABULARY]
       # One row per gate: the normalizer emits one JSON row per finding on stdout — {tool,file,line,id,severity,message} — and returns 0 clean,
       # 1 findings, >1 tool failure with deadline kills passing through as 124/137. Rows are the verdict detail; exit codes only classify state.
-      # Every tool spawn rides `timeout -k 10` under the one deadline: TERM first, KILL after a 10s grace (duration 0 disarms, matching fmt/loc).
+      # Every tool spawn rides `timeout -k 10` under the one deadline: TERM first, KILL after a 10s grace (duration 0 disarms, matching loc).
       declare -Ar _GATE=(
         ["actionlint"]=_gate_actionlint
         ["ratchet"]=_gate_ratchet

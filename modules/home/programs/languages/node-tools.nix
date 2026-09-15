@@ -4,14 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/node-tools.nix
 # ----------------------------------------------------------------------------
-# Node.js runtime and package tooling.
+# Node-hosted machine tools: prettier and mermaid-cli. The Node runtime, pnpm, and the TypeScript compiler are rows of each project's mise.toml
+# and package.json, never a machine package.
 {
   config,
   pkgs,
   ...
 }: let
   style = import ../../../style.nix;
-  # Neither tool has user-level config discovery, so each wrapper injects the house style only when upward discovery finds no project config
+  # prettier has no user-level config discovery, so the wrapper injects the house style only when upward discovery finds no project config
   # and the caller passes none — project law always wins.
   prettierConfig = "${config.xdg.configHome}/prettier/prettierrc.json";
   # Prettier resolves config from each file's directory upward, so the probe rides --find-config-path on the last positional: option values precede
@@ -33,61 +34,11 @@
       exec ${pkgs.prettier}/bin/prettier "$@"
     '';
   };
-  biomeConfigDir = "${config.xdg.configHome}/biome";
-  biome = pkgs.writeShellApplication {
-    name = "biome";
-    text = ''
-      ${style.walkUp}
-      # BIOME_CONFIG_PATH is the env twin of the global --config-path option and disables discovery outright; either spelling is explicit caller
-      # config, so both pass through before discovery can shadow or be shadowed.
-      [[ -n "''${BIOME_CONFIG_PATH:-}" ]] && exec ${pkgs.biome}/bin/biome "$@"
-      for arg in "$@"; do
-        case "$arg" in
-          --config-path | --config-path=*) exec ${pkgs.biome}/bin/biome "$@" ;;
-        esac
-      done
-      _walk_up biome.json biome.jsonc .biome.json .biome.jsonc >/dev/null \
-        && exec ${pkgs.biome}/bin/biome "$@"
-      BIOME_CONFIG_PATH="${biomeConfigDir}" exec ${pkgs.biome}/bin/biome "$@"
-    '';
-  };
 in {
   home.packages = [
-    pkgs.nodejs-bin_26 # Official Node 26 binary; Linux ELF admission and npm/npx stripping are owned in-overlay
-    pkgs.pnpm_11 # Sole package-manager verb on PATH; major-pinned for store-format stability
     prettier # Code formatter (house-config fallback wrapper)
-    biome # TS/JS/JSON/CSS formatter+linter (house-config fallback wrapper)
-    pkgs.typescript # TypeScript 7 native compiler and language server
     pkgs.mermaid-cli # Mermaid CLI (mmdc) on PATH; Chromium pinned via PUPPETEER_EXECUTABLE_PATH
   ];
 
-  xdg.configFile = {
-    "prettier/prettierrc.json".text = builtins.toJSON style.prettierrc;
-    # Full house law: formatter + JS style + organize-imports assist, so config-less directories get the same quality as project law.
-    # Transient trees stay excluded even when passed explicitly (!! rows).
-    "biome/biome.json".text = builtins.toJSON {
-      files = {
-        ignoreUnknown = true;
-        includes =
-          ["**"]
-          ++ map (d: "!!**/${d}") style.transientDirs;
-      };
-      formatter = {
-        enabled = true;
-        indentStyle = "space";
-        indentWidth = style.indent;
-        lineWidth = style.width;
-      };
-      javascript.formatter = {
-        quoteStyle = "single";
-        semicolons = "always";
-        trailingCommas = "all";
-      };
-      json.parser.allowComments = true;
-      assist = {
-        enabled = true;
-        actions.source.organizeImports = "on";
-      };
-    };
-  };
+  xdg.configFile."prettier/prettierrc.json".text = builtins.toJSON style.prettierrc;
 }

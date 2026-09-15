@@ -52,13 +52,11 @@
     vips # vips, vipsthumbnail; pyvips (ABI mode) dlopens libvips off the runtime dylib tree
   ];
 
-  # EnergyPlus/OpenStudio bind macOS only; gmsh generalizes to every host.
-  aecTools =
-    [pkgs.gmsh]
-    ++ lib.optionals isDarwin [
-      pkgs.energyplus
-      pkgs.openstudio
-    ];
+  # EnergyPlus/OpenStudio bind macOS only; gmsh is a project row (the PyPI wheel carries the CLI), never a machine package.
+  aecTools = lib.optionals isDarwin [
+    pkgs.energyplus
+    pkgs.openstudio
+  ];
 in {
   home.packages =
     [

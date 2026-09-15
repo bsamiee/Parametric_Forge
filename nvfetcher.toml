@@ -1,7 +1,7 @@
 # Pin-source declarations for every nvfetcher-engine manifest row; nvfetcher lives in the flake devShell alone, so
 # `nix develop -c nvfetcher -o overlays/_sources` advances the complete family (docs/atlas/rails-and-contracts.md row 03).
 
-# Design renderers, native application routing, and the Node source/runtime pin family; update with --filter '^(design-|nodejs-bin_26-)'.
+# Design renderers, native application routing, and the Node source pin; update with --filter '^design-'.
 [design-imagemagick]
 src.github = "ImageMagick/ImageMagick"
 fetch.url = "https://github.com/ImageMagick/ImageMagick/releases/download/$ver/ImageMagick-$ver.tar.xz"
@@ -79,11 +79,6 @@ src.github = "adoptium/temurin26-binaries"
 fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/linux/aarch64/jre/hotspot/normal/eclipse"
 url.name = "temurin-$ver-aarch64-linux.tar.gz"
 
-[ast-grep-upstream]
-src.github = "ast-grep/ast-grep"
-fetch.github = "ast-grep/ast-grep"
-cargo_lock = ["Cargo.lock"]
-
 [biome-aarch64-darwin]
 src.github = "biomejs/biome"
 src.prefix = "@biomejs/biome@"
@@ -117,24 +112,6 @@ fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli
 [design-nodejs_26]
 src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
 fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver.tar.xz"
-
-[nodejs-bin_26-aarch64-darwin]
-src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
-fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-darwin-arm64.tar.xz"
-
-[nodejs-bin_26-aarch64-linux]
-src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
-fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-arm64.tar.xz"
-
-[nodejs-bin_26-x86_64-linux]
-src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
-fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver-linux-x64.tar.xz"
-
-[pnpm_11]
-src.github_tag = "pnpm/pnpm"
-src.include_regex = "^v11\\.[0-9]+\\.[0-9]+$"
-src.prefix = "v"
-fetch.url = "https://registry.npmjs.org/pnpm/-/pnpm-$ver.tgz"
 
 [sqlean-aarch64-darwin]
 src.github = "nalgeon/sqlean"

@@ -14,7 +14,7 @@ let
 in {
   inherit indent width;
   indentString = builtins.concatStringsSep "" (builtins.genList (_: " ") indent);
-  # Transient trees: never format/lint/search targets. Every consumer projects this one list — fmt discovery, machine tool fallbacks, editor settings
+  # Transient trees: never format/lint/search targets. Every consumer projects this one list — machine tool fallbacks, editor settings
   # — so agent-harness folders (.claude, .codex) stay first-class work surfaces while their scratch/archive/cache interiors stay untouched.
   transientDirs = [".archive" "_archive" ".scratch" "scratch" "_tmp" "_TMP" ".tmp" ".cache" ".history" "node_modules" ".venv"];
   # Prettier config for the prose lane; the machine wrapper and the Home Manager config file both project it.

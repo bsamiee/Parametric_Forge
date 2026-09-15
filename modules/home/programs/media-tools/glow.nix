@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/media-tools/glow.nix
 # ----------------------------------------------------------------------------
-# Terminal markdown renderer for Yazi preview
+# Terminal markdown pager; Yazi previews markdown through rich (apps/yazi/default.nix previewer rows), never through glow.
 {pkgs, ...}: let
   yamlFormat = pkgs.formats.yaml {};
 

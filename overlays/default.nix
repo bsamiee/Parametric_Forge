@@ -246,40 +246,10 @@ final: prev: let
         runHook postInstall
       '';
     };
-    nodejs-bin_26 = {a, ...}: {
-      pname = "nodejs-bin";
-      sourceRoot = a.dir;
-      nativeBuildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
-      buildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.stdenv.cc.cc.lib;
-      # The nixpkgs nodejs passthru the npm/pnpm builders read: buildNpmPackage seats `nodejs.python` (node-gyp's interpreter) in its
-      # nativeBuildInputs, and pnpm's fetchDeps fixup rides that builder with this package seated as pnpm's node.
-      passthru.python = prev.python3;
-      # pnpm-only rail: npm/npx never reach the installed output (Node 26 dropped corepack from the distribution). A missing strip target is upstream
-      # layout drift (patch_drift); fail the build loudly, never ship a silently fatter output.
-      installPhase = let
-        stripRows = ["bin/npm" "bin/npx" "lib/node_modules/npm"];
-      in ''
-        runHook preInstall
-        mkdir -p "$out"
-        cp -R . "$out"
-        ${lib.concatMapStringsSep "\n" (row: ''
-            [ -e "$out/${row}" ] || [ -L "$out/${row}" ] || {
-              echo "nodejs-bin: expected strip target '${row}' missing from the release layout" >&2
-              exit 1
-            }
-            rm -rf "$out/${row}"
-          '')
-          stripRows}
-        runHook postInstall
-      '';
-    };
     energyplus = optRuntime;
     openstudio = optRuntime;
   };
 
-  pnpmRow = rowOf "pnpm_11";
-  astGrepRow = rowOf "ast-grep-upstream";
-  astGrepSource = generatedSources.${astGrepRow.sourcePin};
   sourceRecipes = {
     geist-font = old: {
       # The native font installer consumes srcs; retain it and unpack the official release archive without rewriting font programs.
@@ -382,11 +352,6 @@ in
     vega-cli = prev.vega-cli.override {
       buildNpmPackage = prev.buildNpmPackage.override {nodejs = final.nodejs_26;};
     };
-    ast-grep-upstream = prev.ast-grep.overrideAttrs (old: {
-      inherit (astGrepSource) version src;
-      cargoDeps = prev.rustPlatform.importCargoLock astGrepSource.cargoLock."Cargo.lock";
-      passthru = removeAttrs (old.passthru or {}) ["updateScript"];
-    });
     carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
       # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
       # the build loudly (patch_drift), never ship an unpatched binary.
@@ -472,12 +437,6 @@ in
       };
     };
     forge-provision = final.callPackage ./forge-provision {};
-    # patchFamily shebang-retarget: the builder patches the entry shebangs to its `nodejs-slim` argument, so seating nodejs-bin_26 there retargets
-    # every entry through the upstream layout itself; nixpkgs aliases `pnpm` to this attr.
-    pnpm_11 = (prev.pnpm_11.override {nodejs-slim = final.nodejs-bin_26;}).overrideAttrs (_: {
-      inherit (pnpmRow) version;
-      src = srcOf pnpmRow.assets.any;
-    });
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-forge = let
       row = rowOf "sqlite-forge";

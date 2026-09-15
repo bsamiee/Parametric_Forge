@@ -71,8 +71,6 @@
   ];
   git-tools = [
     ["lg" "lazygit" "Lazygit TUI"]
-    ["gstats" "git-quick-stats" "Interactive git statistics"]
-    ["gstat" "git-quick-stats -T" "Per-author contribution stats"]
     ["ghpr" "gh pr list" "List pull requests; pr stays the paginate binary"]
     ["prc" "gh pr create" "Create pull request"]
     ["prv" "gh pr view" "View pull request"]

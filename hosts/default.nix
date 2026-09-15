@@ -42,8 +42,6 @@
           homeDirectory = host.user.home;
           stateVersion = host.stateVersion.home;
         };
-        programs.home-manager.enable = true;
-
         # No generated manual: option docs are read at source and through nixd
         manual = {
           html.enable = false;

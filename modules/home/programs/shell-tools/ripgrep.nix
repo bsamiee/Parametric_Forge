@@ -4,12 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
-# Agent-first search defaults: raw `rg` must never silently miss corpus content.
-{
-  lib,
-  pkgs,
-  ...
-}: let
+# Agent-first search defaults: raw `rg` must never silently miss corpus content. The rg binary is a project's mise.toml row; this file owns
+# the config file RIPGREP_CONFIG_PATH (environments/shell.nix) hands every rg.
+{lib, ...}: let
   # Miss-prevention only: hidden dotfiles/dirs and symlinked trees (HM configs resolve into the store) are searched by default, with .git/ as the
   # sole exclusion — everything else stays gitignore-owned. Match semantics, error visibility, engine selection, and presentation keep upstream
   # defaults; display cosmetics live in the interactive alias, and scripted gates isolate with --no-config.
@@ -57,6 +54,5 @@
     "--type-add=headers:*.{h,hpp,hxx,hh}"
   ];
 in {
-  home.packages = [pkgs.ripgrep];
   xdg.configFile."ripgrep/config".text = lib.concatStringsSep "\n" ripgrepConfig;
 }

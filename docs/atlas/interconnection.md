@@ -41,7 +41,7 @@ Consumers never restate hex. WezTerm receives `projections.luaPalette` as a row 
 
 `modules/common/toolchain-env.nix` (`forgeToolchainEnvFor`) is the single source of PATH vectors, scientific-env exports, and browser path. Its output is consumed by the shell environment, zsh config, the Darwin GUI launchd env (`darwin/settings/system.nix`), and WezTerm. A bad PATH vector makes shells, launchd agents, and GUI-launched subprocesses resolve different tools — the bug class where a command works in the terminal and fails under a GUI-launched agent.
 
-`languages/python-tools.nix` installs the machine interpreter and tools as plain PATH entries: `python3`, `ruff`, `ty`, and `mypy` resolve to the store binary from any directory. Inside a project, `mise activate` sources the `.venv` its `uv.lock` names (`python.uv_venv_auto`) ahead of them, so the project's interpreter and tools come from its tree, and a non-interactive caller reaches the same environment through `uv run`.
+Forge installs no interpreter, package manager, or checker a project pins: `python`, `uv`, `ruff`, `ty`, `mypy`, `node`, `pnpm`, and their peers are rows of each project's `mise.toml` and lock files. Inside a project, `mise activate` sources the `.venv` its `uv.lock` names (`python.uv_venv_auto`) and the pinned tools ahead of every Nix segment; a non-interactive caller reaches the same environment through `uv run` or the mise shim farm, and outside every project those names resolve to nothing.
 
 ## [06]-[OWNER_TABLES]
 
@@ -68,5 +68,5 @@ Beyond eval-time option hinges, these contracts bind processes at runtime across
 
 - [01]-[TERMINAL_MESH]: `apps/chords.nix` bind rows invoke `forge-yazi.sh toggle` (`scripts/terminal.nix`); the yazi opener invokes `forge-edit.sh %s`; the editor registry publishes `editor-tab-*.tsv` rows the dispatcher globs. Every edge rename lands across all of those owners in the same change.
 - [02]-[XDG_PROJECTIONS]: agent-facing artifacts live at fixed projection paths — `~/.config/forge/theme/palette.json` and `forge-dracula.tmTheme` carry the theme. Consumers hardcode these paths by contract; moving one is an estate-wide grep, not a local edit.
-- [03]-[QA_HOOKS]: `flake-modules/qa.nix` invokes `fmt --self-test`/`--check` from `scripts/fmt.nix`; treefmt lanes and `fmt` share formatter ownership per extension — a file class both claim gets formatted twice, and a placeholder-bearing template neither may own (the `.sql.tpl` scar).
+- [03]-[QA_HOOKS]: `flake-modules/qa.nix` compiles every `.jq` program under `overlays/` with the store jq; treefmt rows (`flake-modules/tooling.nix`) own formatting per extension, and a placeholder-bearing template no row may own (the `.sql.tpl` scar).
 - [04]-[SESSION_FABRIC]: one workspace row (`wezterm/default.nix`) carries picker entry, zellij session identity, cwd, and float policy; `deck.lua` reads the row for its native workspace picker and derives the session arguments from it.

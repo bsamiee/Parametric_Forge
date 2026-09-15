@@ -17,11 +17,6 @@ in {
     ./gitleaks.nix
   ];
 
-  # Config-free git estate tools plus manifest git-roster rows.
-  home.packages =
-    [
-      pkgs.git-quick-stats
-      pkgs.difftastic
-    ]
-    ++ gitRoster;
+  # Manifest git-roster rows; difftastic reaches git through the difftool row's store path in git.nix.
+  home.packages = gitRoster;
 }

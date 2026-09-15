@@ -8,8 +8,8 @@
 
 require("conform").setup({
     formatters_by_ft = require("forge.tools").format,
-    -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save); pin the profile binary the
-    -- estate fmt router's lane owns. C# has no lane here either: `dotnet format` owns .cs through the project rails.
+    -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save); pin the profile binary
+    -- node-tools.nix installs. C# has no lane here either: `dotnet format` owns .cs through the project rails.
     formatters = {
         prettier = { command = "prettier" },
     },

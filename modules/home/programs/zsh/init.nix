@@ -10,6 +10,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   programs.zsh.initContent = lib.mkMerge [
@@ -17,14 +18,23 @@
       # --- [SESSION_SECRETS]
       [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
 
+      # --- [ZELLIJ_PANE_WEZTERM_IDENTITY]
+      # A zellij server freezes its environment at creation and hands it to every pane, so after a WezTerm restart the inherited socket
+      # (gui-sock-<gui pid>) and pane id are dead and `wezterm cli` spawns a stray mux server. Unset, the cli locates the live GUI instance
+      # itself (documented resolution order) and targets its focused pane.
+      if [[ -n $ZELLIJ ]]; then
+        unset WEZTERM_UNIX_SOCKET WEZTERM_PANE
+      fi
+
       # --- [FZF_COMPGEN_PATH_DIR]
-      # fzf's documented hooks for ** completion: fd honors the ignore estate where fzf's built-in walker would not.
+      # fzf's documented hooks for ** completion: fd honors the ignore estate where fzf's built-in walker would not. The store path is a
+      # Nix-side dependency of these hooks; fd is on no PATH outside a project.
       _fzf_compgen_path() {
-        fd --hidden --follow --exclude .git . "$1"
+        ${lib.getExe pkgs.fd} --hidden --follow --exclude .git . "$1"
       }
 
       _fzf_compgen_dir() {
-        fd --type d --hidden --follow --exclude .git . "$1"
+        ${lib.getExe pkgs.fd} --type d --hidden --follow --exclude .git . "$1"
       }
     '')
 

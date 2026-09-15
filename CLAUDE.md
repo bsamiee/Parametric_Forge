@@ -93,7 +93,7 @@ Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` a
 
 [PYTHON]:
 - 3.15 only, never older; `uv` for package management; `ruff` for all linting/formatting.
-- Type checking: `ty` with `mypy` as the strict secondary gate — both resolve the project environment first, `ty` falling back to the Nix build, `mypy` to the newest release through uv's tool cache.
+- Type checking: `ty` with `mypy` as the strict secondary gate, both from the project's `uv.lock`; no machine copy exists outside a project.
 
 ## [05]-[LOCAL_PROVISIONING]
 

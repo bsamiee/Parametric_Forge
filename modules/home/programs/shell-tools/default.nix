@@ -78,13 +78,10 @@ in {
     ++ lib.optional (completionRows != []) manifest-completions
     ++ [
       pkgs._7zz-rar # 7-Zip with RAR support for Yazi archive preview/extraction
-      pkgs.actionlint # GitHub Actions workflow linter
-      pkgs.ast-grep-upstream # Structural code search and rewrite
       pkgs.bandwhich # Per-process bandwidth monitor
       pkgs.choose # Human-friendly column extraction
       pkgs.curlie # Curl-compatible HTTP client
       pkgs.doggo # DNS lookup client
-      pkgs.doppler # Doppler secrets CLI; zsh completion ships in share/zsh/site-functions
       pkgs.dua # Interactive disk usage analyzer
       pkgs.duf # Disk free overview
       pkgs.dust # Directory size tree; config owned by dust.nix
@@ -93,7 +90,6 @@ in {
       pkgs.gping # Graphing ping
       pkgs.grex # Regex generator from test cases
       (withDefaultFlag pkgs.hexyl "--color=auto" "--color|--color=*|-p*|--plain|-[!-]*p*") # Hex viewer; color rides TTY detection
-      pkgs.hyperfine # Command benchmarking
       pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output
       pkgs.ookla-speedtest # Official Ookla speed test CLI
       pkgs.ouch # Archive compression and extraction
@@ -101,7 +97,6 @@ in {
       pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
       pkgs.ratchet # GitHub Actions version pinning
       pkgs.rich-cli # Rich terminal rendering
-      (withDefaultFlag pkgs.sd "--across" "-A*|--across|-[!-]*A*") # Structural find and replace; patterns match across the whole input
       pkgs.sshs # Interactive SSH host picker
       pkgs.trash-cli # FreeDesktop trash suite
       pkgs.zizmor # GitHub Actions security auditor

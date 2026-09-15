@@ -7,7 +7,7 @@
 # ruff:file-ignore[docstring-missing-returns]
 """Own PostToolUse: recover MODE from the payload shape, formatting a file event and redacting a tool-output event.
 
-A file event formats through the estate `fmt` router then gates on `fmt --check`; a tool-output event redacts secrets.
+A file event formats through the repository's treefmt (`nix fmt -- <file>`) then gates on `nix fmt -- --ci <file>`; a tool-output event redacts secrets.
 Wire: PostToolUse matcher "Edit|Write|NotebookEdit|Bash|Read|Grep|WebFetch".
 Boundary kernel: subprocess/shutil.which are admitted here. tool_response is typed Raw because its shape varies per tool (str for
 some, object {stdout,stderr,...} for most built-ins), so it is normalized in-body, never decoded against a single declared shape.
@@ -26,10 +26,12 @@ import msgspec
 WRITE_TOOLS = frozenset(("Edit", "Write", "NotebookEdit"))  # POLICY: tools that mutate a file; only these route to FORMAT
 REDACT_TOOLS = frozenset(("Bash", "Read", "Grep", "WebFetch"))  # POLICY: tools whose output is scanned for secrets
 SECRET = re.compile(r"sk-ant-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{36}|AKIA[A-Z0-9]{16}|xox[baprs]-[A-Za-z0-9-]{10,}")  # POLICY
-CHECK_OVERLAY: dict[str, tuple[str, ...]] = {".py": ("ruff", "check")}  # POLICY: linter beyond `fmt`, where format != lint
+CHECK_OVERLAY: dict[str, tuple[str, ...]] = {".py": ("ruff", "check")}  # POLICY: linter beyond the formatter, where format != lint
 TIMEOUT_S = 30
 MAX_PAYLOAD = 8 * 1024 * 1024  # bound the stdin read; a pathological payload never balloons resident memory
-FMT = next((p for p in (shutil.which("fmt"),) if p and p != "/usr/bin/fmt"), "")  # estate router only; never the macOS reflow namesake
+NIX = (
+    shutil.which("nix") or ""
+)  # the flake formatter (treefmt-nix rows) is the one formatter front door; /usr/bin/fmt is a paragraph reflow, never used
 
 
 class Mode(StrEnum):
@@ -76,12 +78,12 @@ def _run(argv: tuple[str, ...], /) -> subprocess.CompletedProcess[str] | None:
 
 
 def _format(target: Path, /) -> int:
-    """Format a file through the estate router, then gate on check and surface a failing diagnostic."""
-    if not FMT:  # a degraded/absent checker emits a visible diagnostic, never a silent exit 0 that fakes a clean gate
-        sys.stderr.write("gate skipped: estate fmt router unavailable on PATH\n")
+    """Format a file through the flake's treefmt, then gate on its CI mode and surface a failing diagnostic."""
+    if not NIX:  # a degraded/absent checker emits a visible diagnostic, never a silent exit 0 that fakes a clean gate
+        sys.stderr.write("gate skipped: nix unavailable on PATH\n")
         return 0
-    _run((FMT, str(target)))  # the router owns every suffix; a per-language checker overlay survives only where lint != format
-    gate = _run((*overlay, str(target))) if (overlay := CHECK_OVERLAY.get(target.suffix)) else _run((FMT, "--check", str(target)))
+    _run((NIX, "fmt", "--", str(target)))  # treefmt rows own every suffix; a per-language checker overlay survives only where lint != format
+    gate = _run((*overlay, str(target))) if (overlay := CHECK_OVERLAY.get(target.suffix)) else _run((NIX, "fmt", "--", "--ci", str(target)))
     if gate is None:
         sys.stderr.write(f"gate skipped: checker for {target.suffix} did not run\n")
         return 0

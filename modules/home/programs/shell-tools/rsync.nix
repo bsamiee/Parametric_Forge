@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/rsync.nix
 # ----------------------------------------------------------------------------
-# rsync owner: shared exclusion filter plus two packaged rails. rsync-safe.sh is the transparent filtered transport; rsync-mv.sh is the atomic
-# move (rsync cannot remove source directories, only files).
+# rsync owner: shared exclusion filter plus the packaged filtered transport rsync-safe.sh. A move that removes emptied source directories is
+# `rclone move --delete-empty-src-dirs` (aliases/core.nix `rcmv`).
 {
   config,
   pkgs,
@@ -22,36 +22,8 @@
       exec rsync --filter="merge $filter" "$@"
     '';
   };
-
-  rsyncMv = pkgs.writeShellApplication {
-    name = "rsync-mv.sh";
-    runtimeInputs = [pkgs.coreutils pkgs.findutils pkgs.rsync];
-    text = ''
-      if (($# < 2)); then
-        printf 'usage: rsync-mv.sh SOURCE... DEST\n' >&2
-        exit 64
-      fi
-
-      args=("$@")
-      sources=("''${args[@]:0:''${#args[@]}-1}")
-
-      # -aPX --remove-source-files moves file content; --partial-dir keeps interrupted large transfers resumable instead of restarting from zero.
-      rc=0
-      rsync -aPX --remove-source-files --itemize-changes --partial-dir=.rsync-partial "$@" || rc=$?
-
-      # rsync only removes source files; the emptied source directories are swept here to complete move semantics, and one that stays (find
-      # exits 0 over a directory it left populated) is a failed move like any other step.
-      if [ "$rc" = 0 ]; then
-        for src in "''${sources[@]}"; do
-          [ ! -d "$src" ] || { find "$src" -type d -empty -delete && [ ! -d "$src" ]; } || rc=$?
-        done
-      fi
-
-      exit "$rc"
-    '';
-  };
 in {
-  home.packages = [pkgs.rsync rsyncSafe rsyncMv];
+  home.packages = [pkgs.rsync rsyncSafe];
 
   # --- [RSYNC_CONFIGURATION]
   xdg.configFile."rsync/filter" = {

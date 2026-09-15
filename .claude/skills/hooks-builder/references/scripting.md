@@ -84,7 +84,7 @@ A command check normalizes the command before matching — raw substring matchin
 
 Two egress surfaces are the same fail-closed seam. A value written to `$CLAUDE_ENV_FILE` passes `shlex.quote` — the file is sourced into bash, so an unquoted `$()` or backtick in a branch name, path, or fetched value executes on the next Bash call; the quote is the difference between persisting data and shipping a remote-code path.
 
-A binary the hook shells is resolved absolutely or probed for identity, never invoked by bare name — a bare `fmt`, `tree`, or `find` collides with a system namesake (`/usr/bin/fmt` reflows paragraphs), so the resolved path is confirmed against the estate tool before it runs. A checker that is missing, degraded, or wrongly resolved emits a visible stderr diagnostic and exits 0 for a gate that cannot revert its target — never a silent exit 0 that reads as a clean pass; the operator learns the gate did not run.
+A binary the hook shells is resolved absolutely or probed for identity, never invoked by bare name — a bare `tree` or `find` collides with a system namesake (`/usr/bin/find` takes different flags), so the resolved path is confirmed against the estate tool before it runs. A checker that is missing, degraded, or wrongly resolved emits a visible stderr diagnostic and exits 0 for a gate that cannot revert its target — never a silent exit 0 that reads as a clean pass; the operator learns the gate did not run.
 
 ## [05]-[HOT_PATH]
 

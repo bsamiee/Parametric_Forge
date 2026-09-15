@@ -142,7 +142,7 @@
         DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler"; # .doppler.yaml, fallback/, and metadata; the default is ~/.doppler
         GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
         # pnpm's home directory, where `pnpm add -g` lands packages and their bin links; the macOS default is ~/Library/pnpm. pnpm itself is a
-        # Nix package on PATH, the row is data only.
+        # project's mise.toml row, this row is data only.
         PNPM_HOME = "${xdgDataHome}/pnpm";
         # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
         PUPPETEER_EXECUTABLE_PATH = puppeteerExecutablePath;

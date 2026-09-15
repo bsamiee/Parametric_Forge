@@ -36,7 +36,7 @@
 
   # sqruff discovery is cwd-only with no user-level lookup; the wrapper injects a house config solely when the working directory carries no
   # project config and the caller passes none, so project law always wins. Dialect is a filename fact (estate law): the first .sql argument's
-  # basename picks the house dialect, and fmt keeps its batches dialect-homogeneous.
+  # basename picks the house dialect.
   sqruff = pkgs.writeShellApplication {
     name = "sqruff";
     text = ''
@@ -62,11 +62,9 @@
   };
 in {
   home.packages = with pkgs; [
-    sqlite-interactive # Enhanced sqlite3 shell with line editing and metadata helpers
     sqlite-vec # Vector similarity extension for SQLite
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
-    duckdb # In-memory analytics database with SQL interface
     postgres18ForgeTools # PostgreSQL 18 client commands
     sqruff # SQL linter/formatter (let-bound house-config fallback wrapper)
     pgformatter # PostgreSQL SQL formatter

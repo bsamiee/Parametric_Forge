@@ -373,6 +373,9 @@ in {
         // environment (env-bootstrap) before spawning the server.
         theme                       "dracula"
         default_shell               "zsh"
+        // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
+        // and the next `attach --create main` reattaches them live. Resurrection (the `quit` path) replays only layout and argv behind a
+        // Press-ENTER banner. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true

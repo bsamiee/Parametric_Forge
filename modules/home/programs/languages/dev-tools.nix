@@ -80,8 +80,7 @@
     '';
   };
 in {
-  # Machine-level fallback style for the YAML pair. yamlfmt walks the working tree upward for a project .yamlfmt before touching
-  # $XDG_CONFIG_HOME/yamlfmt/.yamlfmt; yamllint discovery rides YAMLLINT_CONFIG_FILE behind project-local .yamllint files, so project law always wins.
+  # Machine-level fallback style for the shell and TOML tools; each resolves a project config ahead of these rows, so project law always wins.
   xdg.configFile = {
     # shellcheck resolves rc files from the script's directory upward, then ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
     # ~/.shellcheckrc absent — it would shadow this row.
@@ -100,21 +99,6 @@ in {
       column_width = ${toString style.width}
       allowed_blank_lines = 2
       reorder_keys = false
-    '';
-    # Projected from the style vocabulary; the treefmt row reads the same value, so every yamlfmt consumer shares one source.
-    "yamlfmt/.yamlfmt".text = style.yamlfmt;
-    "yamllint/config".text = ''
-      extends: default
-
-      # yamlfmt owns shape: its sequence-item nesting is engine-fixed and no indentation rule can describe it, so the linter cedes that dimension.
-      rules:
-        line-length:
-          max: ${toString style.width}
-          level: warning
-        indentation: disable
-        document-start: disable
-        truthy:
-          check-keys: false
     '';
   };
 
@@ -136,17 +120,11 @@ in {
         shfmt # Shell formatter (let-bound house-style fallback wrapper)
         bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
-        # --- [YAML]
-        yamlfmt # YAML formatter (Google)
-        yamllint # YAML linter
+        # --- [YAML_TOML]
         yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
         taplo # TOML formatter/validator/LSP (let-bound house-config fallback wrapper)
 
-        # --- [JSON]
-        jq # Lightweight command-line JSON processor
-
         # --- [GENERAL_DATA_TOOLS]
-        yq-go # YAML/JSON/TOML processor (yq)
         miller # CSV/TSV/JSON processor (mlr)
         qsv # High-performance CSV and tabular data toolkit
         typos # Fast source and docs typo checker
@@ -161,7 +139,6 @@ in {
         # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
         gws # Google Workspace CLI for scripted and batch Workspace administration
-        pulumi # Pulumi CLI engine; Python SDK is managed per-project via uv
       ]
       ++ dataRoster;
   };

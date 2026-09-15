@@ -27,7 +27,7 @@
     PRE_COMMIT_HOME = "${config.xdg.dataHome}/pre-commit";
 
     # --- [CLOUD_IAC]
-    # Plugins, workspaces, credentials, and logs of the Pulumi CLI (dev-tools.nix); the default is ~/.pulumi.
+    # Plugins, workspaces, credentials, and logs of the Pulumi CLI (a project's mise.toml row); the default is ~/.pulumi.
     PULUMI_HOME = "${config.xdg.dataHome}/pulumi";
 
     # --- [AI_CLAUDE]

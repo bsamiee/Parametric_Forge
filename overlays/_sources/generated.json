@@ -1,30 +1,4 @@
 {
-    "ast-grep-upstream": {
-        "cargoLock": {
-            "Cargo.lock": [
-                "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA_6+qFFx5U=/Cargo.lock",
-                {}
-            ]
-        },
-        "date": null,
-        "extract": null,
-        "name": "ast-grep-upstream",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "deepClone": false,
-            "fetchSubmodules": false,
-            "leaveDotGit": false,
-            "name": null,
-            "owner": "ast-grep",
-            "repo": "ast-grep",
-            "rev": "0.45.2",
-            "sha256": "sha256-UivUuJROOteD6klPcGQ+grt2qS55Ja9yLA/6+qFFx5U=",
-            "sparseCheckout": [],
-            "type": "github"
-        },
-        "version": "0.45.2"
-    },
     "biome-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -389,66 +363,6 @@
             "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-amd64.zip"
         },
         "version": "1.5.5"
-    },
-    "nodejs-bin_26-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "nodejs-bin_26-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-9Y5QRLk4oxdBhN5Krx0rv8//gS6IIg/wjpIhwJ9chnc=",
-            "type": "url",
-            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-darwin-arm64.tar.xz"
-        },
-        "version": "26.8.2"
-    },
-    "nodejs-bin_26-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "nodejs-bin_26-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-gdjw/eqdzTv9z+r8X4NZwVHwl+mICwAHwGRcpnDQeXE=",
-            "type": "url",
-            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-arm64.tar.xz"
-        },
-        "version": "26.8.2"
-    },
-    "nodejs-bin_26-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "nodejs-bin_26-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-QOHTIlwcmumiZxyY7LmFfk1VVQJjlPNIZFZ2eYhA1cU=",
-            "type": "url",
-            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2-linux-x64.tar.xz"
-        },
-        "version": "26.8.2"
-    },
-    "pnpm_11": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "pnpm_11",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-0eqyQzFyZhzDahjshfzpP3cdsZYnFzKcwB7JwoJMok8=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/pnpm/-/pnpm-11.24.0.tgz"
-        },
-        "version": "11.24.0"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,

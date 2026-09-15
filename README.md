@@ -73,7 +73,7 @@ Rulings derive from principles, not precedent lists. These axes resolve each new
 |  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction.          |
 |  [05]   | IaC over YAML          | Service state is typed Pulumi rows in `services/` — Doppler, GitHub — never per-repo files or click-ops.    |
 |  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands. |
-|  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; the Git LFS client serves external repos only.      |
+|  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; a project that uses LFS pins `git-lfs` in its `mise.toml`. |
 |  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.             |
 
 ## [04]-[DETERMINATE_NIX]
@@ -114,8 +114,8 @@ Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` 
 
 ## [10]-[TOOLCHAINS]
 
-- [PYTHON]: 3.15 GIL build; `python3`, `uv`, `ruff`, `ty`, and `mypy` serve a shell outside a project, and a project's `mise.toml` and `uv.lock` own the interpreter and tools inside its tree. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `forge-runtime-dylibs` tree ctypes consumers dlopen by name.
-- [NODE_LUA_DB]: Node 26 via the Nix-owned official binary + pnpm pin; Lua with LSP tooling; DuckDB/SQLite with sqlean/spatialite/vec; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `forge-provision`.
+- [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `forge-runtime-dylibs` tree ctypes consumers dlopen by name.
+- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-forge` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `forge-provision`.
 - [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. That `dotnet` reaches PATH through the mise shim farm `toolchain-env.nix` appends as the last segment of the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 - [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Direct calls are Forge-level debugging.
 

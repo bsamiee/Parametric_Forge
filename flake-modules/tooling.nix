@@ -121,7 +121,7 @@ _: {
         shfmt.options = ["-ci"];
         # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql` anchors at the tree root and matches nothing nested. No sqlite
         # row: sqruff's sqlite dialect rewrites virtual-table module arguments (float[2] -> float [2]), which extensions parse verbatim, so
-        # sqlite SQL stays formatter-unowned until that dialect matures, and fmt's sql classification skips the same basenames.
+        # sqlite SQL stays formatter-unowned until that dialect matures.
         sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
         sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
       };

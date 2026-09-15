@@ -21,7 +21,7 @@
 ## [03]-[NIX_SHELL_EXECUTION]
 
 - Prefer Nix/Home Manager owned executables and wrappers over aliases or interactive shell functions.
-- `fmt [--check|--json] [target...]` is the universal formatter front door (owner: `modules/home/scripts/fmt.nix`); each file type routes to its owning formatter through the never-shadow PATH wrappers, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
+- `nix fmt` is this repository's formatter front door (treefmt-nix rows in `flake-modules/tooling.nix`, `nix fmt -- --ci` the proving spelling); a consumer repository formats through its own targets, and repo law (`pyproject.toml`, `biome.json`, treefmt rows) always outranks the machine XDG fallbacks.
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
 - Nix option and package truth is probed against the locked inputs and module source, never recalled; `CLAUDE.md` [03] carries the division of labor with `search-context7`.
 

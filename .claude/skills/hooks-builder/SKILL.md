@@ -28,7 +28,7 @@ Build order: pick the event, pick the handler, write the config into the provide
 
 [TEMPLATES]:
 - [01]-[PRETOOLUSE_GATE](templates/pretooluse-gate.py): typed validator, per-command semantic dispatch, sandbox admission, fail-closed exit-2 block.
-- [02]-[POSTTOOLUSE_FORMAT](templates/posttooluse-format.py): MODE-polymorphic owner formatting through the `fmt` router, redacting tool output.
+- [02]-[POSTTOOLUSE_FORMAT](templates/posttooluse-format.py): MODE-polymorphic owner formatting through the repository's treefmt (`nix fmt`), redacting tool output.
 - [03]-[SESSION_CONTEXT](templates/session-context.py): SessionStart injector with gated probes, session-to-pane routing capture, and env persistence.
 - [04]-[STOP_CONTINUATION](templates/stop-continuation.py): Stop/SubagentStop evaluator: durable counter, layered detection, error-aware reprompt.
 - [05]-[ASYNC_GUARDRAIL](templates/async-guardrail.py): off-hot-path `asyncRewake` check waking the session only on findings new since the baseline.

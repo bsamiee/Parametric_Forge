@@ -4,24 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/fd.nix
 # ----------------------------------------------------------------------------
-# Fast file finder plus the estate noise-pattern taxonomy: `dirs` are directory names, `files` are file globs, `text` is the rendered gitignore-grammar
-# projection watchexec consumes verbatim; fd consumes `dirText` only — traversal prunes noise directories while file discovery stays exhaustive.
+# The estate noise-pattern taxonomy: `dirs` are directory names, `files` are file globs, `text` is the rendered gitignore-grammar projection
+# watchexec consumes verbatim; fd consumes `dirText` only — traversal prunes noise directories while file discovery stays exhaustive. The fd
+# binary is a project's mise.toml row; this file owns the ignore file every fd reads and the taxonomy other consumers project.
 # Narrower per-surface policies (ripgrep search, eza tree prune, rsync filter) stay consumer-owned.
 {
   config,
   lib,
-  pkgs,
   ...
-}: let
-  fdWithHidden = pkgs.symlinkJoin {
-    name = "fd-hidden-${pkgs.fd.version}";
-    paths = [pkgs.fd];
-    nativeBuildInputs = [pkgs.makeWrapper];
-    postBuild = ''
-      wrapProgram "$out/bin/fd" --add-flags '--hidden'
-    '';
-  };
-in {
+}: {
   options.forge.ignoreEstate = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
@@ -95,8 +86,5 @@ in {
     };
   };
 
-  config = {
-    home.packages = [fdWithHidden];
-    xdg.configFile."fd/ignore".text = config.forge.ignoreEstate.dirText;
-  };
+  config.xdg.configFile."fd/ignore".text = config.forge.ignoreEstate.dirText;
 }

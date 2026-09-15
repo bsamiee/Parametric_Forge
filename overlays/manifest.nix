@@ -33,14 +33,6 @@ let
     aarch64-linux = "duckdb-aarch64-linux";
     x86_64-linux = "duckdb-x86_64-linux";
   };
-  nodePins = let
-    binaries = pinFamily {
-      aarch64-darwin = "nodejs-bin_26-aarch64-darwin";
-      aarch64-linux = "nodejs-bin_26-aarch64-linux";
-      x86_64-linux = "nodejs-bin_26-x86_64-linux";
-    };
-  in
-    assert binaries.version == generatedPins.design-nodejs_26.version; binaries;
   sqleanPins = pinFamily {
     aarch64-darwin = "sqlean-aarch64-darwin";
     aarch64-linux = "sqlean-aarch64-linux";
@@ -106,9 +98,9 @@ let
   };
 in rec {
   vocabulary = {
-    sourceKinds = ["source-build" "binary-archive" "npm-tarball" "github-release" "nixpkgs" "repo"];
-    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "auto-patchelf-npm-tool-strip" "shebang-retarget" "source-substitute"];
-    cacheClasses = ["forge-cache-hit" "source-built-local" "binary-only-local"];
+    sourceKinds = ["source-build" "binary-archive" "github-release" "nixpkgs" "repo"];
+    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "source-substitute"];
+    cacheClasses = ["source-built-local" "binary-only-local"];
     updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
     overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
@@ -229,8 +221,8 @@ in rec {
       cacheClass = "binary-only-local";
       updateEngine = "nvfetcher";
       projection.overlay = "override";
-      overlayReason = "nixpkgs source-builds biome behind the upstream release line; the attr override routes every consumer (node-tools wrapper, fmt router) through the official release binary";
-      consumers = ["node-tools" "fmt"];
+      overlayReason = "nixpkgs source-builds biome behind the upstream release line; the attr override routes the treefmt row (flake-modules/tooling.nix) through the official release binary";
+      consumers = ["treefmt"];
       description = "Biome formatter, linter, and LSP for the web toolchain";
       homepage = "https://biomejs.dev/";
       mainProgram = "biome";
@@ -251,63 +243,10 @@ in rec {
         app = true;
       };
       overlayReason = "the top-level attr becomes the upstream binary CLI for every consumer; pythonPackagesExtensions pins python duckdb (Harlequin engine) back to the nixpkgs source-built lineage the header-less binary cannot satisfy";
-      consumers = ["db-tools" "forge-provision" "pythonPackages.duckdb"];
+      consumers = ["forge-provision" "pythonPackages.duckdb"];
       description = "DuckDB command line client";
       homepage = "https://duckdb.org/";
       mainProgram = "duckdb";
-    };
-
-    nodejs-bin_26 = {
-      upstream = "https://nodejs.org/dist";
-      inherit (nodePins) version;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
-      assets = {
-        aarch64-darwin =
-          nodePins.assets.aarch64-darwin
-          // {
-            dir = "node-v${nodePins.version}-darwin-arm64";
-          };
-        aarch64-linux =
-          nodePins.assets.aarch64-linux
-          // {
-            dir = "node-v${nodePins.version}-linux-arm64";
-          };
-        x86_64-linux =
-          nodePins.assets.x86_64-linux
-          // {
-            dir = "node-v${nodePins.version}-linux-x64";
-          };
-      };
-      license = "mit";
-      patchFamily = "auto-patchelf-npm-tool-strip"; # Linux ELF admission plus pnpm-only npm/npx removal; corepack left the Node 26 distribution
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["node-tools" "pnpm_11"];
-      description = "Node.js official binary distribution";
-      homepage = "https://nodejs.org/";
-      mainProgram = "node";
-    };
-
-    pnpm_11 = {
-      upstream = "npm:pnpm";
-      version = generatedPins.pnpm_11.version;
-      versionPolicy = "fast";
-      sourceKind = "npm-tarball";
-      assets.any = pinAsset "pnpm_11";
-      license = "mit";
-      # The builder seats its `nodejs-slim` argument into the entry shebangs; the override seats nodejs-bin_26 there because nixpkgs nodejs-slim
-      # aborts on a libuv kqueue EINTR assertion at Darwin teardown and Node 26 exits clean.
-      patchFamily = "shebang-retarget";
-      cacheClass = "forge-cache-hit";
-      updateEngine = "nvfetcher";
-      projection.overlay = "override";
-      overlayReason = "nixpkgs aliases `pnpm` to this attr, so the override routes every consumer through the pinned 11 line riding nodejs-bin_26";
-      consumers = ["node-tools"];
-      description = "Fast, disk-space-efficient Node package manager";
-      homepage = "https://pnpm.io/";
-      mainProgram = "pnpm";
     };
 
     sqlean = {
@@ -326,26 +265,6 @@ in rec {
       consumers = ["sqlite-forge" "db-tools"];
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
-    };
-
-    ast-grep-upstream = {
-      upstream = "github:ast-grep/ast-grep";
-      version = generatedPins.ast-grep-upstream.version;
-      sourcePin = "ast-grep-upstream";
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "nvfetcher";
-      projection = {
-        overlay = "new";
-        package = true;
-      };
-      consumers = ["shell-tools" "grug-far"];
-      description = "Structural code search and rewriting CLI";
-      homepage = "https://ast-grep.github.io/";
-      mainProgram = "ast-grep";
     };
 
     carbon-now-cli = {
