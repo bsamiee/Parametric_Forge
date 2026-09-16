@@ -24,9 +24,11 @@ Per-agent quirks a plist read does not explain live in their owner modules; the 
 
 ## [03]-[TCC_SUDO]
 
-TCC is reset-only through `tccutil`; the estate writes no `TCC.db` rows and ships no PPPC profile on this unmanaged host, so first agent launches require live macOS approval prompts. Post-activation switches on `DevToolsSecurity` and puts the primary user in `_developer`. `sudo_local` PAM has Touch ID enabled with Watch ID and reattach false: a plain `sudo` from any shell — interactive or not — pops the biometric prompt on the user's screen, so root fixes stay available and `sudo -n` (which suppresses the prompt) never proves root unreachable.
+TCC is reset-only through `tccutil`; the estate writes no `TCC.db` rows and ships no PPPC profile on this unmanaged host, so first agent launches require live macOS approval prompts. Post-activation switches on `DevToolsSecurity` and puts the primary user in `_developer`.
 
-`darwin/settings/security.nix` owns the NOPASSWD allowlist and the exact deploy-rail rows `forge-redeploy` consumes. Live sudoers state must match that file before a switch.
+`security.nix` grants the primary user `ALL=(ALL) NOPASSWD: ALL` with `timestamp_type=global, timestamp_timeout=-1`: no shell, agent, or terminal prompts, and `sudo -n` succeeds everywhere. `sudo_local` PAM keeps Touch ID for every other admin account. sudoers grants nothing macOS authorizes itself: a TCC, Automation, or system-extension dialog still needs its System Settings grant.
+
+`darwin/settings/security.nix` owns the `%admin` NOPASSWD allowlist, the exact deploy-rail rows `forge-redeploy` consumes, and the primary user's passwordless rows. Live sudoers state must match that file before a switch.
 
 macOS 26.4 and newer can require native confirmation when changing a file-type handler. `forge-default-applications apply` changes only mismatched rows and verifies both bundle identity and exact application path; coordinate foreground confirmation before activation. `check` performs the same readback without mutation. utiluti's batch `manage` command can print per-row errors while exiting successfully, so it is not the activation mechanism.
 

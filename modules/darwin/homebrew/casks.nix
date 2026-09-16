@@ -4,8 +4,9 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications, and the Apple-proprietary faces (no nixpkgs source) that font casks install into ~/Library/Fonts. Google OFL
-# families live in the operator design-tools store (Typeface-indexed), never here.
+# Homebrew GUI applications, and the faces with no nixpkgs source that font casks install into ~/Library/Fonts: the Apple-proprietary
+# families and the Google OFL Arabic-script families the design apps need permanently active (the design-tools store is Typeface-activated
+# on demand, so a store copy never reaches an app font menu on its own).
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]
@@ -62,6 +63,9 @@ _: {
     # --- [FONTS]
     "font-sf-pro" # Apple proprietary
     "font-sf-arabic" # Apple proprietary
+    "font-markazi-text" # Persian/Arabic naskh text face, variable weight
+    "font-reem-kufi" # Arabic kufi display face, variable weight
+    "font-qahiri" # Arabic kufic display face
 
     # --- [ADOBE_CREATIVE_SUITE]
     "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask

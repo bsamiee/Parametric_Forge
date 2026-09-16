@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
-# Developer-tool authorization, Touch ID for sudo, and the sudoers allowlist for Darwin.
+# Developer-tool authorization, Touch ID for sudo, the %admin sudoers allowlist, and the primary user's passwordless rows for Darwin.
 {config, ...}: {
   # Debugger/developer-tool authorization without per-launch prompts: developer mode plus _developer membership are idempotent root activations. TCC
   # stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
@@ -13,6 +13,11 @@
       || /usr/sbin/DevToolsSecurity -enable
     dsmemberutil checkmembership -U ${config.system.primaryUser} -G _developer | grep -q "^user is a member" \
       || /usr/sbin/dseditgroup -o edit -t user -a ${config.system.primaryUser} _developer
+    # Authorization rights behind the System Settings unlock, installer, network, and launchd daemon dialogs: allow without a prompt, idempotent
+    for right in system.preferences system.preferences.security system.preferences.network system.privilege.admin system.install.software com.apple.ServiceManagement.daemons.modify; do
+      /usr/bin/security authorizationdb read "$right" 2>/dev/null | grep -q "<string>allow</string>" \
+        || /usr/bin/security authorizationdb write "$right" allow
+    done
   '';
 
   # --- [PAM_AUTHENTICATION]
@@ -62,6 +67,10 @@
       %admin ALL=(root) NOPASSWD: /usr/bin/ditto *
       %admin ALL=(root) NOPASSWD: /usr/sbin/installer *
       %admin ALL=(root) NOPASSWD,SETENV: /usr/sbin/installer *
+
+      # Primary user: every command as any user without a password, one credential cache shared by every shell and agent session
+      Defaults:${config.system.primaryUser} timestamp_type=global, timestamp_timeout=-1
+      ${config.system.primaryUser} ALL=(ALL) NOPASSWD: ALL
 
     '';
   };
