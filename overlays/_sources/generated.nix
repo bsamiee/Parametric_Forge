@@ -4,29 +4,30 @@
   fetchurl,
   fetchFromGitHub,
   dockerTools,
-}: {
+}:
+{
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.5.10";
+    version = "2.5.13";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-darwin-arm64";
-      sha256 = "sha256-govCloB2W2VrajVN4B2af59REeavmbBM7+BtCcbS29o=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-darwin-arm64";
+      sha256 = "sha256-PQz/fkzTWhcJwfT5VoOA4Is1Uez25zVrOkmkDjYRiUs=";
     };
   };
   biome-aarch64-linux = {
     pname = "biome-aarch64-linux";
-    version = "2.5.10";
+    version = "2.5.13";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-arm64-musl";
-      sha256 = "sha256-QtTq8UUbd6TFmp2vbgGjRLR8EP04SefcXpijzOYVexc=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-linux-arm64-musl";
+      sha256 = "sha256-QeoViYyz2j/MkDiGcayIwZf4DE/2gc/1ahzdVDMmZSQ=";
     };
   };
   biome-x86_64-linux = {
     pname = "biome-x86_64-linux";
-    version = "2.5.10";
+    version = "2.5.13";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-x64-musl";
-      sha256 = "sha256-Et5Czs3xx3aKkr4rM3YFOXxIuTXser6UufJY2oeDbfg=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-linux-x64-musl";
+      sha256 = "sha256-vPaHuq6Pyy4V4d/43CVXqYKV0m3r+x41OizbAfY6nmI=";
     };
   };
   design-fontconfig = {
@@ -71,10 +72,10 @@
   };
   design-mupdf = {
     pname = "design-mupdf";
-    version = "1.28.3";
+    version = "1.28.4";
     src = fetchurl {
-      url = "https://mupdf.com/downloads/archive/mupdf-1.28.3-source.tar.gz";
-      sha256 = "sha256-N8MgncDgb6TzeB7USDmtkzqeYUPrRzH5ngaSBHFbzvI=";
+      url = "https://mupdf.com/downloads/archive/mupdf-1.28.4-source.tar.gz";
+      sha256 = "sha256-LZfgQ6YW+WsUhlfJw9ga1xxL0gUsWaKjMVrYQlmTQPk=";
     };
   };
   design-nodejs_26 = {
@@ -88,25 +89,25 @@
   design-pandoc-aarch64-darwin = {
     pname = "design-pandoc-aarch64-darwin";
     version = "3.11";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-arm64-macOS.zip";
-      sha256 = "sha256-FYBr7flRe/6tcuiP5qZpZjXDaR77tuFSFzRA6cW7ULQ=";
+      sha256 = "sha256-B3uZ4PGX0BSJY/0gbibte6H9ifDBeyVHqsx+o7IDfU0=";
     };
   };
   design-pandoc-aarch64-linux = {
     pname = "design-pandoc-aarch64-linux";
     version = "3.11";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-arm64.tar.gz";
-      sha256 = "sha256-Vu1VZuxB0i7J7gcE5qwLmLoQLpI4Tv1TBhc6ItMUx5o=";
+      sha256 = "sha256-he1xvd2zZj1Z+ZHVV/KP2TBfuJVA2oER5dRuW+myy2w=";
     };
   };
   design-pandoc-x86_64-linux = {
     pname = "design-pandoc-x86_64-linux";
     version = "3.11";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-amd64.tar.gz";
-      sha256 = "sha256-N+2zu89yL5IaAJlBv1h04uDAkmMibJtKLZgHiMsGKrY=";
+      sha256 = "sha256-ijcllpIwYeGoBQV834C+uHQQnTG+exDscKSaX6EbeeI=";
     };
   };
   design-poppler = {
@@ -126,7 +127,7 @@
       fetchSubmodules = false;
       deepClone = false;
       leaveDotGit = false;
-      sparseCheckout = [];
+      sparseCheckout = [ ];
       sha256 = "sha256-2eH4dZs2J0CeTWrXOYEHb0Xnpfa7tX8mi7AX2E9D41U=";
     };
     date = "2026-08-14";
@@ -139,31 +140,36 @@
       sha256 = "sha256-8EWqJ3viNW/1OomoYilFlYKRF30kg6/CDt58iozThzw=";
     };
   };
+  design-scheherazade-new = {
+    pname = "design-scheherazade-new";
+    version = "4.500";
+    src = fetchurl {
+      url = "https://github.com/silnrsi/font-scheherazade/releases/download/v4.500/ScheherazadeNew-4.500.zip";
+      sha256 = "sha256-SceJwhMFvtE9kNdQCHe1DWLbHo5Nb3cVF45VYxndvak=";
+    };
+  };
   design-temurin-aarch64-darwin = {
     pname = "design-temurin-aarch64-darwin";
     version = "jdk-26.0.2.1+1";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse";
-      name = "temurin-jdk-26.0.2.1+1-aarch64-darwin.tar.gz";
-      sha256 = "sha256-Y6lLO6BTCAY1NtYMsPm8hHkAowD8U2MMhu6j76eTE6Q=";
+      sha256 = "sha256-J2GzzlHHtdRdoXDxufhaTPIjpTAcVgkAz0wOyk9P+nI=";
     };
   };
   design-temurin-aarch64-linux = {
     pname = "design-temurin-aarch64-linux";
     version = "jdk-26.0.2.1+1";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse";
-      name = "temurin-jdk-26.0.2.1+1-aarch64-linux.tar.gz";
-      sha256 = "sha256-nhUnaBrkphUETIhDXSwan68f1ce6r5UUpKQgdggVAIc=";
+      sha256 = "sha256-ZMNLL5XntXogzLLklrZNmQECidDYUosnCzN0YHhIHoM=";
     };
   };
   design-temurin-x86_64-linux = {
     pname = "design-temurin-x86_64-linux";
     version = "jdk-26.0.2.1+1";
-    src = fetchurl {
+    src = fetchTarball {
       url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse";
-      name = "temurin-jdk-26.0.2.1+1-x86_64-linux.tar.gz";
-      sha256 = "sha256-NXcxFoKVVPs45qz5uSs7qLt4VlV8OriF4m59YejI4bA=";
+      sha256 = "sha256-SNxG+XC44yrnD4CBBrIfrFVhEkLzud7I4bveYo2i2pA=";
     };
   };
   design-utiluti = {
@@ -176,10 +182,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.167";
+    version = "1.31.172";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.167/cli-1.31.167.jar";
-      sha256 = "sha256-spyBcL+9XNuJ6UGDfDywq3kgID0Ifw3zK4EkYxcuNTQ=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.172/cli-1.31.172.jar";
+      sha256 = "sha256-cfahdp2kPkoUL6Krf9TR88urIuevoGYPFtKoh8ze2YQ=";
     };
   };
   duckdb-aarch64-darwin = {
@@ -204,6 +210,30 @@
     src = fetchurl {
       url = "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-amd64.zip";
       sha256 = "sha256-CMDKEXER/O3hQjnQCTeSNSvv3BdCGMNE0jLBMnlkPQU=";
+    };
+  };
+  mise-aarch64-darwin = {
+    pname = "mise-aarch64-darwin";
+    version = "2026.9.9";
+    src = fetchurl {
+      url = "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-macos-arm64.tar.gz";
+      sha256 = "sha256-DxOTf7fFSMTznj+sqRT4xZHFtDoVC4DbiheK/GDU9YE=";
+    };
+  };
+  mise-aarch64-linux = {
+    pname = "mise-aarch64-linux";
+    version = "2026.9.9";
+    src = fetchurl {
+      url = "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-linux-arm64-musl.tar.gz";
+      sha256 = "sha256-hW5JpckO1mX70rfRarA3D4yD43bBR5NeP6gKhsin5uY=";
+    };
+  };
+  mise-x86_64-linux = {
+    pname = "mise-x86_64-linux";
+    version = "2026.9.9";
+    src = fetchurl {
+      url = "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-linux-x64-musl.tar.gz";
+      sha256 = "sha256-mG82xe/vQwL2JS8bHljDIFLzaW/PGbHtRKGXazwrT/w=";
     };
   };
   sqlean-aarch64-darwin = {

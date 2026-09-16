@@ -8,11 +8,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-govCloB2W2VrajVN4B2af59REeavmbBM7+BtCcbS29o=",
+            "sha256": "sha256-PQz/fkzTWhcJwfT5VoOA4Is1Uez25zVrOkmkDjYRiUs=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-darwin-arm64"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-darwin-arm64"
         },
-        "version": "2.5.10"
+        "version": "2.5.13"
     },
     "biome-aarch64-linux": {
         "cargoLock": null,
@@ -23,11 +23,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-QtTq8UUbd6TFmp2vbgGjRLR8EP04SefcXpijzOYVexc=",
+            "sha256": "sha256-QeoViYyz2j/MkDiGcayIwZf4DE/2gc/1ahzdVDMmZSQ=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-arm64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-linux-arm64-musl"
         },
-        "version": "2.5.10"
+        "version": "2.5.13"
     },
     "biome-x86_64-linux": {
         "cargoLock": null,
@@ -38,11 +38,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-Et5Czs3xx3aKkr4rM3YFOXxIuTXser6UufJY2oeDbfg=",
+            "sha256": "sha256-vPaHuq6Pyy4V4d/43CVXqYKV0m3r+x41OizbAfY6nmI=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.10/biome-linux-x64-musl"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.13/biome-linux-x64-musl"
         },
-        "version": "2.5.10"
+        "version": "2.5.13"
     },
     "design-fontconfig": {
         "cargoLock": null,
@@ -128,11 +128,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-N8MgncDgb6TzeB7USDmtkzqeYUPrRzH5ngaSBHFbzvI=",
+            "sha256": "sha256-LZfgQ6YW+WsUhlfJw9ga1xxL0gUsWaKjMVrYQlmTQPk=",
             "type": "url",
-            "url": "https://mupdf.com/downloads/archive/mupdf-1.28.3-source.tar.gz"
+            "url": "https://mupdf.com/downloads/archive/mupdf-1.28.4-source.tar.gz"
         },
-        "version": "1.28.3"
+        "version": "1.28.4"
     },
     "design-nodejs_26": {
         "cargoLock": null,
@@ -157,9 +157,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-FYBr7flRe/6tcuiP5qZpZjXDaR77tuFSFzRA6cW7ULQ=",
-            "type": "url",
+            "sha256": "sha256-B3uZ4PGX0BSJY/0gbibte6H9ifDBeyVHqsx+o7IDfU0=",
+            "type": "tarball",
             "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-arm64-macOS.zip"
         },
         "version": "3.11"
@@ -172,9 +171,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-Vu1VZuxB0i7J7gcE5qwLmLoQLpI4Tv1TBhc6ItMUx5o=",
-            "type": "url",
+            "sha256": "sha256-he1xvd2zZj1Z+ZHVV/KP2TBfuJVA2oER5dRuW+myy2w=",
+            "type": "tarball",
             "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-arm64.tar.gz"
         },
         "version": "3.11"
@@ -187,9 +185,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-N+2zu89yL5IaAJlBv1h04uDAkmMibJtKLZgHiMsGKrY=",
-            "type": "url",
+            "sha256": "sha256-ijcllpIwYeGoBQV834C+uHQQnTG+exDscKSaX6EbeeI=",
+            "type": "tarball",
             "url": "https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-amd64.tar.gz"
         },
         "version": "3.11"
@@ -244,6 +241,21 @@
         },
         "version": "12.4.1"
     },
+    "design-scheherazade-new": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-scheherazade-new",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-SceJwhMFvtE9kNdQCHe1DWLbHo5Nb3cVF45VYxndvak=",
+            "type": "url",
+            "url": "https://github.com/silnrsi/font-scheherazade/releases/download/v4.500/ScheherazadeNew-4.500.zip"
+        },
+        "version": "4.500"
+    },
     "design-temurin-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -252,9 +264,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": "temurin-jdk-26.0.2.1+1-aarch64-darwin.tar.gz",
-            "sha256": "sha256-Y6lLO6BTCAY1NtYMsPm8hHkAowD8U2MMhu6j76eTE6Q=",
-            "type": "url",
+            "sha256": "sha256-J2GzzlHHtdRdoXDxufhaTPIjpTAcVgkAz0wOyk9P+nI=",
+            "type": "tarball",
             "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse"
         },
         "version": "jdk-26.0.2.1+1"
@@ -267,9 +278,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": "temurin-jdk-26.0.2.1+1-aarch64-linux.tar.gz",
-            "sha256": "sha256-nhUnaBrkphUETIhDXSwan68f1ce6r5UUpKQgdggVAIc=",
-            "type": "url",
+            "sha256": "sha256-ZMNLL5XntXogzLLklrZNmQECidDYUosnCzN0YHhIHoM=",
+            "type": "tarball",
             "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse"
         },
         "version": "jdk-26.0.2.1+1"
@@ -282,9 +292,8 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": "temurin-jdk-26.0.2.1+1-x86_64-linux.tar.gz",
-            "sha256": "sha256-NXcxFoKVVPs45qz5uSs7qLt4VlV8OriF4m59YejI4bA=",
-            "type": "url",
+            "sha256": "sha256-SNxG+XC44yrnD4CBBrIfrFVhEkLzud7I4bveYo2i2pA=",
+            "type": "tarball",
             "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse"
         },
         "version": "jdk-26.0.2.1+1"
@@ -313,11 +322,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-spyBcL+9XNuJ6UGDfDywq3kgID0Ifw3zK4EkYxcuNTQ=",
+            "sha256": "sha256-cfahdp2kPkoUL6Krf9TR88urIuevoGYPFtKoh8ze2YQ=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.167/cli-1.31.167.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.172/cli-1.31.172.jar"
         },
-        "version": "1.31.167"
+        "version": "1.31.172"
     },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
@@ -363,6 +372,51 @@
             "url": "https://github.com/duckdb/duckdb/releases/download/v1.5.5/duckdb_cli-linux-amd64.zip"
         },
         "version": "1.5.5"
+    },
+    "mise-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mise-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-DxOTf7fFSMTznj+sqRT4xZHFtDoVC4DbiheK/GDU9YE=",
+            "type": "url",
+            "url": "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-macos-arm64.tar.gz"
+        },
+        "version": "2026.9.9"
+    },
+    "mise-aarch64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mise-aarch64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-hW5JpckO1mX70rfRarA3D4yD43bBR5NeP6gKhsin5uY=",
+            "type": "url",
+            "url": "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-linux-arm64-musl.tar.gz"
+        },
+        "version": "2026.9.9"
+    },
+    "mise-x86_64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mise-x86_64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-mG82xe/vQwL2JS8bHljDIFLzaW/PGbHtRKGXazwrT/w=",
+            "type": "url",
+            "url": "https://github.com/jdx/mise/releases/download/v2026.9.9/mise-v2026.9.9-linux-x64-musl.tar.gz"
+        },
+        "version": "2026.9.9"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,

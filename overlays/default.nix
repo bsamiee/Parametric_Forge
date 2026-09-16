@@ -66,18 +66,26 @@ final: prev: let
   assetOf = name: row:
     row.assets.${system}
     or (throw "${name}: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
-  # Generated sources retain nvfetcher's fetch semantics; manual rows select fetchzip for unpacked hashes or fetchurl for flat hashes.
-  # A release archive lays its payload at the root and keeps the default; a source tarball owns its version directory and strips by row fact.
+  # A zip asset (a manual row's choice, or a tarball pin) is an unpacked fixed-output source whose hash is `nix-prefetch-url --unpack`:
+  # the single release directory is stripped, and the extracted tree survives every stdenv move. Flat pins keep nvfetcher's fetchurl.
   srcOf = a:
-    if a ? pin
-    then generatedSources.${a.pin}.src
-    else if (a.fetch or "url") == "zip"
+    if (a.fetch or "url") == "zip"
     then
       prev.fetchzip {
         inherit (a) url hash;
-        stripRoot = a.stripRoot or false;
+        stripRoot = a.stripRoot or true;
+        extension = a.extension or null;
       }
+    else if a ? pin
+    then generatedSources.${a.pin}.src
     else prev.fetchurl {inherit (a) url hash;};
+
+  # Prebuilt trees install as a link farm into their unpacked source, so the input-addressed derivation holds links and wrappers alone;
+  # Linux copies because autoPatchelf rewrites the binaries in place.
+  linkTree = src: dst:
+    if prev.stdenv.hostPlatform.isLinux
+    then ''cp -R ${src}/. ${dst}/ && chmod -R u+w ${dst}''
+    else ''lndir -silent ${src} ${dst}'';
 
   # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root, root-relative subpaths, or the row version.
   runtimeEnvAt = row: root:
@@ -132,13 +140,33 @@ final: prev: let
       chmod 0755 "$out/bin/${name}"
     '';
   in {
-    nativeBuildInputs = [prev.bash];
+    nativeBuildInputs = [prev.bash prev.lndir];
+    # The runtime root is a link farm into the unpacked source; only what patchShebangs rewrites (a named directory, or the top-level
+    # scripts of `.`) is a real copy, so a nixpkgs move re-keys links and wrappers instead of a gigabyte tree.
+    dontUnpack = true;
     installPhase = ''
       runHook preInstall
 
-      mkdir -p "$out/bin" "$out/${dirOf row.runtime.root}"
-      cp -R . "$out/${row.runtime.root}"
-      ${lib.concatMapStringsSep "\n" (d: ''patchShebangs "$out/${row.runtime.root}/${d}"'') row.runtime.shebangDirs}
+      mkdir -p "$out/bin" "$out/${row.runtime.root}"
+      ${linkTree ''"$src"'' ''"$out/${row.runtime.root}"''}
+      ${lib.concatMapStringsSep "\n" (d:
+        if d == "."
+        then ''
+          find "$src" -maxdepth 1 -type f -print0 | while IFS= read -r -d "" file; do
+            [ "$(head -c 2 "$file")" = '#!' ] || continue
+            rm -f "$out/${row.runtime.root}/$(basename "$file")"
+            cp "$file" "$out/${row.runtime.root}/"
+          done
+          chmod -R u+w "$out/${row.runtime.root}"
+          patchShebangs "$out/${row.runtime.root}"
+        ''
+        else ''
+          rm -r "$out/${row.runtime.root}/${d}"
+          cp -R "$src/${d}" "$out/${row.runtime.root}/${d}"
+          chmod -R u+w "$out/${row.runtime.root}/${d}"
+          patchShebangs "$out/${row.runtime.root}/${d}"
+        '')
+      row.runtime.shebangDirs}
 
       ${lib.concatStrings (lib.mapAttrsToList installWrapper row.runtime.wrappers)}
       runHook postInstall
@@ -164,14 +192,16 @@ final: prev: let
       '';
     };
     pandoc-current = _: {
-      nativeBuildInputs = [prev.unzip] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      dontUnpack = true;
+      nativeBuildInputs = [prev.lndir] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
       buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [prev.gmp prev.zlib prev.stdenv.cc.cc.lib];
       installPhase = ''
         runHook preInstall
-        [ -x bin/pandoc ] || { echo "pandoc: release executable layout changed" >&2; exit 1; }
-        [ -d share/man ] || { echo "pandoc: release manual layout changed" >&2; exit 1; }
-        mkdir -p "$out"
-        cp -R bin share "$out/"
+        [ -x "$src/bin/pandoc" ] || { echo "pandoc: release executable layout changed" >&2; exit 1; }
+        [ -d "$src/share/man" ] || { echo "pandoc: release manual layout changed" >&2; exit 1; }
+        mkdir -p "$out/bin" "$out/share"
+        ${linkTree ''"$src/bin"'' ''"$out/bin"''}
+        ${linkTree ''"$src/share"'' ''"$out/share"''}
         runHook postInstall
       '';
     };
@@ -190,7 +220,7 @@ final: prev: let
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
     };
     temurin-jre-current = {finalAttrs, ...}: {
-      nativeBuildInputs = [prev.makeWrapper] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      nativeBuildInputs = [prev.makeWrapper prev.lndir] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
       buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [
         prev.alsa-lib
         prev.cups
@@ -205,16 +235,13 @@ final: prev: let
         prev.stdenv.cc.cc.lib
       ];
       dontStrip = true;
+      dontUnpack = true;
       installPhase = ''
         runHook preInstall
-        runtime=${
-          if prev.stdenv.hostPlatform.isDarwin
-          then "Contents/Home"
-          else "."
-        }
+        runtime="$src${lib.optionalString prev.stdenv.hostPlatform.isDarwin "/Contents/Home"}"
         [ -x "$runtime/bin/java" ] || { echo "temurin: JRE release layout changed" >&2; exit 1; }
         mkdir -p "$out/lib/openjdk" "$out/bin"
-        cp -R "$runtime/". "$out/lib/openjdk/"
+        ${linkTree ''"$runtime"'' ''"$out/lib/openjdk"''}
         makeWrapper "$out/lib/openjdk/bin/java" "$out/bin/java"
         runHook postInstall
       '';
@@ -238,6 +265,25 @@ final: prev: let
         runHook postInstall
       '';
     };
+    # Release tarball: the binary and its man page. Completions generate from the installed binary (they resolve usage-cli on PATH at
+    # completion time, as the generated scripts do everywhere); the nixpkgs self-update marker keeps `mise self-update` a typed refusal
+    # on a store-owned binary, so the update path stays the pin.
+    mise = _: {
+      nativeBuildInputs = [prev.installShellFiles];
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 bin/mise "$out/bin/mise"
+        installManPage man/man1/mise.1
+        export HOME="$TMPDIR/home"
+        mkdir -p "$HOME" "$out/lib/mise"
+        touch "$out/lib/mise/.disable-self-update"
+        installShellCompletion --cmd mise \
+          --bash <("$out/bin/mise" completion bash) \
+          --fish <("$out/bin/mise" completion fish) \
+          --zsh <("$out/bin/mise" completion zsh)
+        runHook postInstall
+      '';
+    };
     # Library-only release: upstream ships extension modules, no CLI binary; an unmatched glob fails the install loudly on layout drift.
     sqlean = _: {
       installPhase = ''
@@ -256,6 +302,10 @@ final: prev: let
       src = null;
       srcs = [generatedSources.${(rowOf "geist-font").sourcePin}.src];
       nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
+    };
+    # nixpkgs fetches an unpacked zip; the generated pin is the flat release archive, so unzip joins the native install phase unchanged.
+    scheherazade-new = old: {
+      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.unzip];
     };
     nodejs-slim_26 = old: {
       # The native builder's test closes over its original version; keep the test tied to the selected source runtime.

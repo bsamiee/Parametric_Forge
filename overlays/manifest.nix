@@ -10,11 +10,18 @@
 # `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
 let
   generatedPins = builtins.fromJSON (builtins.readFile ./_sources/generated.json);
-  pinAsset = pin: {
-    inherit pin;
-    inherit (generatedPins.${pin}.src) url;
-    hash = generatedPins.${pin}.src.sha256;
-  };
+  # A tarball pin hashes the unpacked tree (nvfetcher prefetches with --unpack), so the overlay fetches it as an unpacked fixed-output source.
+  pinAsset = pin:
+    {
+      inherit pin;
+      inherit (generatedPins.${pin}.src) url;
+      hash = generatedPins.${pin}.src.sha256;
+    }
+    // (
+      if generatedPins.${pin}.src.type == "tarball"
+      then {fetch = "zip";}
+      else {}
+    );
   pinFamily = pins: let
     versions = map (pin: generatedPins.${pin}.version) (builtins.attrValues pins);
     version = builtins.head versions;
@@ -33,6 +40,11 @@ let
     aarch64-linux = "duckdb-aarch64-linux";
     x86_64-linux = "duckdb-x86_64-linux";
   };
+  misePins = pinFamily {
+    aarch64-darwin = "mise-aarch64-darwin";
+    aarch64-linux = "mise-aarch64-linux";
+    x86_64-linux = "mise-x86_64-linux";
+  };
   sqleanPins = pinFamily {
     aarch64-darwin = "sqlean-aarch64-darwin";
     aarch64-linux = "sqlean-aarch64-linux";
@@ -43,11 +55,15 @@ let
     aarch64-linux = "design-pandoc-aarch64-linux";
     x86_64-linux = "design-pandoc-x86_64-linux";
   };
-  temurinPins = pinFamily {
-    aarch64-darwin = "design-temurin-aarch64-darwin";
-    aarch64-linux = "design-temurin-aarch64-linux";
-    x86_64-linux = "design-temurin-x86_64-linux";
-  };
+  # The Adoptium URL carries no file extension; fetchzip picks its unpacker by extension, so the asset names the archive format.
+  temurinPins = let
+    pins = pinFamily {
+      aarch64-darwin = "design-temurin-aarch64-darwin";
+      aarch64-linux = "design-temurin-aarch64-linux";
+      x86_64-linux = "design-temurin-x86_64-linux";
+    };
+  in
+    pins // {assets = builtins.mapAttrs (_: asset: asset // {extension = "tar.gz";}) pins.assets;};
   veraPdfPins = pinFamily {
     aarch64-darwin = "design-verapdf-cli";
     aarch64-linux = "design-verapdf-cli";
@@ -133,6 +149,7 @@ in rec {
     imagemagick = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
     fontconfig = designSource "fontconfig" null "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
     geist-font = designSource "geist-font" null "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
+    scheherazade-new = designSource "scheherazade-new" null "ofl" "https://software.sil.org/scheherazade/" "Current Scheherazade New Arabic-script text font programs" ["fonts-catalog" "font-manifest"] "the script fallback chain and the design apps must render the current SIL release, which nixpkgs lags";
     harfbuzz = designSource "harfbuzz" null "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
     poppler-utils-current =
       (designSource "poppler" null "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
@@ -249,6 +266,24 @@ in rec {
       mainProgram = "duckdb";
     };
 
+    mise = {
+      upstream = "github:jdx/mise";
+      inherit (misePins) version assets;
+      versionPolicy = "fast";
+      sourceKind = "github-release";
+      # Linux rows pin the musl static builds: no interpreter, no patchelf lane.
+      license = "mit";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      projection.overlay = "override";
+      overlayReason = "nixpkgs source-builds mise behind the upstream release line; the attr override routes programs.mise and the zsh activation line through the official release binary";
+      consumers = ["shell-tools:mise" "zsh:init" "toolchain-env"];
+      description = "mise runtime manager: per-project toolchains, env, and tasks";
+      homepage = "https://mise.jdx.dev/";
+      mainProgram = "mise";
+    };
+
     sqlean = {
       upstream = "github:nalgeon/sqlean";
       inherit (sqleanPins) version assets;
@@ -289,9 +324,11 @@ in rec {
       build = v.osBuild;
       versionPolicy = "slow-scientific";
       sourceKind = "github-release";
+      # Unpacked fixed-output source: the hash covers the extracted tree, so a stdenv or nixpkgs move never re-extracts the archive.
       assets.aarch64-darwin = {
         url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v${v.openstudio}/OpenStudio-${v.openstudio}%2B${v.osBuild}-Darwin-arm64.tar.gz";
-        hash = "sha256-t/hZA44pYjcf8eEv/lCSNfAafVT2MfBLRY37XXvjZGQ=";
+        hash = "sha256-ahbG8fvp/4R4M03VCKGD6TWVyl2L21wre/KdaOK4sqo=";
+        fetch = "zip";
       };
       license = "bsd3";
       patchFamily = "none";
@@ -333,7 +370,8 @@ in rec {
       sourceKind = "github-release";
       assets.aarch64-darwin = {
         url = "https://github.com/NatLabRockies/EnergyPlus/releases/download/v${v.energyplus}/EnergyPlus-${v.energyplus}-${v.epBuild}-Darwin-macOS13-arm64.tar.gz";
-        hash = "sha256-fy7EJeZ/XXHGaORQTbGxDZHcTYy4Aumo7nDE8CpG03k=";
+        hash = "sha256-GFHty0SjelIfgpzgXS6Tg6l4bE+NO/dLCFPonFEaqjE=";
+        fetch = "zip";
       };
       license = "bsd3";
       patchFamily = "none";

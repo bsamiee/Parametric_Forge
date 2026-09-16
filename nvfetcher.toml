@@ -42,6 +42,11 @@ src.github = "vercel/geist-font"
 src.prefix = "v"
 fetch.url = "https://github.com/vercel/geist-font/releases/download/v$ver/geist-font-v$ver.zip"
 
+[design-scheherazade-new]
+src.github = "silnrsi/font-scheherazade"
+src.prefix = "v"
+fetch.url = "https://github.com/silnrsi/font-scheherazade/releases/download/v$ver/ScheherazadeNew-$ver.zip"
+
 [design-utiluti]
 src.github = "scriptingosx/utiluti"
 src.prefix = "v"
@@ -52,32 +57,30 @@ src.webpage = "https://artifactory.openpreservation.org/artifactory/vera-dev/org
 src.regex = "<latest>([0-9]+\\.[0-9]+\\.[0-9]+)</latest>"
 fetch.url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/$ver/cli-$ver.jar"
 
+# Prebuilt trees pin as tarballs: the hash covers the unpacked tree, so the overlay links it in place and a nixpkgs move never re-copies it.
 [design-pandoc-aarch64-darwin]
 src.github = "jgm/pandoc"
-fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-arm64-macOS.zip"
+fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-arm64-macOS.zip"
 
 [design-pandoc-x86_64-linux]
 src.github = "jgm/pandoc"
-fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-amd64.tar.gz"
+fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-amd64.tar.gz"
 
 [design-pandoc-aarch64-linux]
 src.github = "jgm/pandoc"
-fetch.url = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-arm64.tar.gz"
+fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-arm64.tar.gz"
 
 [design-temurin-aarch64-darwin]
 src.github = "adoptium/temurin26-binaries"
-fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/mac/aarch64/jre/hotspot/normal/eclipse"
-url.name = "temurin-$ver-aarch64-darwin.tar.gz"
+fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/mac/aarch64/jre/hotspot/normal/eclipse"
 
 [design-temurin-x86_64-linux]
 src.github = "adoptium/temurin26-binaries"
-fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/linux/x64/jre/hotspot/normal/eclipse"
-url.name = "temurin-$ver-x86_64-linux.tar.gz"
+fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/linux/x64/jre/hotspot/normal/eclipse"
 
 [design-temurin-aarch64-linux]
 src.github = "adoptium/temurin26-binaries"
-fetch.url = "https://api.adoptium.net/v3/binary/version/$ver/linux/aarch64/jre/hotspot/normal/eclipse"
-url.name = "temurin-$ver-aarch64-linux.tar.gz"
+fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/linux/aarch64/jre/hotspot/normal/eclipse"
 
 [biome-aarch64-darwin]
 src.github = "biomejs/biome"
@@ -93,6 +96,22 @@ fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbio
 src.github = "biomejs/biome"
 src.prefix = "@biomejs/biome@"
 fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-linux-x64-musl"
+
+# mise release tarballs carry the binary and its man page; Linux rows pin the musl static builds like biome, so no patchelf lane is needed.
+[mise-aarch64-darwin]
+src.github = "jdx/mise"
+src.prefix = "v"
+fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-macos-arm64.tar.gz"
+
+[mise-aarch64-linux]
+src.github = "jdx/mise"
+src.prefix = "v"
+fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linux-arm64-musl.tar.gz"
+
+[mise-x86_64-linux]
+src.github = "jdx/mise"
+src.prefix = "v"
+fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linux-x64-musl.tar.gz"
 
 [duckdb-aarch64-darwin]
 src.github = "duckdb/duckdb"
