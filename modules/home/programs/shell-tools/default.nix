@@ -45,7 +45,6 @@ in {
     ./bundle-apps.nix
     ./bottom.nix
     ./carapace.nix
-    ./carbon.nix
     ./dust.nix
     ./eza.nix
     ./fastfetch.nix

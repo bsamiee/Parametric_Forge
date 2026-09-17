@@ -38,7 +38,6 @@
   mkSurface = family: size: leading: {inherit family size leading;};
   surfaces = {
     terminal = mkSurface "mono" 13.0 catalog.${roles.mono}.lineHeight;
-    screenshot = mkSurface "mono" 16.0 1.4;
     proof = mkSurface "sans" 14.0 1.5;
   };
 
@@ -129,10 +128,8 @@ in {
         # CSS stacks carry a generic fallback; the sans stack falls through to the mono chain.
         cssMono = lib.concatStringsSep ", " (chains.mono ++ ["monospace"]);
         fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.terminal.size)}pt";
-        # Screenshot (carbon) and proof (theme HTML) CSS: one font shorthand plus the two scalar CSS forms the consumers previously hardcoded.
+        # Proof (theme HTML) CSS: one font shorthand the consumer previously hardcoded.
         proofFont = "${cssSize "proof"}/${cssLeading "proof"} ${cssSansStack}";
-        screenshotSize = cssSize "screenshot";
-        screenshotLeading = cssLeading "screenshot";
       };
     };
     description = "Estate font owner: family catalog, roles, chains, per-surface typography, projections.";

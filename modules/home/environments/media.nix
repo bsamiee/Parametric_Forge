@@ -39,10 +39,17 @@ in {
     MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick";
     MAGICK_MEMORY_LIMIT = "2147483648";
     MAGICK_DISK_LIMIT = "2147483648";
-    MAGICK_THREAD_LIMIT = "0";
 
-    # --- [PANDOC]
-    PANDOC_DATA_DIR = "${config.xdg.dataHome}/pandoc";
+    # --- [TYPST]
+    # Typst resolves both package roots through the `dirs` crate, so macOS lands them under ~/Library/Caches and ~/Library/Application Support,
+    # never XDG; the flags' env spellings are the only lever. pandoc needs no row: it reads XDG_DATA_HOME itself (xdg.nix keeps its data dir).
+    TYPST_PACKAGE_CACHE_PATH = "${config.xdg.cacheHome}/typst/packages";
+    TYPST_PACKAGE_PATH = "${config.xdg.dataHome}/typst/packages";
+
+    # --- [FFMPEG]
+    # ffpreset lookup is $FFMPEG_DATADIR, then $HOME/.ffmpeg, then the store datadir (ffmpeg(1), "Preset files"); the row moves the one writable
+    # leg off the dotfile path. FFREPORT stays unset: any value turns every invocation into a debug log dump in the working directory.
+    FFMPEG_DATADIR = "${config.xdg.dataHome}/ffmpeg";
   };
 
   # The XML generator orders children by element name (cachedir, dir, include), so the base include lands after the estate dirs; fontconfig

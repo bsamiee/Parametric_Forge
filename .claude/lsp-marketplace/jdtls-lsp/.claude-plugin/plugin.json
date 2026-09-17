@@ -1,9 +1,9 @@
 {
     "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-    "name": "ty-lsp",
-    "displayName": "ty (Python)",
+    "name": "jdtls-lsp",
+    "displayName": "JDT LS (Java)",
     "version": "1.0.0",
-    "description": "Astral ty language server for Python (.py/.pyi)",
+    "description": "Eclipse JDT language server for Java (.java)",
     "author": {
         "name": "Bardia Samiee"
     }

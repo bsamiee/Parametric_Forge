@@ -45,6 +45,11 @@ let
     aarch64-linux = "mise-aarch64-linux";
     x86_64-linux = "mise-x86_64-linux";
   };
+  vlConvertPins = pinFamily {
+    aarch64-darwin = "vl-convert-aarch64-darwin";
+    aarch64-linux = "vl-convert-aarch64-linux";
+    x86_64-linux = "vl-convert-x86_64-linux";
+  };
   sqleanPins = pinFamily {
     aarch64-darwin = "sqlean-aarch64-darwin";
     aarch64-linux = "sqlean-aarch64-linux";
@@ -130,21 +135,22 @@ in rec {
   # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
   # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
   packages = {
-    nodejs-slim_26 = (designSource "nodejs_26" null "mit" "https://nodejs.org/" "Current Node 26 build runtime for native npm packages" ["media-tools:vega-cli"] "Vega's native Canvas build requires the current Node source headers and nixpkgs npm hooks; the public Node executable remains the existing binary owner") // {sourcePackage = "nodejs-slim_26";};
-    vega-cli = {
-      upstream = "nixpkgs:vega-cli";
-      versionPolicy = "nixpkgs";
-      sourceKind = "nixpkgs";
+    # Vega's own headless renderer: V8 and the Vega/Vega-Lite JS are linked into one executable, so the chart-export role carries no Node
+    # source build and no browser. nixpkgs ships python3Packages.vl-convert-python only, never the CLI, so the attr is new.
+    vl-convert = {
+      upstream = "github:vega/vl-convert";
+      inherit (vlConvertPins) version assets;
+      versionPolicy = "fast";
+      sourceKind = "github-release";
       license = "bsd3";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "nixpkgs-follows";
-      projection.overlay = "override";
-      overlayReason = "Vega's Canvas addon and its CLI are built and run through the selected Node 26 runtime";
+      patchFamily = "auto-patchelf";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      projection.overlay = "new";
       consumers = ["media-tools"];
-      description = "Vega chart export to editable SVG, PDF, and PNG";
-      homepage = "https://vega.github.io/vega/";
-      mainProgram = "vg2svg";
+      description = "Vega and Vega-Lite spec export to SVG, PNG, JPEG, and PDF";
+      homepage = "https://github.com/vega/vl-convert";
+      mainProgram = "vl-convert";
     };
     imagemagick = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
     fontconfig = designSource "fontconfig" null "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
@@ -284,6 +290,30 @@ in rec {
       mainProgram = "mise";
     };
 
+    # The nixpkgs recipe over the newest upstream milestone: a milestone archive carries a build timestamp only its latest.txt knows, so the pin's
+    # release tag is path-shaped (`<milestone>/<archive>`) and `version` extracts the bare milestone. The recipe unpacks a prebuilt Equinox bundle,
+    # so the source-build lane carries binary bytecode.
+    jdt-language-server = let
+      release = generatedPins.jdt-language-server.version;
+    in {
+      upstream = "https://download.eclipse.org/jdtls/milestones/";
+      sourcePackage = "jdt-language-server";
+      sourcePin = "jdt-language-server";
+      version = builtins.head (builtins.match "([0-9.]+)/.*" release);
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      license = "epl20";
+      patchFamily = "none";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      projection.overlay = "override";
+      overlayReason = "nixpkgs carries the previous jdtls milestone; the attr override routes the dev-tools row and the jdtls server rows in apps/nvim through the newest release";
+      consumers = ["dev-tools" "nvim:jdtls" "forge-lsp:jdtls-lsp"];
+      description = "Eclipse JDT Language Server for Java";
+      homepage = "https://github.com/eclipse-jdtls/eclipse.jdt.ls";
+      mainProgram = "jdtls";
+    };
+
     sqlean = {
       upstream = "github:nalgeon/sqlean";
       inherit (sqleanPins) version assets;
@@ -300,22 +330,6 @@ in rec {
       consumers = ["sqlite-forge" "db-tools"];
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
-    };
-
-    carbon-now-cli = {
-      upstream = "nixpkgs:carbon-now-cli";
-      versionPolicy = "nixpkgs";
-      sourceKind = "nixpkgs";
-      license = "mit";
-      patchFamily = "source-substitute"; # Node 26 rejects `assert { type: 'json' }` import syntax; patched to `with`
-      cacheClass = "source-built-local";
-      updateEngine = "nixpkgs-follows";
-      projection.overlay = "override";
-      overlayReason = "patch-only override of the nixpkgs package; update-notifier configstore state is disabled at admission (CA-9 residue policy)";
-      consumers = ["carbon"];
-      description = "Terminal-driven source-code image renderer";
-      homepage = "https://github.com/mixn/carbon-now-cli";
-      mainProgram = "carbon-now";
     };
 
     openstudio = {

@@ -136,6 +136,11 @@ in {
         # on PATH — the mise shim, last PATH segment.
         roslyn-ls # C# LSP: Microsoft.CodeAnalysis.LanguageServer; the server rows in apps/nvim pass --stdio, --autoLoadProjects, and the log directory
 
+        # --- [JAVA]
+        # No JDK lands here: each repo's mise install owns the JDK its project runtime row names (java.configuration.runtimes). The server runs on
+        # its own store JDK and takes source roots, referenced jars, and the project JDK from the settings its client sends (apps/nvim rows).
+        jdt-language-server # Java LSP: Eclipse JDT LS; the upstream `jdtls` launcher keys the workspace data dir by the cwd basename under ~/Library/Caches/jdtls
+
         # --- [CLOUD_IAC]
         google-cloud-sdk # Google Cloud CLI for OAuth/API bootstrap and project administration
         gws # Google Workspace CLI for scripted and batch Workspace administration

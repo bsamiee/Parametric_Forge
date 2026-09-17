@@ -14,26 +14,16 @@
   ];
   actions = [
     ["actl" "act -l" "List workflows/jobs"]
-    ["alint" "actionlint" "Lint workflow files"]
   ];
   data = [
     ["sqlite3" "sqlite3 -column -header -nullvalue NULL" "SQLite shell with terminal display defaults"]
-    ["jqr" "jq -r" "Raw jq output"]
-    ["jqc" "jq -c" "Compact JSON output"]
-    ["jqs" "jq -S" "Sort object keys"]
     ["jqi" "jnv" "Interactive JSON explorer"]
     ["hq" "harlequin" "Terminal SQL IDE"]
     ["fqd" "fq d" "Decode binary file structure"]
-    ["j2y" "yq eval -P" "JSON to YAML"]
-    ["y2j" "yq eval -o=json" "YAML to JSON"]
-    ["yaml" "yq eval" "Process YAML"]
     ["c2j" "mlr --c2j cat" "CSV to JSON"]
     ["j2c" "mlr --j2c cat" "JSON to CSV"]
   ];
   dev = [
-    ["tyc" "ty check" "Type-check shorthand"]
-    ["rfix" "ruff check --fix" "Ruff autofix"]
-    ["rformat" "ruff format" "Ruff format"]
     ["watch" "watchexec -c" "Clear terminal on file change"]
     ["watchr" "watchexec -r" "Restart process on file change"]
     ["pc" "process-compose" "Project-local process mesh"]
@@ -47,7 +37,6 @@
   ];
   files = [
     ["ls" "eza -la --header --no-user --time-style=relative" "Long listing via eza"]
-    ["fda" "fd --hidden --no-ignore -a" "Find all files incl. hidden/ignored"]
     ["mkdir" "mkdir -pv" "Create parents verbosely"]
     ["rcmv" "rclone move --delete-empty-src-dirs" "Move with emptied source directories removed"]
     ["yz" "forge-yazi.sh reveal" "Reveal a path in the tab's yazi popup (creates it when absent)"]
@@ -75,7 +64,6 @@
     ["top" "btm" "System monitor"]
     ["dfi" "dua i" "Interactive disk usage"]
     ["killi" "pik" "Interactive process killer" "destructive"]
-    ["bench" "hyperfine" "Command benchmarking"]
   ];
   navigation = [
     ["cdr" "cd $(git rev-parse --show-toplevel)" "Jump to repo root"]
@@ -99,10 +87,6 @@
     ["lssh" "sshs" "Interactive SSH picker"]
     ["ports" "sudo lsof -iTCP -sTCP:LISTEN -n -P" "List listening TCP ports" "sudo"]
   ];
-  screenshot = [
-    ["carbonc" "carbon-now.sh --to-clipboard" "Code screenshot to clipboard"]
-    ["carboni" "carbon-now.sh --interactive" "Code screenshot interactive"]
-  ];
   shell = [
     ["envs" "env | sort" "Environment variables sorted"]
     ["ezsh" "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc" "Edit zsh config"]
@@ -111,7 +95,6 @@
   ];
   text-search = [
     ["chs" "choose" "Column selector"]
-    ["rg" "rg --max-columns=150 --max-columns-preview --trim" "Ripgrep with terminal display cosmetics"]
     ["batg" "batgrep" "Bat-powered ripgrep"]
     ["tldru" "tldr --update" "Update tldr cache"]
     ["rgx" "grex -xc" "Regex from test cases"]

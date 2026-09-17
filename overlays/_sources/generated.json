@@ -134,21 +134,6 @@
         },
         "version": "1.28.4"
     },
-    "design-nodejs_26": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-nodejs_26",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-NrN79e5NCSudnf8tGpCxRE+LRT7d9v+Wyr3ruX0y9B0=",
-            "type": "url",
-            "url": "https://nodejs.org/dist/v26.8.2/node-v26.8.2.tar.xz"
-        },
-        "version": "26.8.2"
-    },
     "design-pandoc-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -373,6 +358,21 @@
         },
         "version": "1.5.5"
     },
+    "jdt-language-server": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "jdt-language-server",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-M45+c9YYNmUbokU5GaDTT6dj6058AzQgkjCb/7iTTGQ=",
+            "type": "url",
+            "url": "https://download.eclipse.org/jdtls/milestones/1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz"
+        },
+        "version": "1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz"
+    },
     "mise-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -459,5 +459,47 @@
             "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip"
         },
         "version": "0.28.4"
+    },
+    "vl-convert-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "vl-convert-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-qsUO6lEbTVcYthsU8qaGDYVJSvCtNT8Dep3Cfna39RU=",
+            "type": "tarball",
+            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_osx-arm64.zip"
+        },
+        "version": "1.9.0"
+    },
+    "vl-convert-aarch64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "vl-convert-aarch64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-IVm7jUV77hhnFmt4Xq5ePYgKHGRyMOkdfcb9A93Q3Co=",
+            "type": "tarball",
+            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-aarch64.zip"
+        },
+        "version": "1.9.0"
+    },
+    "vl-convert-x86_64-linux": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "vl-convert-x86_64-linux",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-1qkX/2jVh7Mj0KUBP4l7p5n/tBHIFOetqqKAd878Rq0=",
+            "type": "tarball",
+            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-64.zip"
+        },
+        "version": "1.9.0"
     }
 }

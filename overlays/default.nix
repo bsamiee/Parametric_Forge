@@ -292,6 +292,22 @@ final: prev: let
         runHook postInstall
       '';
     };
+    # Release zip: one executable with the V8 runtime linked in, under a single bin/ directory the unpacked pin strips. Linux assets are dynamic
+    # glibc ELFs, so that lane takes autoPatchelf; Darwin needs nothing. A layout move fails the build loudly, never a bin/ that lost its tool.
+    vl-convert = _: {
+      dontUnpack = true;
+      nativeBuildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      buildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.stdenv.cc.cc.lib;
+      installPhase = ''
+        runHook preInstall
+        [ -x "$src/vl-convert" ] || { echo "vl-convert: release executable layout changed" >&2; exit 1; }
+        install -Dm755 "$src/vl-convert" "$out/bin/vl-convert"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/vl-convert";
+    };
     energyplus = optRuntime;
     openstudio = optRuntime;
   };
@@ -306,21 +322,6 @@ final: prev: let
     # nixpkgs fetches an unpacked zip; the generated pin is the flat release archive, so unzip joins the native install phase unchanged.
     scheherazade-new = old: {
       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.unzip];
-    };
-    nodejs-slim_26 = old: {
-      # The native builder's test closes over its original version; keep the test tied to the selected source runtime.
-      passthru =
-        (removeAttrs old.passthru ["updateScript"])
-        // {
-          tests =
-            old.passthru.tests
-            // {
-              version = prev.testers.testVersion {
-                package = final.nodejs-slim_26;
-                version = "v${final.nodejs-slim_26.version}";
-              };
-            };
-        };
     };
     imagemagick = old: {
       configureFlags = (old.configureFlags or []) ++ ["--enable-hdri=yes" "--with-quantum-depth=16" "--with-lcms=yes"];
@@ -399,26 +400,6 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
-    vega-cli = prev.vega-cli.override {
-      buildNpmPackage = prev.buildNpmPackage.override {nodejs = final.nodejs_26;};
-    };
-    carbon-now-cli = prev.carbon-now-cli.overrideAttrs (old: {
-      # patchFamily source-substitute: Node 26 rejects `assert { type: 'json' }`. No existence guard — an upstream layout or syntax change must fail
-      # the build loudly (patch_drift), never ship an unpatched binary.
-      postInstall =
-        (old.postInstall or "")
-        + ''
-          substituteInPlace "$out/lib/node_modules/carbon-now-cli/dist/cli.js" \
-            --replace-fail "assert { type: 'json' }" "with { type: 'json' }"
-        '';
-      # Update-notifier policy row: self-mutating configstore state is disabled at admission, never left as unowned config litter.
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.makeBinaryWrapper];
-      postFixup =
-        (old.postFixup or "")
-        + ''
-          wrapProgram "$out/bin/carbon-now" --set NO_UPDATE_NOTIFIER 1
-        '';
-    });
     # The binary duckdb overlay carries a release tree, not the crate/source layout the python distribution patches and builds from, so the python
     # package pins back to its nixpkgs source-built lineage: duckdb is harlequin's engine.
     pythonPackagesExtensions =

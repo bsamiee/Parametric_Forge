@@ -31,6 +31,7 @@
     "gitattributes"
     "gitcommit"
     "html"
+    "java"
     "javascript"
     "jsdoc"
     "json"
@@ -127,39 +128,8 @@
         };
       };
     };
-    ty = {
-      cmd = ["ty" "server"];
-      filetypes = ["python"];
-      root_markers = ["pyproject.toml" ".git"];
-      settings = {};
-      claude = {
-        plugin = "ty-lsp";
-        extensions = {
-          ".py" = "python";
-          ".pyi" = "python";
-        };
-      };
-    };
-    # TypeScript 7 uses the native tsc executable for compilation and LSP.
-    typescript = {
-      cmd = ["tsc" "--lsp" "-stdio"];
-      filetypes = ["typescript" "typescriptreact" "javascript" "javascriptreact"];
-      root_markers = ["tsconfig.json" "package.json" ".git"];
-      settings = {};
-      claude = {
-        plugin = "typescript-lsp";
-        extensions = {
-          ".ts" = "typescript";
-          ".tsx" = "typescriptreact";
-          ".mts" = "typescript";
-          ".cts" = "typescript";
-          ".js" = "javascript";
-          ".jsx" = "javascriptreact";
-          ".mjs" = "javascript";
-          ".cjs" = "javascript";
-        };
-      };
-    };
+    # Python (ty), TypeScript (tsc), and Biome carry no row: each project's mise.toml and uv.lock own those toolchains, and a project ships its
+    # own Claude plugin row for them, so the machine roster names only profile-installed servers.
     postgres_lsp = {
       cmd = ["postgrestools" "lsp-proxy"];
       filetypes = ["sql"];
@@ -201,20 +171,20 @@
         extensions.".toml" = "toml";
       };
     };
-    # Biome's LSP proxy: the editor attaches it beside TypeScript for lint diagnostics on every Biome language; the Claude lane claims only the
-    # extensions no other row owns (JSON, JSONC, CSS) because Claude Code starts one server per extension, first registered wins.
-    biome = {
-      cmd = ["biome" "lsp-proxy"];
-      filetypes = ["json" "jsonc" "css" "javascript" "javascriptreact" "typescript" "typescriptreact"];
-      root_markers = ["biome.json" "biome.jsonc" ".git"];
+    # jdtls imports a folder without a build file as an invisible project; its source roots, referenced jars, and project JDK arrive as
+    # `java.project.sourcePaths`, `java.project.referencedLibraries`, and `java.configuration.runtimes` settings, so the machine row carries no
+    # project facts: a project's own Claude plugin row (first server registered per extension wins) or its Eclipse .classpath owns them.
+    jdtls = {
+      cmd = ["jdtls"];
+      filetypes = ["java"];
+      root_markers = ["pom.xml" "build.gradle" "build.gradle.kts" ".git"];
       settings = {};
       claude = {
-        plugin = "biome-lsp";
-        extensions = {
-          ".json" = "json";
-          ".jsonc" = "jsonc";
-          ".css" = "css";
-        };
+        plugin = "jdtls-lsp";
+        extensions.".java" = "java";
+        # JVM boot plus workspace import outpaces the default startup window; a crash loop stops after three restarts.
+        startupTimeout = 120000;
+        maxRestarts = 3;
       };
     };
     roslyn_ls = {
@@ -339,9 +309,7 @@
         sh = ["shfmt"];
         bash = ["shfmt"];
         lua = ["stylua"];
-        python = ["ruff_format"];
         toml = ["taplo"];
-        yaml = ["yamlfmt"];
         sql = ["sqruff"];
       }
       // lib.genAttrs
@@ -353,11 +321,9 @@
         nix = ["deadnix" "statix"];
         sh = ["shellcheck"];
         bash = ["shellcheck"];
-        python = ["ruff"];
-        yaml = ["yamllint"];
         dockerfile = ["hadolint"];
       };
-      workflow = ["actionlint" "zizmor"];
+      workflow = ["zizmor"];
       global = ["typos"];
     };
     estate = estateRows;
@@ -395,6 +361,9 @@ in {
     withPython3 = true;
     initLua = builtins.readFile ./init.lua;
     plugins = lib.attrValues plugins;
+    # Editor-only search engines for the snacks pickers and grug-far: ripgrep, fd, and ast-grep left the machine PATH for each project's mise.toml,
+    # so the wrapper seats them on nvim's own PATH and the user profile stays project-owned.
+    extraPackages = [pkgs.ripgrep pkgs.fd pkgs.ast-grep];
   };
 
   # Recursive tree link merges tracked sources with generated fact modules in one home-files derivation; new tracked Lua files deploy with zero rows.

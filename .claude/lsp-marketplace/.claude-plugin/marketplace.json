@@ -7,19 +7,9 @@
     "description": "In-house LSP servers for the polyglot stack",
     "plugins": [
         {
-            "name": "ty-lsp",
-            "source": "./ty-lsp",
-            "description": "Astral ty language server for Python (.py/.pyi)"
-        },
-        {
             "name": "roslyn-lsp",
             "source": "./roslyn-lsp",
             "description": "Roslyn language server for C# (.cs/.csx)"
-        },
-        {
-            "name": "typescript-lsp",
-            "source": "./typescript-lsp",
-            "description": "TypeScript 7 native language server for TypeScript and JavaScript"
         },
         {
             "name": "bash-lsp",
@@ -52,9 +42,9 @@
             "description": "taplo language server with the SchemaStore catalog (.toml)"
         },
         {
-            "name": "biome-lsp",
-            "source": "./biome-lsp",
-            "description": "Biome language server for JSON, JSONC, and CSS (.json/.jsonc/.css)"
+            "name": "jdtls-lsp",
+            "source": "./jdtls-lsp",
+            "description": "Eclipse JDT language server for Java (.java)"
         }
     ]
 }

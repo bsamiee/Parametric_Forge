@@ -27,11 +27,6 @@ advanced `overlays/_sources` pins (verapdf 1.31.170, biome 2.5.13); neither has 
   served the deleted register browser.
 - `modules/home/programs/apps/chords.nix` :536-537 :659 :681 — the `[REGISTER_PROJECTION]` block and `register` attribute have no reader.
 - `modules/home/theme.nix` :218 — `macos-accent` row names `modules/darwin/settings` after the accent rows moved to `mac-tools/defaults/interface.nix`.
-- `modules/home/aliases/core.nix` — rows whose binary left the machine PATH: `alint`, `jqr`, `jqc`, `jqs`, `j2y`, `y2j`, `yaml`, `tyc`,
-  `rfix`, `rformat`, `fda`, `bench`, and the `rg` self-alias (`which -a rg fd biome ast-grep` all resolve nowhere).
-- `modules/home/programs/apps/nvim/default.nix` :203-207 :344 :356-360 — biome `lsp-proxy`, `yamlfmt`, `yamllint`, `actionlint` rows point at
-  binaries no longer installed; `lua/plugins/grug-far.lua` :7 :11-12 pins `rg`/`ast-grep` paths the same way.
-- `.claude/lsp-marketplace/biome-lsp/.lsp.json` :3 — `biome` command is on no PATH and in no `mise.toml`.
 - Stale comments: `modules/home/environments/development.nix` :9 (deleted `forge-tools/default.nix`), `flake-modules/tooling.nix` :81
   ("the PATH wrapper"), `overlays/manifest.nix` :107 :117 :421-422 :649 :653, `CLAUDE.md` :43 ("fmt lane") :104 (duckdb row),
   `.coderabbit.yaml` :47 and `.greptile/rules.md` :12 ("the fmt router").
@@ -45,7 +40,7 @@ Keep: `forge-redeploy`, `forge-provision`, `gha`, `loc`, the `terminal.nix` yazi
   (`lua-tools.nix` :16), `prettier` (`node-tools.nix` :20), `sqruff` (`db-tools.nix` :40), `swiftformat` and the `_walk_up` half of `swiftlint`
   (`apple-tools.nix` :20 :45; keep the `DYLD_FRAMEWORK_PATH` seeding), the argument-less `postgres18-forge-client-tools` makeWrapper
   (`db-tools.nix` :19), `withDefaultFlag` + hexyl (`shell-tools/default.nix` :21 :92), `rsync-safe.sh` (`rsync.nix` :16), the `tree` eza
-  wrapper (`eza.nix` :17), `xh --ignore-stdin` (`xh.nix` :29), `carbon-playwright-install.sh` + `carbon-now.sh` (`carbon.nix` :79 :94),
+  wrapper (`eza.nix` :17), `xh --ignore-stdin` (`xh.nix` :29),
   `sqlite-forge` (`overlays/default.nix` :449). Then delete `walkUp` from `modules/style.nix` :64 once no consumer remains.
 - Activation scripts that are one-liners in derivation clothing: `forge-install-antigravity-cli` + `ensureAntigravityCli`
   (`dev-tools.nix` :57 :110), `forge-zsh-compdump-retire` + `forgeZshCompletions` (`zsh/completions.nix` :158 :169),

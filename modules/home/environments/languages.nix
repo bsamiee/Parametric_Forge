@@ -49,6 +49,6 @@ in {
       # --- [HEADLESS_RENDER_PUPPETEER_PLAYWRIGHT_MERMAID]
       # PUPPETEER_EXECUTABLE_PATH is a cross-surface row of modules/common/toolchain-env.nix, which owns the headless shell pin.
       # PLAYWRIGHT_BROWSERS_PATH is never a machine-wide row: each project's `mise.toml` owns its own browser build, and the
-      # activated shell applies it inside that tree; a Playwright consumer packaged here (carbon) exports its own cache path.
+      # activated shell applies it inside that tree.
     };
 }

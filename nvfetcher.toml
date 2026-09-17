@@ -1,7 +1,7 @@
 # Pin-source declarations for every nvfetcher-engine manifest row; nvfetcher lives in the flake devShell alone, so
 # `nix develop -c nvfetcher -o overlays/_sources` advances the complete family (docs/atlas/rails-and-contracts.md row 03).
 
-# Design renderers, native application routing, and the Node source pin; update with --filter '^design-'.
+# Design renderers and native application routing; update with --filter '^design-'.
 [design-imagemagick]
 src.github = "ImageMagick/ImageMagick"
 fetch.url = "https://github.com/ImageMagick/ImageMagick/releases/download/$ver/ImageMagick-$ver.tar.xz"
@@ -113,6 +113,12 @@ src.github = "jdx/mise"
 src.prefix = "v"
 fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linux-x64-musl.tar.gz"
 
+# jdtls milestone archives carry a build timestamp only each milestone's latest.txt names, so the pin resolves the newest milestone directory
+# and carries the archive path as its release tag (manifest.nix extracts the bare milestone).
+[jdt-language-server]
+src.cmd = "ver=$(curl -fsSL https://download.eclipse.org/jdtls/milestones/ | grep -oE \"milestones/[0-9]+\\.[0-9]+\\.[0-9]+'\" | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' | sort -V | tail -n 1); printf '%s/%s\\n' \"$ver\" \"$(curl -fsSL \"https://download.eclipse.org/jdtls/milestones/$ver/latest.txt\")\""
+fetch.url = "https://download.eclipse.org/jdtls/milestones/$ver"
+
 [duckdb-aarch64-darwin]
 src.github = "duckdb/duckdb"
 src.prefix = "v"
@@ -128,9 +134,22 @@ src.github = "duckdb/duckdb"
 src.prefix = "v"
 fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-amd64.zip"
 
-[design-nodejs_26]
-src.cmd = "curl -fsSL https://nodejs.org/dist/index.json | jq -r 'map(.version | select(startswith(\"v26.\"))) | first | ltrimstr(\"v\")'"
-fetch.url = "https://nodejs.org/dist/v$ver/node-v$ver.tar.xz"
+# vl-convert: Vega and Vega-Lite to SVG/PNG/JPEG/PDF with V8 linked into one executable; nixpkgs carries only the python binding, never the CLI.
+# `src.github` tracks the latest non-prerelease, so the 2.0.0-rc line stays out until it ships stable. The assets are zips, pinned unpacked.
+[vl-convert-aarch64-darwin]
+src.github = "vega/vl-convert"
+src.prefix = "v"
+fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_osx-arm64.zip"
+
+[vl-convert-aarch64-linux]
+src.github = "vega/vl-convert"
+src.prefix = "v"
+fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_linux-aarch64.zip"
+
+[vl-convert-x86_64-linux]
+src.github = "vega/vl-convert"
+src.prefix = "v"
+fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_linux-64.zip"
 
 [sqlean-aarch64-darwin]
 src.github = "nalgeon/sqlean"

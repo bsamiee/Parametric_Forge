@@ -78,14 +78,6 @@
       sha256 = "sha256-LZfgQ6YW+WsUhlfJw9ga1xxL0gUsWaKjMVrYQlmTQPk=";
     };
   };
-  design-nodejs_26 = {
-    pname = "design-nodejs_26";
-    version = "26.8.2";
-    src = fetchurl {
-      url = "https://nodejs.org/dist/v26.8.2/node-v26.8.2.tar.xz";
-      sha256 = "sha256-NrN79e5NCSudnf8tGpCxRE+LRT7d9v+Wyr3ruX0y9B0=";
-    };
-  };
   design-pandoc-aarch64-darwin = {
     pname = "design-pandoc-aarch64-darwin";
     version = "3.11";
@@ -212,6 +204,14 @@
       sha256 = "sha256-CMDKEXER/O3hQjnQCTeSNSvv3BdCGMNE0jLBMnlkPQU=";
     };
   };
+  jdt-language-server = {
+    pname = "jdt-language-server";
+    version = "1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz";
+    src = fetchurl {
+      url = "https://download.eclipse.org/jdtls/milestones/1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz";
+      sha256 = "sha256-M45+c9YYNmUbokU5GaDTT6dj6058AzQgkjCb/7iTTGQ=";
+    };
+  };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
     version = "2026.9.9";
@@ -258,6 +258,30 @@
     src = fetchTarball {
       url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip";
       sha256 = "sha256-e+tbjHjiG4cYtXomKK60h7586heIpc7S9vowb3R7RKI=";
+    };
+  };
+  vl-convert-aarch64-darwin = {
+    pname = "vl-convert-aarch64-darwin";
+    version = "1.9.0";
+    src = fetchTarball {
+      url = "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_osx-arm64.zip";
+      sha256 = "sha256-qsUO6lEbTVcYthsU8qaGDYVJSvCtNT8Dep3Cfna39RU=";
+    };
+  };
+  vl-convert-aarch64-linux = {
+    pname = "vl-convert-aarch64-linux";
+    version = "1.9.0";
+    src = fetchTarball {
+      url = "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-aarch64.zip";
+      sha256 = "sha256-IVm7jUV77hhnFmt4Xq5ePYgKHGRyMOkdfcb9A93Q3Co=";
+    };
+  };
+  vl-convert-x86_64-linux = {
+    pname = "vl-convert-x86_64-linux";
+    version = "1.9.0";
+    src = fetchTarball {
+      url = "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-64.zip";
+      sha256 = "sha256-1qkX/2jVh7Mj0KUBP4l7p5n/tBHIFOetqqKAd878Rq0=";
     };
   };
 }

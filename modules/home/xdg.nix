@@ -28,7 +28,7 @@
     "755" = [
       "${config.home.homeDirectory}/.local/bin"
       "${config.home.homeDirectory}/bin"
-      "${config.xdg.stateHome}/ffmpeg"
+      "${config.xdg.dataHome}/ffmpeg"
       "${config.xdg.stateHome}/sqlite"
       "${config.xdg.cacheHome}/ImageMagick"
       "${config.xdg.configHome}/ImageMagick"
