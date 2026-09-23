@@ -28,9 +28,10 @@
 # and a free-spin flick into hundreds. The Rhino row ANDs app bundle with the MX device (one if-object is a conjunction;
 # an array would be a disjunction, and app-only scope would drag the trackpad in) and disables both smoothed axes, which
 # takes the hi-res normalizer out of passthrough so micro-ticks re-coalesce to detent-scale discrete events; vertical
-# distance 1 then makes a detent exactly one line — one zoom step at Rhino's own zoom scale factor. launchd owns login
-# start. schema.json is the upstream schema of the installed release (the `linearmouse` cask row), the same version the
-# `$schema` row names.
+# distance 1 then makes a detent exactly one line — one zoom step at Rhino's own zoom scale factor. Blender applies a
+# fixed 1.2 zoom factor per wheel event and has no zoom scale setting, so the Blender row mirrors the Rhino row on the
+# same device: one detent, one event, one 1.2 step. launchd owns login start. schema.json is the upstream schema of the
+# installed release (the `linearmouse` cask row), the same version the `$schema` row names.
 {
   forgeAgent,
   pkgs,
@@ -81,6 +82,22 @@
       {
         "if" = {
           app = "com.mcneel.rhinoceros.9";
+          device = {
+            vendorID = "0x046d";
+            productID = "0xb034";
+          };
+        };
+        scrolling = {
+          distance.vertical = 1;
+          smoothed = {
+            vertical.enabled = false;
+            horizontal.enabled = false;
+          };
+        };
+      }
+      {
+        "if" = {
+          app = "org.blenderfoundation.blender";
           device = {
             vendorID = "0x046d";
             productID = "0xb034";
