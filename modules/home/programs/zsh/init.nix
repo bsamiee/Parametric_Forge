@@ -81,8 +81,11 @@
     (lib.mkOrder 2000 ''
       # --- [MISE_ACTIVATE]
       # Last line of the interactive config: mise documents that PATH edits made after activation outrank the tools it manages
-      # (settings, activate_aggressive), so nothing follows this hook.
-      eval "$(${lib.getExe config.programs.mise.package} activate zsh)"
+      # (settings, activate_aggressive), so nothing follows this hook. Activation drops the shim farm from PATH (src/cli/activate.rs and
+      # hook_env.rs keep it only under not_found_auto_install, which auto_install = false turns off), so the `zsh -ilc` VS Code runs from `/`
+      # to resolve its environment (VSCODE_RESOLVING_ENVIRONMENT=1) skips activation and keeps the farm its language servers resolve a
+      # project's .NET SDK through.
+      [[ -n $VSCODE_RESOLVING_ENVIRONMENT ]] || eval "$(${lib.getExe config.programs.mise.package} activate zsh)"
     '')
   ];
 }

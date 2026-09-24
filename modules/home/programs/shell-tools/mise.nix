@@ -21,11 +21,10 @@
     enableZshIntegration = false;
     globalConfig.settings = {
       trusted_config_paths = ["~/Developer"];
-      # The global gate every install path checks: off, so no command ever starts a download. not_found_auto_install stays at its default
-      # (true): activation keeps the shim farm in PATH only under it (src/cli/activate.rs remove_shims), and its handler installs nothing
-      # while this gate is off.
+      # The global gate every install path checks: off, so no command ever starts a download. It also turns off exec_auto_install and
+      # not_found_auto_install (src/config/settings.rs), so activation drops the shim farm from PATH; zsh/init.nix keeps activation out of
+      # VS Code's environment resolution for that reason.
       auto_install = false;
-      exec_auto_install = false;
       disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
     };
   };
