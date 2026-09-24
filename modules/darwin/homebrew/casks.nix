@@ -12,13 +12,14 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so `brew upgrade --greedy-latest wezterm@nightly` refreshes it.
+    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so only the greedy activation upgrade refreshes it.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
     "aldente" # Battery charging limiter
-    "linearmouse" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
+    # Beta cask conflicts with the stable cask; it tracks the Sparkle beta feed the app follows, so Homebrew's record and the app agree.
+    "linearmouse@beta" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
     "raycast" # Launcher/productivity
 
     # --- [BROWSERS_INTERNET]

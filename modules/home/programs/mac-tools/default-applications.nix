@@ -173,8 +173,10 @@
         competing=""
         while IFS= read -r candidate; do
           [[ $candidate != "$path" ]] || found=1
-          # A mounted disk image (an installer or an updater staging volume) is never an installation, so /Volumes copies never compete.
-          if [[ -d $candidate && $candidate != "$path" && $candidate != "$path/"* && $candidate != /Volumes/* ]]; then
+          # A mounted disk image (an installer or an updater staging volume) is never an installation, so /Volumes copies never compete; a
+          # Nix store bundle is the source a Home Manager Apps copy resolves to when it launches, registered once per generation, so it never
+          # competes with its copy either.
+          if [[ -d $candidate && $candidate != "$path" && $candidate != "$path/"* && $candidate != /Volumes/* && $candidate != /nix/store/* ]]; then
             competing=$candidate
           fi
         done <<<"$registered"

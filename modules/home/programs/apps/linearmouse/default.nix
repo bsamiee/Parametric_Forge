@@ -27,18 +27,20 @@
 # scroll event instead of integrating deltas, so the 120 Hz synthetic stream turns one detent into dozens of zoom steps
 # and a free-spin flick into hundreds. The Rhino row ANDs app bundle with the MX device (one if-object is a conjunction;
 # an array would be a disjunction, and app-only scope would drag the trackpad in) and disables both smoothed axes, which
-# takes the hi-res normalizer out of passthrough so micro-ticks re-coalesce to detent-scale discrete events; vertical
-# distance 1 then makes a detent exactly one line — one zoom step at Rhino's own zoom scale factor. Blender applies a
-# fixed 1.2 zoom factor per wheel event and has no zoom scale setting, so the Blender row mirrors the Rhino row on the
-# same device: one detent, one event, one 1.2 step. launchd owns login start. schema.json is the upstream schema of the
-# installed release (the `linearmouse` cask row), the same version the `$schema` row names.
+# leaves the line transformer to coalesce hi-res micro-ticks into one discrete event per detent. Rhino's viewport reads
+# only the sign of that event (one (1/ZoomScale)^2 step per event), while AppKit scroll views move lines times
+# verticalLineScroll (10pt, one row in a table), so vertical distance 3 sets list and menu travel to three lines per
+# detent and leaves zoom at one step. Blender applies a fixed 1.2 zoom factor per wheel event and has no zoom scale
+# setting, so the Blender row takes the same shape on the same device: one detent, one event, one 1.2 step. launchd
+# owns login start. schema.json is the upstream schema of the installed release (the `linearmouse@beta` cask row), the
+# same version the `$schema` row names.
 {
   forgeAgent,
   pkgs,
   ...
 }: let
   settings = {
-    "$schema" = "https://schema.linearmouse.app/0.12.0-beta.4";
+    "$schema" = "https://schema.linearmouse.app/0.12.0-beta.6";
     schemes = [
       {
         "if".device.category = "mouse";
@@ -88,7 +90,7 @@
           };
         };
         scrolling = {
-          distance.vertical = 1;
+          distance.vertical = 3;
           smoothed = {
             vertical.enabled = false;
             horizontal.enabled = false;

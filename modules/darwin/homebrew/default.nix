@@ -34,10 +34,16 @@ in {
     };
 
     # --- [ACTIVATION_BEHAVIOR]
-    # Activation installs missing roster rows; native Homebrew commands own metadata, versions, and operator-installed rows. `brew bundle`
-    # runs under sudo without the session environment; XDG_CONFIG_HOME points Homebrew at the same user configuration directory the shell
-    # uses, where its own brew.env (the one owner of every HOMEBREW_* setting) and the tap trust store trust.json live (under ~/.homebrew when
-    # the variable is unset).
-    onActivation.extraEnv.XDG_CONFIG_HOME = "${config.users.users.${config.system.primaryUser}.home}/.config";
+    # Activation refreshes the catalog, installs missing roster rows, and upgrades every outdated one; greedy casks include the auto-updating
+    # and :latest casks Homebrew otherwise skips, and Homebrew compares the app's own version first so a Sparkle-updated app is never
+    # downgraded. Native Homebrew commands own operator-installed rows. `brew bundle` runs under sudo without the session environment;
+    # XDG_CONFIG_HOME points Homebrew at the same user configuration directory the shell uses, where its own brew.env (the one owner of
+    # every HOMEBREW_* setting) and the tap trust store trust.json live (under ~/.homebrew when the variable is unset).
+    greedyCasks = true;
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      extraEnv.XDG_CONFIG_HOME = "${config.users.users.${config.system.primaryUser}.home}/.config";
+    };
   };
 }
