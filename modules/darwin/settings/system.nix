@@ -68,11 +68,9 @@ in {
     allowSignedApp = true;
   };
 
-  # .NET's install-location registration: the host and VS Code's .NET Install Tool read this file for the install root when no `dotnet` is
-  # resolvable from their own working directory (the Install Tool probes from its extension directory, where a mise shim has no version in
-  # scope). It names mise's shared SDK store, never an SDK: each repository's global.json still selects the version. Root scope by design,
-  # the file lives under /etc.
-  environment.etc."dotnet/install_location_arm64".text = "${primaryUserHome}/.local/share/mise/dotnet-root\n";
+  # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory
+  # Target is a link the mise postinstall hook (home/programs/shell-tools/mise.nix) points at an isolated SDK folder, never a version literal
+  environment.etc."dotnet/install_location_arm64".text = "${dataHome}/mise/dotnet-current\n";
 
   # Keep GUI-launched processes aligned with Nix/Home Manager PATH, so a tool in the shell also resolves in app-launched subprocesses.
   launchd.user.envVariables =

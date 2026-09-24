@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/mise.nix
 # ----------------------------------------------------------------------------
-# mise runtime manager: installed binary, interactive-zsh activation, and a settings-only global config that never shadows a project's own
+# mise runtime manager: installed binary, interactive-zsh activation, and a tool-free global config that never shadows a project's own
 # `mise.toml`. Activation (`mise activate zsh`, a precmd/chpwd hook) is what makes a project's `[env]` and `[tools]` rows apply to the shell
 # inside its tree, so a per-project variable such as PLAYWRIGHT_BROWSERS_PATH is owned by that project's `mise.toml`, never by a machine-wide
 # export. The hook lives in .zshrc and reads the shell's directory once at activation and again at every prompt and directory change, so only
@@ -13,19 +13,34 @@
 # routes stay behind Nix: the farm's segment trails every Nix profile, and outside a trusted project the hook is a no-op over a tool-free global config.
 # The global auto-install gate stays off so a missing tool is a typed failure, never a mid-command download; trust covers the estate roots so
 # a project config composes freely while a foreign checkout's config never executes implicitly.
-{pkgs, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   programs.mise = {
     enable = true;
     package = pkgs.mise;
     # HM's integration has no order; zsh/init.nix evals `mise activate zsh` as the last interactive line, where mise documents it belongs.
     enableZshIntegration = false;
-    globalConfig.settings = {
-      trusted_config_paths = ["~/Developer"];
-      # The global gate every install path checks: off, so no command ever starts a download. It also turns off exec_auto_install and
-      # not_found_auto_install (src/config/settings.rs), so activation drops the shim farm from PATH; zsh/init.nix keeps activation out of
-      # VS Code's environment resolution for that reason.
-      auto_install = false;
-      disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
+    globalConfig = {
+      settings = {
+        trusted_config_paths = ["~/Developer"];
+        # The global gate every install path checks: off, so no command ever starts a download. It also turns off exec_auto_install and
+        # not_found_auto_install (src/config/settings.rs), so activation drops the shim farm from PATH; zsh/init.nix keeps activation out of
+        # VS Code's environment resolution for that reason.
+        auto_install = false;
+        disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
+        # A shared-store SDK install overwrites the running `dotnet` host in place, and macOS then kills every process it hosts
+        dotnet.isolated = true;
+      };
+      # Points the link /etc/dotnet/install_location_arm64 names (darwin/settings/system.nix) at the project's SDK, else the newest installed
+      hooks.postinstall = ''
+        if root="$(${lib.getExe config.programs.mise.package} where dotnet 2>/dev/null)"; then
+          ln -sfn "$root" "${config.xdg.dataHome}/mise/dotnet-current"
+        fi
+      '';
     };
   };
 }
