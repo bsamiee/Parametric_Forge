@@ -70,6 +70,9 @@ _: {
     # --- [ADOBE_CREATIVE_SUITE]
     "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask
 
+    # --- [3D_CREATION]
+    "blender" # 3D creation suite; the cask links its blender command wrapper into /opt/homebrew/bin
+
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "karabiner-elements" # Keyboard remapping
   ];
