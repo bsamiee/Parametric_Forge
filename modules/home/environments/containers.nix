@@ -79,7 +79,7 @@ in {
   };
 
   # Owns DOCKER_CONFIG and config.json on both platforms under the module's XDG default ($XDG_CONFIG_HOME/docker at stateVersion 26.05). NO
-  # credsStore: docker-credential-osxkeychain is a Docker-Desktop binary absent here; empty inline auths are correct for Colima + public images.
+  # credsStore: docker-credential-osxkeychain is the Docker Desktop cask's /usr/local/bin link, unused; empty inline auths are correct for Colima + public images.
   # currentContext is injected by the colima module when the profile is active; docker context meta stays Colima-owned — a store-owned meta.json
   # breaks context creation.
   programs.docker-cli = {

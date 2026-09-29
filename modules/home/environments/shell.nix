@@ -4,10 +4,13 @@
 # License       : MIT
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
-# Shell configuration environment variables
+# Shell configuration environment variables and their GUI launchd domain replay
 {
   config,
+  forgeAgent,
   forgeToolchainEnvFor,
+  lib,
+  pkgs,
   ...
 }: let
   toolchainEnv = forgeToolchainEnvFor {
@@ -17,6 +20,19 @@
     xdgConfigHome = config.xdg.configHome;
     xdgDataHome = config.xdg.dataHome;
     xdgStateHome = config.xdg.stateHome;
+  };
+  # A fresh GUI domain carries no locale, XDG roots, or toolchain PATH, and `launchctl setenv` state dies with the login session, so the rows
+  # replay at every login. The colima and docker-cli modules derive the Docker rows, the HM xdg module the XDG rows.
+  guiEnvRows =
+    toolchainEnv.scientificSessionEnv
+    // toolchainEnv.launchdEnv
+    // {
+      PATH = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
+      inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME DOCKER_HOST COLIMA_HOME DOCKER_CONFIG;
+    };
+  guiEnv = pkgs.writeShellApplication {
+    name = "gui-env";
+    text = lib.concatLines (lib.mapAttrsToList (name: value: "/bin/launchctl setenv ${name} ${lib.escapeShellArg value}") guiEnvRows);
   };
 in {
   # --- [USER_SESSION_PATH]
@@ -67,4 +83,14 @@ in {
         --preview-window=right:60%:border-bold
       '';
     };
+
+  # --- [GUI_SESSION_ENVIRONMENT]
+  # RunAtLoad replays the rows at each login, and a changed row set rewrites the argv, so the switch that lands it reloads and reruns the agent.
+  # An app login restores before launchd runs its agents keeps its launch environment; WezTerm projects its own spawn rows (apps/wezterm/deck.lua).
+  forge.bundleApps.gui-env = "GUI Environment";
+  launchd.agents.gui-env = forgeAgent {
+    name = "gui-env";
+    argv = ["${guiEnv}/bin/gui-env"];
+    RunAtLoad = true;
+  };
 }

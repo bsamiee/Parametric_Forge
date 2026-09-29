@@ -261,7 +261,7 @@ _check_coverage() {
 _mutate_operators() {
     local -r file="$1" backup="${1}.bak"
     cp "${file}" "${backup}"
-    sd '&&' '||' "${file}"
+    sd -A -F '&&' '||' "${file}"
     bats tests/ && {
         printf 'MUTANT SURVIVED: &&->|| in %s\n' "${file}" >&2
         cp "${backup}" "${file}"
@@ -277,7 +277,7 @@ _mutation_sweep() {
     local mut; for mut in "${mutations[@]}"; do
         local -r from="${mut%%:*}" to="${mut#*:}"
         cp "${target}" "${target}.bak"
-        sd "${from}" "${to}" "${target}"
+        sd -A -F -- "${from}" "${to}" "${target}"
         bats tests/ 2>/dev/null && (( survived++ )) || (( killed++ ))
         cp "${target}.bak" "${target}"
     done

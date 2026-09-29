@@ -305,13 +305,23 @@ function M.apply(config)
     -- The palette font is the terminal font object (a constructor value), so it lands here rather than in the pure-data settings.
     config.command_palette_font = config.font
 
-    -- Outer-inner seam: zellij attach + toolchain PATH projection. Deck-owned spawns carry their workspace session
+    -- Outer-inner seam: zellij attach + toolchain PATH and session-secret projection. Deck-owned spawns carry their workspace session
     -- explicitly; this is the fallback for panes spawned outside deck control (`wezterm cli spawn` without a prog).
     config.default_prog = M.session_args(config.default_workspace)
     local ambient = os.getenv("PATH")
     config.set_environment_variables = {
         PATH = (ambient and ambient ~= "") and (rows.paths.path .. ":" .. ambient) or rows.paths.path,
     }
+    -- Login restores WezTerm before launchd leaves on-demand-only mode and runs the gui-op-secrets replay, and the zellij server this
+    -- spawn creates freezes its environment for every pane, including the command panes resurrection execs with no shell. The export
+    -- rows of the mode-600 cache activation publishes (the file interactive zsh sources) therefore ride every local spawn from here.
+    wezterm.add_to_config_reload_watch_list(rows.paths.secrets)
+    for line in io.lines(rows.paths.secrets) do
+        local name, value = line:match('^export ([%w_]+)="(.*)"$')
+        if name then
+            config.set_environment_variables[name] = value
+        end
+    end
 
     -- Launcher menu: non-destructive float command rows become launch items.
     config.launch_menu = {}

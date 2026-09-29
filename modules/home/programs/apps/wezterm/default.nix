@@ -281,6 +281,7 @@
     nightly_floor = "20260707";
     paths = {
       path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
+      secrets = config.forge.secrets.sessionCache;
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
     };

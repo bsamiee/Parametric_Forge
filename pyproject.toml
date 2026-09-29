@@ -102,7 +102,7 @@ error-on-warning = true
 # `ty` is the binding type gate; mypy is the advisory strict secondary, invoked per target — no pinned files row, Forge has no package tree.
 [tool.mypy]
 python_version = "3.15"
-cache_dir = ".cache/mypy"
+cache_dir = "$MYPY_CONFIG_FILE_DIR/.cache/mypy"
 strict = true
 pretty = true
 warn_unreachable = true

@@ -68,7 +68,6 @@
 
         UV_PYTHON_PREFERENCE = "only-system";
         UV_PYTHON_DOWNLOADS = "never";
-        PYTHONDONTWRITEBYTECODE = "1";
 
         # Machine libraries a project's source builds read, each row the search key the build system documents and each value a store reference:
         # pkg-config .pc files (pyicu: icu-i18n and icu-uc; h5py: hdf5; pi-heif: libheif), the CMake package configs find_package(Arrow),
@@ -144,6 +143,8 @@
         # pnpm's home directory, where `pnpm add -g` lands packages and their bin links; the macOS default is ~/Library/pnpm. pnpm itself is a
         # project's mise.toml row, this row is data only.
         PNPM_HOME = "${xdgDataHome}/pnpm";
+        # CPython mirrors bytecode under the prefix in place of __pycache__ beside each source, a project's [env] row wins through the floor
+        PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
         # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
         PUPPETEER_EXECUTABLE_PATH = puppeteerExecutablePath;
       };

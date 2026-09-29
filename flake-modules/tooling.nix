@@ -89,12 +89,13 @@ _: {
       settings.formatter = {
         # biome.json's negation rows verbatim, so treefmt never offers biome the paths its own config ignores (an all-ignored batch is a biome error, not a no-op).
         biome.excludes = biomeExcludes;
-        # --isolated makes the row hermetic: identical bytes with or without the machine-level XDG ruff config the sandboxed check cannot see.
+        # --isolated ties output to row options, treefmt's cache key, and --no-cache moves caching from the working directory's .ruff_cache to treefmt
         ruff-format = {
           command = "${forgePkgs.ruff}/bin/ruff";
           options = [
             "format"
             "--isolated"
+            "--no-cache"
             "--line-length"
             (toString ruffLaw.line-length)
             "--target-version"

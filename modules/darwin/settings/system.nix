@@ -4,29 +4,16 @@
 # License       : MIT
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
-# Root-scope system defaults (loginwindow, Software Update) and the GUI launchd environment; user-scope defaults live in the home scope
-# under forge.userDefaults, which imports each domain only when it changes.
+# Root-scope system defaults (loginwindow, Software Update); user-scope defaults live in the home scope under forge.userDefaults, which
+# imports each domain only when it changes, and the GUI launchd environment replays from the home scope (environments/shell.nix).
 {
   config,
-  forgeToolchainEnvFor,
   lib,
   ...
 }: let
   inherit (config.system) primaryUser;
-  primaryUserHome = config.users.users.${primaryUser}.home;
-  # System scope has no config.xdg; these bindings carry the literals the home scope derives (modules/home/xdg.nix, xdg.enable).
-  configHome = "${primaryUserHome}/.config";
-  cacheHome = "${primaryUserHome}/.cache";
-  dataHome = "${primaryUserHome}/.local/share";
-  stateHome = "${primaryUserHome}/.local/state";
-  toolchainEnv = forgeToolchainEnvFor {
-    home = primaryUserHome;
-    username = primaryUser;
-    xdgCacheHome = cacheHome;
-    xdgConfigHome = configHome;
-    xdgDataHome = dataHome;
-    xdgStateHome = stateHome;
-  };
+  # System scope has no config.xdg; this binding carries the literal the home scope derives (modules/home/xdg.nix, xdg.enable).
+  dataHome = "${config.users.users.${primaryUser}.home}/.local/share";
 in {
   system.defaults = {
     # --- [LOGIN_WINDOW]
@@ -71,23 +58,4 @@ in {
   # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory
   # Target is a link the mise postinstall hook (home/programs/shell-tools/mise.nix) points at an isolated SDK folder, never a version literal
   environment.etc."dotnet/install_location_arm64".text = "${dataHome}/mise/dotnet-current\n";
-
-  # Keep GUI-launched processes aligned with Nix/Home Manager PATH, so a tool in the shell also resolves in app-launched subprocesses.
-  launchd.user.envVariables =
-    toolchainEnv.scientificSessionEnv
-    // toolchainEnv.launchdEnv
-    // {
-      PATH = toolchainEnv.launchdPathEntries;
-      # The GUI domain carries no locale by default, so a Dock-launched process and every child it spawns runs under the C locale; the shell's
-      # own LANG row (environments/core.nix) reaches only its descendants.
-      LANG = "en_US.UTF-8";
-      # The XDG base directories the home scope exports through hm-session-vars; a GUI-launched process (a mise shim under VS Code, a Dock-launched
-      # agent) resolves the same roots as a login shell instead of each tool's own default.
-      XDG_CONFIG_HOME = configHome;
-      XDG_CACHE_HOME = cacheHome;
-      XDG_DATA_HOME = dataHome;
-      XDG_STATE_HOME = stateHome;
-      # The colima and docker-cli home-manager modules derive these; the GUI domain carries the same values.
-      inherit (config.home-manager.users.${primaryUser}.home.sessionVariables) DOCKER_HOST COLIMA_HOME DOCKER_CONFIG;
-    };
 }

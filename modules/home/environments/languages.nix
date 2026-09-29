@@ -36,8 +36,8 @@ in {
       VD_DIR = "${config.xdg.stateHome}/visidata";
 
       # --- [NODE_PNPM_RAIL]
-      # A project's mise.toml owns node and pnpm (PNPM_HOME is a cross-surface row of modules/common/toolchain-env.nix); npm_config_* rows
-      # contain any vendored npm run under XDG, COREPACK_* rows neutralize transitive corepack calls (network off, strict pins, XDG cache).
+      # Project mise.toml files own node and pnpm, PNPM_HOME is a cross-surface row of modules/common/toolchain-env.nix
+      # npm_config_* rows configure bundled npm and npx, pnpm reads npm_config_userconfig alone, COREPACK_* rows neutralize transitive corepack calls
       npm_config_cache = "${config.xdg.cacheHome}/npm";
       npm_config_userconfig = "${config.xdg.configHome}/npm/npmrc";
       npm_config_globalconfig = "${config.xdg.configHome}/npm/global-npmrc";

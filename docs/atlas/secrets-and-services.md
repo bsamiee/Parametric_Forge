@@ -20,7 +20,7 @@ Secret custody is partitioned into classes, each with one origin, one movement p
 
 ## [02]-[LOCAL_SESSION_CUSTODY]
 
-Home Manager resolves `~/.config/op/env.template` through `op inject` during activation and publishes `~/.config/hm-op-session.sh` mode 600. Interactive shells source that cache through `forge-session-secrets.sh`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their own material with an explicit project and config at their execution boundary.
+Home Manager resolves `~/.config/op/env.template` through `op inject` during activation and publishes `~/.config/hm-op-session.sh` mode 600. Interactive shells source that cache through `forge-session-secrets.sh`; `gui-op-secrets` projects the same names into the launchd GUI domain for applications spawned after its login run. Login restores WezTerm before that run, so WezTerm reads the cache into every spawn, reaching the command panes zellij resurrects shell-free. Process-specific Doppler consumers fetch their own material with an explicit project and config at their execution boundary.
 
 ## [03]-[SERVICES_IAC]
 

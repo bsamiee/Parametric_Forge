@@ -125,14 +125,15 @@ Builtins: `NF` (fields), `NR` (line#), `FNR` (file-line#), `FS`/`OFS` (separator
 
 ## [05]-[SD]
 
-sd uses PCRE2 natively, writes in-place by default (no `-i` flag), and requires no backslash escaping for capture groups. On macOS, `sed -i` requires an empty string argument (`sed -i '' ...`) — sd avoids this entirely.
+sd uses Rust regex (no lookaround, no backreferences), writes in-place by default (no `-i` flag), and requires no backslash escaping for capture groups. It matches inside one line unless `-A` is passed: a find spanning lines changes nothing and exits 0. A find or replacement opening with `-` follows `--`. On macOS, `sed -i` requires an empty string argument (`sed -i '' ...`) — sd avoids this entirely.
 
 ```bash copy-safe
-sd 'pattern' 'replacement' file.txt       # In-place, global (all occurrences)
-sd -s 'literal.string' 'replacement' f    # Fixed string mode (no regex)
-sd '(\w+)@(\w+)' '$1 AT $2' emails.txt    # PCRE2 captures — $ not \
-sd 'pattern.*\n' '' file.txt              # Delete lines matching pattern
-command | sd 'old' 'new'                  # Pipe mode (stdin → stdout)
+sd -A 'pattern' 'replacement' file.txt    # In-place, global (all occurrences), across lines
+sd -A -F 'literal.string' 'replacement' f # Fixed string mode (no regex)
+sd -A '(\w+)@(\w+)' '$1 AT $2' emails.txt # Rust regex captures — $ not \, ${1} before a word character
+sd -A 'pattern.*\n' '' file.txt           # Delete lines matching pattern
+sd -A -F -- '-x' '-y' file.txt            # Find opening with -
+command | sd -A 'old' 'new'               # Pipe mode (stdin → stdout)
 ```
 
 ## [06]-[PIPELINE_PATTERNS]

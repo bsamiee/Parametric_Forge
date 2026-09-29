@@ -41,6 +41,7 @@ _: {
 
     # --- [DEVELOPMENT]
     "codex" # Official OpenAI CLI cask
+    "docker-desktop" # VI-Suite FloVi probes /Applications/Docker.app; Colima stays the DOCKER_HOST owner and the Nix profile precedes its /usr/local/bin links
     "visual-studio-code"
     # Typeface Beta is installed and updated through its native vendor channel.
     "sf-symbols" # Apple's symbol library
@@ -72,7 +73,9 @@ _: {
     "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask
 
     # --- [3D_CREATION]
-    "blender" # 3D creation suite; the cask links its blender command wrapper into /opt/homebrew/bin
+    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch, pinned in Casks/blender@daily.rb; the cask links its blender command wrapper into /opt/homebrew/bin
+    "inkscape" # Bonsai's SVG to DXF/PDF sheet converter, read at its app bundle; the cask links its inkscape command wrapper into /opt/homebrew/bin
+    "xquartz" # X11 server the VI-Suite LiVi preview (Radiance rvu) opens its window on
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "karabiner-elements" # Keyboard remapping

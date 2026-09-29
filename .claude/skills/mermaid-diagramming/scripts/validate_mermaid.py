@@ -74,8 +74,8 @@ class Family(StrEnum):
 APP = App(name="validate-mermaid")
 ENCODER = msgspec.json.Encoder()
 ENV_MARKERS = ("chrome", "chromium", "puppeteer", "browser", "libnss", "sandbox", "econnrefused", "enoent")
-# Version-pinned fallback renderer: proves whether a syntax failure survives a known-good release.
 CACHE_TTL = 3600  # seconds; the gitignored render cache stays ephemeral — every run drops entries older than this before rendering
+# Fallback renderer proves whether a syntax failure survives a known-good release
 RELEASE_RENDERER = ("pnpm", "dlx", "@mermaid-js/mermaid-cli@11.16.0")
 RENDER_TIMEOUT = 120
 SUFFIXES = frozenset({".md", ".mmd"})
@@ -933,7 +933,7 @@ def main(
     json: bool = False,
     no_render: bool = False,
     renderer: str | None = None,
-    cache_dir: Path = Path(".cache/mermaid"),
+    cache_dir: Path | None = None,
     export: Path | None = None,
     proof: bool = False,
     keep: bool = False,
@@ -951,8 +951,9 @@ def main(
         # Proof rasters are per-run ephemera, never a growing cache: the dir dies with the run unless --keep preserves it for inspection.
         proof_dir = Path(mkdtemp(prefix="mermaid-proof-")) if proof else None
         prefix, cwd = resolve_renderer(renderer)
+        toplevel = subprocess.run(("git", "rev-parse", "--show-toplevel"), capture_output=True, text=True, check=False).stdout.strip()
         rendered = (
-            rendered_rows(prefix, cwd, diagrams, cache_dir, export, proof_dir)
+            rendered_rows(prefix, cwd, diagrams, cache_dir or Path(toplevel, ".cache", "mermaid"), export, proof_dir)
             if prefix
             else (Row("-", 0, Check.SETUP, "fail", "no mermaid renderer"),)
         )

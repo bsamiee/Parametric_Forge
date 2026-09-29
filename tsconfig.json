@@ -33,6 +33,5 @@
         "types": ["node"],
         "verbatimModuleSyntax": true
     },
-    "include": ["services/*.ts"],
-    "exclude": ["**/node_modules", "**/.cache"]
+    "include": ["services/*.ts"]
 }

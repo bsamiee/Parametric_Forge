@@ -148,7 +148,7 @@ MARKERS: dict[str, str] = (
 )
 # Teaching surfaces carry comments and dividers as taught pattern; the exemption binds only inside skill and docs trees.
 TEACHING = frozenset({"templates", "examples", "assets"})
-PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", ".direnv", "result", "dist", "coverage", ".archive", ".history"})
+PRUNED = frozenset({".git", "node_modules", ".venv", ".cache", "result", "dist", "coverage", ".archive", ".history"})
 # Routing is a file class: only these filenames carry file links; a relative link anywhere else is coupling.
 ROUTING_FILES = frozenset({"README.md", "SKILL.md", "CLAUDE.md", "AGENTS.md", "MEMORY.md"})
 # Instruction files weight constraints with the closed invocation-marker family; the leader is legal there and nowhere else.
