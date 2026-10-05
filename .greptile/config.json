@@ -57,9 +57,9 @@
         },
         {
             "id": "provision-contract",
-            "rule": "forge-provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row; jq programs live in jq/ files, never inlined in Bash.",
+            "rule": "provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row; jq programs live in jq/ files, never inlined in Bash.",
             "severity": "high",
-            "scope": ["overlays/forge-provision/**"],
+            "scope": ["overlays/provision/**"],
             "enabled": true
         },
         {

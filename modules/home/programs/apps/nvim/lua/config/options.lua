@@ -66,7 +66,7 @@ opt.foldlevelstart = 99
 -- FEEDBACK -------------------------------------------------------------------
 -- Yank flash through the host highlighter (no default autocmd ships).
 vim.api.nvim_create_autocmd("TextYankPost", {
-    group = vim.api.nvim_create_augroup("forge_yank", { clear = true }),
+    group = vim.api.nvim_create_augroup("yank_highlight", { clear = true }),
     callback = function()
         vim.hl.on_yank()
     end,

@@ -34,12 +34,11 @@ in {
     };
 
     # --- [ACTIVATION_BEHAVIOR]
-    # Activation refreshes the catalog, installs missing roster rows, and upgrades every outdated one; greedy casks include the auto-updating
-    # and :latest casks Homebrew otherwise skips, and Homebrew compares the app's own version first so a Sparkle-updated app is never
-    # downgraded. Native Homebrew commands own operator-installed rows. `brew bundle` runs under sudo without the session environment;
-    # XDG_CONFIG_HOME points Homebrew at the same user configuration directory the shell uses, where its own brew.env (the one owner of
-    # every HOMEBREW_* setting) and the tap trust store trust.json live (under ~/.homebrew when the variable is unset).
-    greedyCasks = true;
+    # Activation refreshes the catalog, installs missing roster rows, and upgrades every outdated one; casks that declare `auto_updates` stay
+    # with their own updater (brew.env, shell-tools/redeploy.nix), and a :latest cask opts in per row (casks.nix). Native Homebrew commands own
+    # operator-installed rows. `brew bundle` runs under sudo without the session environment; XDG_CONFIG_HOME points Homebrew at the same user
+    # configuration directory the shell uses, where its own brew.env (the one owner of every HOMEBREW_* setting) and the tap trust store
+    # trust.json live (under ~/.homebrew when the variable is unset).
     onActivation = {
       autoUpdate = true;
       upgrade = true;

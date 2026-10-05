@@ -5,7 +5,7 @@
 # Path          : modules/home/xdg.nix
 # ----------------------------------------------------------------------------
 # XDG hygiene owner: base-directory env, Linux user dirs and desktop shims, and permission-classed directory rows for tools that expect their target
-# directory ahead of first run. Runtime forge projections (~/.config/forge, ~/.local/state/forge*) are owner-created; only ahead-of-run rows live here.
+# directory ahead of first run. Runtime projections (~/.config/estate, the services state under ~/.local/state) are owner-created; only ahead-of-run rows live here.
 {
   config,
   host,
@@ -54,7 +54,7 @@ in {
 
   # chmod runs on every activation, not only creation: mkdir -pm leaves a pre-existing loose directory untouched, and the 700 class is custody.
   # The rows precede linkGeneration and setupLaunchAgents, which otherwise create the directories they populate at the default mode.
-  home.activation.forgeDirRows = lib.hm.dag.entryBetween ["linkGeneration" "setupLaunchAgents"] ["writeBoundary"] (
+  home.activation.dirRows = lib.hm.dag.entryBetween ["linkGeneration" "setupLaunchAgents"] ["writeBoundary"] (
     lib.concatStringsSep "\n" (
       lib.mapAttrsToList (mode: dirs: "mkdir -p ${lib.escapeShellArgs dirs} && chmod ${mode} ${lib.escapeShellArgs dirs}") dirRows
     )

@@ -33,8 +33,8 @@ in {
     TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
     MAGICK_CONFIGURE_PATH = lib.concatStringsSep ":" [
       "${config.xdg.configHome}/ImageMagick"
-      "${pkgs.imagemagick}/etc/ImageMagick-7"
-      "${pkgs.imagemagick}/share/ImageMagick-7"
+      "${pkgs.imagemagick-current}/etc/ImageMagick-7"
+      "${pkgs.imagemagick-current}/share/ImageMagick-7"
     ];
     MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick";
     MAGICK_MEMORY_LIMIT = "2147483648";

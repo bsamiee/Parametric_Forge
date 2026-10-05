@@ -16,6 +16,6 @@
     ++ lib.optionals (host.os == "darwin") [./terminal.nix];
 
   home.packages = [
-    pkgs.forge-provision
+    pkgs.provision
   ];
 }

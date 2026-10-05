@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : pyproject.toml
 # ----------------------------------------------------------------------------
-# Python law for Forge-owned scripts: the Rasm bedrock's tool sections over a curated dependency core — the stack-law substrate plus what the skill
+# Python law for Forge-owned scripts: the language-law tool sections over a curated dependency core — the stack-law substrate plus what the skill
 # scripts import, never the scientific graph. `package = false` keeps the repo a virtual uv project: locked, synced, and nothing here ever builds.
 
 [project]

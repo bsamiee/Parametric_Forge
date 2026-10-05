@@ -13,7 +13,7 @@
   lib,
   ...
 }: let
-  cfg = config.forge.userDefaults;
+  cfg = config.estate.userDefaults;
   # Readers that load their domain at launch only: a changed plist restarts them. Every other domain is picked up live through cfprefsd.
   restart = {"com.apple.dock" = "Dock";};
   # The global domain rides its defaults(1) import spelling; every other row imports under its own name.
@@ -21,7 +21,7 @@
     if domain == "NSGlobalDomain"
     then "-globalDomain"
     else domain;
-  root = "${config.xdg.configHome}/forge/defaults";
+  root = "${config.xdg.configHome}/estate/defaults";
   domains = lib.filterAttrs (_: keys: keys != {}) (lib.mapAttrs (_: lib.filterAttrs (_: v: v != null)) cfg);
   mkRow = domain: keys: let
     path = "${root}/${domain}.plist";
@@ -43,7 +43,7 @@ in {
     ./system.nix
   ];
 
-  options.forge.userDefaults = lib.mkOption {
+  options.estate.userDefaults = lib.mkOption {
     type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
     default = {};
     description = "macOS user defaults, domain -> keys (a null key is left unwritten); each domain is one plist, imported (a merge into the live domain) only on the generation that changed it.";

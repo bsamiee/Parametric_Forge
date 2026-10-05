@@ -15,7 +15,7 @@
   assetDir = "${cfgDir}/assets/complex_modifications";
 
   # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
-  chordRules = config.forge.chords.karabiner.rules;
+  chordRules = config.estate.chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [
@@ -29,8 +29,8 @@
   });
 
   # Inert import material for the Settings UI; active rules live in karabiner.json.
-  stagedAssetJson = pkgs.writeText "parametric-forge-chords.json" (builtins.toJSON {
-    title = "Parametric Forge chords";
+  stagedAssetJson = pkgs.writeText "leader-chords.json" (builtins.toJSON {
+    title = "Leader chords";
     rules = chordRules;
   });
 
@@ -87,7 +87,7 @@ in {
     refuse_symlink "${cfgDir}/assets"
     refuse_symlink "${assetDir}"
     refuse_symlink "${cfgDir}/karabiner.json"
-    refuse_symlink "${assetDir}/parametric-forge-chords.json"
+    refuse_symlink "${assetDir}/leader-chords.json"
 
     if ! lint="$(${lib.escapeShellArg karabinerCli} --lint-complex-modifications ${stagedAssetJson} 2>&1)"; then
       echo "karabiner: chord rules failed lint: $lint" >&2
@@ -101,7 +101,7 @@ in {
         cat ${karabinerJson} >"$tmp"
       fi
     ''}
-    ${stageFile "${assetDir}/parametric-forge-chords.json" ''
+    ${stageFile "${assetDir}/leader-chords.json" ''
       cat ${stagedAssetJson} >"$tmp"
     ''}
   '';

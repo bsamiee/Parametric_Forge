@@ -8,6 +8,7 @@
 # to the system Docker socket unpointed with docker-cli owning config.json only.
 {
   config,
+  launchdAgent,
   lib,
   pkgs,
   ...
@@ -37,13 +38,12 @@ in {
 
   # Apple Container autostart: `system start` registers the apiserver and helpers under the com.apple.container. launchd prefix and returns —
   # no keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive. The binary is the Homebrew `container` row of the same profile.
-  launchd.agents.container-system = {
-    enable = isDarwin;
-    config = {
-      ProgramArguments = ["/opt/homebrew/bin/container" "system" "start" "--enable-kernel-install"];
-      RunAtLoad = true;
-    };
-  };
+  estate.bundleApps = lib.mkIf isDarwin {container-system = "Apple Container System";};
+  launchd.agents.container-system = lib.mkIf isDarwin (launchdAgent {
+    name = "container-system";
+    argv = ["/opt/homebrew/bin/container" "system" "start" "--enable-kernel-install"];
+    RunAtLoad = true;
+  });
 
   services.colima = {
     enable = isDarwin;

@@ -4,11 +4,11 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/colorscheme.lua
 -- ----------------------------------------------------------------------------
--- Dracula colorscheme remapped to the Forge palette, then the generated syntax projection (forge/syntax.lua: owner scope table -> treesitter
+-- Dracula colorscheme remapped to the Forge palette, then the generated syntax projection (estate/syntax.lua: owner scope table -> treesitter
 -- captures, role rows -> diagnostics/floats/Pmenu/statuscolumn) applies on top. No hex lives here; every value arrives from the theme owner.
 
-local palette = require("forge.palette")
-local syntax = require("forge.syntax")
+local palette = require("estate.palette")
+local syntax = require("estate.syntax")
 
 local int = function(hex)
     return tonumber(hex:sub(2), 16)

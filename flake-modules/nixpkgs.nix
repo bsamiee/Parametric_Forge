@@ -11,14 +11,14 @@
   ...
 }: {
   perSystem = {system, ...}: let
-    forgePkgs = import inputs.nixpkgs {
+    overlaidPkgs = import inputs.nixpkgs {
       inherit system;
       overlays = [self.overlays.default];
     };
   in {
-    _module.args.forgePkgs = forgePkgs;
+    _module.args.overlaidPkgs = overlaidPkgs;
     # Overlaid set as legacyPackages: `nix build .#<attr>` reaches overlay attrs without a public-package projection, and flake check never
     # recurses legacyPackages.
-    legacyPackages = forgePkgs;
+    legacyPackages = overlaidPkgs;
   };
 }

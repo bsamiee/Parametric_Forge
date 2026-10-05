@@ -5,16 +5,16 @@
 # Path          : flake-modules/packages.nix
 # ----------------------------------------------------------------------------
 # Public packages and apps as folds of overlays/manifest.nix projection rows: `projection.package` publishes the attr, `projection.app` wraps its CLI,
-# `projection.default = true` names the default. `forge-package-manifest` is the machine-readable ledger and rides the same smoke checks.
+# `projection.default = true` names the default. `package-manifest` is the machine-readable ledger and rides the same smoke checks.
 _: let
   manifest = import ../overlays/manifest.nix;
 in {
   perSystem = {
     config,
-    forgePkgs,
+    overlaidPkgs,
     ...
   }: let
-    inherit (forgePkgs) lib;
+    inherit (overlaidPkgs) lib;
     rowsWhere = field:
       lib.filterAttrs (_: row: row.projection.${field} or false) manifest.packages;
     # Exactly one row may carry projection.default; zero or many is a named eval fault.
@@ -30,14 +30,14 @@ in {
     };
   in {
     packages =
-      lib.mapAttrs (name: _: forgePkgs.${name}) (rowsWhere "package")
+      lib.mapAttrs (name: _: overlaidPkgs.${name}) (rowsWhere "package")
       // {
-        inherit (forgePkgs) forge-package-manifest;
-        default = forgePkgs.${defaultName};
+        inherit (overlaidPkgs) package-manifest;
+        default = overlaidPkgs.${defaultName};
       };
 
     apps =
-      lib.mapAttrs (name: _: mkApp forgePkgs.${name}) (rowsWhere "app")
+      lib.mapAttrs (name: _: mkApp overlaidPkgs.${name}) (rowsWhere "app")
       // {
         default =
           config.apps.${defaultName}

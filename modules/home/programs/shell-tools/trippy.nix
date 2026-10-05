@@ -12,7 +12,7 @@
   ...
 }: let
   # palette retained for the one hue with no semantic role: string-yellow (radius ring, current-flow label).
-  inherit (config.forge.theme) roles palette;
+  inherit (config.estate.theme) roles palette;
   tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {

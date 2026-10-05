@@ -11,5 +11,5 @@
   ...
 }: {
   home.packages = [pkgs.watchexec];
-  xdg.configFile."watchexec/ignore".text = config.forge.ignoreEstate.text;
+  xdg.configFile."watchexec/ignore".text = config.estate.ignoreEstate.text;
 }

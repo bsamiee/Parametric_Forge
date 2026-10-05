@@ -14,7 +14,7 @@
     };
   };
 in {
-  forge.userDefaults = {
+  estate.userDefaults = {
     # --- [DOCK_CONFIGURATION]
     "com.apple.dock" = {
       orientation = "bottom";
@@ -69,7 +69,7 @@ in {
           "/Applications/Superhuman.app"
           "/System/Applications/Messages.app"
           "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app"
-          "/Applications/Adobe InDesign 2026 (Beta)/Adobe InDesign 2026 (Beta).app"
+          "/Applications/Adobe InDesign 2027 (Beta)/Adobe InDesign 2027 (Beta).app"
           "/Applications/Adobe Photoshop (Beta)/Adobe Photoshop (Beta).app"
           "/Applications/Adobe Illustrator (Beta)/Adobe Illustrator.app"
           "/Applications/Adobe Acrobat DC/Adobe Acrobat.app"

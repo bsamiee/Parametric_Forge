@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
-# Root-scope system defaults (loginwindow, Software Update); user-scope defaults live in the home scope under forge.userDefaults, which
+# Root-scope system defaults (loginwindow, Software Update); user-scope defaults live in the home scope under estate.userDefaults, which
 # imports each domain only when it changes, and the GUI launchd environment replays from the home scope (environments/shell.nix).
 {
   config,
@@ -36,9 +36,13 @@ in {
   };
 
   # --- [POWER]
-  # Idle minutes until the displays sleep (systemsetup): `pmset -g custom` carries the row under AC Power, while Battery Power keeps macOS's
-  # own 2-minute default; the screen lock delay stays sysadminctl's.
-  power.sleep.display = 30;
+  # Idle minutes until the displays sleep, and no system sleep (systemsetup): `pmset -g custom` carries both rows under AC Power, while Battery
+  # Power keeps macOS's own defaults. Agent and build sessions hold no power assertion, so system sleep would suspend them mid-run, the same
+  # stake that turns automatic installs off above; the screen lock delay stays sysadminctl's.
+  power.sleep = {
+    display = 30;
+    computer = "never";
+  };
 
   # --- [PROFILES]
   # The login-shell profile list (PATH, NIX_PROFILES, fpath, XDG_*_DIRS through set-environment): the per-user packages profile Home Manager

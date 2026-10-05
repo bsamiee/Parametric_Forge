@@ -119,6 +119,30 @@ fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linu
 src.cmd = "ver=$(curl -fsSL https://download.eclipse.org/jdtls/milestones/ | grep -oE \"milestones/[0-9]+\\.[0-9]+\\.[0-9]+'\" | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' | sort -V | tail -n 1); printf '%s/%s\\n' \"$ver\" \"$(curl -fsSL \"https://download.eclipse.org/jdtls/milestones/$ver/latest.txt\")\""
 fetch.url = "https://download.eclipse.org/jdtls/milestones/$ver"
 
+# librdkafka tags each release candidate ahead of its release, so the max tag over both lines is the newest library confluent-kafka builds against.
+# The tag is the fetch rev, so the pin keeps its `v` and manifest.nix extracts the bare version.
+[rdkafka]
+src.github_tag = "confluentinc/librdkafka"
+src.include_regex = "^v[0-9]+\\.[0-9]+\\.[0-9]+(-RC[0-9]+)?$"
+fetch.github = "confluentinc/librdkafka"
+
+# 1Password publishes the CLI on its release-history page; the version group matches only stable `x.y.z` asset names, so betas stay out.
+# macOS ships one universal flat package, Linux one zip per architecture pinned unpacked.
+[1password-cli-aarch64-darwin]
+src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
+src.regex = "op_apple_universal_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.pkg"
+fetch.url = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_apple_universal_v$ver.pkg"
+
+[1password-cli-aarch64-linux]
+src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
+src.regex = "op_linux_arm64_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.zip"
+fetch.tarball = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_linux_arm64_v$ver.zip"
+
+[1password-cli-x86_64-linux]
+src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
+src.regex = "op_linux_amd64_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.zip"
+fetch.tarball = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_linux_amd64_v$ver.zip"
+
 [duckdb-aarch64-darwin]
 src.github = "duckdb/duckdb"
 src.prefix = "v"

@@ -4,10 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/1password.nix
 # ----------------------------------------------------------------------------
-# 1Password custody: biometric CLI unlock, SSH agent seam, op-inject token cache on rebuild, and GUI secret replay
+# 1Password custody: the CLI, SSH agent seam, op-inject token cache on rebuild, and GUI secret replay
 {
   config,
-  forgeAgent,
+  launchdAgent,
   lib,
   pkgs,
   ...
@@ -19,7 +19,6 @@
   tokenRows = {
     GREPTILE_API_KEY = null;
     CODERABBIT_API_KEY = null;
-    OP_SERVICE_ACCOUNT_TOKEN = null;
     GOOGLE_OAUTH_CLIENT_ID = "GOOGLE_OAUTH_CLIENT_ID/credential";
     GOOGLE_OAUTH_CLIENT_SECRET = "GOOGLE_OAUTH_CLIENT_SECRET/credential";
     GOOGLE_WORKSPACE_CLI_CLIENT_ID = "GOOGLE_OAUTH_CLIENT_ID/credential";
@@ -58,8 +57,8 @@
     '';
   };
 in {
-  # The mode-600 session cache every consumer sources (shell init, the deploy rail): one declared path, read as an option.
-  options.forge.secrets.sessionCache = lib.mkOption {
+  # The mode-600 session cache every consumer sources (.zshenv, the deploy rail, the GUI replay): one declared path, read as an option.
+  options.estate.secrets.sessionCache = lib.mkOption {
     type = lib.types.str;
     readOnly = true;
     default = opCache;
@@ -69,12 +68,7 @@ in {
   config = {
     home = {
       # The CLI on PATH for the operator and the secrets skill; no 1Password shell plugin is enabled (gh keeps GH_TOKEN for non-interactive use).
-      packages = [pkgs._1password-cli];
-
-      # --- [BIOMETRIC_UNLOCK]
-      sessionVariables = {
-        OP_BIOMETRIC_UNLOCK_ENABLED = "true";
-      };
+      packages = [pkgs._1password-cli-current];
 
       activation = {
         # --- [TOKEN_CACHE]
@@ -94,7 +88,7 @@ in {
           # tty-scoped authorization never caches — every switch would fire Touch ID. The template is a store symlink whose realpath changes only
           # when tokenRows does, and the cache carries that realpath as its own first-line comment (a no-op when the cache is sourced), so an
           # ordinary switch that left the secret set alone reads its own provenance and never unlocks 1Password.
-          marker="# forge-op-template: $(readlink -f "$template_file")"
+          marker="# op-template: $(readlink -f "$template_file")"
           if [[ -s "$cache_file" && "$(head -n1 "$cache_file")" == "$marker" ]]; then
             echo "Secret template unchanged; skipping op inject" >&2
           else
@@ -105,7 +99,7 @@ in {
             tmp_file="$(mktemp "$cache_file.XXXXXX")"
             if {
               printf '%s\n' "$marker"
-              ${pkgs._1password-cli}/bin/op inject -f -i "$template_file"
+              ${pkgs._1password-cli-current}/bin/op inject -f -i "$template_file"
             } >"$tmp_file"; then
               chmod 600 "$tmp_file"
               mv -f "$tmp_file" "$cache_file"
@@ -121,25 +115,20 @@ in {
           fi
 
           # GUI replay: restart the RunAtLoad agent so GUI apps pick up the current cache on this switch instead of at next login.
-          /bin/launchctl kickstart -k "gui/$UID/com.parametric-forge.gui-op-secrets"
+          /bin/launchctl kickstart -k "gui/$UID/dev.bsamiee.gui-op-secrets"
         '';
       };
     };
 
     xdg.configFile = {
       # --- [SSH_AGENT_SEAM]
-      # The agent serves exactly the unified estate key; op-ssh-sign (git-tools signing rail) resolves the same item by public key. Approval
-      # posture is app-level: approve-for-all-applications during active windows.
+      # The agent serves exactly the one key in Personal, referenced by its item ID so a title change never breaks the seam; op-ssh-sign
+      # (git-tools signing rail) resolves the same item by public key. Approval posture is app-level: approve-for-all-applications during
+      # active windows.
       "1Password/ssh/agent.toml".text = ''
         [[ssh-keys]]
-        item = "Forge SSH Key"
+        item = "3mtwmcjq3ywwglpkrdqt25enhe"
         vault = "Personal"
-      '';
-
-      # --- [SESSION_SECRETS]
-      # Interactive shells source the op-injected cache through one stable path.
-      "forge-session-secrets.sh".text = ''
-        [ ! -f "${opCache}" ] || . "${opCache}"
       '';
 
       # --- [SECRET_TEMPLATE]
@@ -154,11 +143,11 @@ in {
     # --- [GUI_SESSION_SECRETS]
     # launchd-launched GUI apps never source .zshrc; this RunAtLoad agent replays the mode-600 session material, and no secret value enters the
     # Nix store. The bundle-apps row makes Login Items & Extensions show the display name the agent's AssociatedBundleIdentifiers resolves to.
-    forge.bundleApps.gui-op-secrets = "GUI Op Secrets";
+    estate.bundleApps.gui-op-secrets = "GUI Op Secrets";
 
     # RunAtLoad + writer-side kickstart is the event source; WatchPaths on the cache file is race-prone (launchd.plist(5)), and the cache writer
     # already owns the deterministic replay trigger.
-    launchd.agents.gui-op-secrets = forgeAgent {
+    launchd.agents.gui-op-secrets = launchdAgent {
       name = "gui-op-secrets";
       argv = ["${guiOpSecrets}/bin/gui-op-secrets"];
       RunAtLoad = true;

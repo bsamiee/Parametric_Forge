@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Zsh shell options, zle variables, history, and the two highlighting plugins bound to the estate palette through their own style variables.
 {config, ...}: let
-  inherit (config.forge.theme) roles palette;
+  inherit (config.estate.theme) roles palette;
   fg = c: "fg=${c.hex}";
 in {
   programs.zsh = {

@@ -5,15 +5,15 @@
 # Path          : modules/home/programs/shell-tools/posting.nix
 # ----------------------------------------------------------------------------
 # Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the estate
-# palette owner; user collections stay mutable state, while the forge-services collection is a generated probe surface over service-row
-# credential NAMES — `forge-console` brokers values into a mode-600 launch-time env file, never a durable file.
+# palette owner; user collections stay mutable state, while the services collection is a generated probe surface over service-row
+# credential NAMES — `services-console` brokers values into a mode-600 launch-time env file, never a durable file.
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette roles;
+  inherit (config.estate.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
 
   # Credential custody coordinates; probe rows reference keys by name only.
@@ -96,7 +96,7 @@
   ];
 
   collectionFiles = lib.listToAttrs (map (row: {
-      name = "posting/collections/forge-services/${row.name}.posting.yaml";
+      name = "posting/collections/services/${row.name}.posting.yaml";
       value.source = yamlFormat.generate "posting-${row.name}" {
         inherit (row) name description method url headers;
         params = row.params or [];
@@ -105,8 +105,8 @@
     probes);
 
   # Launch-time credential materialization: one env render per distinct custody coordinate, mode-600 tmpfile, removed on exit — no secret at rest.
-  forgeConsole = pkgs.writeShellApplication {
-    name = "forge-console";
+  servicesConsole = pkgs.writeShellApplication {
+    name = "services-console";
     runtimeInputs = [pkgs.coreutils pkgs.doppler pkgs.posting];
     text = ''
       env_file="$(mktemp)"
@@ -114,20 +114,20 @@
       ${lib.concatMapStringsSep "\n" (
         source: ''doppler secrets download --project ${source.project} --config ${source.config} --format env --no-file >>"$env_file"''
       ) (lib.unique (map (row: probeSources.${row.source}) probes))}
-      posting --collection "${config.xdg.dataHome}/posting/collections/forge-services" --env "$env_file" "$@"
+      posting --collection "${config.xdg.dataHome}/posting/collections/services" --env "$env_file" "$@"
     '';
   };
 
   postingConfig = {
-    theme = "forge";
+    theme = "estate";
     load_user_themes = true;
     watch_themes = false;
     theme_directory = "${config.xdg.dataHome}/posting/themes";
     use_host_environment = false; # request variables come from explicit --env files only
   };
 
-  forgeTheme = {
-    name = "forge";
+  postingTheme = {
+    name = "estate";
     primary = roles.accent.primary.hex;
     secondary = roles.accent.structural.hex;
     accent = roles.accent.secondary.hex;
@@ -169,9 +169,9 @@
     };
   };
 in {
-  home.packages = [forgeConsole];
+  home.packages = [servicesConsole];
   xdg.configFile."posting/config.yaml".source = yamlFormat.generate "posting-config" postingConfig;
   xdg.dataFile =
-    {"posting/themes/forge.yaml".source = yamlFormat.generate "posting-forge-theme" forgeTheme;}
+    {"posting/themes/estate.yaml".source = yamlFormat.generate "posting-theme" postingTheme;}
     // collectionFiles;
 }

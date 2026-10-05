@@ -4,14 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
-# Zsh .zshenv floor for every shell: the PATH assertion, the scientific library exports, and the never-clobber session-variable floor.
+# Zsh .zshenv floor for every shell: the PATH assertion, the scientific library exports, the never-clobber session-variable floor, and the
+# op-injected session secrets.
 {
   config,
-  forgeToolchainEnvFor,
+  toolchainEnvFor,
   lib,
   ...
 }: let
-  toolchainEnv = forgeToolchainEnvFor {
+  toolchainEnv = toolchainEnvFor {
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;
@@ -35,12 +36,15 @@ in {
       # effect on assignment per interface of the tied pair, so both carry it: the array here and the scalar for hm-session-vars' later prepend,
       # which then adds no second copy of any segment.
       typeset -U PATH path
-      _forge_path=(${lib.concatMapStringsSep " " lib.escapeShellArg toolchainEnv.sessionPathEntries})
-      path=(''${_forge_path:|path} $path)
-      unset _forge_path
+      _session_path=(${lib.concatMapStringsSep " " lib.escapeShellArg toolchainEnv.sessionPathEntries})
+      path=(''${_session_path:|path} $path)
+      unset _session_path
 
       ${toolchainEnv.shellExports toolchainEnv.scientificSessionEnv}
       ${toolchainEnv.resilientFloorExports}
+      # The mode-600 cache activation publishes (shell-tools/1password.nix): every shell, login and script ones included, carries the tokens
+      # gh, the deploy rail, and the MCP rows read, so a process its multiplexer starts through a login shell holds them too.
+      [[ ! -f ${lib.escapeShellArg config.estate.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.estate.secrets.sessionCache}
     '';
   };
 }

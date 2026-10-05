@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/common/toolchain-env.nix
 # ----------------------------------------------------------------------------
-# Shared PATH vectors and toolchain env factory installed as the forgeToolchainEnvFor module argument; session, launchd,
+# Shared PATH vectors and toolchain env factory installed as the toolchainEnvFor module argument; session, launchd,
 # and zsh owners call it with their own home/username/cache context.
 {
   host,
@@ -12,12 +12,12 @@
   pkgs,
   ...
 }: {
-  _module.args.forgeToolchainEnvFor = {
+  _module.args.toolchainEnvFor = {
     home,
     username,
     xdgCacheHome,
     xdgConfigHome ? "${home}/.config", # XDG default; session/resilient/launchd owners pass their scope's configHome, PATH-only callers inherit.
-    xdgDataHome ? "${home}/.local/share", # Same convention: the shim-farm segment reads it, so a PATH-only caller inherits the XDG default.
+    xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it, so a PATH-only caller inherits the XDG default.
     xdgStateHome ? "${home}/.local/state", # Same convention: the interactive history rows read it.
   }: let
     isDarwin = host.os == "darwin"; # OS branch keys on the static host context, never on pkgs (fixpoint safety).
@@ -42,15 +42,12 @@
       "/usr/sbin"
       "/sbin"
     ];
-    # Last segment of every vector by construction, behind the macOS directories too: the mise shim farm serves only the per-repo toolchains
-    # Nix does not ship — the .NET SDK a global.json pins — because every Nix-owned binary resolves ahead of it and a shim for a name Nix does
-    # not own (pip3) never shadows the system copy outside a project. `mise activate` lives in .zshrc and resolves tools from the shell's
-    # directory, so a non-interactive login shell, a launchd agent, and a GUI app (VS Code resolves its environment with `zsh -ilc` from `/`)
-    # get no project tool from it; the farm is the one route those processes have, and each shim resolves the version from its caller's directory.
-    # Home Manager prepends home.sessionPath to the inherited PATH, so the session vector carries the macOS directories explicitly ahead of the
-    # farm; the inherited copies behind it are duplicates, never a different owner.
+    # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, a GUI app, and a
+    # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
+    # whose tool has no version there execs the next copy on PATH. `mise env` writes a project's tool paths where this segment sits, so an agent
+    # session that applies its output resolves project tools first. Interactive zsh drops the segment when `mise activate` runs (zsh/init.nix).
     shimPathEntries = ["${xdgDataHome}/mise/shims"];
-    pathEntries = userPathEntries ++ fallbackPathEntries ++ shimPathEntries;
+    pathEntries = shimPathEntries ++ userPathEntries ++ fallbackPathEntries;
     # ctypes/dlopen consumers (weasyprint's gobject/pango/harfbuzz/fontconfig chain, python-magic's libmagic, pyvips's libvips/gobject/glib)
     # resolve their dylibs by bare name at runtime, outside any build env. One linked lib tree behind DYLD_FALLBACK_LIBRARY_PATH serves them;
     # dyld consults the fallback only after every standard location, so system libraries keep precedence. getLib pins each member's lib output:
@@ -58,7 +55,7 @@
     # scientific set because the .zshenv floor re-exports that set in every shell: exec of a SIP-protected binary (/bin/bash, /usr/bin/env)
     # purges every DYLD_* variable, and a child shell behind the inherited __HM_SESS_VARS_SOURCED guard never re-sources hm-session-vars.
     runtimeDylibEnv = pkgs.buildEnv {
-      name = "forge-runtime-dylibs";
+      name = "runtime-dylibs";
       paths = map lib.getLib [pkgs.file pkgs.fontconfig pkgs.glib pkgs.harfbuzz pkgs.pango pkgs.vips];
       pathsToLink = ["/lib"];
     };
@@ -78,8 +75,8 @@
         # find_path or only find_library.
         PKG_CONFIG_PATH = lib.makeSearchPathOutput "dev" "lib/pkgconfig" [pkgs.icu pkgs.hdf5 pkgs.libheif];
         CMAKE_PREFIX_PATH = lib.concatStringsSep ":" (map toString [pkgs.arrow-cpp pkgs.eigen pkgs.pdal]);
-        CPATH = "${lib.getDev pkgs.rdkafka}/include";
-        LIBRARY_PATH = "${lib.getLib pkgs.rdkafka}/lib";
+        CPATH = "${lib.getDev pkgs.rdkafka-current}/include";
+        LIBRARY_PATH = "${lib.getLib pkgs.rdkafka-current}/lib";
         OpenMP_ROOT = "${pkgs.symlinkJoin {
           name = "openmp-prefix";
           paths = [(lib.getDev pkgs.llvmPackages.openmp) (lib.getLib pkgs.llvmPackages.openmp)];

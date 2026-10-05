@@ -16,7 +16,7 @@ const _projects = [
     {
         slug: 'agent-runtime',
         description: 'AI agent runtime secrets',
-        origin: 'mint',
+        origin: 'adopt',
     },
     {
         slug: 'parametric-forge',
@@ -75,8 +75,9 @@ type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug | Ext
 
 type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
 
-// Static Developer-plan tokens; replacement is manual revoke-and-remint: drop the row and `up --target=<project>/<config>/<name>` (revokes),
-// restore the row and target again (mints), then hand the fresh key off through 1Password.
+// Static Developer-plan tokens with no origin: the provider imports no service token and reads no key after creation, so every row mints.
+// Replacement is revoke-and-remint: drop the row and `up --target=<project>/<config>/<name>` (revokes), restore the row and target again
+// (mints), then hand the fresh key off through 1Password.
 // A read grant carries the `-readonly` name suffix as the naming law.
 const _tokens = [
     {
@@ -88,7 +89,7 @@ const _tokens = [
     {
         project: 'parametric-forge',
         config: 'dev_machine',
-        name: 'forge-machine-readonly',
+        name: 'machine-readonly',
         access: 'read',
     },
 ] as const satisfies ReadonlyArray<

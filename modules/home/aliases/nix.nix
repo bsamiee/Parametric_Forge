@@ -7,13 +7,13 @@
 # Nix and Darwin register rows: deploy rail, nix ops, flake ops.
 {
   darwin = [
-    ["drs" "forge-redeploy --switch" "Check, build, diff, switch"]
-    ["drb" "forge-redeploy --build" "Check and build"]
-    ["drc" "forge-redeploy --check-only" "Check config and build proof"]
+    ["drs" "redeploy --switch" "Check, build, diff, switch"]
+    ["drb" "redeploy --build" "Check and build"]
+    ["drc" "redeploy --check-only" "Check config and build proof"]
   ];
   flake = [
     ["nfu" "nix flake update && nix flake check --all-systems --no-build && nix flake check" "Update all inputs + validate"]
-    ["nfn" "nix flake update nixpkgs && forge-redeploy --check-only" "Update nixpkgs + validate"]
+    ["nfn" "nix flake update nixpkgs && redeploy --check-only" "Update nixpkgs + validate"]
     ["nfl" "nix flake lock" "Lock missing inputs"]
     ["nfc" "nix flake check && nix flake show" "Validate + explore outputs"]
   ];

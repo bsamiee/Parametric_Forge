@@ -19,5 +19,5 @@
   ];
 
   # Machine-readable projection of overlays/manifest.nix with live-resolved admission versions; consumers read rows here, never derivation source.
-  xdg.dataFile."forge/packages/manifest.json".source = "${pkgs.forge-package-manifest}/share/forge/manifest.json";
+  xdg.dataFile."estate/packages/manifest.json".source = "${pkgs.package-manifest}/share/estate/manifest.json";
 }

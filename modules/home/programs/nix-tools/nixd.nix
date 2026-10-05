@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/nix-tools/nixd.nix
 # ----------------------------------------------------------------------------
 # nixd estate-portal owner (nix-community/nixd, the LSP — distinct from the determinate-nixd daemon). Option-completion expressions generate
-# once from the host context; every LSP client (Neovim rows, Claude marketplace) consumes these generated rows.
+# once from the host context; the Neovim server rows consume them.
 {
   host,
   lib,
@@ -31,7 +31,7 @@
       host.os
     };
 in {
-  options.forge.lsp = lib.mkOption {
+  options.estate.lsp = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {

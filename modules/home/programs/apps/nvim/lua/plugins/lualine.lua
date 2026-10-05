@@ -7,8 +7,8 @@
 -- Statusline over the generated Forge palette (showmode=false decided a statusline mode indicator; default shows none). Theme rows derive from one
 -- mode->hue table; git facts from gitsigns buffer state — no second git engine. globalstatus derives from laststatus=3 (owner: config/options.lua).
 
-local p = require("forge.palette")
-local git = require("forge.syntax").roles.git
+local p = require("estate.palette")
+local git = require("estate.syntax").roles.git
 
 local mode = function(hue)
     return {

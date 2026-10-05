@@ -15,7 +15,7 @@
 
     # Rows differ from bat's defaults (style drops snip, wrap is auto upstream); Nix, JSON with comments, and Jenkinsfiles map natively.
     config = {
-      theme = "forge-dracula";
+      theme = "estate-dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
@@ -24,7 +24,7 @@
     };
 
     # Owner-generated tmTheme; the activation cache build exposes it to bat and, through the bat cache, to delta's syntax-theme.
-    themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;
+    themes."estate-dracula".src = config.estate.theme.projections.tmThemeFile;
 
     extraPackages = with pkgs.bat-extras; [
       batman # Colored man pages

@@ -5,7 +5,7 @@
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/snacks.lua
 -- ----------------------------------------------------------------------------
 -- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and input stay off; Zellij owns terminals/lazygit, Yazi owns file
--- navigation. The estate picker is the register-rail projection inside the editor: typed action rows arrive from forge/tools.lua;
+-- navigation. The estate picker is the register-rail projection inside the editor: typed action rows arrive from estate/tools.lua;
 -- scratch rows render into a float, pane rows hand off to a Zellij floating pane.
 
 require("snacks").setup({
@@ -90,7 +90,7 @@ Snacks.toggle.option("signcolumn", { on = "yes", off = "no", name = "Sign Column
 -- [ESTATE_PICKER]
 -- Chords live in apps/chords.nix (fn = "pick_estate"); rows are generated facts. Buffer-lifecycle chords ride the same owner — no keymaps here.
 local M = {}
-local tools = require("forge.tools")
+local tools = require("estate.tools")
 
 local function scratch_show(row, out)
     local text = out.stdout or ""

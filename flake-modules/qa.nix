@@ -8,11 +8,11 @@
 {self, ...}: {
   perSystem = {
     config,
-    forgePkgs,
+    overlaidPkgs,
     system,
     ...
   }: let
-    inherit (forgePkgs.lib) fileset mapAttrs' nameValuePair optionalAttrs;
+    inherit (overlaidPkgs.lib) fileset mapAttrs' nameValuePair optionalAttrs;
     # Every named public output gets build smoke; new packages join with zero edits here.
     publicPackages = removeAttrs config.packages ["default"];
     # .nix-only projection: binaries and prose never invalidate the check.
@@ -41,7 +41,7 @@
     hostContext = import ../hosts/context.nix;
     hostEvals = optionalAttrs (builtins.elem system (map (host: host.system) (builtins.attrValues hostContext))) (mapAttrs' (
         name: host:
-          nameValuePair "host-eval-${name}" (forgePkgs.runCommand "host-eval-${name}" {
+          nameValuePair "host-eval-${name}" (overlaidPkgs.runCommand "host-eval-${name}" {
             drvPath =
               builtins.unsafeDiscardStringContext
               self."${host.os}Configurations".${name}.config.system.build.toplevel.drvPath;
@@ -52,7 +52,7 @@
     checks =
       hostEvals
       // {
-        nix-static = forgePkgs.runCommand "forge-nix-static" {nativeBuildInputs = [forgePkgs.deadnix forgePkgs.statix];} ''
+        nix-static = overlaidPkgs.runCommand "nix-static" {nativeBuildInputs = [overlaidPkgs.deadnix overlaidPkgs.statix];} ''
           deadnix --fail ${nixSources}
           statix check ${nixSources}
           touch "$out"
@@ -60,7 +60,7 @@
 
         # Compile gate: empty stdin, so the body never runs and the gate cannot hang. Programs written for `jq --arg` reference variables that
         # are compile errors when unbound, so every referenced $name is bound before the compile; jq's own $ENV, $__loc__, and $__prog__ stay.
-        jq-syntax = forgePkgs.runCommand "forge-jq-syntax" {nativeBuildInputs = [forgePkgs.jq];} ''
+        jq-syntax = overlaidPkgs.runCommand "jq-syntax" {nativeBuildInputs = [overlaidPkgs.jq];} ''
           find ${jqSources} -name '*.jq' | LC_ALL=C sort | while IFS= read -r program; do
             defs=()
             while IFS= read -r name; do

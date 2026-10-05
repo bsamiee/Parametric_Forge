@@ -13,7 +13,7 @@
   lib,
   ...
 }: {
-  options.forge.ignoreEstate = lib.mkOption {
+  options.estate.ignoreEstate = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     description = "Noise-pattern taxonomy: dirs (names, no slash), files (globs), text (full projection), dirText (directory-only projection).";
@@ -86,5 +86,5 @@
     };
   };
 
-  config.xdg.configFile."fd/ignore".text = config.forge.ignoreEstate.dirText;
+  config.xdg.configFile."fd/ignore".text = config.estate.ignoreEstate.dirText;
 }

@@ -5,9 +5,9 @@
 # Path          : overlays/default.nix
 # ----------------------------------------------------------------------------
 # Row-folded package projection over overlays/manifest.nix: one binary-release template consumes asset rows; opt-runtime rows (energyplus,
-# openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-forge shell kernel generates from its row's profile data;
-# patch rows override upstream packages with row-owned facts; forge-provision is the one hand-authored kernel directory. Vocabulary validation runs
-# here and is forced by the forge-package-manifest build.
+# openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-extended shell kernel generates from its row's profile data;
+# patch rows override upstream packages with row-owned facts; provision is the one hand-authored kernel directory. Vocabulary validation runs
+# here and is forced by the package-manifest build.
 final: prev: let
   manifest = import ./manifest.nix;
   generatedSources = import ./_sources/generated.nix {
@@ -191,6 +191,38 @@ final: prev: let
         runHook postInstall
       '';
     };
+    # macOS: the universal flat package's gzip cpio payload holds `op`; Linux: the unpacked zip holds it beside its signature. Completions
+    # generate from the installed binary.
+    _1password-cli-current = _: {
+      dontUnpack = true;
+      dontStrip = prev.stdenv.hostPlatform.isDarwin;
+      nativeBuildInputs =
+        [prev.installShellFiles]
+        ++ lib.optionals prev.stdenv.hostPlatform.isDarwin [prev.xar prev.cpio]
+        ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      installPhase = ''
+        runHook preInstall
+        ${
+          if prev.stdenv.hostPlatform.isDarwin
+          then ''
+            xar -xf "$src"
+            [ -f op.pkg/Payload ] || { echo "1password-cli: package payload layout changed" >&2; exit 1; }
+            gzip -dc op.pkg/Payload | cpio -i
+            install -Dm755 op "$out/bin/op"
+          ''
+          else ''install -Dm755 "$src/op" "$out/bin/op"''
+        }
+        export HOME="$TMPDIR"
+        installShellCompletion --cmd op \
+          --bash <("$out/bin/op" completion bash) \
+          --fish <("$out/bin/op" completion fish) \
+          --zsh <("$out/bin/op" completion zsh)
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/op";
+    };
     pandoc-current = _: {
       dontUnpack = true;
       nativeBuildInputs = [prev.lndir] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
@@ -323,7 +355,7 @@ final: prev: let
     scheherazade-new = old: {
       nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.unzip];
     };
-    imagemagick = old: {
+    imagemagick-current = old: {
       configureFlags = (old.configureFlags or []) ++ ["--enable-hdri=yes" "--with-quantum-depth=16" "--with-lcms=yes"];
       postInstallCheck =
         (old.postInstallCheck or "")
@@ -332,9 +364,9 @@ final: prev: let
           [[ "$features" == *Q16-HDRI* && "$features" == *lcms* ]] || { echo "ImageMagick: required Q16-HDRI/LCMS support absent" >&2; exit 1; }
         '';
     };
-    harfbuzz = old: {
-      # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack. This is the library every
-      # consumer links, so it takes no cairo backend: media-tools builds the command-line utilities from the same source as their own package.
+    harfbuzz-current = old: {
+      # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack. It takes no cairo backend:
+      # media-tools builds the command-line utilities from the same source as their own package.
       mesonFlags = (map (flag: lib.replaceStrings ["-Dgraphite="] ["-Dgraphite2="] flag) (old.mesonFlags or [])) ++ [(lib.mesonEnable "gpu_demo" false)];
     };
     poppler-utils-current = old: let
@@ -347,7 +379,7 @@ final: prev: let
     in {
       # The sole old nixpkgs patch is merged in 26.09; HarfBuzz is now required for font subsetting.
       patches = [];
-      buildInputs = old.buildInputs ++ [final.harfbuzz];
+      buildInputs = old.buildInputs ++ [final.harfbuzz-current];
       # The new font-subsetting checks require August's form fixture and explicit Latin/Japanese fallback fonts.
       preConfigure = lib.replaceStrings [(toString old.passthru.testData)] [(toString testData)] old.preConfigure;
       # Nixpkgs' consumer tests close over its top-level Poppler. Retaining them here would test 26.06 while presenting the result as 26.09 coverage.
@@ -365,7 +397,7 @@ final: prev: let
           mkdir -p "$XDG_CACHE_HOME"
         '';
     };
-    qpdf = old: {
+    qpdf-current = old: {
       # Completion checks require bind/compgen/progcomp; stdenv's stripped Bash is not an interactive shell.
       nativeCheckInputs = (old.nativeCheckInputs or []) ++ [final.bashInteractive final.zsh];
       cmakeFlags = (old.cmakeFlags or []) ++ ["-DREQUIRE_SHELLS=ON"];
@@ -375,15 +407,27 @@ final: prev: let
           export PATH=${lib.makeBinPath [final.bashInteractive final.zsh]}:$PATH
         '';
     };
+    # 1.28.5 grew a cmark-gfm row inside the Makerules section nixpkgs' Darwin system-deps patch lifts out of its Linux branch; the same lift
+    # rebased onto the pinned tree replaces it, and nixpkgs' C++ wrap patch still applies as shipped.
     mupdf = old: {
+      patches = [./mupdf-darwin-system-deps.patch (prev.path + "/pkgs/by-name/mu/mupdf/fix-cpp-build.patch")];
       postInstall = lib.replaceStrings [old.version] [(rowOf "mupdf").version] old.postInstall;
+    };
+    # nvfetcher hands the release tag to fetchFromGitHub as rev; the nixpkgs changelog link reads src.tag, and the same tree fetched by tag keeps its store path.
+    rdkafka-current = _: let
+      src = generatedSources.${(rowOf "rdkafka-current").sourcePin}.src;
+    in {
+      src = src.override {
+        tag = src.rev;
+        rev = null;
+      };
     };
   };
   mkSourceRelease = name: _: let
     row = rowOf name;
     source = generatedSources.${row.sourcePin};
     base =
-      if name == "imagemagick"
+      if name == "imagemagick-current"
       then prev.imagemagick.override {lcms2Support = true;}
       else prev.${row.sourcePackage};
   in
@@ -405,30 +449,13 @@ in
     pythonPackagesExtensions =
       (prev.pythonPackagesExtensions or [])
       ++ [
-        (_pyFinal: pyPrev:
-          {
-            duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
-          }
-          # patchFamily darwin-install-name: upstream links the extension module against @rpath/libcurl-impersonate.4.dylib and seats no LC_RPATH, so
-          # every import dies at dlopen and takes yt-dlp and mpv down with it. Seat the provider's lib dir; the row retires when nixpkgs links it.
-          // lib.optionalAttrs (prev.stdenv.hostPlatform.isDarwin && pyPrev ? curl-cffi) {
-            curl-cffi = pyPrev.curl-cffi.overrideAttrs (old: {
-              postFixup =
-                (old.postFixup or "")
-                + ''
-                  wrapper="$out/${pyPrev.python.sitePackages}/curl_cffi/_wrapper.abi3.so"
-                  [ -f "$wrapper" ] || {
-                    echo "curl-cffi: expected extension module missing from the release layout" >&2
-                    exit 1
-                  }
-                  install_name_tool -add_rpath ${prev.curl-impersonate}/lib "$wrapper"
-                '';
-            });
-          })
+        (_pyFinal: pyPrev: {
+          duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
+        })
       ];
-    forge-package-manifest = prev.writeTextFile {
-      name = "forge-package-manifest";
-      destination = "/share/forge/manifest.json";
+    package-manifest = prev.writeTextFile {
+      name = "package-manifest";
+      destination = "/share/estate/manifest.json";
       text = builtins.toJSON {
         inherit (manifest) vocabulary;
         extensions = lib.mapAttrs checkExtensionLane manifest.extensions;
@@ -467,10 +494,10 @@ in
           manifest.admissions;
       };
     };
-    forge-provision = final.callPackage ./forge-provision {};
+    provision = final.callPackage ./provision {};
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
-    sqlite-forge = let
-      row = rowOf "sqlite-forge";
+    sqlite-extended = let
+      row = rowOf "sqlite-extended";
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;
       profiles =
         row.shell.profiles
@@ -478,14 +505,14 @@ in
       arm = name: mods: "  ${name}) ${lib.optionalString (mods != []) "modules+=(${toString mods}) "};;";
     in
       final.writeShellApplication {
-        name = "sqlite-forge";
+        name = "sqlite-extended";
         runtimeInputs = [final.sqlite-interactive];
         text = ''
-          profile="''${SQLITE_FORGE_PROFILE:-safe}"
+          profile="''${SQLITE_EXTENDED_PROFILE:-safe}"
           modules=(${toString row.shell.baseModules})
           case "$profile" in
           ${lib.concatLines (lib.mapAttrsToList arm profiles)}  *)
-              printf 'sqlite-forge: unknown SQLITE_FORGE_PROFILE=%s; expected one of: ${toString (lib.attrNames profiles)}\n' "$profile" >&2
+              printf 'sqlite-extended: unknown SQLITE_EXTENDED_PROFILE=%s; expected one of: ${toString (lib.attrNames profiles)}\n' "$profile" >&2
               exit 2
               ;;
           esac

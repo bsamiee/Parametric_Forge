@@ -6,28 +6,21 @@
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
 {config, ...}: let
-  inherit (config.forge.theme) roles;
+  inherit (config.estate.theme) roles;
 in {
-  # Hidden identity bundle row: Login Items & Extensions resolves the HM-owned atuin-daemon agent to "Atuin Daemon" instead of the "/bin/sh"
-  # basename home-manager's mutateConfig writes into ProgramArguments[0].
-  forge.bundleApps.atuin-daemon = "Atuin Daemon";
-
-  # Identity + log rows merge into the HM module's agent config (freeform schema). The label stays upstream (org.nix-community.home.atuin-daemon):
-  # the job is HM-module-generated, not repo-owned.
-  launchd.agents.atuin-daemon.config = {
-    AssociatedBundleIdentifiers = ["com.parametric-forge.atuin-daemon"];
-    StandardOutPath = "${config.home.homeDirectory}/Library/Logs/forge-atuin-daemon.log";
-    StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/forge-atuin-daemon.log";
-  };
-
   programs.atuin = {
     enable = true;
     # HM evals `atuin init zsh` at order 1000: after fzf (910, whose ^R binding is off), so Atuin owns ^R and the up arrow.
     enableZshIntegration = true;
-    daemon.enable = true; # launchd-managed: fast writes plus in-memory daemon-fuzzy search
 
     # Rows here differ from Atuin's documented defaults; the database and key sit at their XDG defaults under ~/.local/share/atuin.
     settings = {
+      # The shell client starts the daemon on demand and clears a socket no daemon listens on; `atuin daemon start` under launchd binds without
+      # that cleanup and crash-loops on a leftover socket while every history write and search waits on it.
+      daemon = {
+        enabled = true;
+        autostart = true;
+      };
       logs.dir = "${config.xdg.stateHome}/atuin/logs"; # the daemon's default log root is the hard-coded ~/.atuin/logs
       # History remains local until a new sync owner is deliberately configured.
       auto_sync = false;

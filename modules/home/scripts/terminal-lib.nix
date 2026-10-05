@@ -8,7 +8,7 @@
 # kernel, the DDS client-id projection, and the runtime-root derivation. Every terminal.nix kernel reads these single bindings.
 {lib}: let
   # One popup-identity vocabulary — production dispatch and caller dismissal share this exact jq row predicate. terminal_command is the spawn command (invoked_with), so exec inside the pane never breaks rediscovery.
-  yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "forge-yazi.sh")'';
+  yaziPopupIdentity = ''(.is_plugin | not) and (.exited | not) and ((.is_floating // false) or (.is_suppressed // false)) and ((.title // "") == " [YAZI] ") and ((.terminal_command // .command // "") == "yazi-dispatch.sh")'';
 
   # One self-row vocabulary: (panes snapshot, $self) -> this pane's row; every kernel resolves its own pane through this exact projection.
   selfRow = ''[.[] | select((.is_plugin | not) and ((.id | tostring) == $self))][0]'';
@@ -80,7 +80,7 @@
   # One runtime-root derivation for every rail script: RPC sockets, the dispatch lock, surfaced markers, and DDS state live in a
   # canonical per-user private namespace. Every destructive target is admitted only as a strict descendant of this root.
   runtimeBaseSh = ''
-    runtime_base_raw="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/forge-edit"
+    runtime_base_raw="''${XDG_RUNTIME_DIR:-''${TMPDIR:-/tmp}}/nvim-edit"
     mkdir -p "$runtime_base_raw"
     runtime_base="$(realpath -- "$runtime_base_raw")"
     chmod go-rwx "$runtime_base"

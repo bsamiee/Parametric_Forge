@@ -16,7 +16,7 @@
   app = id: path: extensions: schemes: {inherit id path extensions schemes;};
   applications = [
     # ICAP is an InCopy-bound package; InDesign explicitly declares role None. IDAP is its supported return package.
-    (app "com.adobe.InDesign" "/Applications/Adobe InDesign 2026 (Beta)/Adobe InDesign 2026 (Beta).app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [])
+    (app "com.adobe.InDesign" "/Applications/Adobe InDesign 2027 (Beta)/Adobe InDesign 2027 (Beta).app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [])
     (app "com.adobe.illustratorBeta" "/Applications/Adobe Illustrator (Beta)/Adobe Illustrator.app" ["ai" "ait" "aia" "svg" "svgz" "eps" "ase"] [])
     (app "com.adobe.Photoshop" "/Applications/Adobe Photoshop (Beta)/Adobe Photoshop (Beta).app" [
       "psd"
@@ -143,13 +143,13 @@
     (app "company.thebrowser.Browser" "/Applications/Arc.app" [] ["http" "ftp"])
     (app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"])
   ];
-  roster = pkgs.writeText "forge-default-applications.json" (builtins.toJSON applications);
+  roster = pkgs.writeText "default-applications.json" (builtins.toJSON applications);
   command = pkgs.writeShellApplication {
-    name = "forge-default-applications";
+    name = "default-applications";
     runtimeInputs = [pkgs.coreutils pkgs.flock pkgs.jq pkgs.utiluti];
     text = ''
       mode="''${1:-apply}"
-      [[ $# -le 1 && ( $mode == apply || $mode == check ) ]] || { echo 'usage: forge-default-applications [apply|check]' >&2; exit 2; }
+      [[ $# -le 1 && ( $mode == apply || $mode == check ) ]] || { echo 'usage: default-applications [apply|check]' >&2; exit 2; }
       changed=0
       checked=0
       skipped=0
@@ -223,6 +223,6 @@
 in {
   home.packages = [command];
   home.activation.setDefaultApplications = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${command}/bin/forge-default-applications apply
+    run ${command}/bin/default-applications apply
   '';
 }

@@ -13,11 +13,11 @@
   ...
 }: let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  inherit (config.forge.theme) roles projections;
+  inherit (config.estate.theme) roles projections;
   # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
   git = projections.gitHex;
-  # One universal identity; the unified estate key ("Forge SSH Key" in the Private vault, the first hosts/context.nix authorized key without its
-  # comment) authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
+  # One universal identity; the one key (in the Personal vault, the first hosts/context.nix authorized key without its comment)
+  # authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
     name = "Bardia Samiee";
     email = "b.samiee93@gmail.com";
@@ -210,7 +210,7 @@ in {
       wrap-right-prefix-symbol = "…";
 
       # UI elements
-      syntax-theme = "forge-dracula"; # Owner-generated bat theme; delta reads the bat cache
+      syntax-theme = "estate-dracula"; # Owner-generated bat theme; delta reads the bat cache
       true-color = "always";
       zero-style = "dim syntax";
 

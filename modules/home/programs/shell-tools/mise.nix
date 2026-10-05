@@ -5,14 +5,12 @@
 # Path          : modules/home/programs/shell-tools/mise.nix
 # ----------------------------------------------------------------------------
 # mise runtime manager: installed binary, interactive-zsh activation, and a tool-free global config that never shadows a project's own
-# `mise.toml`. Activation (`mise activate zsh`, a precmd/chpwd hook) is what makes a project's `[env]` and `[tools]` rows apply to the shell
-# inside its tree, so a per-project variable such as PLAYWRIGHT_BROWSERS_PATH is owned by that project's `mise.toml`, never by a machine-wide
-# export. The hook lives in .zshrc and reads the shell's directory once at activation and again at every prompt and directory change, so only
-# an interactive shell inside a project gets its tools this way; the shim farm `toolchain-env.nix` puts last on every PATH vector is what a
-# non-interactive login shell, a launchd agent, and a GUI app resolve a project's tools through, each shim reading its caller's directory. Both
-# routes stay behind Nix: the farm's segment trails every Nix profile, and outside a trusted project the hook is a no-op over a tool-free global config.
-# The global auto-install gate stays off so a missing tool is a typed failure, never a mid-command download; trust covers the estate roots so
-# a project config composes freely while a foreign checkout's config never executes implicitly.
+# `mise.toml`. Activation (`mise activate zsh`, a precmd/chpwd hook) makes a project's `[env]` and `[tools]` rows apply to the shell inside its
+# tree, so a per-project variable is owned by that project's `mise.toml`, never by a machine-wide export. Every process without the hook (a login
+# shell, a launchd agent, a GUI app) resolves a project's tools through the shim segment `toolchain-env.nix` puts first on every PATH vector,
+# each shim reading its caller's directory and passing through to the next copy on PATH where no version is set. The global auto-install gate
+# stays off so a missing tool is a typed failure, never a mid-command download; trust covers the estate roots so a project config composes
+# freely while a foreign checkout's config never executes implicitly.
 {
   config,
   lib,
@@ -28,8 +26,8 @@
       settings = {
         trusted_config_paths = ["~/Developer"];
         # The global gate every install path checks: off, so no command ever starts a download. It also turns off exec_auto_install and
-        # not_found_auto_install (src/config/settings.rs), so activation drops the shim farm from PATH; zsh/init.nix keeps activation out of
-        # VS Code's environment resolution for that reason.
+        # not_found_auto_install, so activation drops the shim segment from PATH; zsh/init.nix keeps activation out of VS Code's
+        # environment resolution for that reason.
         auto_install = false;
         disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
         # A shared-store SDK install overwrites the running `dotnet` host in place, and macOS then kills every process it hosts

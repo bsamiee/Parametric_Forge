@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Lazygit TUI configuration themed from the estate palette owner
 {config, ...}: let
-  inherit (config.forge.theme) palette roles;
+  inherit (config.estate.theme) palette roles;
 in {
   programs.lazygit = {
     enable = true;

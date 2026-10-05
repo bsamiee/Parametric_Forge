@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # System information display themed from the estate palette owner
 {config, ...}: let
-  inherit (config.forge.theme) roles;
+  inherit (config.estate.theme) roles;
 in {
   programs.fastfetch = {
     enable = true;
@@ -157,7 +157,7 @@ in {
         {
           type = "terminalfont";
           key = " └   ";
-          format = config.forge.fonts.projections.fastfetchLabel;
+          format = config.estate.fonts.projections.fastfetchLabel;
         }
         {type = "break";}
 

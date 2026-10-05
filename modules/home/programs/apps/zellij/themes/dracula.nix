@@ -11,7 +11,7 @@
   lib,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (config.estate.theme) palette;
   rgb = role: palette.${role}.triple; # Component theme rows take decimal RGB triples
   slots = ["base" "background" "emphasis_0" "emphasis_1" "emphasis_2" "emphasis_3"];
   components = [

@@ -7,9 +7,9 @@
 # Host-context factory: one vocabulary for every host on every OS. A new machine is a new row here; the host factory projects rows into
 # darwinSystem or nixosSystem, and the home graph gates imports on `host.os`.
 let
-  # Universal 1Password-held key ("Forge SSH Key"): auth + signing everywhere.
+  # Universal 1Password-held key: auth + signing everywhere.
   authorizedKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Forge SSH Key"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Bardia SSH Key"
   ];
 in {
   macbook = {

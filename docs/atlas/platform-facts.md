@@ -4,7 +4,7 @@ macOS reality the estate is built against: the invariants and quirks an agent ne
 
 ## [01]-[SCOPE_BOUNDARIES]
 
-Declaring scope bounds each fact. `modules/darwin` owns system defaults, security, and Homebrew; `modules/home` owns fonts, user launchd agents, environments, programs, and XDG. Home Manager LaunchAgents mutate user state while system defaults mutate machine state. Recurring machine work is declared as `com.parametric-forge.<name>` beside its surface.
+Declaring scope bounds each fact. `modules/darwin` owns system defaults, security, and Homebrew; `modules/home` owns fonts, user launchd agents, environments, programs, and XDG. Home Manager LaunchAgents mutate user state while system defaults mutate machine state. Recurring machine work is declared as `dev.bsamiee.<name>` beside its surface.
 
 ## [02]-[LAUNCHD_GRAMMAR]
 
@@ -14,23 +14,19 @@ GUI launchd domains can carry credential-bearing session variables. Credential-f
 
 Per-agent quirks a plist read does not explain live in their owner modules; the ones that bite:
 
-| [INDEX] | [AGENT]                                 | [OWNER]                       | [NON_OBVIOUS_FACT]                    |
-| :-----: | :-------------------------------------- | :---------------------------- | :------------------------------------ |
-|  [01]   | `org.nix-community.home.colima-default` | `environments/containers.nix` | restart-on-stop; needs `ExitTimeOut`  |
-|  [02]   | `org.nix-community.home.atuin-daemon`   | `shell-tools/atuin.nix`       | upstream HM label, not estate grammar |
+| [INDEX] | [AGENT]                                 | [OWNER]                       | [NON_OBVIOUS_FACT]                   |
+| :-----: | :-------------------------------------- | :---------------------------- | :----------------------------------- |
+|  [01]   | `org.nix-community.home.colima-default` | `environments/containers.nix` | restart-on-stop; needs `ExitTimeOut` |
 
 - [01]: `KeepAlive.SuccessfulExit=true` restarts it after `colima stop`; the default exit timeout SIGKILLs VM teardown, so teardown needs the declared `ExitTimeOut`.
-- [02]: upstream HM label, not estate grammar; a `com.parametric-forge.*` label search misses the live agent.
 
 ## [03]-[TCC_SUDO]
 
 TCC is reset-only through `tccutil`; the estate writes no `TCC.db` rows and ships no PPPC profile on this unmanaged host, so first agent launches require live macOS approval prompts. Post-activation switches on `DevToolsSecurity` and puts the primary user in `_developer`.
 
-`security.nix` grants the primary user `ALL=(ALL) NOPASSWD: ALL` with `timestamp_type=global, timestamp_timeout=-1`: no shell, agent, or terminal prompts, and `sudo -n` succeeds everywhere. `sudo_local` PAM keeps Touch ID for every other admin account. sudoers grants nothing macOS authorizes itself: a TCC, Automation, or system-extension dialog still needs its System Settings grant.
+`security.nix` grants the primary user `ALL=(ALL) NOPASSWD: ALL`: no shell, agent, or terminal prompts, and `sudo -n` succeeds everywhere. `sudo_local` PAM keeps Touch ID for every other admin account. sudoers grants nothing macOS authorizes itself: a TCC, Automation, or system-extension dialog still needs its System Settings grant.
 
-`darwin/settings/security.nix` owns the `%admin` NOPASSWD allowlist, the exact deploy-rail rows `forge-redeploy` consumes, and the primary user's passwordless rows. Live sudoers state must match that file before a switch.
-
-macOS 26.4 and newer can require native confirmation when changing a file-type handler. `forge-default-applications apply` changes only mismatched rows and verifies both bundle identity and exact application path; coordinate foreground confirmation before activation. `check` performs the same readback without mutation. utiluti's batch `manage` command can print per-row errors while exiting successfully, so it is not the activation mechanism.
+macOS 26.4 and newer can require native confirmation when changing a file-type handler. `default-applications apply` changes only mismatched rows and verifies both bundle identity and exact application path; coordinate foreground confirmation before activation. `check` performs the same readback without mutation. utiluti's batch `manage` command can print per-row errors while exiting successfully, so it is not the activation mechanism.
 
 Filename suffixes are not necessarily independent types. `.typ` now resolves to its own dynamic type and receives an explicit editor association; an older Oracle SQL declaration also advertises that suffix and must never be assigned as if it were Typst-only. `.ts` resolves to MPEG transport streams, and `.vg.json` shares JSON. Those use explicit editor handoff; no broad JSON, XML, or public-data handler is imposed. Photoshop/CAD `.pat` and shell/Photoshop `.csh` remain native-import resources rather than global association rules.
 
@@ -38,14 +34,14 @@ Filename suffixes are not necessarily independent types. `.typ` now resolves to 
 
 `/bin/bash` is Apple bash `3.2`; the Home Manager profile bash (`/etc/profiles/per-user/$USER/bin/bash`) is `5.x`. Bash-only snippets run through `bash -lc`, a bash heredoc, or a bash-shebang executable.
 
-BSD/GNU tool divergence is handled by probe-then-fallback. `forge-provision` carries GNU coreutils because atomic generation publication requires `mv -T`. Runtime-bearing shell CLIs use `writeShellApplication`; closure-free one-liners use `writeShellScriptBin`. Deadline-bearing scripts package their own timeout implementation.
+BSD/GNU tool divergence is handled by probe-then-fallback. `provision` carries GNU coreutils because atomic generation publication requires `mv -T`. Runtime-bearing shell CLIs use `writeShellApplication`; closure-free one-liners use `writeShellScriptBin`. Deadline-bearing scripts package their own timeout implementation.
 
 ## [05]-[CONTAINER_RUNTIME]
 
-Colima owns the Docker runtime, XDG data home, current context, and launchd lifecycle. Its launchd profile declares writable home and `/tmp/colima` mounts because background starts omit implicit mounts. GUI launchd jobs receive `DOCKER_HOST`, `COLIMA_HOME`, and `DOCKER_CONFIG`; `programs.docker-cli` owns the helper-free config. `forge-provision` resolves `DOCKER_HOST`, then `DOCKER_CONTEXT`, then the Colima socket and rejects foreign Darwin endpoints unless explicitly admitted. Apple Container remains additive.
+Colima owns the Docker runtime, XDG data home, current context, and launchd lifecycle. Its launchd profile declares writable home and `/tmp/colima` mounts because background starts omit implicit mounts. GUI launchd jobs receive `DOCKER_HOST`, `COLIMA_HOME`, and `DOCKER_CONFIG`; `programs.docker-cli` owns the helper-free config. `provision` resolves `DOCKER_HOST`, then `DOCKER_CONTEXT`, then the Colima socket and rejects foreign Darwin endpoints unless explicitly admitted. Apple Container remains additive.
 
 ## [06]-[DEPLOY_AND_ACTIVATION]
 
-`forge-redeploy` is the only sanctioned activation path, and it rejects any post-activation profile whose `/run/current-system` differs from the built store path.
+`redeploy` is the only sanctioned activation path, and it rejects any post-activation profile whose `/run/current-system` differs from the built store path.
 
-Two activation traps bite a switch. Installer-written `/etc/nix/nix.custom.conf` blocks Determinate activation; the deploy rail moves it aside through an exact sudoers row. Stale root-owned Home Manager store hardlinks under `.config`, `.local/share`, `.local/state`, and `Library/LaunchAgents` block user-mode backup/relink; `sudo find <root> -uid 0 -prune -print` names the topmost offenders for one `sudo rm -rf` batch. `forge-provision` runs a parallel generation model — `gen-<epoch>-<srandom>` ids, a `.staging-<id>` dir, and an atomic `current` symlink publish that refuses a non-symlink `current`.
+Two activation traps bite a switch. Installer-written `/etc/nix/nix.custom.conf` blocks Determinate activation; the deploy rail moves it aside under the passwordless sudo row. Stale root-owned Home Manager store hardlinks under `.config`, `.local/share`, `.local/state`, and `Library/LaunchAgents` block user-mode backup/relink; `sudo find <root> -uid 0 -prune -print` names the topmost offenders for one `sudo rm -rf` batch. `provision` runs a parallel generation model — `gen-<epoch>-<srandom>` ids, a `.staging-<id>` dir, and an atomic `current` symlink publish that refuses a non-symlink `current`.

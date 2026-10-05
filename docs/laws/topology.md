@@ -10,8 +10,8 @@ Editing a `[SURFACE]` obligates its `[OBLIGATED_COUNTERPARTS]` in the same chang
 |  [02]   | harness master tree file              | sibling-repo byte copies                       | propagation is byte-identical copy     |
 |  [03]   | law or standards ruling               | `.greptile/rules.md` + `.coderabbit.yaml` twin | reviewer prose derives from doctrine   |
 |  [04]   | `CLAUDE.md` fact                      | `AGENTS.md` cross-reference                    | one fact lands at its acting reader    |
-|  [05]   | any `modules/` or `overlays/` file    | `forge-redeploy --switch`                      | an unswitched edit is invisible        |
-|  [06]   | `forge-provision` envelope or verb    | its README contract row + `data/` catalog row  | the envelope is a cross-repo contract  |
+|  [05]   | any `modules/` or `overlays/` file    | `redeploy --switch`                            | an unswitched edit is invisible        |
+|  [06]   | `provision` envelope or verb          | its README contract row + `data/` catalog row  | the envelope is a cross-repo contract  |
 |  [07]   | `overlays/manifest.nix` admission row | its consuming roster surface                   | admission requires a real consumer now |
 
 Harness masters live in `.claude/{skills,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards. Shared-home module edits prove the Darwin build and `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'`. Manifest admission requires an HM `rosterRows` consumer or a flake projection.

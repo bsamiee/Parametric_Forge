@@ -12,11 +12,11 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette roles;
+  inherit (config.estate.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
 
   # theme.yaml backs the TUI "Custom Style" selector entry.
-  forgeStyle.style = {
+  processComposeTheme.style = {
     body = {
       fgColor = roles.text.primary.hex;
       bgColor = roles.surface.base.hex;
@@ -61,7 +61,7 @@
     };
   };
 in {
-  xdg.configFile."process-compose/theme.yaml".source = yamlFormat.generate "process-compose-theme" forgeStyle;
+  xdg.configFile."process-compose/theme.yaml".source = yamlFormat.generate "process-compose-theme" processComposeTheme;
 
   # settings.yaml is TUI-mutated state (theme/sort auto-save); seed the custom style selection once, never overwrite later user edits.
   home.activation.seedProcessComposeSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''

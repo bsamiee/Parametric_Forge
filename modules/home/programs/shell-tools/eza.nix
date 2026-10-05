@@ -11,7 +11,7 @@
   ...
 }: let
   # palette retained for the one hue with no semantic role: string-yellow (size emphasis, octal, build kind, SELinux type).
-  inherit (config.forge.theme) roles palette;
+  inherit (config.estate.theme) roles palette;
   yamlFormat = pkgs.formats.yaml {};
   treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
   treeCommand = pkgs.writeShellApplication {
@@ -19,7 +19,7 @@
     runtimeInputs = [pkgs.eza];
     # --all is baked in: the dotfile surfaces an agent navigates by — .claude, .github, a package .planning, a lone .gitkeep proving a stub
     # directory is populated — are load-bearing, and the ls alias already lists hidden. --git-ignore is what makes that affordable, so the
-    # repo's own .gitignore retires the build, venv, and artifact trees instead of a glob list chasing them; FORGE_TREE_GITIGNORE=0 admits
+    # repo's own .gitignore retires the build, venv, and artifact trees instead of a glob list chasing them; TREE_GITIGNORE=0 admits
     # them back. --ignore-glob still covers the non-git checkout. A caller-supplied -a is dropped rather than forwarded, because eza reads a
     # second --all as "show . and .." and rejects it beside --tree.
     text = ''
@@ -32,10 +32,10 @@
         esac
       done
       gitignore=(--git-ignore)
-      if [[ "''${FORGE_TREE_GITIGNORE:-1}" == 0 ]]; then gitignore=(); fi
+      if [[ "''${TREE_GITIGNORE:-1}" == 0 ]]; then gitignore=(); fi
       exec eza \
         --tree \
-        --level "''${FORGE_TREE_LEVEL:-4}" \
+        --level "''${TREE_LEVEL:-4}" \
         --all \
         --long \
         --header \
@@ -50,7 +50,7 @@
         --no-user \
         --time-style=relative \
         "''${gitignore[@]}" \
-        --ignore-glob "''${FORGE_TREE_IGNORE:-${treeIgnoreGlobs}}" \
+        --ignore-glob "''${TREE_IGNORE:-${treeIgnoreGlobs}}" \
         "''${args[@]}"
     '';
   };

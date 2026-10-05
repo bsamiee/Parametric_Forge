@@ -14,7 +14,7 @@
   lib,
   ...
 }: let
-  inherit (config.forge.theme) roles palette icons projections;
+  inherit (config.estate.theme) roles palette icons projections;
 
   # BMP private-use glyphs mint from codepoint escapes: the harness edit path strips raw 3-byte PUA literals, so rows
   # land as \uXXXX through fromJSON. Supplementary-plane glyphs (U+F0000+) survive writes and stay literal below.
@@ -27,7 +27,7 @@
   # metachars ($ for the stash marker) ride behind starship's backslash escape.
   m = lib.mapAttrs (_: r: lib.escape ["$"] (lib.removePrefix "[" (lib.removeSuffix "]" r.ascii))) roles.git;
   badges = projections.contextBadges;
-  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> forge palette token (leaf names match)
+  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> estate palette token (leaf names match)
 in {
   programs.starship = {
     enable = true;
@@ -36,9 +36,7 @@ in {
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- [GLOBAL_CONFIGURATION]
-      palette = "forge";
-      scan_timeout = 30; # File-scan budget (ms); context detection never blocks on large trees
-      command_timeout = 500; # Module budget (ms); a slow module is dropped for one render, never awaited (vcs measures ~28ms dirty in this repo)
+      palette = "estate";
       continuation_prompt = "[❯](muted) ";
       format = lib.concatStrings [
         "$username"
@@ -67,7 +65,7 @@ in {
       # --- [SEMANTIC_ROLE_PALETTE]
       # Styles reference the estate roles by intent, never raw hue names; `syntax` carries string-yellow, the one hue
       # with no semantic role. Only tokens a module style consumes get a row.
-      palettes.forge = {
+      palettes.estate = {
         primary = roles.text.primary.hex;
         subtle = roles.text.subtle.hex;
         muted = roles.text.muted.hex;

@@ -13,7 +13,7 @@
   pkgs,
   ...
 }: let
-  fonts = config.forge.fonts;
+  fonts = config.estate.fonts;
   byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
   # Color record: uppercase hex plus every numeric rendering consumers need.
@@ -137,7 +137,7 @@
   in
     if dead == []
     then v
-    else throw "forge.theme.icons: empty glyph rows (harness strip?): ${lib.concatStringsSep ", " dead}";
+    else throw "estate.theme.icons: empty glyph rows (harness strip?): ${lib.concatStringsSep ", " dead}";
   icons = glyphsProved {
     dirs = byName (map (row ["name" "glyph" "color"]) [
       [".git" "󰊢" palette.pink]
@@ -226,11 +226,11 @@
     unruled = builtins.filter (t: !lib.elem t.verdict ["bound" "gap" "defer"]) targets;
   in
     if missing != []
-    then throw "forge.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}"
+    then throw "estate.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}"
     else if dupes != []
-    then throw "forge.theme.targets: duplicate target ids: ${lib.concatStringsSep ", " dupes}"
+    then throw "estate.theme.targets: duplicate target ids: ${lib.concatStringsSep ", " dupes}"
     else if unruled != []
-    then throw "forge.theme.targets: verdicts off the bound|gap|defer ladder: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.verdict}") unruled}"
+    then throw "estate.theme.targets: verdicts off the bound|gap|defer ladder: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.verdict}") unruled}"
     else targets;
 
   scopeRule = row: let
@@ -254,7 +254,7 @@
     <plist version="1.0">
     <dict>
       <key>name</key>
-      <string>Forge Dracula</string>
+      <string>Estate Dracula</string>
       <key>settings</key>
       <array>
         <dict>
@@ -268,7 +268,7 @@
     </dict>
     </plist>
   '';
-  tmThemeFile = pkgs.writeText "forge-dracula.tmTheme" tmTheme;
+  tmThemeFile = pkgs.writeText "estate-dracula.tmTheme" tmTheme;
 
   # Deep hex projection: a color record (any attrset carrying `hex`) collapses to its hex, every other leaf (glyphs, labels) passes through —
   # so a new role family lands in palette.json with zero edits here.
@@ -300,9 +300,9 @@
       i: p: lib.nameValuePair "base${lib.fixedWidthString 2 "0" (lib.toHexString i)}" palette.${p}
     ) (lib.splitString " "
       "background surface selection comment subtle foreground foreground foreground red orange yellow green cyan blue purple magenta crust crust red yellow green cyan brightBlue pink"));
-  base24File = (pkgs.formats.yaml {}).generate "forge-base24.yaml" {
+  base24File = (pkgs.formats.yaml {}).generate "base24.yaml" {
     system = "base24";
-    name = "Forge Dracula";
+    name = "Estate Dracula";
     author = "Parametric Forge";
     variant = "dark";
     palette = lib.mapAttrs (_: c: lib.toLower (lib.removePrefix "#" c.hex)) base24Slots;
@@ -311,8 +311,8 @@
   # --- [RENDERED_PROOF_BOARD]
   # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes over a live sample, diff/search fills, git glyphs, and a WCAG
   # contrast matrix computed in the page against base/surface/overlay landings.
-  paletteHtml = pkgs.writeText "forge-palette.html" ''
-    <!doctype html><html><head><meta charset="utf-8"><title>Forge Theme Proof Board</title>
+  paletteHtml = pkgs.writeText "palette.html" ''
+    <!doctype html><html><head><meta charset="utf-8"><title>Estate Theme Proof Board</title>
     <style>
       body{background:${palette.background.hex};color:${palette.foreground.hex};font:${fonts.projections.proofFont};margin:2rem;max-width:1100px}
       h1,h2{color:${palette.pink.hex};font-weight:700;text-transform:uppercase;letter-spacing:.08em}
@@ -328,7 +328,7 @@
       .muted{color:${palette.comment.hex}}
       pre{background:${palette.crust.hex};padding:1rem;border-radius:6px;overflow-x:auto}
     </style></head><body>
-    <h1>Forge Theme Proof Board</h1>
+    <h1>Estate Theme Proof Board</h1>
     <p class="muted">Generated from modules/home/theme.nix — the estate palette owner. Contrast is computed live in this page (WCAG2 relative luminance).</p>
     <div id="root"></div>
     <script id="data" type="application/json">${paletteJson}</script>
@@ -458,7 +458,7 @@
     ];
   };
 in {
-  options.forge.theme = lib.mkOption {
+  options.estate.theme = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
@@ -471,12 +471,12 @@ in {
   config = {
     # Machine-readable projections for consumers outside Home Manager, the ecosystem exchange adapter, the proof board, and the coverage ledger.
     xdg.configFile = {
-      "forge/theme/palette.json".text = paletteJson;
-      "forge/theme/forge-dracula.tmTheme".source = tmThemeFile;
-      "forge/theme/base24.yaml".source = base24File;
-      "forge/theme/palette.html".source = paletteHtml;
-      "forge/theme/coverage.json".text = builtins.toJSON {
-        schema = "forge-theme-coverage/v1";
+      "estate/theme/palette.json".text = paletteJson;
+      "estate/theme/estate-dracula.tmTheme".source = tmThemeFile;
+      "estate/theme/base24.yaml".source = base24File;
+      "estate/theme/palette.html".source = paletteHtml;
+      "estate/theme/coverage.json".text = builtins.toJSON {
+        schema = "theme-coverage/v1";
         targets = targetsProved;
       };
     };

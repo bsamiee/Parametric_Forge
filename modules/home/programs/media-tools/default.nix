@@ -9,7 +9,7 @@
   # HarfBuzz's command-line shaper. nixpkgs passes no `utilities` meson option, so the library package's bin output (outputBin = "dev") ships
   # empty; the utilities build lands hb-shape, hb-subset, and hb-info. No cairo: hb-view (specimen raster) is the one utility that needs it, and
   # pango-view covers that lane; the build rides its own derivation so no libharfbuzz consumer re-keys.
-  harfbuzzTools = pkgs.harfbuzz.overrideAttrs (prev: {
+  harfbuzzTools = pkgs.harfbuzz-current.overrideAttrs (prev: {
     mesonFlags = prev.mesonFlags ++ [(pkgs.lib.mesonEnable "utilities" true)];
   });
 in {
@@ -18,14 +18,14 @@ in {
   home.packages = [
     pkgs.chafa # Yazi image adapter where no graphics protocol passes through; also the one terminal image/ASCII renderer
     pkgs.exiftool # Metadata read/write across image, video, PDF, and font containers
-    pkgs.ffmpeg-full # Every codec, filter, and hwaccel nixpkgs offers on this platform, whisper transcription included; frei0r and opencv build locally
+    pkgs.ffmpeg-full # Every codec, filter, and hwaccel nixpkgs offers on this platform, whisper transcription included
     pkgs.ffmpeg-normalize # Two-pass EBU R128 loudnorm; the measure-then-apply JSON handoff is the one ffmpeg lane worth a wrapper
     pkgs.gifski # GIF encoder reading video directly (nixpkgs builds the video feature); beats palettegen/paletteuse
     # nixpkgs row on purpose: the 16.x release tarball fails on Darwin three ways (no autogen.sh, plugin modules with unresolved libgvc symbols,
     # a bundled libltdl missing argz), and nothing in 16.x is load-bearing for dot; the pin returns when nixpkgs or upstream fixes the lane.
     pkgs.graphviz # dot layout family; ImageMagick's shipped `dot` delegate renders .dot sources through it
     harfbuzzTools.dev # hb-shape, hb-subset, hb-info: shaping traces and font subsetting; harfbuzz seats its utilities in the dev output
-    pkgs.imagemagick
+    pkgs.imagemagick-current
     pkgs.mediainfo # Yazi `inspect` opener row
     pkgs.mpv # Playback backend for media aliases
     pkgs.oxipng # Lossless PNG recompression for exported raster; no config or env surface

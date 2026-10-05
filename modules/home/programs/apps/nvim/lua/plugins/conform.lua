@@ -4,10 +4,10 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/conform.lua
 -- ----------------------------------------------------------------------------
--- Formatter orchestration over Forge-owned binaries; per-filetype table is generated (forge/tools.lua); availability rows feed :checkhealth forge.
+-- Formatter orchestration over Forge-owned binaries; per-filetype table is generated (estate/tools.lua); availability rows feed :checkhealth estate.
 
 require("conform").setup({
-    formatters_by_ft = require("forge.tools").format,
+    formatters_by_ft = require("estate.tools").format,
     -- Bare-name law: the builtin prettier def prefers the repo's node_modules/.bin (a repo-owned binary runs on save); pin the profile binary
     -- node-tools.nix installs. C# has no lane here either: `dotnet format` owns .cs through the project rails.
     formatters = {

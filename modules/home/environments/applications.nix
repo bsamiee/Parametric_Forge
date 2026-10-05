@@ -7,20 +7,13 @@
 # User application environment variables
 {config, ...}: {
   home.sessionVariables = {
-    # WezTerm carries no row: it reads $XDG_CONFIG_HOME/wezterm and keeps its runtime and logs under ~/.local/share/wezterm by construction.
-
-    # --- [ZELLIJ]
-    ZELLIJ_CONFIG_DIR = "${config.xdg.configHome}/zellij";
-    # WezTerm config owns Zellij auto-load; both flags stay false.
-    ZELLIJ_AUTO_ATTACH = "false";
-    ZELLIJ_AUTO_EXIT = "false";
-    ZELLIJ_DEFAULT_LAYOUT = "default";
+    # WezTerm and Zellij carry no row: both read their $XDG_CONFIG_HOME directory, WezTerm keeps its runtime and logs under ~/.local/share/wezterm.
 
     # --- [YAZI]
     YAZI_CONFIG_HOME = "${config.xdg.configHome}/yazi";
 
     # --- [NEOVIM]
-    # Editor RPC rail: `nvim --listen`/`--server`; sockets under private runtime root (XDG runtime dir, else per-user TMPDIR) at forge-edit/<session>/.
+    # Editor RPC rail: `nvim --listen`/`--server`; sockets under private runtime root (XDG runtime dir, else per-user TMPDIR) at nvim-edit/<session>/.
 
     # --- [SERPL]
     SERPL_CONFIG = "${config.xdg.configHome}/serpl";

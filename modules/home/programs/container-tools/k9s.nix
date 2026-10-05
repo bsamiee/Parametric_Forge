@@ -4,16 +4,16 @@
 # License       : MIT
 # Path          : modules/home/programs/container-tools/k9s.nix
 # ----------------------------------------------------------------------------
-# Terminal UI for Kubernetes cluster management; package row lives in the owner table. The forge skin is projected from the estate palette owner.
+# Terminal UI for Kubernetes cluster management; package row lives in the owner table. The estate skin is projected from the estate palette owner.
 {
   config,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette roles;
+  inherit (config.estate.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
 
-  forgeSkin.k9s = {
+  k9sSkin.k9s = {
     body = {
       fgColor = roles.text.primary.hex;
       bgColor = roles.surface.base.hex;
@@ -128,7 +128,7 @@
     };
   };
   # Mouse/chrome toggles live under k9s.ui only; top-level twins are ignored.
-  forgeConfig.k9s = {
+  k9sConfig.k9s = {
     liveViewAutoRefresh = true;
     refreshRate = 2;
     maxConnRetry = 5;
@@ -140,7 +140,7 @@
       logoless = false;
       crumbsless = false;
       noIcons = false;
-      skin = "forge";
+      skin = "estate";
     };
     logger = {
       tail = 200;
@@ -153,7 +153,7 @@
 
   # CRD front doors; a new hotkey/alias/plugin is one attrset row.
   hotKey = shortCut: description: command: {inherit shortCut description command;};
-  forgeHotkeys.hotKeys = {
+  k9sHotkeys.hotKeys = {
     shift-a = hotKey "Shift-A" "ArgoCD Applications" "applications.argoproj.io";
     shift-k = hotKey "Shift-K" "Kyverno PolicyReports" "policyreports.wgpolicyk8s.io";
     shift-d = hotKey "Shift-D" "CloudNativePG Clusters" "clusters.postgresql.cnpg.io";
@@ -161,7 +161,7 @@
     shift-s = hotKey "Shift-S" "SealedSecrets" "sealedsecrets.bitnami.com";
   };
 
-  forgeAliases.aliases = {
+  k9sAliases.aliases = {
     # ArgoCD
     app = "argoproj.io/v1alpha1/applications";
     appproj = "argoproj.io/v1alpha1/appprojects";
@@ -180,7 +180,7 @@
     ss = "bitnami.com/v1alpha1/sealedsecrets";
   };
 
-  forgePlugins.plugins = {
+  k9sPlugins.plugins = {
     logs-previous = {
       shortCut = "Shift-L";
       description = "Previous container logs";
@@ -192,10 +192,10 @@
   };
 in {
   xdg.configFile = {
-    "k9s/skins/forge.yaml".source = yamlFormat.generate "k9s-forge-skin" forgeSkin;
-    "k9s/config.yaml".source = yamlFormat.generate "k9s-config" forgeConfig;
-    "k9s/hotkeys.yaml".source = yamlFormat.generate "k9s-hotkeys" forgeHotkeys;
-    "k9s/aliases.yaml".source = yamlFormat.generate "k9s-aliases" forgeAliases;
-    "k9s/plugins.yaml".source = yamlFormat.generate "k9s-plugins" forgePlugins;
+    "k9s/skins/estate.yaml".source = yamlFormat.generate "k9s-skin" k9sSkin;
+    "k9s/config.yaml".source = yamlFormat.generate "k9s-config" k9sConfig;
+    "k9s/hotkeys.yaml".source = yamlFormat.generate "k9s-hotkeys" k9sHotkeys;
+    "k9s/aliases.yaml".source = yamlFormat.generate "k9s-aliases" k9sAliases;
+    "k9s/plugins.yaml".source = yamlFormat.generate "k9s-plugins" k9sPlugins;
   };
 }

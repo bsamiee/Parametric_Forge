@@ -19,10 +19,10 @@
   tl = import ./terminal-lib.nix {inherit lib;};
   inherit (tl) yaziPopupIdentity selfRow liveInTab retrySh deadlineGuardSh panesSnapshotSh cidPipeline runtimeBaseSh;
 
-  # Registry contract: forge-edit serializes observe/create/publication of one "<tab_id>\t<pane_id>\t<socket>" row per tab; forge-nvim admits only
+  # Registry contract: nvim-edit serializes observe/create/publication of one "<tab_id>\t<pane_id>\t<socket>" row per tab; nvim-server admits only
   # its already-published row before binding the deterministic socket.
-  forgeNvim = pkgs.writeShellApplication {
-    name = "forge-nvim.sh";
+  nvimServer = pkgs.writeShellApplication {
+    name = "nvim-server.sh";
     runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils];
     text = ''
       # Outside Zellij: plain editor. Inside: per-pane RPC server + tab registry.
@@ -31,7 +31,7 @@
       fi
 
       session="''${ZELLIJ_SESSION_NAME:-default}"
-      pane_id="''${ZELLIJ_PANE_ID:?forge-nvim.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
+      pane_id="''${ZELLIJ_PANE_ID:?nvim-server.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
       ${runtimeBaseSh}
       runtime_root="$(_runtime_child "$session")"
       mkdir -p "$runtime_root"
@@ -47,7 +47,7 @@
         [[ -n "$tab_id" ]]
       }
       if ! _retry 10 0.1 _tab_probe; then
-        printf 'forge-nvim.sh: pane inventory never resolved pane %s to a tab; refusing an unregistered editor server\n' "$pane_id" >&2
+        printf 'nvim-server.sh: pane inventory never resolved pane %s to a tab; refusing an unregistered editor server\n' "$pane_id" >&2
         exit 75
       fi
 
@@ -62,7 +62,7 @@
         [[ "$_tab" == "$tab_id" && "$_pane" == "$pane_id" && "$_socket" == "$socket" ]] && _runtime_contains "$_socket"
       }
       if ! _retry 20 0.1 _registry_probe; then
-        printf 'forge-nvim.sh: editor registry never admitted tab=%s pane=%s; refusing an unowned server\n' "$tab_id" "$pane_id" >&2
+        printf 'nvim-server.sh: editor registry never admitted tab=%s pane=%s; refusing an unowned server\n' "$tab_id" "$pane_id" >&2
         exit 75
       fi
       rm -f "$socket"
@@ -70,9 +70,9 @@
     '';
   };
 
-  forgeEdit = pkgs.writeShellApplication {
-    name = "forge-edit.sh";
-    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock forgeNvim];
+  nvimEdit = pkgs.writeShellApplication {
+    name = "nvim-edit.sh";
+    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock nvimServer];
     text = ''
       # Yazi opener target: RPC into the tab's registered Neovim, else spawn one.
       if [[ $# -eq 0 ]]; then
@@ -82,15 +82,15 @@
         exec nvim "$@"
       fi
       ${deadlineGuardSh {
-        environment = "FORGE_EDIT_DEADLINE_SECONDS";
+        environment = "NVIM_EDIT_DEADLINE_SECONDS";
         default = 30;
         maximum = 120;
         killGrace = 2;
-        errorContext = "forge-edit.sh";
+        errorContext = "nvim-edit.sh";
       }}
 
       session="''${ZELLIJ_SESSION_NAME:-default}"
-      caller="''${ZELLIJ_PANE_ID:?forge-edit.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
+      caller="''${ZELLIJ_PANE_ID:?nvim-edit.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
       self="$caller"
       ${runtimeBaseSh}
       runtime_root="$(_runtime_child "$session")"
@@ -103,7 +103,7 @@
       # Snapshot failure is ambiguous, so it never licenses another editor process; the caller retries after the bounded Zellij probe recovers.
       ${panesSnapshotSh "timeout -k 1 3 zellij action list-panes --all --json"}
       if [[ "$panes_snapshot_ok" != "true" ]]; then
-        printf 'forge-edit.sh: pane inventory unavailable; refusing an ambiguous editor spawn\n' >&2
+        printf 'nvim-edit.sh: pane inventory unavailable; refusing an ambiguous editor spawn\n' >&2
         exit 75
       fi
       # One projection owns the caller vector; the unit separator preserves empty fields without tab-field collapse.
@@ -115,7 +115,7 @@
       registry="''${runtime_root}/editor-tab-''${tab_id}.tsv"
       exec {editor_lock_fd}>"''${registry}.lock"
       if ! flock -w 5 "$editor_lock_fd"; then
-        printf 'forge-edit.sh: another editor transaction holds tab %s\n' "$tab_id" >&2
+        printf 'nvim-edit.sh: another editor transaction holds tab %s\n' "$tab_id" >&2
         exit 75
       fi
 
@@ -152,10 +152,10 @@
           zellij action close-pane --pane-id "terminal_''${editor_pane}" >/dev/null 2>&1 || true
         fi
         rm -f -- "$registry"
-        created="$(zellij action new-pane --close-on-exit --name " [EDITOR] " --cwd "$PWD" -- forge-nvim.sh "$@")"
+        created="$(zellij action new-pane --close-on-exit --name " [EDITOR] " --cwd "$PWD" -- nvim-server.sh "$@")"
         editor_pane="''${created#terminal_}"
         if [[ ! "$editor_pane" =~ ^[0-9]+$ ]]; then
-          printf 'forge-edit.sh: editor spawn returned an invalid pane id: %s\n' "$created" >&2
+          printf 'nvim-edit.sh: editor spawn returned an invalid pane id: %s\n' "$created" >&2
           exit 75
         fi
         socket="$runtime_root/pane-$editor_pane.sock"
@@ -172,16 +172,16 @@
       fi
 
       # Pane-scoped dismissal: close only the Forge popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
-      # identity vocabulary; a yazi launched WITH args ("forge-yazi.sh <dir>") is never the popup.
+      # identity vocabulary; a yazi launched WITH args ("yazi-dispatch.sh <dir>") is never the popup.
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
       fi
     '';
   };
 
-  forgeYazi = pkgs.writeShellApplication {
-    name = "forge-yazi.sh";
-    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock pkgs.gawk forgeEdit];
+  yaziDispatch = pkgs.writeShellApplication {
+    name = "yazi-dispatch.sh";
+    runtimeInputs = [yaziPkg pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock pkgs.gawk nvimEdit];
     text = ''
       # Polymorphic entry — one command owns every popup modality:
       #   (no args)          popup body: yazi + DDS bridge (client-id, local-events)
@@ -202,9 +202,9 @@
         # Popup body: pin the DDS client id and bridge local events. Events stream as `kind,receiver,sender,{json}`; cd lands in a compact state
         # cache AND the event log, hover only in the cache (render-hot path reads caches, never the stream). TUI renders on the pty untouched. State
         # writes truncate in place — rename-atomicity would fork per hover event — so cache readers poll with jq -e and retry torn JSON.
-        pane_id="''${ZELLIJ_PANE_ID:?forge-yazi.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
+        pane_id="''${ZELLIJ_PANE_ID:?yazi-dispatch.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
         cid="$(cid_of "$pane_id")"
-        EDITOR="forge-edit.sh" exec yazi "$PWD" \
+        EDITOR="nvim-edit.sh" exec yazi "$PWD" \
           --client-id "$cid" \
           --local-events=cd,hover,rename,bulk,@yank,move,trash,delete \
           > >(exec gawk -F, -v root="$runtime_root" -v pane="$pane_id" '
@@ -220,7 +220,7 @@
                 if (kind == "hover") next
               }
               log_file = root "/dds-events.log"
-              printf "ts=%s\tsurface=forge-yazi\tkind=%s\tsender=%s\tbody=%s\n", ts, kind, sender, body >> log_file
+              printf "ts=%s\tsurface=yazi-dispatch\tkind=%s\tsender=%s\tbody=%s\n", ts, kind, sender, body >> log_file
               close(log_file)
             }')
       fi
@@ -229,26 +229,26 @@
         toggle | reveal | cd) ;;
         *)
           (($#)) || set -- "$PWD"
-          EDITOR="forge-edit.sh" exec yazi "$@"
+          EDITOR="nvim-edit.sh" exec yazi "$@"
           ;;
       esac
 
       if [[ -z "''${ZELLIJ:-}" ]]; then
-        printf 'forge-yazi.sh %s: requires a Zellij session\n' "$1" >&2
+        printf 'yazi-dispatch.sh %s: requires a Zellij session\n' "$1" >&2
         exit 1
       fi
       ${deadlineGuardSh {
-        environment = "FORGE_YAZI_DISPATCH_DEADLINE_SECONDS";
+        environment = "YAZI_DISPATCH_DEADLINE_SECONDS";
         default = 45;
         maximum = 120;
         killGrace = 2;
-        errorContext = "forge-yazi.sh";
+        errorContext = "yazi-dispatch.sh";
       }}
 
       verb="$1"
       target=""
       if [[ "$verb" != "toggle" ]]; then
-        target="''${2:?forge-yazi.sh $verb needs a path}"
+        target="''${2:?yazi-dispatch.sh $verb needs a path}"
         # emit-to resolves paths against the popup's cwd, never the caller's, and the cd action only accepts a directory — normalize both here so the
         # create and live-popup branches see one canonical target.
         target="$(realpath -m -- "$target")"
@@ -257,17 +257,17 @@
         fi
       fi
 
-      self="''${ZELLIJ_PANE_ID:?forge-yazi.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
+      self="''${ZELLIJ_PANE_ID:?yazi-dispatch.sh: ZELLIJ_PANE_ID is unset inside Zellij}"
       # Serialize concurrent dispatchers (double-chord): one session-scoped lock spans snapshot-to-act, so racing
       # toggles never both read a popup-free tab and create duplicate popups.
       exec {lock_fd}>"$runtime_root/toggle.lock"
       flock -w 5 "$lock_fd" || {
-        printf 'forge-yazi.sh: another toggle holds the dispatch lock\n' >&2
+        printf 'yazi-dispatch.sh: another toggle holds the dispatch lock\n' >&2
         exit 75
       }
       ${panesSnapshotSh "timeout -k 1 3 zellij action list-panes --all --json"}
       if [[ "$panes_snapshot_ok" != "true" ]]; then
-        printf 'forge-yazi.sh: pane inventory unavailable; refusing an ambiguous popup action\n' >&2
+        printf 'yazi-dispatch.sh: pane inventory unavailable; refusing an ambiguous popup action\n' >&2
         exit 75
       fi
       # One projection resolves both self-tab and popup identity. Dispatchers and yazi-with-args rows never match; hidden floating popups retain
@@ -286,7 +286,7 @@
       spawn_popup() { # $1 = cwd for the new popup
         created="$(zellij action new-pane --floating --pinned true \
           ${yaziPopupArgs} \
-          --name " [YAZI] " --close-on-exit --cwd "$1" -- forge-yazi.sh)"
+          --name " [YAZI] " --close-on-exit --cwd "$1" -- yazi-dispatch.sh)"
         zellij action focus-pane-id "$created" >/dev/null 2>&1 || true
         : >"$marker"
       }
@@ -324,7 +324,7 @@
             fi
           else
             emit_popup "$(cid_of "$popup")" "$verb" "$target" || {
-              printf 'forge-yazi.sh: DDS %s to the tab popup did not land\n' "$verb" >&2
+              printf 'yazi-dispatch.sh: DDS %s to the tab popup did not land\n' "$verb" >&2
               exit 1
             }
             surface_popup
@@ -359,5 +359,5 @@
 in {
   imports = [../programs/apps/chords.nix];
 
-  home.packages = [forgeNvim forgeEdit forgeYazi yaziZoxideCdi];
+  home.packages = [nvimServer nvimEdit yaziDispatch yaziZoxideCdi];
 }

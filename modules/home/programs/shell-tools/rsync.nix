@@ -18,7 +18,7 @@
     runtimeInputs = [pkgs.rsync];
     text = ''
       # Transparent filtered rsync: argv passes through untouched so every rsync option stays reachable; only the estate filter is injected.
-      filter="''${FORGE_RSYNC_FILTER:-${filterPath}}"
+      filter="''${RSYNC_FILTER:-${filterPath}}"
       exec rsync --filter="merge $filter" "$@"
     '';
   };

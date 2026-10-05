@@ -4,10 +4,10 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/lsp.lua
 -- ----------------------------------------------------------------------------
--- Native LSP control plane over generated forge/lsp.lua rows (owner: apps/nvim/default.nix); native completion
+-- Native LSP control plane over generated estate/lsp.lua rows (owner: apps/nvim/default.nix); native completion
 -- with autotrigger is the lane, blink.cmp stays annex-gated, and diagnostics render through one config.
 
-for name, row in pairs(require("forge.lsp").servers) do
+for name, row in pairs(require("estate.lsp").servers) do
     vim.lsp.config(name, {
         cmd = row.cmd,
         filetypes = row.filetypes,
@@ -23,7 +23,7 @@ for lhs, mode in pairs({ grn = "n", gra = { "n", "x" }, grr = "n", gri = "n", gr
 end
 
 vim.api.nvim_create_autocmd("LspAttach", {
-    group = vim.api.nvim_create_augroup("forge_lsp_attach", { clear = true }),
+    group = vim.api.nvim_create_augroup("lsp_attach", { clear = true }),
     callback = function(ev)
         local client = assert(vim.lsp.get_client_by_id(ev.data.client_id))
         if client:supports_method("textDocument/completion") then

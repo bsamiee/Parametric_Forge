@@ -4,7 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/config/keymaps.lua
 -- ----------------------------------------------------------------------------
--- Chord binder: motion primitives stay native rows here; every domain chord is a generated forge/chords.lua row (owner: apps/chords.nix). `fn`
+-- Chord binder: motion primitives stay native rows here; every domain chord is a generated estate/chords.lua row (owner: apps/chords.nix). `fn`
 -- rows resolve through the dispatch table: explicit verbs, then the picker grammar; ids outside both fault at startup.
 
 local map = vim.keymap.set
@@ -46,7 +46,7 @@ local pick = function(source)
     return function()
         local open = Snacks.picker[source]
         if not open then
-            vim.notify(("forge.chords: unknown picker source %q"):format(source), vim.log.levels.ERROR)
+            vim.notify(("estate.chords: unknown picker source %q"):format(source), vim.log.levels.ERROR)
             return
         end
         open()
@@ -100,10 +100,10 @@ local actions = setmetatable({
     end,
 })
 
-for _, row in ipairs(require("forge.chords")) do
+for _, row in ipairs(require("estate.chords")) do
     local rhs = row.action or actions[row.fn]
     if not rhs then
-        vim.notify(("forge.chords: unknown dispatch id %q"):format(tostring(row.fn)), vim.log.levels.ERROR)
+        vim.notify(("estate.chords: unknown dispatch id %q"):format(tostring(row.fn)), vim.log.levels.ERROR)
     else
         map(row.mode, row.keys, rhs, { desc = row.desc })
     end

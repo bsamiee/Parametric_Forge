@@ -11,7 +11,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) projections;
+  inherit (config.estate.theme) projections;
   # fd rides its store path: a Nix-side dependency of the fzf widgets, on no PATH outside a project.
   fd = lib.getExe pkgs.fd;
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";

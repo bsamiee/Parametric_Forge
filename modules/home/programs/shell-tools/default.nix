@@ -31,7 +31,7 @@
         exec ${lib.getExe pkg} ${flag} "$@"
       '';
     };
-  manifest-completions = pkgs.runCommand "forge-manifest-completions" {} ''
+  manifest-completions = pkgs.runCommand "manifest-completions" {} ''
     mkdir -p "$out/share/zsh/site-functions"
     ${lib.concatMapStringsSep "\n" (row: ''${lib.getExe pkgs.${row.attr}} ${lib.escapeShellArgs row.completionArgs} > "$out/share/zsh/site-functions/_${row.attr}"'') completionRows}
   '';
@@ -49,7 +49,7 @@ in {
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
-    ./forge-redeploy.nix
+    ./redeploy.nix
     ./fzf.nix
     ./jnv.nix
     ./mise.nix

@@ -26,7 +26,7 @@ import msgspec
 
 SINK_URL = os.environ.get("HOOK_SINK_URL", "http://127.0.0.1:4000/events")  # POLICY: the collector; a dead one never gates
 BRAND = os.environ.get("HOOK_PROVIDER", "claude")  # source tag so a dual-provider fleet's events self-identify their origin
-NAMESPACE = "com.parametric-forge"  # reverse-DNS root for the CloudEvents type
+NAMESPACE = "dev.bsamiee"  # reverse-DNS root for the CloudEvents type
 MAX_PAYLOAD = 8 * 1024 * 1024  # bound the stdin read; a pathological payload never balloons resident memory
 TIMEOUT = 2.0
 

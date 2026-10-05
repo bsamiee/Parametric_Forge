@@ -15,7 +15,7 @@ in {
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
     // ----------------------------------------------------------------------------
-    // Shell-first layout with floating lazygit; nvim spawns via forge-edit rail
+    // Shell-first layout with floating lazygit; nvim spawns via nvim-edit rail
 
     layout {
         // --- [PANE_TEMPLATES]

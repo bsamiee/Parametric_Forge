@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/init.nix
 # ----------------------------------------------------------------------------
-# Interactive init rows outside a tool's own Home Manager integration: session secrets, fzf's completion hooks, the post-atuin suggestion
+# Interactive init rows outside a tool's own Home Manager integration: the pane identity reset, fzf's completion hooks, the post-atuin suggestion
 # override, mise activation last, and the transient prompt. Tool inits ride their HM orders: compinit 570, fzf-tab 580, autosuggestions 700,
 # zoxide 851, fzf 910, plugins 950, starship/atuin/carapace/nix-index 1000, aliases 1100, syntax highlighting 1200.
 {
@@ -15,9 +15,6 @@
 }: {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
-      # --- [SESSION_SECRETS]
-      [[ ! -f "${config.xdg.configHome}/forge-session-secrets.sh" ]] || source "${config.xdg.configHome}/forge-session-secrets.sh"
-
       # --- [ZELLIJ_PANE_WEZTERM_IDENTITY]
       # A zellij server freezes its environment at creation and hands it to every pane, so after a WezTerm restart the inherited socket
       # (gui-sock-<gui pid>) and pane id are dead and `wezterm cli` spawns a stray mux server. Unset, the cli locates the live GUI instance
@@ -51,40 +48,39 @@
       # Collapses accepted or interrupted lines to HH:MM + pointer without another Starship render.
       if [[ $PROMPT == *starship* ]]; then
         autoload -Uz add-zsh-hook add-zle-hook-widget
-        typeset -g _forge_prompt_live="$PROMPT"
-        typeset -gi _forge_prompt_status=0
-        _forge-transient-save() {
-          TRAPINT() { _forge-transient-apply; return $(( 128 + $1 )) }
-          PROMPT="$_forge_prompt_live"
-          _forge_prompt_status=''${STARSHIP_CMD_STATUS:-0}
+        typeset -g _transient_prompt_live="$PROMPT"
+        typeset -gi _transient_prompt_status=0
+        _transient-prompt-save() {
+          TRAPINT() { _transient-prompt-apply; return $(( 128 + $1 )) }
+          PROMPT="$_transient_prompt_live"
+          _transient_prompt_status=''${STARSHIP_CMD_STATUS:-0}
         }
-        _forge-transient-apply() {
+        _transient-prompt-apply() {
           if zle; then
             local pointer=❯ pointer_color
             if [[ $KEYMAP == vicmd ]]; then
               pointer=❮
-              pointer_color="${config.forge.theme.roles.state.success.hex}"
-            elif (( _forge_prompt_status == 0 )); then
-              pointer_color="${config.forge.theme.roles.state.success.hex}"
+              pointer_color="${config.estate.theme.roles.state.success.hex}"
+            elif (( _transient_prompt_status == 0 )); then
+              pointer_color="${config.estate.theme.roles.state.success.hex}"
             else
-              pointer_color="${config.forge.theme.roles.state.danger.hex}"
+              pointer_color="${config.estate.theme.roles.state.danger.hex}"
             fi
-            PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            PROMPT="%F{${config.estate.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
             zle .reset-prompt
           fi
         }
-        add-zsh-hook precmd _forge-transient-save
-        add-zle-hook-widget zle-line-finish _forge-transient-apply
+        add-zsh-hook precmd _transient-prompt-save
+        add-zle-hook-widget zle-line-finish _transient-prompt-apply
       fi
     '')
 
     (lib.mkOrder 2000 ''
       # --- [MISE_ACTIVATE]
-      # Last line of the interactive config: mise documents that PATH edits made after activation outrank the tools it manages
-      # (settings, activate_aggressive), so nothing follows this hook. Activation drops the shim farm from PATH (src/cli/activate.rs and
-      # hook_env.rs keep it only under not_found_auto_install, which auto_install = false turns off), so the `zsh -ilc` VS Code runs from `/`
-      # to resolve its environment (VSCODE_RESOLVING_ENVIRONMENT=1) skips activation and keeps the farm its language servers resolve a
-      # project's .NET SDK through.
+      # Last line of the interactive config: mise documents that PATH edits made after activation outrank the tools it manages, so nothing
+      # follows this hook. Activation drops the shim segment from PATH (it stays only under not_found_auto_install, which auto_install = false
+      # turns off), so the `zsh -ilc` VS Code runs from `/` to resolve its environment (VSCODE_RESOLVING_ENVIRONMENT=1) skips activation and
+      # keeps the shims its language servers resolve a project's tools through.
       [[ -n $VSCODE_RESOLVING_ENVIRONMENT ]] || eval "$(${lib.getExe config.programs.mise.package} activate zsh)"
     '')
   ];

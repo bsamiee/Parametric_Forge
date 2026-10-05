@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Host factory: every context row becomes a system through one OS dispatch table; the per-host module and Home Manager projection are shared verbatim
 # across OS classes. A new machine is one context row — nothing here changes shape.
-# Bootstrap for NixOS rows is nixos-anywhere + disko; day-2 for every row is forge-redeploy.
+# Bootstrap for NixOS rows is nixos-anywhere + disko; day-2 for every row is redeploy.
 {
   inputs,
   nix-darwin,
@@ -16,7 +16,7 @@
   context = import ./context.nix;
 
   # Shared per-host module: platform, overlay admission, identity, and the Home Manager projection every OS carries identically.
-  hostModule = host: {forgeToolchainEnvFor, ...}: {
+  hostModule = host: {toolchainEnvFor, ...}: {
     nixpkgs.hostPlatform = host.system;
     nixpkgs.overlays = [inputs.self.overlays.default];
 
@@ -31,7 +31,7 @@
       useGlobalPkgs = true;
       useUserPackages = true;
       backupFileExtension = "backup"; # Backup conflicting files instead of failing
-      extraSpecialArgs = {inherit inputs host forgeToolchainEnvFor;};
+      extraSpecialArgs = {inherit inputs host toolchainEnvFor;};
       users.${host.user.name} = {
         imports = [
           inputs.nix-index-database.homeModules.nix-index
@@ -64,7 +64,13 @@
         home-manager.darwinModules.home-manager
         {
           networking.computerName = host.label;
-          programs.zsh.enableGlobalCompInit = false; # HM owns compinit (fingerprinted -C); stock /etc/zshrc global compinit double-inits every shell
+          # HM owns compinit (fingerprinted -C) and the prompt (starship); /etc/zshrc would otherwise run compinit, bashcompinit, and the suse
+          # promptinit theme in every interactive shell ahead of them.
+          programs.zsh = {
+            enableGlobalCompInit = false;
+            enableBashCompletion = false;
+            promptInit = "";
+          };
           system.primaryUser = host.user.name;
           users.users.${host.user.name} = {inherit (host.user) name home;};
         }

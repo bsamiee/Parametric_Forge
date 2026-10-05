@@ -5,7 +5,7 @@
 # Path          : modules/home/aliases/default.nix
 # ----------------------------------------------------------------------------
 # Alias register owner: sibling files are category-keyed row tables; this module folds each tuple into a typed row, stamps
-# owner_file and the risk default, asserts alias uniqueness, exposes forge.registers.aliases, and projects the shell surface.
+# owner_file and the risk default, asserts alias uniqueness, exposes estate.registers.aliases, and projects the shell surface.
 {
   host,
   lib,
@@ -31,7 +31,7 @@
   names = map (r: r.alias) rows;
   dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: n: acc // {${n} = (acc.${n} or 0) + 1;}) {} names));
 in {
-  options.forge.registers.aliases = lib.mkOption {
+  options.estate.registers.aliases = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = rows;
@@ -42,7 +42,7 @@ in {
     assertions = [
       {
         assertion = dupes == [];
-        message = "forge.registers.aliases: duplicate alias rows: ${lib.concatStringsSep ", " dupes}";
+        message = "estate.registers.aliases: duplicate alias rows: ${lib.concatStringsSep ", " dupes}";
       }
     ];
     programs.zsh.shellAliases =

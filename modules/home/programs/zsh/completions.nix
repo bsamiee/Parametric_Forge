@@ -14,7 +14,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette projections;
+  inherit (config.estate.theme) palette projections;
 
   # Package rows whose share/zsh/site-functions precede compinit on fpath.
   completionPackages = [pkgs.zsh-completions];
@@ -156,7 +156,7 @@
 
   # Activation: retire dumps from earlier fingerprints and the pre-fingerprint generations that dumped into ZDOTDIR.
   dumpRetirement = pkgs.writeShellApplication {
-    name = "forge-zsh-compdump-retire";
+    name = "zsh-compdump-retire";
     runtimeInputs = [pkgs.coreutils pkgs.findutils];
     text = ''
       cache_dir=${lib.escapeShellArg cacheDir}
@@ -166,8 +166,8 @@
     '';
   };
 in {
-  home.activation.forgeZshCompletions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${dumpRetirement}/bin/forge-zsh-compdump-retire
+  home.activation.zshCompdumpRetire = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    run ${dumpRetirement}/bin/zsh-compdump-retire
   '';
 
   programs.zsh = {

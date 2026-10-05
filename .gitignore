@@ -10,7 +10,7 @@ result-*
 # --- [CACHES] -----------------------------------------------------------------
 
 .cache/
-# .artifacts/ holds forge-provision generations and per-run agent scratch.
+# .artifacts/ holds provision generations and per-run agent scratch.
 **/.artifacts/
 
 # --- [ENVIRONMENT_VARIABLES] --------------------------------------------------

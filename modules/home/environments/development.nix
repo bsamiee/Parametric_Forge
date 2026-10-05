@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Development tools and version control
 {config, ...}: {
-  # Homebrew's own variables live in $XDG_CONFIG_HOME/homebrew/brew.env (modules/home/programs/shell-tools/forge-tools/default.nix), which brew
+  # Homebrew's own variables live in $XDG_CONFIG_HOME/homebrew/brew.env (modules/home/programs/shell-tools/redeploy.nix), which brew
   # reads in every context, the sudo activation included.
   home.sessionVariables = {
     # --- [NIX]
@@ -17,7 +17,7 @@
     GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
     # Difftastic brightness follows the estate surface luminance, not a mode literal
     DFT_BACKGROUND = let
-      surface = config.forge.theme.palette.background;
+      surface = config.estate.theme.palette.background;
     in
       if surface.r + surface.g + surface.b < 384
       then "dark"

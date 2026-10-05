@@ -4,7 +4,7 @@
 
 - `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, provisioning contract, commit standards. This file carries only agent-runtime deltas.
 - This repository is the machine/user toolchain owner for every estate host: shell, PATH, tool, wrapper, launcher, and credential behavior is fixed here, never patched in a sibling project.
-- Apple Container is a coexistence runtime, never a Docker/Compose replacement or `DOCKER_HOST` owner. Install ownership: `modules/darwin/homebrew/brews.nix`; runtime/env ownership: `modules/home/environments/containers.nix`; diagnostics: `forge-provision doctor`.
+- Apple Container is a coexistence runtime, never a Docker/Compose replacement or `DOCKER_HOST` owner. Install ownership: `modules/darwin/homebrew/brews.nix`; runtime/env ownership: `modules/home/environments/containers.nix`; diagnostics: `provision doctor`.
 - Runtime routing — Colima runs Docker Engine API, `DOCKER_HOST`, Compose, Pulumi Docker providers, Docker SDKs, Testcontainers, `docker cp`/`docker exec`, and Buildx-into-daemon.
 - Runtime routing — registry/image movement without a runtime uses `skopeo`/`crane`/`oras`/`regctl`.
 - Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
@@ -27,7 +27,7 @@
 
 ## [04]-[PROVISIONING_AND_LAUNCHERS]
 
-- The `forge-provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
+- The `provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
 - MCP servers are project-owned: each repository registers its servers with their upstream commands in its own `.mcp.json` and `.codex/config.toml`; Forge provisions no MCP server, package, wrapper, launcher, or credential directory.
 
 ## [05]-[AGENT_RUNTIME]
@@ -41,11 +41,11 @@
 
 ## [06]-[DEPLOY_SEAM]
 
-- Any change to a module, overlay, or launcher lands through `forge-redeploy --switch`; an edited `.nix` file without a switch is invisible to the running estate.
+- Any change to a module, overlay, or launcher lands through `redeploy --switch`; an edited `.nix` file without a switch is invisible to the running estate.
 - A file created in the working tree is `git add --intent-to-add`ed before its first build — untracked files are invisible to the git-filtered flake source, and a dirty-tree build silently packages without them.
 - Shared-home module edits prove both hosts before landing: the Darwin system build and `nix eval '.#nixosConfigurations.vps.config.system.build.toplevel.drvPath'` — `nix flake check` covers neither toplevel.
-- Probe a machine that misbehaves after a switch before theorizing about it: `readlink /run/current-system` reads generation-versus-`$HOME` drift, `launchctl list | grep parametric-forge` the live agent census against the declared set, `which -a <bin>` binary provenance and cross-owner shadows. Every probe is read-only, so it opens the investigation rather than closing it.
-- Forge deploys the generic `vps` NixOS host over SSH (`forge-redeploy --os nixos --host vps --target-host <ssh>`). Its baseline exposes only SSH; workloads and ingress require explicit owners.
+- Probe a machine that misbehaves after a switch before theorizing about it: `readlink /run/current-system` reads generation-versus-`$HOME` drift, `launchctl list | grep dev.bsamiee` the live agent census against the declared set, `which -a <bin>` binary provenance and cross-owner shadows. Every probe is read-only, so it opens the investigation rather than closing it.
+- Forge deploys the generic `vps` NixOS host over SSH (`redeploy --os nixos --host vps --target-host <ssh>`). Its baseline exposes only SSH; workloads and ingress require explicit owners.
 
 ## [07]-[REVIEW_GUIDELINES]
 

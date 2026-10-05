@@ -12,7 +12,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) roles;
+  inherit (config.estate.theme) roles;
   toml = pkgs.formats.toml {};
   configToml = toml.generate "pik-config.toml" {
     screen_size = "fullscreen";

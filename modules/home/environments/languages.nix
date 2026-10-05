@@ -7,10 +7,10 @@
 # Programming language toolchains and environments
 {
   config,
-  forgeToolchainEnvFor,
+  toolchainEnvFor,
   ...
 }: let
-  toolchainEnv = forgeToolchainEnvFor {
+  toolchainEnv = toolchainEnvFor {
     home = config.home.homeDirectory;
     username = config.home.username;
     xdgCacheHome = config.xdg.cacheHome;

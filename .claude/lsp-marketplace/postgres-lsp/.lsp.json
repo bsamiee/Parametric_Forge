@@ -1,9 +1,0 @@
-{
-    "postgres": {
-        "command": "postgrestools",
-        "args": ["lsp-proxy"],
-        "extensionToLanguage": {
-            ".sql": "sql"
-        }
-    }
-}

@@ -5,8 +5,8 @@
 # Path          : modules/home/programs/apps/nvim/default.nix
 # ----------------------------------------------------------------------------
 # Store-owned Neovim rail and Lua fact generator. Home Manager deploys the pinned plugin set (zero network at first start) and one
-# server/tool/chord/syntax inventory projects into generated forge/*.lua modules, the Claude LSP marketplace parity rows, and .luarc.json —
-# editor and Claude LSP never drift. Lua owns runtime behavior; Nix owns packages, paths, and facts.
+# server/tool/chord/syntax inventory projects into generated estate/*.lua modules and .luarc.json. Lua owns runtime behavior; Nix owns
+# packages, paths, and facts.
 {
   config,
   lib,
@@ -15,7 +15,7 @@
 }: let
   toLua = lib.generators.toLua {};
   manifest = import ../../../../../overlays/manifest.nix;
-  flakeRoot = config.forge.lsp.flakeRoot;
+  flakeRoot = config.estate.lsp.flakeRoot;
   stateHome = config.xdg.stateHome;
 
   # --- [TREESITTER_COMPAT_UNIT_NEOVIM_PIN_NVIM_TREESITTER_MAIN_PARSERS]
@@ -67,32 +67,22 @@
     ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
     ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
 
-  # --- [LSP_INVENTORY_ONE_ROW_FAMILY_TWO_CONSUMERS]
-  # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows; `claude` is the marketplace identity (plugin dir, extension map,
-  # optional settings override, optional lifecycle rows startupTimeout/shutdownTimeout/maxRestarts in milliseconds and counts) the health
-  # surface proves against .claude/lsp-marketplace — command/args derive from `cmd` at projection, so the tracked .lsp.json is a copy of the
-  # generated row and any hand edit there is drift. A plugin's tracked file change bumps its plugin.json version: Claude Code pins the
-  # installed cache to that version and refreshes it only on a bump (`claude plugin update <plugin>@forge-lsp`, an operator step).
-  # Commands are bare names resolving through the Forge per-user profile — never per-project shells (tool-resolution policy).
+  # --- [LSP_INVENTORY]
+  # `cmd`/`filetypes`/`root_markers`/`settings` feed vim.lsp.config rows. Commands are bare names resolving through the Forge per-user
+  # profile — never per-project shells (tool-resolution policy).
   servers = {
-    nixd = rec {
+    nixd = {
       cmd = ["nixd"];
       filetypes = ["nix"];
       root_markers = ["flake.nix" ".git"];
-      settings.nixd = config.forge.lsp.nixd;
-      claude = {
-        plugin = "nixd-lsp";
-        extensions.".nix" = "nix";
-        inherit settings;
-      };
+      settings.nixd = config.estate.lsp.nixd;
     };
     lua_ls = {
       cmd = ["lua-language-server"];
       filetypes = ["lua"];
       root_markers = [".luarc.json" "stylua.toml" ".git"];
       # The generated .luarc.json reaches only the deployed config dir; the settings row carries the same facts to every root, so repo sources
-      # resolve at apps/nvim (stylua.toml) with vim/plugin awareness. The Claude lane below carries only the drift-free globals, since a
-      # store-path workspace.library would drift the tracked .lsp.json on every plugin bump.
+      # resolve at apps/nvim (stylua.toml) with vim/plugin awareness.
       settings.Lua = {
         runtime.version = "LuaJIT";
         workspace = {
@@ -101,46 +91,26 @@
         };
         diagnostics.globals = ["vim" "Snacks"];
       };
-      claude = {
-        plugin = "lua-lsp";
-        extensions.".lua" = "lua";
-        settings.Lua.diagnostics.globals = ["vim" "Snacks"];
-      };
     };
     bashls = {
       cmd = ["bash-language-server" "start"];
       filetypes = ["sh" "bash"];
       root_markers = [".git"];
-      # Editor side disables the LSP shellcheck lane: nvim-lint owns shellcheck (namespace separation, one diagnostic per fault); Claude keeps it.
+      # Editor side disables the LSP shellcheck lane: nvim-lint owns shellcheck (namespace separation, one diagnostic per fault).
       settings.bashIde = {
         shellcheckPath = "";
         shfmt.path = "shfmt";
       };
-      claude = {
-        plugin = "bash-lsp";
-        extensions = {
-          ".sh" = "shellscript";
-          ".bash" = "shellscript";
-        };
-        settings.bashIde = {
-          shellcheckPath = "shellcheck";
-          shfmt.path = "shfmt";
-        };
-      };
     };
-    # Python (ty), TypeScript (tsc), and Biome carry no row: each project's mise.toml and uv.lock own those toolchains, and a project ships its
-    # own Claude plugin row for them, so the machine roster names only profile-installed servers.
+    # Python (ty), TypeScript (tsc), and Biome carry no row: each project's mise.toml and uv.lock own those toolchains, so the machine roster
+    # names only profile-installed servers.
     postgres_lsp = {
       cmd = ["postgrestools" "lsp-proxy"];
       filetypes = ["sql"];
       root_markers = ["postgrestools.jsonc" ".git"];
       settings = {};
-      claude = {
-        plugin = "postgres-lsp";
-        extensions.".sql" = "sql";
-      };
     };
-    yamlls = rec {
+    yamlls = {
       cmd = ["yaml-language-server" "--stdio"];
       filetypes = ["yaml"];
       root_markers = [".git"];
@@ -148,17 +118,9 @@
         schemaStore.enable = true;
         validate = true;
       };
-      claude = {
-        plugin = "yaml-lsp";
-        extensions = {
-          ".yaml" = "yaml";
-          ".yml" = "yaml";
-        };
-        inherit settings;
-      };
     };
     # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
-    # workspace folders itself, so generic clients (Claude Code, vim.lsp without roslyn.nvim) get project-scoped diagnostics, not misc-files mode.
+    # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
     # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
     # TOML: taplo's LSP mode; the SchemaStore catalog is on by default, and the PATH wrapper seats the house taplo.toml only where no project config exists.
     taplo = {
@@ -166,26 +128,15 @@
       filetypes = ["toml"];
       root_markers = [".taplo.toml" "taplo.toml" ".git"];
       settings = {};
-      claude = {
-        plugin = "taplo-lsp";
-        extensions.".toml" = "toml";
-      };
     };
     # jdtls imports a folder without a build file as an invisible project; its source roots, referenced jars, and project JDK arrive as
     # `java.project.sourcePaths`, `java.project.referencedLibraries`, and `java.configuration.runtimes` settings, so the machine row carries no
-    # project facts: a project's own Claude plugin row (first server registered per extension wins) or its Eclipse .classpath owns them.
+    # project facts: a project's Eclipse .classpath owns them.
     jdtls = {
       cmd = ["jdtls"];
       filetypes = ["java"];
       root_markers = ["pom.xml" "build.gradle" "build.gradle.kts" ".git"];
       settings = {};
-      claude = {
-        plugin = "jdtls-lsp";
-        extensions.".java" = "java";
-        # JVM boot plus workspace import outpaces the default startup window; a crash loop stops after three restarts.
-        startupTimeout = 120000;
-        maxRestarts = 3;
-      };
     };
     roslyn_ls = {
       cmd = [
@@ -200,17 +151,6 @@
       filetypes = ["cs"];
       root_markers = ["global.json" ".git"];
       settings = {};
-      claude = {
-        plugin = "roslyn-lsp";
-        extensions = {
-          ".cs" = "csharp";
-          ".csx" = "csharp";
-        };
-        # Solution load on a large workspace outpaces the default startup window (upstream's own plugin seats 120s); a crash loop stops after
-        # three restarts.
-        startupTimeout = 120000;
-        maxRestarts = 3;
-      };
     };
   };
 
@@ -274,8 +214,8 @@
     }
     {
       id = "redeploy-check";
-      label = "forge-redeploy --check-only";
-      argv = ["forge-redeploy" "--check-only"];
+      label = "redeploy --check-only";
+      argv = ["redeploy" "--check-only"];
       cwd = flakeRoot;
       mode = "pane";
     }
@@ -287,8 +227,8 @@
     }
     {
       id = "provision-doctor";
-      label = "forge-provision doctor";
-      argv = ["forge-provision" "doctor" "--json"];
+      label = "provision doctor";
+      argv = ["provision" "doctor" "--json"];
       mode = "scratch";
       ft = "json";
     }
@@ -339,12 +279,12 @@
         color = row.color.hex;
         style = row.style or "";
       })
-      config.forge.theme.syntaxScopes;
+      config.estate.theme.syntaxScopes;
     roles =
-      config.forge.theme.projections.rolesHex
+      config.estate.theme.projections.rolesHex
       # Git-state vocabulary rows: colorscheme highlights read .color, gitsigns sign text reads .glyph (the editor gutter is a terminal render
       # surface); the ascii twin stays with persisted consumers.
-      // {git = lib.mapAttrs (_: g: {inherit (g) color glyph;}) config.forge.theme.projections.gitHex;};
+      // {git = lib.mapAttrs (_: g: {inherit (g) color glyph;}) config.estate.theme.projections.gitHex;};
   };
 
   luarc =
@@ -373,31 +313,16 @@ in {
       recursive = true;
     };
     "nvim/.luarc.json".text = builtins.toJSON luarc;
-    "nvim/lua/forge/palette.lua".text = config.forge.theme.projections.luaPalette;
-    "nvim/lua/forge/syntax.lua".text = genLuaModule syntaxFacts;
-    "nvim/lua/forge/lsp.lua".text = genLuaModule {
+    "nvim/lua/estate/palette.lua".text = config.estate.theme.projections.luaPalette;
+    "nvim/lua/estate/syntax.lua".text = genLuaModule syntaxFacts;
+    "nvim/lua/estate/lsp.lua".text = genLuaModule {
       servers =
         lib.mapAttrs (_: row: {
           inherit (row) cmd filetypes root_markers settings;
         })
         servers;
     };
-    "nvim/lua/forge/tools.lua".text = genLuaModule toolFacts;
-    "nvim/lua/forge/chords.lua".text = genLuaModule config.forge.chords.nvim.rows;
-    # Claude marketplace parity projection: identity rows the health surface compares against <flake_root>/.claude/lsp-marketplace/<plugin>/
-    # .lsp.json. command/args are one fact — the server `cmd` row — projected here. Registering the marketplace and installing a plugin are
-    # operator decisions per scope (`claude plugin marketplace add`, `claude plugin install <plugin>@forge-lsp --scope user|project`), never
-    # an activation side effect; `:checkhealth forge` proves the state.
-    "forge/lsp/claude-marketplace.json".text = builtins.toJSON (
-      lib.mapAttrs' (_: row:
-        lib.nameValuePair row.claude.plugin ({
-            command = builtins.head row.cmd;
-            extensionToLanguage = row.claude.extensions;
-          }
-          // lib.optionalAttrs (builtins.tail row.cmd != []) {args = builtins.tail row.cmd;}
-          // lib.optionalAttrs (row.claude ? settings) {inherit (row.claude) settings;}
-          // lib.filterAttrs (name: _: builtins.elem name ["startupTimeout" "shutdownTimeout" "maxRestarts"]) row.claude))
-      servers
-    );
+    "nvim/lua/estate/tools.lua".text = genLuaModule toolFacts;
+    "nvim/lua/estate/chords.lua".text = genLuaModule config.estate.chords.nvim.rows;
   };
 }

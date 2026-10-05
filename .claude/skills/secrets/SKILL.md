@@ -21,12 +21,12 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 ## [02]-[RESOLUTION]
 
 - `~/.doppler` is the CLI config dir; scopes ride `~/.doppler/.doppler.yaml`, written by `doppler configure set` through the driver's `scopes apply`.
-- A repo-local `doppler.yaml` is vendor setup guidance, not the estate scope owner; the estate carries none.
+- `doppler.yaml` inside a repo is vendor setup guidance, never the estate scope owner; the estate carries none.
 - Precedence, highest first: a service token's embedded project/config, runtime flags, env vars, config-file scope.
 - Config-file scope resolves an exact directory match before the nearest ancestor.
 - Scope env vars: `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, `DOPPLER_CONFIG`, `DOPPLER_CONFIG_DIR`, `DOPPLER_PASSPHRASE`.
 - Agents pass `--project`/`--config` explicitly; env carries only token custody.
-- An ambient `DOPPLER_TOKEN` outranks flags and represents one config; strip it with `env -u DOPPLER_TOKEN` when fetching more than one source.
+- Ambient `DOPPLER_TOKEN` outranks flags and represents one config; strip it with `env -u DOPPLER_TOKEN` when fetching more than one source.
 
 ## [03]-[DOPPLER_CLI]
 
@@ -48,39 +48,39 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 
 ## [04]-[OP_CLI]
 
-`op` reads the local store directly; the field suffix is `token`, `credential`, or `password` per item. An exported `OP_SERVICE_ACCOUNT_TOKEN` pins `op` to the `Tokens` vault, so `Personal` (the SSH key) resolves only under `env -u OP_SERVICE_ACCOUNT_TOKEN`.
+`op` authenticates through the desktop app's CLI integration setting, which serves every vault the account holds; the field suffix is `token`, `credential`, or `password` per item. `OP_SERVICE_ACCOUNT_TOKEN` is a `Tokens` item for a machine without the desktop app, passed to that one process and never exported into a workstation shell: a service account sees only the vaults granted at its creation and no Personal vault, so an exported token hides `Personal` from every `op` call.
 
-| [INDEX] | [TASK]                          | [COMMAND]                                                                      |
-| :-----: | :------------------------------ | :----------------------------------------------------------------------------- |
-|  [01]   | Auth proof                      | `op whoami`                                                                    |
-|  [02]   | Vault inventory                 | `op vault list`                                                                |
-|  [03]   | Tokens item names               | `op item list --vault Tokens --format json \| jq -r '.[].title'`               |
-|  [04]   | Read one secret                 | `op read "op://Tokens/<ITEM>/<token\|credential\|password>"`                   |
-|  [05]   | Resolve the rebuild template    | `op inject -i ~/.config/op/env.template -o <out>`                              |
-|  [06]   | Personal-vault SSH item         | `env -u OP_SERVICE_ACCOUNT_TOKEN op item get "Forge SSH Key" --vault Personal` |
-|  [07]   | Rename an item to its real name | `op item edit "<old-title>" title="<official-name>" --vault Tokens`            |
+| [INDEX] | [TASK]                          | [COMMAND]                                                             |
+| :-----: | :------------------------------ | :-------------------------------------------------------------------- |
+|  [01]   | Auth proof                      | `op whoami`                                                           |
+|  [02]   | Vault inventory                 | `op vault list`                                                       |
+|  [03]   | Tokens item names               | `op item list --vault Tokens --format json \| jq -r '.[].title'`      |
+|  [04]   | Read one secret                 | `op read "op://Tokens/<ITEM>/<token\|credential\|password>"`          |
+|  [05]   | Resolve the rebuild template    | `op inject -i ~/.config/op/env.template -o <out>`                     |
+|  [06]   | Personal-vault SSH item         | `op item get "Bardia SSH Key" --vault Personal`                       |
+|  [07]   | Rename an item to its real name | `op item edit "<old-title>" --title "<official-name>" --vault Tokens` |
 
-- `op` serves the SSH key to `ssh`, `git`, WezTerm, Yazi, and rclone through the 1Password agent socket; the item ref lives in `1Password/ssh/agent.toml`, never a private key on disk.
+- 1Password's desktop-app SSH agent serves the key to `ssh`, `git`, WezTerm, Yazi, and rclone through its socket; the item ref lives in `1Password/ssh/agent.toml`, never a private key on disk.
 - Read a secret only to verify presence or wire a one-off; standing local consumption rides the activation-generated session cache.
 
 ## [05]-[SESSION_CUSTODY]
 
-`op inject` resolves `~/.config/op/env.template` into the mode-600 `~/.config/hm-op-session.sh` cache on every `forge-redeploy --switch`. Interactive shells source that cache through `forge-session-secrets.sh`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their material explicitly with the owning project and config.
+`op inject` resolves `~/.config/op/env.template` into the mode-600 `~/.config/hm-op-session.sh` cache on a switch whose template store path changed; an unchanged template skips the inject and the unlock. Every zsh sources that cache from `.zshenv`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their material explicitly with the owning project and config.
 
 - `~/.config/op/env.template` owns the local session key set; activation keeps values outside the Nix store.
-- `forge-session-secrets.sh` is the shell source path; `gui-op-secrets` is the GUI projection path.
+- `.zshenv` is the shell source path; `gui-op-secrets` is the GUI projection path.
 - Doppler delivery stays at the process boundary through `doppler run` or an owner-specific `doppler secrets download`.
 
 ## [06]-[CUSTODY]
 
-Local custody is `op`, never the OS keychain: every service and IaC token and the SSH key live in a `Tokens` or `Personal` vault item. A personal `doppler login` is the one credential Doppler keeps in the keychain, used for the operator's ad-hoc interactive work alone — no rail depends on it.
+Local custody is `op`, never the OS keychain: every service and IaC token and the SSH key live in a `Tokens` or `Personal` vault item. Doppler keeps one credential in the keychain, the personal `doppler login`, used for the operator's ad-hoc interactive work alone — no rail depends on it.
 
-| [INDEX] | [CLASS]                          | [CUSTODY]                                    | [USE]                           |
-| :-----: | :------------------------------- | :------------------------------------------- | :------------------------------ |
-|  [01]   | Config-scoped service token      | Pulumi stack secret output                    | Explicit runtime reads          |
-|  [02]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`        | Topology writes via Pulumi only |
-|  [03]   | Pulumi stack passphrase          | `op://Tokens/PULUMI_FORGE_SERVICES/password` | Stack state decryption          |
-|  [04]   | Provider PATs (GitHub and peers) | `op://Tokens` items, mirrored into configs   | Activation or process injection |
+| [INDEX] | [CLASS]                          | [CUSTODY]                                       | [USE]                           |
+| :-----: | :------------------------------- | :---------------------------------------------- | :------------------------------ |
+|  [01]   | Config-scoped service token      | Pulumi stack secret output                      | Explicit runtime reads          |
+|  [02]   | IaC admin token                  | `op://Tokens/DOPPLER_IAC_TOKEN/token`           | Topology writes via Pulumi only |
+|  [03]   | Pulumi stack passphrase          | `op://Tokens/PULUMI_CONFIG_PASSPHRASE/password` | Stack state decryption          |
+|  [04]   | Provider PATs (GitHub and peers) | `op://Tokens` items, mirrored into configs      | Activation or process injection |
 
 - Config-scoped service token: minted by topology rows; static Developer-plan tokens are revoked and reminted, never rotated in place.
 - IaC admin token and stack passphrase: brokered by `driver.ts`; an ambient `DOPPLER_TOKEN` or `PULUMI_CONFIG_PASSPHRASE` short-circuits the op read per run.
@@ -88,7 +88,7 @@ Local custody is `op`, never the OS keychain: every service and IaC token and th
 
 ## [07]-[LAW]
 
-- One item, one official name: an item carries the credential's real published name, never a handrolled synonym; a consumer needing a different env-var name renames the item at the source and repoints every reader, never adds a second item or a duplicate export aliasing the same secret. A naming mistake is fixed by renaming in `op` and Doppler, never papered over.
-- A new project lands as project/config rows in `Parametric_Forge/services/topology.ts` and a directory scope row, then `pulumi up`; retiring it deletes its rows.
-- A repo carries zero Doppler files; its agents resolve through scope and hook automatically.
+- One item, one official name: an item carries the credential's real published name, never a handrolled synonym; a consumer needing a different env-var name renames the item at the source and repoints every reader, never adds a second item or a duplicate export aliasing the same secret. Renaming in `op` and Doppler fixes a naming mistake; papering over never does.
+- New projects land as project/config rows in `Parametric_Forge/services/topology.ts` and a directory scope row, then `pulumi up`; retiring one deletes its rows.
+- Repos carry zero Doppler files; their agents resolve through scope and hook automatically.
 - Rendered secret material is ephemeral: `--mount`/`--mount-template` over durable renders; plaintext binds only where the target owner requires it.

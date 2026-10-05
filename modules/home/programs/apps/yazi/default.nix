@@ -21,13 +21,13 @@
         host = row.hostName;
         inherit (row) user;
         port = 22;
-        identity_agent = config.forge.ssh.identityAgent;
+        identity_agent = config.estate.ssh.identityAgent;
       })
-      config.forge.ssh.hosts;
+      config.estate.ssh.hosts;
   };
   # Remote-context Header badge (theme owner contextBadges.remote): an SFTP tree reads the same glyph and hue as the prompt hostname and the
   # WezTerm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
-  badge = config.forge.theme.projections.contextBadges.remote;
+  badge = config.estate.theme.projections.contextBadges.remote;
   remoteBadgeLua = ''
 
     -- --- [REMOTE_BADGE] (generated: theme owner contextBadges.remote) -----------------------
@@ -41,8 +41,6 @@
   yaziPkg = pkgs.yazi.override {
     _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
   };
-
-  # The ambient SSH_AUTH_SOCK is the identity-less Apple agent; VFS rows pin the estate identity socket (config.forge.ssh.identityAgent) explicitly.
 
   # Diagnostic previewer kernel: ONE dispatch surface over the config-language lanes; every arm is read-only evidence (checks + syntax render), never
   # a build, never network. Hover latency stays bounded by head caps.
@@ -176,7 +174,7 @@
   openers = {
     edit = [
       {
-        run = "forge-edit.sh %s";
+        run = "nvim-edit.sh %s";
         block = false;
         for = "unix";
       }

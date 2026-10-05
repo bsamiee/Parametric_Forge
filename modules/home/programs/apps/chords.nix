@@ -196,7 +196,7 @@
     {
       t = ["y" null null ["yazi popup" 150] ["files" 10]];
       id = "yaziToggle";
-      body = runFloat ["forge-yazi.sh" "toggle"] popupGeometry.dispatcher;
+      body = runFloat ["yazi-dispatch.sh" "toggle"] popupGeometry.dispatcher;
       pre = lib.concatStringsSep "\n" [
         "        // Floating dispatcher: toggles the per-tab Yazi popup (create /"
         "        // show+focus / hide). Never in_place: an attached client on 0.44.3"
@@ -230,7 +230,7 @@
     [260 "json explore" "jqi -> jnv"]
     [270 "loc report" "loc <path>"]
     [280 "folder map" "tree <path>"]
-    [290 "deploy" "forge-redeploy --check-only / --build / --switch"]
+    [290 "deploy" "redeploy --check-only / --build / --switch"]
     [300 "http" "GET/POST/PUT -> xh"]
   ];
 
@@ -298,7 +298,7 @@
     weztermRows;
 
   # --- [NEOVIM_EDITOR_DOMAIN_TABLE]
-  # One editor chord vocabulary keyed by domain; the nvim module projects it into lua/forge/chords.lua. `<cmd>…` targets land as native command
+  # One editor chord vocabulary keyed by domain; the nvim module projects it into lua/estate/chords.lua. `<cmd>…` targets land as native command
   # strings, bare names as dispatch-table fns (keymaps.lua binds both); mode defaults to ["n"]. Plugin README maps never leak in.
   mkNvim = t: let
     r = row ["keys" "target" "desc" "mode"] t;
@@ -387,7 +387,7 @@
       label = r.desc;
       action = r.action or r.fn;
       scope = "editor:${lib.concatStringsSep "," r.mode}";
-      projection_path = ".config/nvim/lua/forge/chords.lua";
+      projection_path = ".config/nvim/lua/estate/chords.lua";
       rendered = builtins.toJSON r;
     })
     nvimRows;
@@ -654,7 +654,7 @@
   # listToAttrs keeps the first occurrence: a duplicate injection id would shadow silently without this guard.
   conflictInjectionIds = dupesOf (lib.concatMap (rows: lib.concatMap (r: lib.optional (r ? id) r.id) rows) (lib.attrValues bindRows));
 in {
-  options.forge.chords = lib.mkOption {
+  options.estate.chords = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
@@ -685,20 +685,20 @@ in {
   config.assertions = [
     {
       assertion = conflictClaims == [];
-      message = "forge.chords: conflicting chord claims: ${lib.concatStringsSep ", " conflictClaims}";
+      message = "estate.chords: conflicting chord claims: ${lib.concatStringsSep ", " conflictClaims}";
     }
     {
       assertion = conflictIds == [];
-      message = "forge.chords: duplicate chord_id rows: ${lib.concatStringsSep ", " conflictIds}";
+      message = "estate.chords: duplicate chord_id rows: ${lib.concatStringsSep ", " conflictIds}";
     }
     {
       assertion = conflictInjectionIds == [];
-      message = "forge.chords: duplicate injection ids: ${lib.concatStringsSep ", " conflictInjectionIds}";
+      message = "estate.chords: duplicate injection ids: ${lib.concatStringsSep ", " conflictInjectionIds}";
     }
     {
       # zipListsWith truncates: a layer past the role vocabulary would vanish from the headerComment silently instead of landing misdocumented.
       assertion = builtins.length (lib.attrValues layers) <= builtins.length headerRoles;
-      message = "forge.chords: ${toString (builtins.length (lib.attrValues layers))} layers exceed the ${toString (builtins.length headerRoles)}-row headerRoles vocabulary; extend headerRoles.";
+      message = "estate.chords: ${toString (builtins.length (lib.attrValues layers))} layers exceed the ${toString (builtins.length headerRoles)}-row headerRoles vocabulary; extend headerRoles.";
     }
   ];
 }

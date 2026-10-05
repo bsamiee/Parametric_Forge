@@ -8,7 +8,7 @@
 _: {
   perSystem = {
     config,
-    forgePkgs,
+    overlaidPkgs,
     lib,
     ...
   }: let
@@ -32,28 +32,28 @@ _: {
     # SQL dialect is a per-file fact; each row binds its files to a generated config projected from the style vocabulary. sqruff discovery is
     # cwd-only, so the explicit --config keeps rows hermetic inside the sandboxed check.
     sqruffRow = dialect: includes: {
-      command = "${forgePkgs.sqruff}/bin/sqruff";
+      command = "${overlaidPkgs.sqruff}/bin/sqruff";
       options = [
         "--config"
-        (toString (forgePkgs.writeText "sqruff-${dialect}" (style.sql "sqruff" dialect)))
+        (toString (overlaidPkgs.writeText "sqruff-${dialect}" (style.sql "sqruff" dialect)))
         "fix"
       ];
       inherit includes;
     };
   in {
     # Repository-maintenance shell: formatter plus flake proof/update helpers. Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
-    devShells.default = forgePkgs.mkShell {
+    devShells.default = overlaidPkgs.mkShell {
       packages = [
         config.formatter
-        forgePkgs.deadnix
-        forgePkgs.statix
-        forgePkgs.nix-fast-build
-        forgePkgs.nix-init
-        forgePkgs.nix-output-monitor
-        forgePkgs.nix-update
-        forgePkgs.nixpkgs-review
-        forgePkgs.nvfetcher
-        forgePkgs.nurl
+        overlaidPkgs.deadnix
+        overlaidPkgs.statix
+        overlaidPkgs.nix-fast-build
+        overlaidPkgs.nix-init
+        overlaidPkgs.nix-output-monitor
+        overlaidPkgs.nix-update
+        overlaidPkgs.nixpkgs-review
+        overlaidPkgs.nvfetcher
+        overlaidPkgs.nurl
       ];
     };
 
@@ -91,7 +91,7 @@ _: {
         biome.excludes = biomeExcludes;
         # --isolated ties output to row options, treefmt's cache key, and --no-cache moves caching from the working directory's .ruff_cache to treefmt
         ruff-format = {
-          command = "${forgePkgs.ruff}/bin/ruff";
+          command = "${overlaidPkgs.ruff}/bin/ruff";
           options = [
             "format"
             "--isolated"
@@ -114,8 +114,8 @@ _: {
         # The style vocabulary is the single law; its bytes ride the row so the sandboxed check needs no XDG config and the treefmt cache busts
         # whenever the law changes. pnpm owns its lockfile pair and rewrites both in its own layout.
         yamlfmt = {
-          command = "${forgePkgs.yamlfmt}/bin/yamlfmt";
-          options = ["-conf" (toString (forgePkgs.writeText "yamlfmt-conf" style.yamlfmt))];
+          command = "${overlaidPkgs.yamlfmt}/bin/yamlfmt";
+          options = ["-conf" (toString (overlaidPkgs.writeText "yamlfmt-conf" style.yamlfmt))];
           includes = ["*.yaml" "*.yml"];
           excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
         };

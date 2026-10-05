@@ -15,8 +15,8 @@
   style = import ../../../style.nix;
   sqlDialects = ["postgres" "duckdb" "sqlite"];
 
-  # PostgreSQL 18 client roster; server extensions stay Docker-owned by forge-provision.
-  postgres18ForgeTools = pkgs.runCommand "postgres18-forge-client-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
+  # PostgreSQL 18 client roster; server extensions stay Docker-owned by provision.
+  postgres18ClientTools = pkgs.runCommand "postgres18-client-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
     mkdir -p "$out/bin"
     for bin in psql pg_dump pg_dumpall pg_restore pg_isready pgbench pg_amcheck createdb dropdb createuser dropuser vacuumdb reindexdb clusterdb; do
       makeWrapper "${pkgs.postgresql_18}/bin/$bin" "$out/bin/$bin"
@@ -65,12 +65,12 @@ in {
     sqlite-vec # Vector similarity extension for SQLite
     libspatialite # Spatial SQL extension for geospatial work
     sqlfluff # SQL linter and formatter supporting multiple dialects
-    postgres18ForgeTools # PostgreSQL 18 client commands
+    postgres18ClientTools # PostgreSQL 18 client commands
     sqruff # SQL linter/formatter (let-bound house-config fallback wrapper)
     pgformatter # PostgreSQL SQL formatter
     sqlean # Extension library bundle (regexp, uuid, stats, etc.)
     postgres-language-server # Postgres LSP; bundles postgrestools
-    sqlite-forge # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
+    sqlite-extended # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
     (harlequin.override {withBigQueryAdapter = false;}) # Terminal SQL IDE with duckdb/sqlite/postgres adapters
     visidata # Interactive tabular workbench for CSV/parquet/JSON/directory sheets
   ];

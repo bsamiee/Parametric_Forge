@@ -45,14 +45,14 @@ Parametric_Forge/
 │       │   └── zsh/
 │       └── scripts/               # Integration and analysis kernels
 ├── overlays/                      # Manifest-folded package admissions
-│   └── forge-provision/           # Local provisioning CLI
+│   └── provision/                 # Local provisioning CLI
 ├── services/                      # Doppler and GitHub IaC rows
 ├── docs/
 │   ├── atlas/                     # Platform facts, rails, interconnection
 │   ├── laws/                      # Estate design and machine law
 │   ├── stacks/                    # Language law
 │   └── standards/                 # Prose, formatting, information structure
-├── .claude/                       # Harness agents, commands, skills, scripts, LSP marketplace
+├── .claude/                       # Harness agents, commands, skills, scripts
 ├── .greptile/                     # Per-repo reviewer configuration
 └── .coderabbit.yaml               # Per-repo reviewer configuration
 ```
@@ -65,16 +65,16 @@ Parametric_Forge/
 
 Rulings derive from principles, not precedent lists. These axes resolve each new situation:
 
-| [INDEX] | [AXIS]                 | [LAW]                                                                                                       |
-| :-----: | :--------------------- | :---------------------------------------------------------------------------------------------------------- |
-|  [01]   | Greenfield-only        | Every touched surface rebuilds to the best current shape; no compatibility layer of any kind survives.      |
-|  [02]   | One owner per axis     | One declaring file per concern; a second copy of any fact is a fork — extend the owner, never add files.    |
-|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table; a new host, package, or service is one row.    |
-|  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction.          |
-|  [05]   | IaC over YAML          | Service state is typed Pulumi rows in `services/` — Doppler, GitHub — never per-repo files or click-ops.    |
-|  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands. |
+| [INDEX] | [AXIS]                 | [LAW]                                                                                                              |
+| :-----: | :--------------------- | :----------------------------------------------------------------------------------------------------------------- |
+|  [01]   | Greenfield-only        | Every touched surface rebuilds to the best current shape; no compatibility layer of any kind survives.             |
+|  [02]   | One owner per axis     | One declaring file per concern; a second copy of any fact is a fork — extend the owner, never add files.           |
+|  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table; a new host, package, or service is one row.           |
+|  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction.                 |
+|  [05]   | IaC over YAML          | Service state is typed Pulumi rows in `services/` — Doppler, GitHub — never per-repo files or click-ops.           |
+|  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands.        |
 |  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; a project that uses LFS pins `git-lfs` in its `mise.toml`. |
-|  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.             |
+|  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.                    |
 
 ## [04]-[DETERMINATE_NIX]
 
@@ -83,7 +83,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 ## [05]-[MODULE_BOUNDARIES]
 
 - `modules/common/` carries what both OSes consume identically: Nix settings and the toolchain env vocabulary. `host.os` selects the OS branch from the static host context without entering the package fixpoint.
-- `modules/darwin/` carries system-scope macOS state: defaults, security (`%admin` sudoers NOPASSWD allowlist, the primary user's passwordless `ALL`, TCC adjacency), and the Homebrew bridge. Homebrew carries GUI/proprietary bundles nixpkgs cannot ship; nix-darwin's Brewfile installs missing roster entries while native Homebrew owns metadata, versions, and cleanup. Uninstall/zap stays off so operator installs survive.
+- `modules/darwin/` carries system-scope macOS state: defaults, security (the primary user's passwordless sudo `ALL`, TCC adjacency), and the Homebrew bridge. Homebrew carries GUI/proprietary bundles nixpkgs cannot ship; nix-darwin's Brewfile installs missing roster entries while native Homebrew owns metadata, versions, and cleanup. Uninstall/zap stays off so operator installs survive.
 - `Casks/` owns vendor GUI packages absent from Homebrew's main catalog; `modules/darwin/homebrew/` projects their installation through the `bsamiee/forge` tap.
 - Adobe applications remain Creative Cloud-owned; Typeface Beta uses its native vendor updater. `mac-tools/default-applications.nix` owns exact native handlers through utiluti. `home/fonts.nix` installs the curated catalog through Home Manager's native user font projection.
 - `modules/nixos/` carries the generic VPS baseline: boot and disko, static addressing projected from the host-context network row, key-only SSH, declarative users, and routine Nix maintenance. Work reaches the server through its native `ssh vps` host; no local mount, persistent tunnel, or project service is implied. Nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes here.
@@ -106,18 +106,18 @@ One ed25519 key serves everything: custodied in the 1Password Personal vault, se
 
 ## [09]-[DEPLOY_RAIL_AND_AUTOMATION]
 
-`forge-redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it gates on `nix flake check`, builds the per-host toplevel, diffs the closure, activates, and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally under the sudoers allowlist; NixOS targets deploy over SSH.
+`redeploy [--os darwin|nixos] [--host NAME] [--target-host SSH] --check-only|--build|--switch` is the only sanctioned activation path: it gates on `nix flake check`, builds the per-host toplevel, diffs the closure, activates, and pushes the system closure to Cachix when `CACHIX_AUTH_TOKEN` resolves. Darwin activates locally through the primary user's passwordless sudo; NixOS targets deploy over SSH.
 
-Probe a machine that misbehaves after a switch before theorizing about it: `which -a <bin>` classifies PATH owners and cross-owner shadows, `launchctl list | grep com.parametric-forge` reconciles the declared agent set against the live table, and `readlink /run/current-system` reads the live generation against `$HOME`. Every probe is read-only, so it opens the investigation rather than closing it.
+Probe a machine that misbehaves after a switch before theorizing about it: `which -a <bin>` classifies PATH owners and cross-owner shadows, `launchctl list | grep dev.bsamiee` reconciles the declared agent set against the live table, and `readlink /run/current-system` reads the live generation against `$HOME`. Every probe is read-only, so it opens the investigation rather than closing it.
 
-Recurring machine work is launchd-owned under the `com.parametric-forge.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep com.parametric-forge` is the live census, `launchctl print gui/$UID/com.parametric-forge.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
+Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep dev.bsamiee` is the live census, `launchctl print gui/$UID/dev.bsamiee.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
 
 ## [10]-[TOOLCHAINS]
 
-- [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `forge-runtime-dylibs` tree ctypes consumers dlopen by name.
-- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-forge` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `forge-provision`.
-- [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. That `dotnet` reaches PATH through the mise shim farm `toolchain-env.nix` appends as the last segment of the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
-- [PROVISIONING]: `forge-provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `forge-provision --help` is the live verb list. Direct calls are Forge-level debugging.
+- [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `runtime-dylibs` tree ctypes consumers dlopen by name.
+- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `provision`.
+- [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. That `dotnet` reaches PATH through the mise shim segment `toolchain-env.nix` puts first on the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
+- [PROVISIONING]: `provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `provision --help` is the live verb list. Direct calls are Forge-level debugging.
 
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
@@ -150,7 +150,7 @@ Everything lands declaratively with the first switch; only these steps are manua
     - Verify: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -L` lists the key
 3. Clone to the path the deploy rail resolves; the agent socket is explicit until the first switch projects `~/.ssh/config`.
     - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Developer/Parametric_Forge`
-    - Verify: repo present at `FORGE_ROOT`
+    - Verify: repo present at `~/Developer/Parametric_Forge`
 4. Authenticate GitHub.
     - Command: `gh auth login` (keyring, SSH protocol)
     - Verify: `gh auth status`
@@ -159,18 +159,18 @@ Everything lands declaratively with the first switch; only these steps are manua
     - Verify: `doppler me`
 6. Grant the bootstrap terminal Full Disk Access (System Settings → Privacy & Security) — `universalaccess` defaults writes abort activation without it; move the grant to WezTerm after the first switch.
     - Verify: the switch's Home Manager `onChange` import of `com.apple.universalaccess` passes without `Could not write domain com.apple.universalaccess`
-7. First switch — installs the sudoers allowlist every later `forge-redeploy --switch` rides. Installer-written real files at `/etc/pam.d/sudo_local` or `/etc/nix/nix.custom.conf` trip the /etc collision guard: move each aside (`.before-nix-darwin`) and rerun.
+7. First switch — installs the passwordless sudo row every later `redeploy --switch` rides. Installer-written real files at `/etc/pam.d/sudo_local` or `/etc/nix/nix.custom.conf` trip the /etc collision guard: move each aside (`.before-nix-darwin`) and rerun.
     - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
-    - Verify: `forge-redeploy --check-only`
+    - Verify: `redeploy --check-only`
 8. Approve the TCC/automation prompts macOS raises on first launches: Karabiner driver extension + Input Monitoring, LinearMouse Accessibility, and the 1Password autofill pair (AutoFill & Passwords → 1Password on, Apple Passwords off; Privacy & Security → Accessibility → 1Password).
     - Verify: affected agents run without prompting
 
-Day-2 rebuilds: `forge-redeploy --switch`. `nixos-anywhere` with disko bootstraps each NixOS host from its `hosts/context.nix` row; day-2 uses the same rail with `--os nixos --target-host`.
+Day-2 rebuilds: `redeploy --switch`. `nixos-anywhere` with disko bootstraps each NixOS host from its `hosts/context.nix` row; day-2 uses the same rail with `--os nixos --target-host`.
 
 ## [15]-[MAINTENANCE]
 
 - Format: `nix fmt -- --ci` — full proof: `nix flake check`.
-- Provisioner: `nix build .#forge-provision`; smoke with `nix run .#forge-provision -- self-test`.
+- Provisioner: `nix build .#provision`; smoke with `nix run .#provision -- self-test`.
 - Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[06]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
 
 Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly && brew cleanup`.

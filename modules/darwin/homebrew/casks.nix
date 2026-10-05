@@ -12,8 +12,11 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so only the greedy activation upgrade refreshes it.
-    "wezterm@nightly"
+    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so only a greedy upgrade refreshes it.
+    {
+      name = "wezterm@nightly";
+      greedy = true;
+    }
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
@@ -74,6 +77,7 @@ _: {
 
     # --- [3D_CREATION]
     "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch, pinned in Casks/blender@daily.rb; the cask links its blender command wrapper into /opt/homebrew/bin
+    "epic-games" # Epic Games Launcher; Unreal Engine and Twinmotion install into /Users/Shared/Epic Games and update through it, and the launcher self-updates, so activation only realigns Homebrew's record
     "inkscape" # Bonsai's SVG to DXF/PDF sheet converter, read at its app bundle; the cask links its inkscape command wrapper into /opt/homebrew/bin
     "xquartz" # X11 server the VI-Suite LiVi preview (Radiance rvu) opens its window on
 

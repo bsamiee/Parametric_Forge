@@ -102,7 +102,7 @@ in {
       run ${pkgs.runtimeShell} -c ${lib.escapeShellArg ''
         set -eu
         permsFile="${permsFile}"
-        tmp="$permsFile.forge-tmp"
+        tmp="$permsFile.tmp"
         ${pkgs.coreutils}/bin/mkdir -p "''${permsFile%/*}"
         if [ -f "$permsFile" ]; then
           ${pkgs.gawk}/bin/awk -v dir="${plugDir}/" -v q='"' -f ${pruneAwk} "$permsFile" >"$tmp"

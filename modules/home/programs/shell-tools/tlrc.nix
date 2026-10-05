@@ -12,7 +12,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (config.estate.theme) palette;
   toml = pkgs.formats.toml {};
   rgb = c: {rgb = [c.r c.g c.b];};
   style = color: extra:

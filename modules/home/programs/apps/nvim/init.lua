@@ -4,7 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/init.lua
 -- ----------------------------------------------------------------------------
--- Deterministic startup: options, chords, LSP rows, then plugin setup owners; plugins and forge/* fact modules
+-- Deterministic startup: options, chords, LSP rows, then plugin setup owners; plugins and estate/* fact modules
 -- arrive store-owned via Home Manager, so no runtime bootstrap exists.
 
 require("config.options")

@@ -10,7 +10,7 @@
   pkgs,
   ...
 }: let
-  # Styles are ANSI-16 slots; the terminal palette (forge.theme.ansi16 projected through WezTerm) resolves them to estate colors.
+  # Styles are ANSI-16 slots; the terminal palette (estate.theme.ansi16 projected through WezTerm) resolves them to estate colors.
   tomlFormat = pkgs.formats.toml {};
 
   procsConfig = {

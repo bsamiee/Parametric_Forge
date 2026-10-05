@@ -7,7 +7,7 @@
 # Resource monitor themed from the estate palette owner
 {config, ...}: let
   # palette retained for the categorical per-core / per-GPU rainbows — a chromatic spectrum wants stable distinct hues, not semantic roles.
-  inherit (config.forge.theme) roles palette;
+  inherit (config.estate.theme) roles palette;
 in {
   programs.bottom = {
     enable = true;

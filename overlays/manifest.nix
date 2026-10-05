@@ -69,6 +69,25 @@ let
     };
   in
     pins // {assets = builtins.mapAttrs (_: asset: asset // {extension = "tar.gz";}) pins.assets;};
+  # The Linux zips carry `op` beside its signature at the archive root, so the unpacked pin keeps that root.
+  onePasswordCliPins = let
+    pins = pinFamily {
+      aarch64-darwin = "1password-cli-aarch64-darwin";
+      aarch64-linux = "1password-cli-aarch64-linux";
+      x86_64-linux = "1password-cli-x86_64-linux";
+    };
+  in
+    pins
+    // {
+      assets = builtins.mapAttrs (_: asset:
+        asset
+        // (
+          if asset ? fetch
+          then {stripRoot = false;}
+          else {}
+        ))
+      pins.assets;
+    };
   veraPdfPins = pinFamily {
     aarch64-darwin = "design-verapdf-cli";
     aarch64-linux = "design-verapdf-cli";
@@ -120,7 +139,7 @@ let
 in rec {
   vocabulary = {
     sourceKinds = ["source-build" "binary-archive" "github-release" "nixpkgs" "repo"];
-    patchFamilies = ["none" "darwin-install-name" "auto-patchelf" "source-substitute"];
+    patchFamilies = ["none" "auto-patchelf" "source-substitute"];
     cacheClasses = ["source-built-local" "binary-only-local"];
     updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
     versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
@@ -152,11 +171,13 @@ in rec {
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
-    imagemagick = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] "the palette and image workflows require the current ICC converter with its complete existing delegate closure";
+    # New attrs beside nixpkgs' imagemagick and qpdf: an override re-keys vips, yazi, fastfetch, pikepdf, and every package above them off the cache.
+    imagemagick-current = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] null;
     fontconfig = designSource "fontconfig" null "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
     geist-font = designSource "geist-font" null "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
     scheherazade-new = designSource "scheherazade-new" null "ofl" "https://software.sil.org/scheherazade/" "Current Scheherazade New Arabic-script text font programs" ["fonts-catalog" "font-manifest"] "the script fallback chain and the design apps must render the current SIL release, which nixpkgs lags";
-    harfbuzz = designSource "harfbuzz" null "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["scientific-tools" "media-tools" "font-manifest"] "the current shaping library is shared by the renderers, Poppler subsetting, and the complete command-line tool variant";
+    # A new attr beside nixpkgs' harfbuzz: an override re-keys pango, libass, libraqm, and every package above them off the binary cache.
+    harfbuzz-current = designSource "harfbuzz" null "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["media-tools" "font-manifest" "poppler-utils-current"] null;
     poppler-utils-current =
       (designSource "poppler" null "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
       // {
@@ -164,7 +185,7 @@ in rec {
         testDataPin = "design-poppler-test-data";
       };
     mupdf = designSource "mupdf" null "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
-    qpdf = designSource "qpdf" null "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] "all publication PDF transformations use the current parser and writer";
+    qpdf-current = designSource "qpdf" null "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] null;
     ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
 
     utiluti = {
@@ -198,6 +219,23 @@ in rec {
       description = "Universal document converter";
       homepage = "https://pandoc.org/";
       mainProgram = "pandoc";
+    };
+
+    # A new attr beside nixpkgs' _1password-cli, which trails the 1Password release line; its one consumer reads it, so nothing else re-keys.
+    _1password-cli-current = {
+      upstream = "https://app-updates.agilebits.com/product_history/CLI2";
+      inherit (onePasswordCliPins) version assets;
+      versionPolicy = "fast";
+      sourceKind = "binary-archive";
+      license = "unfree";
+      patchFamily = "auto-patchelf";
+      cacheClass = "binary-only-local";
+      updateEngine = "nvfetcher";
+      projection.overlay = "new";
+      consumers = ["shell-tools:1password"];
+      description = "1Password command-line tool";
+      homepage = "https://developer.1password.com/docs/cli/";
+      mainProgram = "op";
     };
 
     verapdf-current = {
@@ -266,7 +304,7 @@ in rec {
         app = true;
       };
       overlayReason = "the top-level attr becomes the upstream binary CLI for every consumer; pythonPackagesExtensions pins python duckdb (Harlequin engine) back to the nixpkgs source-built lineage the header-less binary cannot satisfy";
-      consumers = ["forge-provision" "pythonPackages.duckdb"];
+      consumers = ["provision"];
       description = "DuckDB command line client";
       homepage = "https://duckdb.org/";
       mainProgram = "duckdb";
@@ -308,10 +346,30 @@ in rec {
       updateEngine = "nvfetcher";
       projection.overlay = "override";
       overlayReason = "nixpkgs carries the previous jdtls milestone; the attr override routes the dev-tools row and the jdtls server rows in apps/nvim through the newest release";
-      consumers = ["dev-tools" "nvim:jdtls" "forge-lsp:jdtls-lsp"];
+      consumers = ["dev-tools" "nvim:jdtls"];
       description = "Eclipse JDT Language Server for Java";
       homepage = "https://github.com/eclipse-jdtls/eclipse.jdt.ls";
       mainProgram = "jdtls";
+    };
+
+    # The nixpkgs recipe over librdkafka's newest tag, release candidates included: a candidate tag carries its release's RD_KAFKA_VERSION, the
+    # value confluent-kafka's sdist compares against its minimum at compile time. The tag is the fetch rev, so `version` drops its `v`. A new attr
+    # beside nixpkgs' rdkafka, so ffmpeg and every package above it keep their cached builds.
+    rdkafka-current = {
+      upstream = "github:confluentinc/librdkafka";
+      sourcePackage = "rdkafka";
+      sourcePin = "rdkafka";
+      version = builtins.head (builtins.match "v(.*)" generatedPins.rdkafka.version);
+      versionPolicy = "fast";
+      sourceKind = "source-build";
+      license = "bsd2";
+      patchFamily = "source-substitute";
+      cacheClass = "source-built-local";
+      updateEngine = "nvfetcher";
+      projection.overlay = "new";
+      consumers = ["toolchain-env"];
+      description = "Apache Kafka C client library";
+      homepage = "https://github.com/confluentinc/librdkafka";
     };
 
     sqlean = {
@@ -325,9 +383,9 @@ in rec {
       updateEngine = "nvfetcher";
       projection = {
         overlay = "new";
-        package = true; # package-only: extension library set consumed by sqlite-forge
+        package = true; # package-only: extension library set consumed by sqlite-extended
       };
-      consumers = ["sqlite-forge" "db-tools"];
+      consumers = ["sqlite-extended" "db-tools"];
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
     };
@@ -418,11 +476,11 @@ in rec {
       mainProgram = "energyplus";
     };
 
-    forge-provision = {
-      upstream = "repo:overlays/forge-provision";
+    provision = {
+      upstream = "repo:overlays/provision";
       versionPolicy = "repo-owned";
       sourceKind = "repo";
-      sourceInputs = ["overlays/forge-provision"]; # fileset whose change re-keys the derivation
+      sourceInputs = ["overlays/provision"]; # fileset whose change re-keys the derivation
       license = "mit";
       patchFamily = "none";
       cacheClass = "source-built-local";
@@ -437,10 +495,10 @@ in rec {
       consumers = ["scripts" "nvim"];
       description = "Local PostgreSQL provisioning rail for the estate";
       homepage = "https://github.com/bardiasamiee/Parametric_Forge";
-      mainProgram = "forge-provision";
+      mainProgram = "provision";
     };
 
-    sqlite-forge = {
+    sqlite-extended = {
       upstream = "repo:overlays";
       versionPolicy = "repo-owned";
       sourceKind = "repo";
@@ -462,10 +520,10 @@ in rec {
           fileio = ["fileio"];
         };
       };
-      consumers = ["db-tools" "forge-provision"];
+      consumers = ["db-tools" "provision"];
       description = "SQLite shell kernel preloading the SQLean module profiles";
       homepage = "https://github.com/bardiasamiee/Parametric_Forge";
-      mainProgram = "sqlite-forge";
+      mainProgram = "sqlite-extended";
     };
   };
 

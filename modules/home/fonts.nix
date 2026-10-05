@@ -22,7 +22,7 @@
   # Roles are the swap surface: one family per role, scripts ordered by shaping preference. Every role family must be a catalog row — a typo
   # fails at eval, never at runtime. The mono chain is the fallback expression CoreText and Chromium renderers read; fontconfig is
   # inert against them. Emoji is system-owned (Apple Color Emoji): a chain member so WezTerm's bundled Noto Color Emoji never wins, never a package row.
-  roles = lib.throwIf (!(lib.all (f: catalog ? ${f}) (lib.flatten (lib.attrValues roles')))) "forge.fonts: a role names a family absent from the catalog" roles';
+  roles = lib.throwIf (!(lib.all (f: catalog ? ${f}) (lib.flatten (lib.attrValues roles')))) "estate.fonts: a role names a family absent from the catalog" roles';
   roles' = {
     mono = "Geist Mono";
     sans = "Geist";
@@ -53,14 +53,14 @@
   # --- [BUILD_TIME_MANIFEST_NAME_TABLE_IDENTITY_FEATURE_SHAPING_RECEIPTS]
   # fonttools is the metadata oracle, hb-shape the shaping oracle; feature claims are proven by receipts, never by settings presence. Script rows
   # additionally assert zero .notdef over the Perso-Arabic sample.
-  catalogJson = pkgs.writeText "forge-font-catalog.json" (builtins.toJSON (lib.mapAttrs (_: row: {
+  catalogJson = pkgs.writeText "font-catalog.json" (builtins.toJSON (lib.mapAttrs (_: row: {
       path = "${row.package}/${row.file}";
       package = "${row.package.pname or row.package.name}-${row.package.version or ""}";
       inherit (row) class roles;
       sample = row.sample or "-> => != >= fi ffi 0O1lI";
     })
     catalog));
-  manifestPy = pkgs.writeText "forge-font-manifest.py" ''
+  manifestPy = pkgs.writeText "font-manifest.py" ''
     import json, os, subprocess, sys
     from fontTools.ttLib import TTFont
 
@@ -90,19 +90,19 @@
             "axes": axes, "features": gsub,
             "shaping": {"sample": sample, "glyphs": shaped},
         }
-    json.dump({"schema": "forge-fonts/v1", "families": rows}, open(os.path.join(sys.argv[3], "families.json"), "w"), indent=1, ensure_ascii=False)
+    json.dump({"schema": "fonts/v1", "families": rows}, open(os.path.join(sys.argv[3], "families.json"), "w"), indent=1, ensure_ascii=False)
   '';
   fontManifest =
-    pkgs.runCommand "forge-font-manifest" {
-      nativeBuildInputs = [(pkgs.python3.withPackages (ps: [ps.fonttools])) pkgs.harfbuzz.dev];
+    pkgs.runCommand "font-manifest" {
+      nativeBuildInputs = [(pkgs.python3.withPackages (ps: [ps.fonttools])) pkgs.harfbuzz-current.dev];
     } ''
       mkdir -p $out
       # Base harfbuzz owns the shaping oracle: the icu variant ships no core libharfbuzz.so on Linux, and hb-shape carries no RUNPATH, so the
       # explicit library path binds the loader on Linux while staying inert on darwin (absolute install-names). OT shaping needs no ICU.
-      export LD_LIBRARY_PATH=${lib.makeLibraryPath [pkgs.harfbuzz]}
-      python3 ${manifestPy} ${catalogJson} ${pkgs.harfbuzz.dev}/bin/hb-shape $out
+      export LD_LIBRARY_PATH=${lib.makeLibraryPath [pkgs.harfbuzz-current]}
+      python3 ${manifestPy} ${catalogJson} ${pkgs.harfbuzz-current.dev}/bin/hb-shape $out
     '';
-  manifestJson = pkgs.runCommand "forge-fonts.json" {nativeBuildInputs = [pkgs.jq];} ''
+  manifestJson = pkgs.runCommand "fonts.json" {nativeBuildInputs = [pkgs.jq];} ''
     jq --argjson roles ${lib.escapeShellArg (builtins.toJSON roles)} \
        --argjson chains ${lib.escapeShellArg (builtins.toJSON chains)} \
        --argjson surfaces ${lib.escapeShellArg (builtins.toJSON surfaces)} \
@@ -111,7 +111,7 @@
        ${fontManifest}/families.json >$out
   '';
 in {
-  options.forge.fonts = lib.mkOption {
+  options.estate.fonts = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
@@ -137,6 +137,6 @@ in {
 
   config = {
     home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
-    xdg.configFile."forge/fonts/manifest.json".source = manifestJson;
+    xdg.configFile."estate/fonts/manifest.json".source = manifestJson;
   };
 }

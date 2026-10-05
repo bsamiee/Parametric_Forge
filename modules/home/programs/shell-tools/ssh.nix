@@ -24,7 +24,7 @@
       aliases = [vps.name];
     };
   };
-  knownHostsFile = pkgs.writeText "forge-known-hosts" (lib.concatLines [
+  knownHostsFile = pkgs.writeText "known-hosts" (lib.concatLines [
     "${vps.ssh.hostName} ${vps.ssh.hostKey}"
     "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
   ]);
@@ -38,7 +38,7 @@
     })
   sshHosts;
 in {
-  options.forge.ssh = {
+  options.estate.ssh = {
     hosts = lib.mkOption {
       type = lib.types.raw;
       readOnly = true;

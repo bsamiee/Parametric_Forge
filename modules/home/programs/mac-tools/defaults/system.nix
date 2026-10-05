@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # System-behavior and per-application user defaults.
 {config, ...}: {
-  forge.userDefaults = {
+  estate.userDefaults = {
     # --- [ACTIVITY_MONITOR]
     "com.apple.ActivityMonitor" = {
       ShowCategory = 100;

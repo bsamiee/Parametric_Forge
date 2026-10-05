@@ -34,7 +34,7 @@ _: let
   # The Magic Mouse row set likewise projects onto both of its driver domains.
   magicmouse.MouseButtonMode = "TwoButton";
 in {
-  forge.userDefaults = {
+  estate.userDefaults = {
     # --- [TRACKPAD_CONFIGURATION]
     "com.apple.AppleMultitouchTrackpad" =
       trackpad

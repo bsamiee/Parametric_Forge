@@ -4,7 +4,7 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/wezterm/deck.lua
 -- ----------------------------------------------------------------------------
--- Row interpreter for constructor-bound config: fonts, seam env, key dispatch, pane-nav handoff, guarded broadcast, launcher menu,
+-- Row interpreter for constructor-bound config: fonts, session seam, key dispatch, pane-nav handoff, guarded broadcast, launcher menu,
 -- floats, and palette entries. Every vocabulary it consumes is generated (rows.lua); no private literals.
 -- Actions build once per config generation: action_callback registers a permanent handler per call, so per-press construction leaks.
 
@@ -22,9 +22,10 @@ M.sync = nil -- populated in apply(); events.lua reads is_synced for status
 M.palette = {} -- populated in apply(); events.lua replays it per palette open
 
 -- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
--- so windows in different workspaces never mirror one shared session.
+-- so windows in different workspaces never mirror one shared session. The client starts through a login shell: the server it forks keeps
+-- that session environment for every pane and every command resurrection execs without a shell.
 function M.session_args(name)
-    return { rows.paths.zellij, "--layout", os.getenv("ZELLIJ_DEFAULT_LAYOUT") or "default", "attach", "--create", name }
+    return { rows.paths.zsh, "-lc", 'exec "$@"', "zsh", rows.paths.zellij, "attach", "--create", name }
 end
 
 function M.workspace_row(name)
@@ -242,7 +243,7 @@ local function guarded_sync_action(sync)
         for _, p in ipairs(window:active_tab():panes()) do
             local domain = p:get_domain_name()
             if domain ~= "local" then
-                window:toast_notification("Forge Deck", "sync-panes blocked: remote pane in tab (" .. domain .. ")", nil, 4000)
+                window:toast_notification("Deck", "sync-panes blocked: remote pane in tab (" .. domain .. ")", nil, 4000)
                 return
             end
         end
@@ -284,7 +285,7 @@ local function key_actions(launcher, quick_select)
         ["workspace-switch"] = wezterm.action_callback(function(window, pane)
             window:perform_action(
                 act.InputSelector({
-                    title = "forge workspaces",
+                    title = "deck workspaces",
                     fuzzy = true,
                     choices = workspace_choices(),
                     action = pick_workspace,
@@ -305,23 +306,9 @@ function M.apply(config)
     -- The palette font is the terminal font object (a constructor value), so it lands here rather than in the pure-data settings.
     config.command_palette_font = config.font
 
-    -- Outer-inner seam: zellij attach + toolchain PATH and session-secret projection. Deck-owned spawns carry their workspace session
-    -- explicitly; this is the fallback for panes spawned outside deck control (`wezterm cli spawn` without a prog).
+    -- Outer-inner seam: deck-owned spawns carry their workspace session explicitly; this is the fallback for panes spawned outside deck
+    -- control (`wezterm cli spawn` without a prog).
     config.default_prog = M.session_args(config.default_workspace)
-    local ambient = os.getenv("PATH")
-    config.set_environment_variables = {
-        PATH = (ambient and ambient ~= "") and (rows.paths.path .. ":" .. ambient) or rows.paths.path,
-    }
-    -- Login restores WezTerm before launchd leaves on-demand-only mode and runs the gui-op-secrets replay, and the zellij server this
-    -- spawn creates freezes its environment for every pane, including the command panes resurrection execs with no shell. The export
-    -- rows of the mode-600 cache activation publishes (the file interactive zsh sources) therefore ride every local spawn from here.
-    wezterm.add_to_config_reload_watch_list(rows.paths.secrets)
-    for line in io.lines(rows.paths.secrets) do
-        local name, value = line:match('^export ([%w_]+)="(.*)"$')
-        if name then
-            config.set_environment_variables[name] = value
-        end
-    end
 
     -- Launcher menu: non-destructive float command rows become launch items.
     config.launch_menu = {}
@@ -365,7 +352,7 @@ function M.apply(config)
     local quick_select = act.QuickSelectArgs({ skip_action_on_paste = true })
     local launcher = {
         flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES|DOMAINS|LAUNCH_MENU_ITEMS",
-        title = "forge launcher",
+        title = "deck launcher",
         help_text = "Enter=run  Esc=cancel  /=filter",
         fuzzy_help_text = "Launcher: ",
     }
@@ -391,9 +378,8 @@ function M.apply(config)
 
     -- Store-owned plugin rail: direct store-path load. plugin.require git-clones into the runtime cache (and a
     -- fetchFromGitHub tree is not a repo); dofile consumes the pin with zero cache mutation, so the cache stays empty
-    -- and update_all() has nothing to touch. The env row swaps the pin for a dev checkout without touching generated config.
-    local sync_src = os.getenv("FORGE_WEZTERM_PLUGIN_SYNC_PANES") or rows.plugins.sync_panes
-    local sync = dofile(sync_src .. "/plugin/init.lua")
+    -- and update_all() has nothing to touch.
+    local sync = dofile(rows.plugins.sync_panes .. "/plugin/init.lua")
     M.sync = sync
     if sync_row then
         sync.apply_to_config(config, {

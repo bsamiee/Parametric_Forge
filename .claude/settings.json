@@ -15,5 +15,8 @@
     "permissions": {
         "allow": ["Bash(container run *)", "Bash(docker run *)"],
         "deny": []
+    },
+    "enabledPlugins": {
+        "argus@rasm": true
     }
 }

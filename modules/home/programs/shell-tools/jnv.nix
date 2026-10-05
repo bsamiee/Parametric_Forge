@@ -12,7 +12,7 @@
   ...
 }: let
   # palette retained for the one hue with no semantic role: JSON string values ride the estate string-yellow (syntaxScopes String).
-  inherit (config.forge.theme) roles palette;
+  inherit (config.estate.theme) roles palette;
   tomlFormat = pkgs.formats.toml {};
   # termcfg style strings: "fg=<hex>,bg=<hex>,attr=<token|token...>"
   fg = c: "fg=${c.hex}";

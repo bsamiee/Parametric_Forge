@@ -35,7 +35,7 @@
 # owns login start. schema.json is the upstream schema of the installed release (the `linearmouse@beta` cask row), the
 # same version the `$schema` row names.
 {
-  forgeAgent,
+  launchdAgent,
   pkgs,
   ...
 }: let
@@ -129,8 +129,8 @@ in {
 
   # Login start through the estate agent grammar (label, dual log, identity bundle) with the GUI rows: Interactive class and the Aqua session,
   # since `open` needs the login-window session; `open` exits once the app is launched, so the row is one-shot.
-  forge.bundleApps.linearmouse = "Forge LinearMouse";
-  launchd.agents.linearmouse = forgeAgent {
+  estate.bundleApps.linearmouse = "LinearMouse Launcher";
+  launchd.agents.linearmouse = launchdAgent {
     name = "linearmouse";
     argv = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];
     RunAtLoad = true;

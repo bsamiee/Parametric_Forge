@@ -9,22 +9,16 @@
 # validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
 {
   config,
-  forgeToolchainEnvFor,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) roles projections;
-  chordRows = config.forge.chords.wezterm.rows;
-  sshHosts = config.forge.ssh.hosts;
+  inherit (config.estate.theme) roles projections;
+  chordRows = config.estate.chords.wezterm.rows;
+  sshHosts = config.estate.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
-  toolchainEnv = forgeToolchainEnvFor {
-    home = homeDir;
-    username = config.home.username;
-    xdgCacheHome = config.xdg.cacheHome;
-  };
 
   # --- [PLUGIN_PINS_MANIFEST_ROWS_FILE_STORE_PATH_LOADS_ONLY]
   pluginSrc = row:
@@ -35,9 +29,9 @@
   weztermTypesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.wezterm-types;
 
   # --- [FONT_ROW]
-  # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the forge-font override path all arrive
-  # from config.forge.fonts; deck.lua interprets them.
-  fontRow = config.forge.fonts.projections.luaFont;
+  # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the font override path all arrive
+  # from config.estate.fonts; deck.lua interprets them.
+  fontRow = config.estate.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS]
   # One row = picker entry + zellij session identity + cwd + float policy. The workspace name IS the inner zellij session name, so windows in
@@ -50,7 +44,6 @@
   };
   workspaceRows = [
     (mkWorkspace "main" "[FORGE]" "Parametric_Forge")
-    (mkWorkspace "rasm" "[RASM]" "Rasm")
   ];
   defaultWorkspace = "main";
 
@@ -129,18 +122,18 @@
     [
       {
         id = "redeploy-check";
-        label = "forge: redeploy check";
+        label = "deploy: redeploy check";
         kind = "float";
         float = "log";
-        args = ["${profileBin}/forge-redeploy" "--check-only"];
+        args = ["${profileBin}/redeploy" "--check-only"];
       }
       {
         id = "redeploy-switch";
-        label = "forge: redeploy SWITCH";
+        label = "deploy: redeploy SWITCH";
         kind = "float";
         float = "log";
         destructive = true;
-        args = ["${profileBin}/forge-redeploy" "--switch"];
+        args = ["${profileBin}/redeploy" "--switch"];
       }
       {
         id = "telemetry";
@@ -172,13 +165,13 @@
       label = "remote: browse ${h.name} files (sftp)";
       kind = "float";
       float = "utility";
-      args = ["${profileBin}/forge-yazi.sh" "sftp://${h.name}/"];
+      args = ["${profileBin}/yazi-dispatch.sh" "sftp://${h.name}/"];
     }) (lib.attrValues sshHosts);
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
   # Constructor/env-dependent values live in deck.lua; the two sets stay disjoint (validated below) so the single-writer merge never collides.
   settings = {
-    color_scheme = "forge-dracula";
+    color_scheme = "estate-dracula";
     check_for_updates = false; # the cask pin owns updates; check_update state stays inert
 
     # Window
@@ -243,8 +236,9 @@
     ssh_domains = sshDomainRows;
     quick_select_patterns = map (r: r.regex) (lib.sort (a: b: a.priority < b.priority) quickSelectRows);
     quick_select_remove_styling = true;
-    # Mux auth-sock pin: every mux-spawned pane and SSH domain rides the 1Password agent instead of the identity-less Apple launchd SSH_AUTH_SOCK.
-    default_ssh_auth_sock = config.forge.ssh.identityAgent;
+    # Mux auth-sock pin: every mux-spawned pane and SSH domain rides the 1Password agent, also when a login restores WezTerm before the gui-env
+    # replay (environments/shell.nix) points the launchd domain at it.
+    default_ssh_auth_sock = config.estate.ssh.identityAgent;
   };
 
   # Config keys the interpreters own; a settings row on this list is a shallow-merge collision and fails eval.
@@ -257,7 +251,6 @@
     "key_tables" # sync-panes writes its broadcast table here
     "mouse_bindings"
     "default_prog"
-    "set_environment_variables"
     "launch_menu"
     "command_palette_font"
   ];
@@ -280,8 +273,7 @@
     # The oldest wezterm@nightly build every deck.lua action, option, and overlay exists in; deck.lua faults the config load below it.
     nightly_floor = "20260707";
     paths = {
-      path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
-      secrets = config.forge.secrets.sessionCache;
+      zsh = "${profileBin}/zsh";
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
     };
@@ -326,9 +318,9 @@
     require("events").apply(config)
     return config
   '';
-  schemeToml = (pkgs.formats.toml {}).generate "forge-dracula.toml" {
+  schemeToml = (pkgs.formats.toml {}).generate "estate-dracula.toml" {
     colors = projections.weztermColorScheme;
-    metadata.name = "forge-dracula";
+    metadata.name = "estate-dracula";
   };
   luarc = pkgs.writeText "wezterm-luarc.json" (builtins.toJSON {
     "$schema" = "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json";
@@ -353,7 +345,7 @@
       cp ${./events.lua} "$out/events.lua"
       cp ${weztermLua} "$out/wezterm.lua"
       cp ${rowsLua} "$out/rows.lua"
-      cp ${schemeToml} "$out/colors/forge-dracula.toml"
+      cp ${schemeToml} "$out/colors/estate-dracula.toml"
       cp ${luarc} "$out/.luarc.json"
       for f in "$out"/*.lua; do
         luac -p "$f"

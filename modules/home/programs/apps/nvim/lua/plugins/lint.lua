@@ -4,14 +4,14 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/lint.lua
 -- ----------------------------------------------------------------------------
--- Non-LSP diagnostic lane over generated linter rows (forge/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from LSP.
+-- Non-LSP diagnostic lane over generated linter rows (estate/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from LSP.
 -- Filetype lanes index rows directly — a new Nix lint row lands with zero edits here. GitHub Actions lanes gate on workflow path, never plain yaml.
 
 local lint = require("lint")
-local rows = require("forge.tools").lint
+local rows = require("estate.tools").lint
 
 -- Resolvability cache keyed on the linter definition's own cmd: an unresolvable or undefined linter degrades to silence (nvim-lint would ERROR-notify
--- per event); :checkhealth forge owns the availability proof.
+-- per event); :checkhealth estate owns the availability proof.
 local resolvable = setmetatable({}, {
     __index = function(cache, name)
         local ok, def = pcall(require, "lint.linters." .. name)
@@ -34,7 +34,7 @@ end
 
 -- FileType (not BufReadPost): init-registered read autocmds run before filetype detection, so the filetype lane would resolve empty on open.
 vim.api.nvim_create_autocmd({ "FileType", "BufWritePost", "InsertLeave" }, {
-    group = vim.api.nvim_create_augroup("forge_lint", { clear = true }),
+    group = vim.api.nvim_create_augroup("lint", { clear = true }),
     callback = function(ev)
         if vim.bo[ev.buf].modifiable and vim.bo[ev.buf].buftype == "" then
             local names = names_for(ev.buf)

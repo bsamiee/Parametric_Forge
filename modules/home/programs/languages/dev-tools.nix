@@ -54,8 +54,8 @@
   dataRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "data");
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
   # First-install only: the vendor installer exits on a present binary, and agy self-updates in the background during its own runs.
-  forge-install-antigravity-cli = pkgs.writeShellApplication {
-    name = "forge-install-antigravity-cli";
+  install-antigravity-cli = pkgs.writeShellApplication {
+    name = "install-antigravity-cli";
     runtimeInputs = [
       pkgs.bash
       pkgs.coreutils
@@ -108,7 +108,7 @@ in {
   home = {
     activation = {
       ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
-        ${forge-install-antigravity-cli}/bin/forge-install-antigravity-cli
+        ${install-antigravity-cli}/bin/install-antigravity-cli
       '';
     };
 

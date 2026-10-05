@@ -11,8 +11,8 @@
   lib,
   ...
 }: let
-  p = config.forge.theme.palette;
-  g = config.forge.theme.roles.git;
+  p = config.estate.theme.palette;
+  g = config.estate.theme.roles.git;
 
   # Style combinators over palette rows; badge is the dominant shape (background-colored text on a colored block).
   fg = c: {fg = c.hex;};
@@ -117,7 +117,7 @@ in {
       count_cut = badge p.red;
       count_selected = badge p.cyan;
       border_style = fg p.cyan;
-      syntect_theme = "${config.xdg.configHome}/forge/theme/forge-dracula.tmTheme";
+      syntect_theme = "${config.xdg.configHome}/estate/theme/estate-dracula.tmTheme";
     };
 
     # Hovered-file styling: 26.5.6 moved mgr.hovered/preview_hovered here.
@@ -251,7 +251,7 @@ in {
           text = row.glyph;
           fg = row.color.hex;
         })
-        config.forge.theme.icons.dirs;
+        config.estate.theme.icons.dirs;
 
       prepend_exts = lib.concatLists (lib.mapAttrsToList (names: family:
         map (name:

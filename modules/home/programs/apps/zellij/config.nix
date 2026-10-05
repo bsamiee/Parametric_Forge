@@ -11,8 +11,8 @@
   lib,
   ...
 }: let
-  inherit (config.forge.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles
-  chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
+  inherit (config.estate.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles
+  chords = config.estate.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
 
@@ -369,13 +369,16 @@ in {
         // Core Zellij options referencing the shared Parametric Forge theme
 
         // --- [CORE_CONFIGURATION]
-        // Rows differ from zellij's documented defaults. default_shell stays: its default is $SHELL, which WezTerm strips from its own
-        // environment (env-bootstrap) before spawning the server.
+        // Rows differ from zellij's documented defaults. default_shell takes the shell's path: the $SHELL default is the account's /bin/zsh,
+        // not the profile zsh every other spawn runs.
         theme                       "dracula"
-        default_shell               "zsh"
+        default_shell               "${lib.getExe config.programs.zsh.package}"
         // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
-        // and the next `attach --create main` reattaches them live. Resurrection (the `quit` path) replays only layout and argv behind a
-        // Press-ENTER banner. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
+        // and the next `attach --create main` reattaches them live. After a reboot resurrection replays layout and argv behind a Press-ENTER
+        // banner, each command exec'd in the server's environment (the login shell WezTerm starts it through). The discovery hook rewrites a
+        // discovered bare `claude` to `claude --continue`, so a restored pane resumes its directory's last conversation; zellij splits the
+        // hook's output on whitespace. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
+        post_command_discovery_hook r#"set -- $RESURRECT_COMMAND; case "''${1##*/}:$*" in claude:*' -c'*|claude:*' --continue'*|claude:*' -r'*|claude:*' --resume'*) ;; claude:*) set -- "$@" --continue ;; esac; echo "$*""#
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true

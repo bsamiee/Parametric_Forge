@@ -20,7 +20,7 @@ import { Topology } from './topology.ts';
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
-const PROJECT = 'forge-services';
+const PROJECT = 'services';
 const STACK = 'estate';
 
 // Host seam: the home-relative scope rows resolve onto the operator home once, here, so topology.ts carries no machine path.
@@ -118,17 +118,17 @@ const _dopplerSecret = (token: Redacted.Redacted<string>, project: string, confi
 
 // nonEmptyString: an empty exported override means unset, per XDG semantics.
 const _settings = Config.all({
-    passphraseRef: Config.nonEmptyString('FORGE_SERVICES_PASSPHRASE_REF').pipe(
-        Config.withDefault('op://Tokens/PULUMI_FORGE_SERVICES/password'),
+    passphraseRef: Config.nonEmptyString('SERVICES_PASSPHRASE_REF').pipe(
+        Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password'),
         Config.withDescription('1Password reference the Pulumi stack passphrase brokers from'),
     ),
-    tokenRef: Config.nonEmptyString('FORGE_SERVICES_DOPPLER_TOKEN_REF').pipe(
+    tokenRef: Config.nonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(
         Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token'),
         Config.withDescription('1Password reference the Doppler IaC token brokers from'),
     ),
-    stateDir: Config.nonEmptyString('FORGE_SERVICES_STATE_DIR').pipe(
-        Config.orElse(() => Config.map(Config.nonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'forge-services'))),
-        Config.withDefault(path.join(homedir(), '.local', 'state', 'forge-services')),
+    stateDir: Config.nonEmptyString('SERVICES_STATE_DIR').pipe(
+        Config.orElse(() => Config.map(Config.nonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'services'))),
+        Config.withDefault(path.join(homedir(), '.local', 'state', 'services')),
         Config.withDescription('Pulumi file-backend state directory'),
     ),
     passphrase: Config.option(Config.redacted('PULUMI_CONFIG_PASSPHRASE')).pipe(
@@ -467,7 +467,7 @@ const _appCensus = {
 // --- [ENTRY] ---------------------------------------------------------------------------
 
 const USAGE =
-    'forge-services driver\n' +
+    'services driver\n' +
     '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
     '  outputs [name] [--reveal]\n' +
     '  scopes apply|doctor|strict\n' +

@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Machine-wide native command-line tools and runtimes. The per-user profile links bin and man alone (nix-darwin environment.pathsToLink), so a
 # row here lands commands only: a source build reaches each library through the scientificSessionEnv rows of modules/common/toolchain-env.nix,
-# each a store reference, and a ctypes consumer through the forge-runtime-dylibs tree the same file exports. A package landing no command has no
+# each a store reference, and a ctypes consumer through the runtime-dylibs tree the same file exports. A package landing no command has no
 # consumer here.
 {
   lib,
@@ -32,7 +32,7 @@
   # which zsh/completions.nix already has on fpath ahead of compinit.
   qpdfCompletion = pkgs.runCommand "qpdf-zsh-completion" {} ''
     mkdir -p "$out/share/zsh/site-functions"
-    ${lib.getExe pkgs.qpdf} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
+    ${lib.getExe pkgs.qpdf-current} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
   '';
 
   columnarTools = [pkgs.arrow-cpp]; # parquet-reader, parquet-scan, parquet-dump-*; pyarrow reaches the library through the CMAKE_PREFIX_PATH row
@@ -41,7 +41,7 @@
     file # file; python-magic dlopens libmagic off the runtime dylib tree
     fontconfig # fc-list, fc-match, fc-cache; weasyprint dlopens libfontconfig off the runtime dylib tree
     ghostscript
-    ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs spawned by the Rasm C# and python branches; TS consumes the produced bytes
+    ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs a consumer spawns to encode textures
     lcms2
     libheif # heif-enc, heif-dec, heif-info; pi-heif reaches the library through the PKG_CONFIG_PATH row
     libjpeg_turbo
@@ -50,7 +50,7 @@
     mupdf
     openjpeg
     pango # pango-view; weasyprint dlopens libpango off the runtime dylib tree
-    qpdf
+    qpdf-current
     qpdfCompletion
     tesseract
     vips # vips, vipsthumbnail; pyvips (ABI mode) dlopens libvips off the runtime dylib tree

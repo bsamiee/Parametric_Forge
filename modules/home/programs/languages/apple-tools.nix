@@ -79,12 +79,12 @@
   };
   # osacompile is the only OSA syntax gate Apple ships; compile -> osadecompile round-trip is the canonical, comment-preserving AppleScript
   # formatter. JXA compiles through the same gate; its formatting is prettier/biome-owned.
-  forge-osa = pkgs.writeShellApplication {
-    name = "forge-osa";
+  osa = pkgs.writeShellApplication {
+    name = "osa";
     runtimeInputs = [pkgs.coreutils];
     text = ''
       usage() {
-        printf 'usage: forge-osa <check|fmt> <file.applescript|file.jxa|file.js>...\n' >&2
+        printf 'usage: osa <check|fmt> <file.applescript|file.jxa|file.js>...\n' >&2
         exit 2
       }
       [ "$#" -ge 2 ] || usage
@@ -125,7 +125,7 @@
         fi
       done
       if [ "$processed" -eq 0 ]; then
-        printf 'forge-osa: no OSA sources among arguments\n' >&2
+        printf 'osa: no OSA sources among arguments\n' >&2
         exit 2
       fi
       exit "$status"
@@ -158,6 +158,6 @@ in
       swiftlint # Swift linter (project config promoted, house config fallback)
 
       # --- [APPLESCRIPT_JXA]
-      forge-osa # OSA syntax gate + canonical AppleScript formatter
+      osa # OSA syntax gate + canonical AppleScript formatter
     ];
   }
