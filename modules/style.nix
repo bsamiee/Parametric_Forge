@@ -13,7 +13,6 @@ let
   w = toString width;
 in {
   inherit indent width;
-  indentString = builtins.concatStringsSep "" (builtins.genList (_: " ") indent);
   # Transient trees: never format/lint/search targets. Every consumer projects this one list — machine tool fallbacks, editor settings
   # — so agent-harness folders (.claude, .codex) stay first-class work surfaces while their scratch/archive/cache interiors stay untouched.
   transientDirs = [".archive" "_archive" ".scratch" "scratch" "_tmp" "_TMP" ".tmp" ".cache" ".history" "node_modules" ".venv"];

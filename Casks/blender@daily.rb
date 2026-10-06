@@ -1,6 +1,6 @@
 cask "blender@daily" do
-  version "5.3.0-alpha,877314a34bbc"
-  sha256 "b3b8c0ce4fd6e16423f1728d3efcdf67ff83d1a715d34c01c18b24daea70d155"
+  version "5.3.0-alpha,4ea5191d7d2a"
+  sha256 "a4b24ba8b43d5fc7bf1387c87f98e24787de1dd4f3141a94e8b169ddda871e1c"
 
   url "https://cdn.builder.blender.org/download/daily/blender-#{version.csv.first}+main.#{version.csv.second}-darwin.arm64-release.dmg"
   name "Blender Daily"

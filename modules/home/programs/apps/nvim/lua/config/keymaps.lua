@@ -64,7 +64,7 @@ local actions = setmetatable({
         vim.lsp.buf.code_action()
     end,
     format = function()
-        require("conform").format({ async = true, lsp_format = "fallback" })
+        require("conform").format({ async = true })
     end,
     grug_open = function()
         require("grug-far").open()

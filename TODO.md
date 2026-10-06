@@ -36,7 +36,7 @@ advanced `overlays/_sources` pins (verapdf 1.31.170, biome 2.5.13); neither has 
 Keep: `redeploy`, `provision`, `gha`, `loc`, the `terminal.nix` yazi→zellij→nvim rail, `osa`, `services-console`,
 `gui-op-secrets`, `default-applications`, `known-hosts`, the zellij grant pruner, the karabiner/yazi config proofs.
 
-- Flag-injection wrappers, install the bare package instead: `shfmt` and `taplo` (`languages/dev-tools.nix` :18 :39), `stylua`
+- Flag-injection wrappers, install the bare package instead: `shfmt` (`languages/dev-tools.nix` :18), `stylua`
   (`lua-tools.nix` :16), `prettier` (`node-tools.nix` :20), `sqruff` (`db-tools.nix` :40), `swiftformat` and the `_walk_up` half of `swiftlint`
   (`apple-tools.nix` :20 :45; keep the `DYLD_FRAMEWORK_PATH` seeding), the argument-less `postgres18-client-tools` makeWrapper
   (`db-tools.nix` :19), `withDefaultFlag` + hexyl (`shell-tools/default.nix` :21 :92), `rsync-safe.sh` (`rsync.nix` :16), the `tree` eza

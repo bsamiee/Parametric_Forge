@@ -122,7 +122,7 @@
     # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
     # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
     # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
-    # TOML: taplo's LSP mode; the SchemaStore catalog is on by default, and the PATH wrapper seats the house taplo.toml only where no project config exists.
+    # TOML: taplo's LSP mode; the SchemaStore catalog is on by default, and a project taplo.toml at the root is the one config it reads.
     taplo = {
       cmd = ["taplo" "lsp" "stdio"];
       filetypes = ["toml"];
@@ -249,7 +249,7 @@
         sh = ["shfmt"];
         bash = ["shfmt"];
         lua = ["stylua"];
-        toml = ["taplo"];
+        toml.lsp_format = "never";
         sql = ["sqruff"];
       }
       // lib.genAttrs

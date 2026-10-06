@@ -33,23 +33,6 @@
       exec ${pkgs.shfmt}/bin/shfmt -i ${toString style.indent} -ci "$@"
     '';
   };
-
-  # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs; the wrapper reaches the house config only when upward discovery finds
-  # no project taplo.toml and the caller passes neither flag nor env. -c* covers clap's attached and equals value forms.
-  taplo = pkgs.writeShellApplication {
-    name = "taplo";
-    text = ''
-      ${style.walkUp}
-      [[ -n "''${TAPLO_CONFIG:-}" ]] && exec ${pkgs.taplo}/bin/taplo "$@"
-      for arg in "$@"; do
-        case "$arg" in
-          -c* | --config | --config=* | --no-auto-config) exec ${pkgs.taplo}/bin/taplo "$@" ;;
-        esac
-      done
-      _walk_up .taplo.toml taplo.toml >/dev/null && exec ${pkgs.taplo}/bin/taplo "$@"
-      TAPLO_CONFIG="${config.xdg.configHome}/taplo/taplo.toml" exec ${pkgs.taplo}/bin/taplo "$@"
-    '';
-  };
   # Data-lane admissions from the package manifest (CSV -> xan; relational/Parquet -> DuckDB).
   dataRoster = map (row: pkgs.${row.attr}) (manifest.rosterRows "data");
   antigravity-cli-bin-dir = "${config.home.homeDirectory}/.local/bin";
@@ -80,25 +63,13 @@
     '';
   };
 in {
-  # Machine-level fallback style for the shell and TOML tools; each resolves a project config ahead of these rows, so project law always wins.
+  # Machine-level fallback style for the shell tools; each resolves a project config ahead of these rows, so project law always wins.
   xdg.configFile = {
     # shellcheck resolves rc files from the script's directory upward, then ~/.shellcheckrc, then this file; a project rc fully shadows it. Keep
     # ~/.shellcheckrc absent — it would shadow this row.
     "shellcheckrc".text = ''
       external-sources=true
       enable=deprecate-which
-    '';
-    # taplo has no user-level lookup and TAPLO_CONFIG overrides project configs; only the wrapper above may reference this file.
-    "taplo/taplo.toml".text = ''
-      # Estate law: every pyproject.toml carries hand-aligned comment columns across its dependency arrays; no formatter
-      # route touches it. Vendored trees stay out of any repo-wide sweep.
-      exclude = ["**/pyproject.toml", "**/node_modules/**"]
-
-      [formatting]
-      indent_string = "${style.indentString}"
-      column_width = ${toString style.width}
-      allowed_blank_lines = 2
-      reorder_keys = false
     '';
   };
 
@@ -122,7 +93,7 @@ in {
 
         # --- [YAML_TOML]
         yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
-        taplo # TOML formatter/validator/LSP (let-bound house-config fallback wrapper)
+        taplo # TOML validator and LSP (SchemaStore-backed validation + completion)
 
         # --- [GENERAL_DATA_TOOLS]
         miller # CSV/TSV/JSON processor (mlr)
