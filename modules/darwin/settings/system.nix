@@ -50,6 +50,12 @@ in {
   # use-xdg-base-directories (modules/common/nix.nix) moves under $XDG_STATE_HOME/nix and useUserPackages leaves empty — a dead PATH segment.
   environment.profiles = lib.mkForce ["/etc/profiles/per-user/$USER" "/run/current-system/sw" "/nix/var/nix/profiles/default"];
 
+  # --- [SHELL_RESOURCES]
+  # Concurrent Codex startup exceeds the inherited 256-file soft limit; new zsh children inherit this capacity without changing the hard limit
+  programs.zsh.shellInit = ''
+    ulimit -Sn 65536
+  '';
+
   # --- [APPLICATION_FIREWALL]
   # Off, with signed software allowed to accept connections: the localhost listeners here are unsigned nix and mise binaries, which an enabled
   # firewall would prompt for one by one.

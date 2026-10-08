@@ -168,6 +168,9 @@
         fi
         actual=$(utiluti app identifier "$path")
         [[ $actual == "$id" ]] || { printf 'bundle identity mismatch: %s\n' "$path" >&2; exit 1; }
+        # A bundle copyApps wrote this generation reaches the LaunchServices database on its next Finder scan or launch; registering it here
+        # makes the for-identifier read below current for a Home Manager Apps copy that changed its store path.
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$path"
         registered=$(utiluti app for-identifier "$id")
         found=0
         competing=""

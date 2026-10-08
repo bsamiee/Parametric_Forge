@@ -202,14 +202,14 @@ read_container_provenance() {
     local id="$1"
     local raw var
     raw="$(docker inspect "$id" 2>/dev/null)" || raw=""
-    IFS=$'\x1f' read -r name image compose_project compose_service provision_owner provision_root provision_project < <(
+    IFS=$'\x1f' read -r name image compose_project compose_service provision_owner label_root provision_project < <(
         jq -r --arg owner "$owner_label" --arg root "$root_label" --arg project "$project_label" \
             '.[0] as $c | ($c.Config.Labels // {}) as $l
         | [(($c.Name // "") | ltrimstr("/")), ($c.Config.Image // ""),
            ($l["com.docker.compose.project"] // ""), ($l["com.docker.compose.service"] // ""),
            ($l[$owner] // ""), ($l[$root] // ""), ($l[$project] // "")] | join("\u001f")' <<<"${raw:-[]}"
     )
-    for var in name image compose_project compose_service provision_owner provision_root provision_project; do
+    for var in name image compose_project compose_service provision_owner label_root provision_project; do
         [[ -n "${!var}" ]] || printf -v "$var" '%s' '-'
     done
 }
@@ -218,13 +218,13 @@ classify_owner() {
     local id="$1"
     local compose_project="$2"
     local provision_owner="$3"
-    local provision_root="$4"
+    local label_root="$4"
     local provision_project="$5"
-    if [[ "$provision_owner" == "1" && "$provision_root" == "$root_key" && "$provision_project" == "$project_name" ]]; then
+    if [[ "$provision_owner" == "1" && "$label_root" == "$root_key" && "$provision_project" == "$project_name" ]]; then
         printf 'provision:this-project'
-    elif [[ "$provision_owner" == "1" && "$provision_root" == "$root_key" ]]; then
+    elif [[ "$provision_owner" == "1" && "$label_root" == "$root_key" ]]; then
         printf 'provision:this-root-other-project'
-    elif [[ "$provision_owner" == "1" && -n "$provision_root" ]]; then
+    elif [[ "$provision_owner" == "1" && -n "$label_root" ]]; then
         printf 'provision:other-root'
     elif [[ "$compose_project" == "$project_name" ]]; then
         printf 'project:unowned'
@@ -253,11 +253,11 @@ port_collision_report() {
     local port
     port="$(service_port "$service")"
     local ids=()
-    local id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner
+    local id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" label_root="-" provision_project="-" owner
     collect_published_container_ids ids "$port"
     ((${#ids[@]} == 0)) || id="${ids[0]}"
     [[ "$id" == "-" ]] || read_container_provenance "$id"
-    owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$provision_root" "$provision_project")"
+    owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$label_root" "$provision_project")"
     stderr_line "$(printf 'port-collision\tservice=%s\tenv=%s\tport=%s\towner=%s\taction=%s' \
         "$service" "$env_var" "$port" "$owner" "set $env_var to a free port or stop the non-owned listener outside provision")"
 }
@@ -591,7 +591,7 @@ configured_images_json() {
 port_record_json() {
     local service="$1"
     local online="${2:-true}"
-    local port ids=() id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" provision_root="-" provision_project="-" owner="none" host_listener=false state="free" occupied=false
+    local port ids=() id="-" name="-" image="-" compose_project="-" compose_service="-" provision_owner="-" label_root="-" provision_project="-" owner="none" host_listener=false state="free" occupied=false
     port="$(service_port "$service")"
     service_enabled "$service" || state="disabled"
     if [[ "$online" == true ]]; then
@@ -603,7 +603,7 @@ port_record_json() {
     if ((${#ids[@]} > 0)); then
         id="${ids[0]}"
         read_container_provenance "$id"
-        owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$provision_root" "$provision_project")"
+        owner="$(classify_owner "$id" "$compose_project" "$provision_owner" "$label_root" "$provision_project")"
         occupied=true
         [[ "$state" == "disabled" ]] || state="busy"
     elif [[ "$host_listener" == true ]]; then
