@@ -10,27 +10,23 @@
   host,
   pkgs,
   lib,
+  toolchainEnvFor,
   ...
 }: let
-  fontDirectories =
-    lib.optionals (host.os == "darwin") [
-      "/System/Library/Fonts"
-      "/Library/Fonts"
-      "${config.home.homeDirectory}/Library/Fonts"
-      # The operator-owned design font store, one recursive root: fontconfig <dir> and Typst both descend it.
-      "${config.home.homeDirectory}/Library/Application Support/design-tools/fonts"
-    ]
-    # Darwin package fonts already live under ~/Library/Fonts/HomeManager (Home Manager's native target), so the profile row is Linux-only.
-    ++ lib.optional (host.os != "darwin") "${config.home.profileDirectory}/share/fonts";
+  # FONTCONFIG_FILE and TYPST_FONT_PATHS are cross-surface rows of modules/common/toolchain-env.nix; the same font roots feed fonts.conf here.
+  inherit
+    (toolchainEnvFor {
+      home = config.home.homeDirectory;
+      username = config.home.username;
+      xdgCacheHome = config.xdg.cacheHome;
+    })
+    fontDirectories
+    ;
 in {
   home.sessionVariables = {
     # --- [IMAGEMAGICK]
-    # Freetype text (annotate/caption) resolves fonts through fontconfig, not MAGICK_FONT_PATH — the generated
-    # config below indexes the same Darwin + generation dirs, so both resolution paths agree.
-    FONTCONFIG_FILE = "${config.xdg.configHome}/fontconfig/fonts.conf";
-    # System font dirs are a Darwin fact; the profile share is portable.
-    MAGICK_FONT_PATH = lib.concatStringsSep ":" fontDirectories;
-    TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
+    # Freetype text (annotate/caption) resolves fonts through fontconfig, so no MAGICK_FONT_PATH row: ImageMagick reads that variable as one
+    # directory, and a colon-joined list makes every named -font fail.
     MAGICK_CONFIGURE_PATH = lib.concatStringsSep ":" [
       "${config.xdg.configHome}/ImageMagick"
       "${pkgs.imagemagick-current}/etc/ImageMagick-7"

@@ -14,7 +14,7 @@
     NIX_REMOTE = "daemon";
 
     # --- [GIT_VERSION_CONTROL]
-    GITLEAKS_CONFIG = "${config.xdg.configHome}/gitleaks/gitleaks.toml";
+    # GITLEAKS_CONFIG is a cross-surface row of modules/common/toolchain-env.nix.
     # Difftastic brightness follows the estate surface luminance, not a mode literal
     DFT_BACKGROUND = let
       surface = config.estate.theme.palette.background;

@@ -13,8 +13,5 @@
     LC_ALL = "";
 
     # EDITOR/VISUAL are owned by programs.neovim.defaultEditor.
-
-    # --- [PRIVACY_TELEMETRY_OPT_OUTS]
-    GITLEAKS_NO_UPDATE_CHECK = "true";
   };
 }

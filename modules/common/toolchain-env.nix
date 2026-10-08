@@ -87,11 +87,13 @@
         DYLD_FALLBACK_LIBRARY_PATH = "${runtimeDylibEnv}/lib";
       };
     # PROJ 9.1 renamed PROJ_LIB to PROJ_DATA and every reader here (libproj, pyproj, rasterio) consults PROJ_DATA first, so the old name carries no row.
+    # The Nix PROJ_DATA ships no datum grids; PROJ_NETWORK streams them from cdn.proj.org into the XDG data cache (300 MB cap).
     geoEnv = {
       GDAL_CONFIG = "${pkgs.gdal}/bin/gdal-config";
       GDAL_DATA = "${pkgs.gdal}/share/gdal";
       GEOS_CONFIG = "${pkgs.geos}/bin/geos-config";
       PROJ_DATA = "${pkgs.proj}/share/proj";
+      PROJ_NETWORK = "ON";
       PROJ_DIR = "${pkgs.proj}";
       PROJ_INCDIR = "${pkgs.proj.dev}/include";
       PROJ_LIBDIR = "${pkgs.proj}/lib";
@@ -131,12 +133,28 @@
     # `session` rows are interactive-only (man/bat/info/sqlite). Every row moves a tool off a non-XDG default or names a fact its config file
     # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
     # its own config key. A new cross-surface var is one `all` row.
+    # One font root list feeds fontconfig's fonts.conf (media.nix) and Typst, which reads no fontconfig; the design store is operator-owned.
+    fontDirectories =
+      if isDarwin
+      then [
+        "/System/Library/Fonts"
+        "/Library/Fonts"
+        "${home}/Library/Fonts"
+        "${home}/Library/Application Support/design-tools/fonts"
+      ]
+      else ["/etc/profiles/per-user/${username}/share/fonts"];
     envByClass = {
       all = {
         PAGER = "less";
         LESS = "-RFX";
-        DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler"; # .doppler.yaml, fallback/, and metadata; the default is ~/.doppler
         GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
+        # fontconfig consumers (fc-*, magick, vips text, gs, Pango) and Typst each resolve fonts through one of these two rows on every surface.
+        FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
+        TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
+        # Config files whose defaults are dotfiles in $HOME: kind, kubectl, and helm read KUBECONFIG, gitleaks its machine policy allowlists.
+        KUBECONFIG = "${xdgConfigHome}/kube/config";
+        GITLEAKS_CONFIG = "${xdgConfigHome}/gitleaks/gitleaks.toml";
+        QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
         # pnpm's home directory, where `pnpm add -g` lands packages and their bin links; the macOS default is ~/Library/pnpm. pnpm itself is a
         # project's mise.toml row, this row is data only.
         PNPM_HOME = "${xdgDataHome}/pnpm";
@@ -167,6 +185,7 @@
     );
   in {
     inherit
+      fontDirectories
       puppeteerExecutablePath
       resilientFloorExports
       shellExports

@@ -92,9 +92,8 @@ in {
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
     CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
-    # Write-targets: registry login and kind cluster-create materialize these; absent = anonymous/no cluster.
+    # Write-target: registry login materializes it; absent = anonymous. KUBECONFIG is a cross-surface row of modules/common/toolchain-env.nix.
     REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
-    KUBECONFIG = "${config.xdg.configHome}/kube/config";
 
     # --- [KUBERNETES]
     K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
