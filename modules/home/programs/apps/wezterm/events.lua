@@ -29,18 +29,35 @@ local function domain_name(pane)
     return pane:get_domain_name()
 end
 
+-- Pane id -> spawn size of each gated startup client; the first resize off that size releases it.
+local gated = {}
+
 local handlers = {
     -- Session persistence is code-defined: GUI and auto-spawned mux servers land the default workspace's slug session at its name-policy cwd; an
-    -- explicit `wezterm start -- prog` keeps its own args untouched.
+    -- explicit `wezterm start -- prog` keeps its own args untouched. The default client starts gated, window-resized releases it maximized.
     ["gui-startup"] = function(cmd)
         local spawn = cmd or {}
         local ws = wezterm.mux.get_active_workspace()
         spawn.cwd = spawn.cwd or deck.workspace_cwd(ws)
-        spawn.args = spawn.args or deck.session_args(ws)
-        local _, _, window = wezterm.mux.spawn_window(spawn)
+        local gate = spawn.args == nil
+        spawn.args = spawn.args or deck.session_args(ws, true)
+        local _, pane, window = wezterm.mux.spawn_window(spawn)
         local gui = window:gui_window()
+        if gate then
+            local size = pane:get_dimensions()
+            gated[pane:pane_id()] = { cols = size.cols, rows = size.viewport_rows }
+        end
         if gui then
             gui:maximize()
+        end
+    end,
+
+    ["window-resized"] = function(_, pane)
+        local spawned = gated[pane:pane_id()]
+        local size = pane:get_dimensions()
+        if spawned and (size.cols ~= spawned.cols or size.viewport_rows ~= spawned.rows) then
+            gated[pane:pane_id()] = nil
+            pane:send_text("\n")
         end
     end,
 

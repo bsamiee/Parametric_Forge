@@ -23,9 +23,11 @@ M.palette = {} -- populated in apply(); events.lua replays it per palette open
 
 -- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
 -- so windows in different workspaces never mirror one shared session. The client starts through a login shell: the server it forks keeps
--- that session environment for every pane and every command resurrection execs without a shell.
-function M.session_args(name)
-    return { rows.paths.zsh, "-lc", 'exec "$@"', "zsh", rows.paths.zellij, "attach", "--create", name }
+-- that session environment for every pane and every command resurrection execs without a shell. A gated client waits for one line: zellij
+-- sends its startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup size.
+function M.session_args(name, gated)
+    local body = gated and 'read -r _; exec "$@"' or 'exec "$@"'
+    return { rows.paths.zsh, "-lc", body, "zsh", rows.paths.zellij, "attach", "--create", name }
 end
 
 function M.workspace_row(name)
