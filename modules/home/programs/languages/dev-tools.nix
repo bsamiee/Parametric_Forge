@@ -73,10 +73,14 @@ in {
     '';
   };
 
-  # Machine editor law from the style vocabulary: nearest-first resolution means any repo-local .editorconfig fully outranks this fallback.
-  home.file.".editorconfig".text = style.editorconfig;
-
   home = {
+    file = {
+      # Machine editor law from the style vocabulary: nearest-first resolution means any repo-local .editorconfig fully outranks this fallback.
+      ".editorconfig".text = style.editorconfig;
+      # Codex CLI ships inside ChatGPT.app and updates with it; the bundle's launcher follows this link back to its CodexCLI.app.
+      ".local/bin/codex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex";
+    };
+
     activation = {
       ensureAntigravityCli = lib.hm.dag.entryAfter ["linkGeneration"] ''
         ${install-antigravity-cli}/bin/install-antigravity-cli
