@@ -1,23 +1,20 @@
 cask "blender@daily" do
-  version "5.3.0-alpha,4ea5191d7d2a"
-  sha256 "a4b24ba8b43d5fc7bf1387c87f98e24787de1dd4f3141a94e8b169ddda871e1c"
+  # The builder replaces main's build daily and keeps no stable link to the newest one, so a version written into
+  # this file goes stale the next day. The cask reads the newest main build from the builder's index each time
+  # Homebrew loads it: `brew upgrade` moves to every new daily with no edit here, and the build's published .sha256
+  # checks the download.
+  index = ::Utils::Curl.curl("https://builder.blender.org/download/daily/?format=json&v=1", print_stdout: false)
+  rows = JSON.parse(index.stdout, symbolize_names: true)
+  build = rows.select { |row| row in { branch: "main", platform: "darwin", architecture: "arm64", file_extension: "dmg" } }
+              .max_by { |row| row[:file_mtime] }
 
-  url "https://cdn.builder.blender.org/download/daily/blender-#{version.csv.first}+main.#{version.csv.second}-darwin.arm64-release.dmg"
+  version "#{build[:version]}-#{build[:risk_id]},#{build[:hash]}"
+  sha256 ::Utils::Curl.curl("#{build[:url]}.sha256", print_stdout: false).stdout.strip
+
+  url build[:url]
   name "Blender Daily"
   desc "3D creation suite at the newest daily build of the main branch"
   homepage "https://builder.blender.org/download/daily/"
-
-  livecheck do
-    url "https://builder.blender.org/download/daily/?format=json&v=1"
-    strategy :json do |json|
-      build = json.select { |row| row["branch"] == "main" && row["platform"] == "darwin" }
-                  .select { |row| row["architecture"] == "arm64" && row["file_extension"] == "dmg" }
-                  .max_by { |row| row["file_mtime"] }
-      next if build.nil?
-
-      "#{build["version"]}-#{build["risk_id"]},#{build["hash"]}"
-    end
-  end
 
   conflicts_with cask: ["blender", "blender@lts"]
   depends_on arch: :arm64
