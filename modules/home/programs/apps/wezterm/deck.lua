@@ -23,11 +23,13 @@ M.palette = {} -- populated in apply(); events.lua replays it per palette open
 
 -- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
 -- so windows in different workspaces never mirror one shared session. The client starts through a login shell: the server it forks keeps
--- that session environment for every pane and every command resurrection execs without a shell. A gated client waits for one line: zellij
--- sends its startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup size.
+-- that session environment for every pane and every command a rebuilt session execs without a shell. A rebuilt session (the server died
+-- with the machine) runs its recorded commands at once instead of parking each behind a Press-ENTER banner; the zellij discovery hook
+-- decides what gets recorded. A gated client waits for one line: zellij sends its startup size before installing its SIGWINCH handler, so
+-- a resize inside that gap strands the session at the startup size.
 function M.session_args(name, gated)
     local body = gated and 'read -r _; exec "$@"' or 'exec "$@"'
-    return { rows.paths.zsh, "-lc", body, "zsh", rows.paths.zellij, "attach", "--create", name }
+    return { rows.paths.zsh, "-lc", body, "zsh", rows.paths.zellij, "attach", "--create", "--force-run-commands", name }
 end
 
 function M.workspace_row(name)
@@ -144,7 +146,7 @@ local function command_action(cmd)
     return action
 end
 
--- Quick-select action bus: per-row `select` arms convert the selected span to a Forge action; rows without an arm keep the native clipboard default.
+-- Quick-select action bus: per-row `select` arms convert the selected span to an estate action; rows without an arm keep the native clipboard default.
 local select_kinds = {
     ["edit"] = function(_, pane, sel)
         local file, line = sel:match("^(.-):(%d+)")
@@ -387,7 +389,6 @@ function M.apply(config)
         sync.apply_to_config(config, {
             toggle_key = sync_row.key,
             toggle_mods = sync_row.mods,
-            indicator = false, -- events.lua owns the status plane
             border = true,
             -- Active broadcast is the danger state everywhere: this border and the events.lua [SYNC] chip read one role.
             border_color = rows.theme.roles.state.danger,

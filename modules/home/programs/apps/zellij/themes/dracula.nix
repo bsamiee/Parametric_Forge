@@ -47,7 +47,7 @@ in {
     // License       : MIT
     // Path          : ~/.config/zellij/themes/dracula.kdl
     // ----------------------------------------------------------------------------
-    // Zellij component theme generated from the Forge palette owner
+    // Zellij component theme generated from the estate palette owner
 
     themes {
       "dracula" {

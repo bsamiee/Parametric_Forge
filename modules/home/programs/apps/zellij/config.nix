@@ -374,11 +374,12 @@ in {
         theme                       "dracula"
         default_shell               "${lib.getExe config.programs.zsh.package}"
         // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
-        // and the next `attach --create main` reattaches them live. After a reboot resurrection replays layout and argv behind a Press-ENTER
-        // banner, each command exec'd in the server's environment (the login shell WezTerm starts it through). The discovery hook rewrites a
-        // discovered bare `claude` to `claude --continue`, so a restored pane resumes its directory's last conversation; zellij splits the
-        // hook's output on whitespace. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
-        post_command_discovery_hook r#"set -- $RESURRECT_COMMAND; case "''${1##*/}:$*" in claude:*' -c'*|claude:*' --continue'*|claude:*' -r'*|claude:*' --resume'*) ;; claude:*) set -- "$@" --continue ;; esac; echo "$*""#
+        // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted) rebuilds the session from its
+        // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: it
+        // runs under `sh -c` once a minute per pane with a foreground command, keeps `claude` (a bare invocation gains `--continue`, so the
+        // pane resumes its directory's last conversation), and prints nothing for anything else, which rebuilds that pane as a plain shell
+        // in its directory. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
+        post_command_discovery_hook r#"set -- $RESURRECT_COMMAND; case "''${1##*/}:$*" in claude:*' -c'*|claude:*' --continue'*|claude:*' -r'*|claude:*' --resume'*) echo "$*" ;; claude:*) echo "$* --continue" ;; esac"#
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true
@@ -410,7 +411,6 @@ in {
             format_left               "{tabs}"
             format_center             "{swap_layout}"
             format_right              "#[bg=$accent2,fg=$inverse,bold] {session} "
-            format_space              ""
 
             // Narrow panes: hide whole parts by precedence instead of letting them overlap — the session cell outranks tabs and the swap label.
             format_hide_on_overlength "true"
@@ -423,9 +423,6 @@ in {
             tab_normal    "#[fg=$focus_inactive] TAB [{index}] "
             tab_separator " "
             tab_rename    "#[bg=$mode_renametab,fg=$inverse,bold] TAB [{index}] {name} "
-
-            border_enabled              "false"
-            hide_frame_for_single_pane  "false"
           }
 
           // --- [ZJSTATUS_HINTS_BOTTOM_BAR_MODE_CHIP_ALWAYS_VISIBLE_KEY_RIBBON]
@@ -442,9 +439,6 @@ in {
 
     ${modeHintLines}
             mode_default_to_mode "normal"
-
-            border_enabled              "false"
-            hide_frame_for_single_pane  "false"
           }
         }
 

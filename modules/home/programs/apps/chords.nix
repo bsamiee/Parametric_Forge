@@ -166,7 +166,6 @@
     ];
   hyperRows = map mkBind [
     [modes.locked.key ''SwitchToMode "Locked";'' "locked mode" ["lock" 10]]
-    ["q" "Quit;" null ["quit zellij" 110]]
     ["[" "PreviousSwapLayout;" null ["swap layout prev/next" "Hyper [ / Hyper ]" 100]]
     ["]" "NextSwapLayout;"]
     {

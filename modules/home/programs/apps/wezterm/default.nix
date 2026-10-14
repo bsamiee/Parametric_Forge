@@ -35,15 +35,14 @@
 
   # --- [WORKSPACE_ROWS]
   # One row = picker entry + zellij session identity + cwd + float policy. The workspace name IS the inner zellij session name, so windows in
-  # different workspaces never mirror one shared session; the default workspace keeps the estate's historical `main` session.
-  workspaceRoot = "${homeDir}/Developer";
-  mkWorkspace = name: label: source: {
-    inherit name label;
-    cwd = "${workspaceRoot}/${source}";
+  # different workspaces never mirror one shared session; the default workspace keeps the estate's historical `main` session. The cwd seeds a
+  # brand-new session's first pane and the workspace scratch float only: a live or rebuilt session keeps its own pane directories.
+  mkWorkspace = name: label: cwd: {
+    inherit name label cwd;
     float = "utility";
   };
   workspaceRows = [
-    (mkWorkspace "main" "[FORGE]" "Parametric_Forge")
+    (mkWorkspace "main" "[MAIN]" homeDir)
   ];
   defaultWorkspace = "main";
 

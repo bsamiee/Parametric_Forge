@@ -171,7 +171,7 @@
         zellij action focus-pane-id "terminal_''${editor_pane#terminal_}" >/dev/null 2>&1 || true
       fi
 
-      # Pane-scoped dismissal: close only the Forge popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
+      # Pane-scoped dismissal: close only the estate popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
       # identity vocabulary; a yazi launched WITH args ("yazi-dispatch.sh <dir>") is never the popup.
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
@@ -187,7 +187,7 @@
       #   (no args)          popup body: yazi + DDS bridge (client-id, local-events)
       #   toggle             per-tab popup dispatch (create / show+focus / hide)
       #   reveal|cd <path>   semantic DDS action on the tab popup via ya emit-to, creating the popup when absent — never key simulation
-      #   <entries...>       plain yazi with the Forge editor handoff
+      #   <entries...>       plain yazi with the estate editor handoff
       # DDS client ids derive deterministically from (session, pane_id), so the dispatcher recomputes the popup's id without a registry.
       session="''${ZELLIJ_SESSION_NAME:-default}"
       ${runtimeBaseSh}
