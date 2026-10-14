@@ -310,7 +310,7 @@ classes:
       matchers:
         - '(per|cites?|according to|under).{0,40}(deleted|retired|superseded|re-?ruled|former)'
         - '(law|rule|standard) (no longer|does not) (hold|apply|exist)'
-      refuting_citation: 'docs/laws/ + memory current state — a finding grounded in a superseded ruling is void, the prose twin of stale-disk-quoted-shape-void; the discriminator is the cited law re-verified on current disk — a standing law confirmed there keeps the finding live'
+      refuting_citation: 'standing law + memory current state — a finding grounded in a superseded ruling is void, the prose twin of stale-disk-quoted-shape-void; the discriminator is the cited law re-verified on current disk — a standing law confirmed there keeps the finding live'
       landed_surfaces:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'
@@ -323,7 +323,7 @@ classes:
         - '(valid|literal) (json|yaml|as.?written).{0,60}(fence|body|curl)'
         - 'placeholder.{0,60}(invalid|not valid|breaks)'
         - 'must be valid.{0,40}as written'
-      refuting_citation: 'docs/standards/formatting.md:140 — template fences carry neutral placeholders by definition; validity-as-written binds copy-safe bodies only (r4d-03, r4d-04)'
+      refuting_citation: 'formatting law — template fences carry neutral placeholders by definition; validity-as-written binds copy-safe bodies only (r4d-03, r4d-04)'
       landed_surfaces:
         - '.coderabbit.yaml'
         - '.greptile/rules.md'

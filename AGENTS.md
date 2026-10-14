@@ -10,13 +10,13 @@
 - Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
 - Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
-- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas the docs corpus omits.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas no repo surface records.
 
 ## [02]-[ESTATE_PROPAGATION]
 
 - `.claude/scripts/` is Forge-mastered: fixes land here first, then byte-copy to the sibling repos, `~/.claude/`, and `~/.codex/`.
 - Every other estate surface carries no master: a change to `.claude/skills/` or `.claude/agents/` in any project byte-copies to the other two regardless of where it was edited, and skills additionally byte-copy to `~/.codex/skills/`. Claude-caller skills such as `codex` stay out of `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
-- The byte-copied set spans `.claude/{skills,scripts,agents}`, `commands/`, `docs/stacks/{python,typescript}/`, and the three prose standards (`information-structure`, `formatting`, `style-guide`); every copy is byte-identical across the repos where the surface exists.
+- The byte-copied set spans `.claude/{skills,scripts,agents}` and `commands/`; every copy is byte-identical across the repos where the surface exists.
 
 ## [03]-[NIX_SHELL_EXECUTION]
 
@@ -36,7 +36,6 @@
 - Gemini judgment, visual, and image-prompt legs route through the `delegate-agy` skill (`.claude/skills/delegate-agy`), strongest reasoning tier pinned; its review lanes are read-only. A codex session reaches `agy` only under `-s danger-full-access` — the Seatbelt sandbox kills the process at lower sandbox levels.
 - The harness edit path can materialize control-character escapes (the `\u001f` class) as raw bytes on disk; after writing content that carries them, byte-verify with `cat -v` — raw control bytes are invisible to every text reader — and can strip 3-byte BMP private-use glyphs while planes 15/16 survive, so glyph-bearing files ride scripted writes with byte-level diff gates.
 - Estate rebuild passes hold the structural-win bar: a pass that only polishes is a failed pass unless an exhausted attack proves clean; a byte-fidelity deferral discharges by baseline eval-diff of the rendered artifact, never by standing; every pass returns evidence-anchored harvest rows that fold into doctrine and review rules the same session.
-- `docs/laws/` binds every substantive pass: a touched topology `[SURFACE]` lands its obligated counterparts in the same change, and harvest nominations land only through the run's terminal doctrine stage under the corpus admission law — `CLAUDE.md` [02] carries the full pointer.
 - Rebuild task-owned surfaces when replacement materially improves the requested outcome; preserve unrelated code and active-session work.
 
 ## [06]-[DEPLOY_SEAM]

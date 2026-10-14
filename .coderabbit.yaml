@@ -1,40 +1,15 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
-language: en-US
-tone_instructions: "Senior-to-senior register. Findings name the defect class and the line. No praise, no emojis, no hedging. Doctrine (docs/stacks, docs/standards, docs/laws) outranks generic convention; violations are defects. Prefer collapse over additive patches."
-early_access: false
-enable_free_tier: true
-inheritance: false
+tone_instructions: "Senior-to-senior register. Findings name the defect class and the line. No praise, no emojis, no hedging. CLAUDE.md law outranks generic convention; violations are defects. Prefer collapse over additive patches."
 reviews:
     profile: assertive
     request_changes_workflow: true
-    high_level_summary: true
     high_level_summary_instructions: >-
         Lead with contract-surface and behavior deltas, one dense paragraph. No restated diff statistics, no methodology narration.
-    high_level_summary_placeholder: "@coderabbitai summary"
-    high_level_summary_in_walkthrough: false
-    auto_title_placeholder: "@coderabbitai"
-    review_status: true
     review_details: true
-    review_progress: true
     fail_commit_status: true
-    collapse_walkthrough: true
-    changed_files_summary: true
-    sequence_diagrams: true
-    estimate_code_review_effort: true
-    assess_linked_issues: true
-    related_issues: true
-    related_prs: true
     suggested_labels: false
-    auto_apply_labels: false
     suggested_reviewers: false
-    auto_assign_reviewers: false
     in_progress_fortune: false
-    poem: false
-    enable_prompt_for_ai_agents: true
-    abort_on_close: true
-    disable_cache: false
-    slop_detection:
-        enabled: true
     path_filters:
         - "!flake.lock"
         - "!pnpm-lock.yaml"
@@ -44,19 +19,19 @@ reviews:
     path_instructions:
         - path: "**"
           instructions: >-
-            Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material used at full power, newest stable versions. Everything is agent-first: composable, self-describing, no interactive-only paths. Collapse spam relentlessly. Never restate law the formatters and gates already enforce (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua); flag their suppressions and bypasses — a shellcheck directive, noqa, or biome-ignore in a diff demands the ownership justification, and suppression-as-fix is the defect. Fix-to-root is a review demand: a PR that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the change's scope, or defers a residual for a later pass is defective — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual. Comment discipline: a comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap — one line as the target, inlined onto its statement when short, two lines the usual ceiling; what-comments, narration, and restated code are defects, and every pass that touches a file prunes its stale or drifted comments in the same pass. Coupling completeness: docs/laws/topology.md is the edit-coupling map — a diff touching a listed [SURFACE] without its obligated counterparts is incomplete, and generalizable lessons land under the docs/laws/README.md admission law, never as ad-hoc doc edits.
-        - path: "{docs/**,CLAUDE.md,AGENTS.md,.greptile/**,.coderabbit.yaml}"
+            Universal bar: anticipate 10x functionality growth — surfaces absorb new modalities as rows, cases, or dispatch arms, never as new files, flags, or knobs. Defects: knob/param/flag spam, hardcoded values, fragile string plumbing, naive happy-path logic, hand-rolled reimplementations of capability the ecosystem already provides. External packages are first-class implementation material used at full power, newest stable versions. Everything is agent-first: composable, self-describing, no interactive-only paths. Collapse spam relentlessly. Never restate law the formatters and gates already enforce (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua); flag their suppressions and bypasses — a shellcheck directive, noqa, or biome-ignore in a diff demands the ownership justification, and suppression-as-fix is the defect. Fix-to-root is a review demand: a PR that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the change's scope, or defers a residual for a later pass is defective — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual. Comment discipline: a comment exists only for the in-situ constraint the code cannot show — the why, the invariant, the trap — one line as the target, inlined onto its statement when short, two lines the usual ceiling; what-comments, narration, and restated code are defects, and every pass that touches a file prunes its stale or drifted comments in the same pass. Coupling completeness: a diff touching an owner surface without the consumers that project from it is incomplete.
+        - path: "{CLAUDE.md,AGENTS.md,.greptile/**,.coderabbit.yaml}"
           instructions: >-
-            Doctrine-surface diffs are judged against docs/laws/README.md: hardening beats extending beats minting, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
+            Constitution and reviewer-config diffs: hardening an existing clause beats extending beats minting a new one, each move needing the prior proven insufficient; run provenance or process narration in a landed row is a defect; an addition without recurrence evidence or branch-spanning blast radius is spam. Flag the miss as hard as the spam — a topology row the diff proves but does not land, a scar whose law a new gate owns still sitting in the ledger.
         - path: "**/*.nix"
           instructions: >-
-            Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable. Review against docs/laws/design.md and its machine law pages (modules.md, kernels.md, projections.md, agents.md). Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory options, `with pkgs;` at file level, mixed system/home scope, singleton per-tool files where an owner table exists, vocabulary values (color, keybind, tool admission) placed outside their single declared owner, host facts duplicated instead of projected from the host context owner, generated config built by string templates where a native generator exists, version pins without a recorded reason. Embedded shell bodies are reviewed as Bash: set -euo pipefail, declared runtimeInputs, shellcheck-clean, no hardcoded repo paths or usernames; an `|| true` survives only as a pipefail rail where non-zero exit is expected data. A darwin-only package interpolated in a module both hosts import is an eval break — it rides `lib.optionalString pkgs.stdenv.hostPlatform.isDarwin` with a runtime guard. One owner per axis; a new capability is a row on the owning surface, never a new file. Files trend toward 300 LOC via polymorphic collapse, never by deleting capability.
+            Machine-owner repo on nix-darwin + Home Manager, Determinate Nix, nixpkgs-unstable. Review against CLAUDE.md [02] and [03]. Defects: new wrapper modules, compat shims, aliases for retired names, anticipatory options, `with pkgs;` at file level, mixed system/home scope, singleton per-tool files where an owner table exists, vocabulary values (color, keybind, tool admission) placed outside their single declared owner, host facts duplicated instead of projected from the host context owner, generated config built by string templates where a native generator exists, version pins without a recorded reason. Embedded shell bodies are reviewed as Bash: set -euo pipefail, declared runtimeInputs, shellcheck-clean, no hardcoded repo paths or usernames; an `|| true` survives only as a pipefail rail where non-zero exit is expected data. A darwin-only package interpolated in a module both hosts import is an eval break — it rides `lib.optionalString pkgs.stdenv.hostPlatform.isDarwin` with a runtime guard. One owner per axis; a new capability is a row on the owning surface, never a new file. Files trend toward 300 LOC via polymorphic collapse, never by deleting capability.
         - path: "overlays/**"
           instructions: >-
             Overlay packages are contract-bearing. provision emits schema-v3 JSON envelopes only — flag any envelope field lacking a README contract row, any raw socket path, host absolute path, or token material in agent-facing JSON. jq programs live in jq/ files, never inlined in Bash; jq owns JSON shape, Bash owns admission and exit codes. SQL probes stay read-only. Dispatch is catalog-driven: service, image, command, and verb facts live in data catalogs, never hardcoded in shell — a bash-side literal re-validating a row-owned vocabulary is a duplicate constant that will contradict the row. Every upstream-layout-dependent install step (strip, wrapper target, conditional branch) carries a fail-loud existence guard: silent strips ship fatter outputs on drift, silent-skip guards thinner ones. Package layout vocabulary is single-owner via passthru; a per-package kernel file exists only when install logic differs — data deltas belong on the manifest row. Package update engines are executable: flag hand-edited or duplicated generated values, partial pin-family advancement, metadata-only engines, and inherited update scripts targeting another source owner.
         - path: "services/**"
           instructions: >-
-            TypeScript under docs/stacks/typescript law: Effect rails with tagged faults, Config.redacted for secret-bearing config, Schema decodes at boundaries, no any, no class-based services, pnpm-only. Pulumi rows are typed and declarative; imperative provider calls outside the driver are defects. Secret values must never reach state outputs unredacted. Dependency movement is forward-only — a downgrade or stale pin without a recorded reason is a defect. Row origin columns narrow per-resource to what the pinned provider actually imports (an adopt row for an importless resource is a latent apply failure); wire-grammar fields that are pure functions of row coordinates generate at the engine boundary, never ride as row data.
+            TypeScript law: Effect rails with tagged faults, Config.redacted for secret-bearing config, Schema decodes at boundaries, no any, no class-based services, pnpm-only. Pulumi rows are typed and declarative; imperative provider calls outside the driver are defects. Secret values must never reach state outputs unredacted. Dependency movement is forward-only — a downgrade or stale pin without a recorded reason is a defect. Row origin columns narrow per-resource to what the pinned provider actually imports (an adopt row for an importless resource is a latent apply failure); wire-grammar fields that are pure functions of row coordinates generate at the engine boundary, never ride as row data.
         - path: "modules/home/programs/**"
           instructions: >-
             App config consumers (Lua, TOML) project from Nix-owned vocabularies: private hex colors, ad hoc keybinds, or duplicated theme values in consumer config are defects — values arrive from generated owners. Lua is reviewed against the host application's API, not generic Lua convention. Lua consumers index generated row tables directly — a hand-written key mirror reintroduces the two-edit drift; host callback-registration APIs register permanently per call, so actions build once per config generation, never inside press/open/event bodies; theme roles bind only to plugin group names verified from source.
@@ -68,24 +43,17 @@ reviews:
             Agent-facing declarative artifacts: implicit agentic prose, active voice, 1-2 line comments. Defects: meta-commentary, provenance or freshness tails, checklist noise, restating obligations the instruction chain already carries, project-coupled content in reusable surfaces.
         - path: "**/*.md"
           instructions: >-
-            Review prose and structure against docs/standards/style-guide.md, docs/standards/formatting.md, and docs/standards/information-structure.md — the docgen discipline. Defects: no-op sentences that change no reader decision, leading filler words, meta-commentary, provenance/freshness tails, checklist tails, heading proliferation for short content, tables carrying explanations instead of enumerable facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE] label convention, quality ladders (good/better/best tiers) where a contract gate belongs, restated obligations the instruction chain already carries (follow CLAUDE.md, use available tools), and defensive caveats softening settled rules. Table repair preserves the grid — hoist repeats into headers, relieve clause tails into the lead or a note, split overloaded rows — and conversion to cards or lists is earned only when rows share no comparison question or a type standard owns the shape; cell width alone never converts a table. Apply the regeneration test: a sentence a fresh agent regenerates from disk plus the document's stated invariants is a mirror and is deleted. Sibling files of one kind (references of one bundle, atlas pages, templates) share one structural schema — section vocabulary, card field sets, marker tokens — and a locally-optimized deviation is a defect even when it reads better in isolation.
+            Review prose and structure under the docgen discipline. Defects: no-op sentences that change no reader decision, leading filler words, meta-commentary, provenance/freshness tails, checklist tails, heading proliferation for short content, tables carrying explanations instead of enumerable facts, duplicated content an owning doc already carries, drift from the [UPPER_CASE] label convention, quality ladders (good/better/best tiers) where a contract gate belongs, restated obligations the instruction chain already carries (follow CLAUDE.md, use available tools), and defensive caveats softening settled rules. Table repair preserves the grid — hoist repeats into headers, relieve clause tails into the lead or a note, split overloaded rows — and conversion to cards or lists is earned only when rows share no comparison question or a type standard owns the shape; cell width alone never converts a table. Apply the regeneration test: a sentence a fresh agent regenerates from disk plus the document's stated invariants is a mirror and is deleted. Sibling files of one kind (references of one bundle, templates) share one structural schema — section vocabulary, card field sets, marker tokens — and a locally-optimized deviation is a defect even when it reads better in isolation.
         - path: ".claude/skills/**"
           instructions: >-
             Skill bundles under the docgen skill-craft law. Defects: first- or second-person voice in frontmatter descriptions — quoted user-utterance trigger phrases are not voice; over-broad triggers spanning unrelated domains or keyword-stuffed synonym lists; SKILL.md over 500 lines or carrying reference banks, troubleshooting ledgers, or example floods that belong one hop down; references that only route to other references; no-op intensifiers with no owner, action, or gate; filler lead-ins (note that, make sure to, remember to); good/better/best quality ladders instead of contract gates; command catalogs without task triggers; generic think/plan/implement lifecycle steps; closing checklists with no machine-checkable gate; deterministic multi-step procedures narrated in prose where a bundled script belongs; three or more abstract guidance bullets with no paired rejected/accepted example or gate; one mandated output skeleton regardless of consumer; instructed network fetches or global installs inside skill bodies, except an owned install surface naming exact source, scope, and verification. The SKILL.md root follows the declared schema: H1 is the bare [SKILL_TOKEN], routable bundles open with [01]-[ROUTING] router cards (- [NN]-[TOKEN](path): phrase), group labels are [TOKEN]: lines never bold, and a body rule that would change no agent output if deleted is dead weight regardless of its register.
     auto_review:
-        enabled: true
-        auto_incremental_review: true
         auto_pause_after_reviewed_commits: 0
-        drafts: false
     finishing_touches:
         docstrings:
             enabled: false
         unit_tests:
             enabled: false
-        simplify:
-            enabled: false
-        autofix:
-            enabled: true
     pre_merge_checks:
         docstrings:
             mode: "off"
@@ -96,21 +64,10 @@ reviews:
         issue_assessment:
             mode: "off"
     tools:
-        ast-grep:
-            essential_rules: true
-        shellcheck:
-            enabled: true
-        ruff:
-            enabled: true
         markdownlint:
             enabled: false
-        github-checks:
-            enabled: true
-            timeout_ms: 900000
         languagetool:
             enabled: false
-        biome:
-            enabled: true
         hadolint:
             enabled: false
         swiftlint:
@@ -123,12 +80,6 @@ reviews:
             enabled: false
         golangci-lint:
             enabled: false
-        yamllint:
-            enabled: true
-        gitleaks:
-            enabled: true
-        trufflehog:
-            enabled: true
         checkov:
             enabled: false
         tflint:
@@ -167,8 +118,6 @@ reviews:
             enabled: false
         clippy:
             enabled: false
-        sqlfluff:
-            enabled: true
         squawk:
             enabled: false
         trivy:
@@ -181,8 +130,6 @@ reviews:
             enabled: false
         shopifyThemeCheck:
             enabled: false
-        luacheck:
-            enabled: true
         brakeman:
             enabled: false
         dotenvLint:
@@ -193,8 +140,6 @@ reviews:
             enabled: false
         checkmake:
             enabled: false
-        osvScanner:
-            enabled: true
         oasdiff:
             enabled: false
         reactDoctor:
@@ -207,32 +152,22 @@ reviews:
             enabled: false
         emberTemplateLint:
             enabled: false
-        skillspector:
-            enabled: true
         psscriptanalyzer:
             enabled: false
 chat:
     art: false
-    allow_non_org_members: true
-    auto_reply: true
     integrations:
         jira:
             usage: disabled
         linear:
             usage: disabled
 knowledge_base:
-    opt_out: false
-    web_search:
-        enabled: true
     code_guidelines:
-        enabled: true
         filePatterns:
-            - "docs/laws/*.md"
-            - "docs/standards/*.md"
-            - "docs/stacks/**/*.md"
+            - "CLAUDE.md"
+            - "AGENTS.md"
     learnings:
         scope: local
-        approval_delay: 0
     issues:
         scope: local
     jira:
@@ -241,9 +176,6 @@ knowledge_base:
         usage: disabled
     pull_requests:
         scope: local
-    mcp:
-        usage: auto
-    automatic_repository_linking: false
     linked_repositories:
         - repository: bsamiee/Rasm
           instructions: >-
@@ -253,5 +185,3 @@ issue_enrichment:
         enabled: true
     planning:
         enabled: false
-    labeling:
-        auto_apply_labels: false

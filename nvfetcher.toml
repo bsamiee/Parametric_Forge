@@ -1,5 +1,5 @@
 # Pin-source declarations for every nvfetcher-engine manifest row; nvfetcher lives in the flake devShell alone, so
-# `nix develop -c nvfetcher -o overlays/_sources` advances the complete family (docs/atlas/rails-and-contracts.md row 03).
+# `nix develop -c nvfetcher -o overlays/_sources` advances the complete family.
 
 # Design renderers and native application routing; update with --filter '^design-'.
 [design-imagemagick]

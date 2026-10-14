@@ -23,9 +23,9 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 
 ## [02]-[ESTATE_LAW]
 
-The Nix estate is machine configuration, not application code: every Nix line configures the system/user environment, deploys files/packages, or activates services — a line doing none of these does not belong here. One module graph serves every host; the OS branch keys on the static host context (`hosts/context.nix`), never on `pkgs`. `services/` owns live service state as Pulumi rows, `docs/` owns durable law, and `overlays/` admits an upstream package only with a real consumer now.
+The Nix estate is machine configuration, not application code: every Nix line configures the system/user environment, deploys files/packages, or activates services — a line doing none of these does not belong here. One module graph serves every host; the OS branch keys on the static host context (`hosts/context.nix`), never on `pkgs`. `services/` owns live service state as Pulumi rows, and `overlays/` admits an upstream package only with a real consumer now.
 
-- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas the docs corpus omits, and dispatched agents reach them only through this route.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas no repo surface records, and dispatched agents reach them only through this route.
 - System scope (`modules/darwin/`, `modules/nixos/`) and home scope (`modules/home/`) never mix in one module; nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes into `modules/nixos/`.
 - Latest nixpkgs-unstable always; a pin exists only with a named incompatibility and dies when compatibility lands.
 - `redeploy` is the only activation path, and switches happen freely — deploy early to catch runtime-only bugs, never batch changes behind ceremony. It gates on `nix flake check` (formatting, lint, both hosts' evals) and the per-host toplevel build; a failing check is a real blocker resolved at the source, never bypassed.
@@ -34,7 +34,6 @@ The Nix estate is machine configuration, not application code: every Nix line co
 - Storage questions ride `dust -d 1 -n 20 -r ~` and each tool's own prune verb — `uv cache prune`, `pnpm store prune`, `docker system prune`, `mise prune --configs`; store maintenance runs `sudo -H nix-env -p /nix/var/nix/profiles/system --delete-generations old`, `nix-collect-garbage -d`, and `nix store optimise`, and Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly && brew cleanup`.
 - [NEVER]: kill live terminal sessions — no `zellij kill-session`/`kill-all-sessions`, no WezTerm restarts. Fix in repo, redeploy; the operator restarts on their own schedule.
 - `.claude/scripts/` is Forge-mastered and copies to the sibling repos, `~/.claude/`, and `~/.codex/`; every other `.claude/` surface carries no master and byte-copies bidirectionally on change, skills byte-copying to `~/.codex/skills/`. Claude-caller skills such as `codex` stay outside `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
-- `docs/laws/` is the design and maintenance-law corpus: `design.md` with its machine law pages and the coupling topology, all under the `README.md` admission law. Read it at source before any cross-surface edit; a touched `topology.md` `[SURFACE]` lands its obligated counterparts in the same change, and generalizable findings land only through a run's terminal doctrine stage under `docs/laws/README.md` with the `docgen` skill loaded.
 
 ## [03]-[NIX_CODE_LAW]
 
@@ -86,7 +85,7 @@ Every module opens with the header block and takes only the arguments it reads:
 
 ## [04]-[LANGUAGE_LAW]
 
-Code-generation law lives in the stack atlases: `docs/stacks/python/README.md` and `docs/stacks/typescript/README.md` route every language, shape, rail, and boundary decision to its owning page. Design law lives in the `docs/laws/` corpus — `design.md` binds every executable surface (rails, dispatch, vocabularies), and the machine law pages extend it: `modules.md` onto the Nix module graph, `kernels.md` onto packaged shell, `projections.md` onto Lua consumers and generated config, `agents.md` onto service agents. Durable Markdown follows the `docs/standards/` owners — `style-guide.md` for language law, `formatting.md` for surface mechanics, `information-structure.md` for container design. The docgen skill's `prose_gate.py` compiles those owners into the mechanical floor: bare invocation checks, `fix --write` repairs; every touched durable doc passes it before the turn ends.
+Durable Markdown passes the docgen skill's `prose_gate.py`: bare invocation checks, `fix --write` repairs; every touched durable doc passes it before the turn ends.
 
 [SHELL]:
 - `.sh` extension on every bash script; `set -euo pipefail` mandatory; ShellCheck passes. Package shell CLIs with `writeShellApplication` when they carry a runtime closure, ShellCheck integration, or a stable Home Manager-installed binary; `writeShellScriptBin` only for closure-free one-liners.

@@ -47,11 +47,6 @@ Parametric_Forge/
 ├── overlays/                      # Manifest-folded package admissions
 │   └── provision/                 # Local provisioning CLI
 ├── services/                      # Doppler and GitHub IaC rows
-├── docs/
-│   ├── atlas/                     # Platform facts, rails, interconnection
-│   ├── laws/                      # Estate design and machine law
-│   ├── stacks/                    # Language law
-│   └── standards/                 # Prose, formatting, information structure
 ├── .claude/                       # Harness agents, commands, skills, scripts
 ├── .greptile/                     # Per-repo reviewer configuration
 └── .coderabbit.yaml               # Per-repo reviewer configuration
@@ -89,7 +84,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 - `modules/nixos/` carries the generic VPS baseline: boot and disko, static addressing projected from the host-context network row, key-only SSH, declarative users, and routine Nix maintenance. Work reaches the server through its native `ssh vps` host; no local mount, persistent tunnel, or project service is implied. Nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes here.
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: `manifest.nix` owns admission and recipes consume nvfetcher-generated versions and hashes. Admission requires a real consumer now — never anticipatory packaging.
-- `services/` owns live service state as code, held to `docs/stacks/typescript/` in full. `package.json` and `pnpm-workspace.yaml` bind the repo-root workspace without per-folder manifests. Existing service domains extend their rows; new domains get one organized owner.
+- `services/` owns live service state as code under the TypeScript quality bar. `package.json` and `pnpm-workspace.yaml` bind the repo-root workspace without per-folder manifests. Existing service domains extend their rows; new domains get one organized owner.
 - `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the estate; `outputs [--reveal]` projects receipts; `scopes apply|doctor|strict` governs directory-scope resolution; `reviewers` proves the reviewer matrix; `apps` projects the browser-custodied GitHub App census. `services/driver.ts` brokers Pulumi and Doppler credentials from 1Password and resolves `GITHUB_TOKEN` from the agent environment or Doppler.
 
 ## [06]-[SECRETS]
@@ -127,12 +122,12 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 
 | [INDEX] | [SURFACE]       | [STANDARD]                                                                                                      |
 | :-----: | :-------------- | :-------------------------------------------------------------------------------------------------------------- |
-|  [01]   | Nix             | `docs/laws/design.md` + the machine law pages; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.       |
+|  [01]   | Nix             | `CLAUDE.md` estate and code law; `alejandra`/`deadnix`/`statix` gate via `nix flake check`.                    |
 |  [02]   | Shell source    | `.sh` extension; `set -euo pipefail`; ShellCheck passes.                                                        |
 |  [03]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
-|  [04]   | TypeScript      | `docs/stacks/typescript/` — `services/` code is held to it in full.                                             |
-|  [05]   | Python          | `docs/stacks/python/`; 3.15, `uv`-managed, `ruff` + `ty`.                                                       |
-|  [06]   | Markdown        | `docs/standards/` prose owners; `prose_gate.py` (docgen skill) is the check + fix rail.                         |
+|  [04]   | TypeScript      | Effect rails, tagged faults, redacted config, schema decodes at boundaries, pnpm-only.                          |
+|  [05]   | Python          | 3.15, `uv`-managed, `ruff` + `ty`.                                                                              |
+|  [06]   | Markdown        | `prose_gate.py` (docgen skill) is the check + fix rail.                                                         |
 |  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
 
 ## [13]-[GITHUB_AND_SERVICES]
@@ -171,7 +166,7 @@ Day-2 rebuilds: `redeploy --switch`. `nixos-anywhere` with disko bootstraps each
 
 - Format: `nix fmt -- --ci` — full proof: `nix flake check`.
 - Provisioner: `nix build .#provision`; smoke with `nix run .#provision -- self-test`.
-- Inputs: the ordered update sequence in `docs/atlas/rails-and-contracts.md` `[06]-[UPDATE_SEQUENCE]`; closure diffs review through `nvd`/`nix-diff` before switching.
+- Inputs, in order, each proven before the next: clean working tree, `nix flake update` proven by `redeploy --build`, `nix develop -c nvfetcher -o overlays/_sources`, `redeploy --switch`, the Homebrew pass, then the store trim; closure diffs review through `nvd`/`nix-diff` before switching.
 
 Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly && brew cleanup`.
 

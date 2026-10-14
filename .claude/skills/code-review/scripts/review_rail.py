@@ -655,7 +655,7 @@ class ShardFill(msgspec.Struct, frozen=True):
     files: tuple[str, ...]
     packages: tuple[PackageTier, ...] = ()
     substrate: tuple[str, ...] = ()  # language-root .api tiers beside the package overlays
-    doctrine: tuple[str, ...] = ()  # docs/stacks/<language> roots owning the shard's files
+    doctrine: tuple[str, ...] = ()  # language doctrine roots owning the shard's files
     unplaced: tuple[str, ...] = ()  # files outside every tiered root — no package, no .api, no stack doctrine
 
 
@@ -2293,11 +2293,11 @@ def tiers_of(file: str, /) -> tuple[str, str, str]:
     # (package_root, substrate_api, doctrine_root); "" marks a tier the path does not carry — package .api existence resolves at the verb.
     match PurePosixPath(file).parts:
         case ("libs", lang, package, _leaf, *_) if lang in LANGS:
-            return (f"libs/{lang}/{package}", f"libs/{lang}/.api", f"docs/stacks/{lang}")
+            return (f"libs/{lang}/{package}", f"libs/{lang}/.api", "")
         case ("libs", lang, *_) if lang in LANGS:
-            return ("", f"libs/{lang}/.api", f"docs/stacks/{lang}")
+            return ("", f"libs/{lang}/.api", "")
         case ("tests", lang, *_) if lang in LANGS:
-            return ("", f"tests/{lang}/.api", f"docs/stacks/{lang}")
+            return ("", f"tests/{lang}/.api", "")
         case _:
             return ("", "", "")
 
@@ -2943,7 +2943,7 @@ def selftest_fixture() -> tuple[bytes, bytes]:
     # one primary, so a contract change edits one site and both variants follow.
     primary: dict[str, object] = {
         "ledger": [
-            {"id": "r9a-01", "file": "docs/<file-a>.md", "severity": "major", "verdict": "fixed", "note": "<repair>", "shape": "substitution"},
+            {"id": "r9a-01", "file": "notes/<file-a>.md", "severity": "major", "verdict": "fixed", "note": "<repair>", "shape": "substitution"},
             {"id": "r9a-02", "file": "libs/<file-b>.py", "severity": "minor", "verdict": "pushed-back", "note": "<refusal>"},
             {
                 "id": "r9a-03",
@@ -2956,14 +2956,14 @@ def selftest_fixture() -> tuple[bytes, bytes]:
             {"id": "r9a-04", "file": "libs/<file-b>.py", "severity": "trivial", "verdict": "upgraded", "note": "<collapse>", "shape": "collapse"},
         ],
         "improvements": [
-            {"page": "docs/<file-a>.md", "pattern": "<pattern-a>", "what": "<upgrade-a>", "axis": "hunt-axis:<axis-a>"},
+            {"page": "notes/<file-a>.md", "pattern": "<pattern-a>", "what": "<upgrade-a>", "axis": "hunt-axis:<axis-a>"},
             {"page": "libs/<file-b>.py", "pattern": "<pattern-b>", "what": "<upgrade-b>", "axis": ""},
         ],
         "refuted": [{"claim": "<claim-a>", "evidence": "<citation-a>"}],
-        "capability": [{"page": "docs/<file-a>.md", "pattern": "<roster-a>", "members": ["<member-a>", "<member-b>"]}, "<capability-line>"],
+        "capability": [{"page": "notes/<file-a>.md", "pattern": "<roster-a>", "members": ["<member-a>", "<member-b>"]}, "<capability-line>"],
         "routing": [{"target_file": "libs/<file-c>.py", "needed_change": "<change>"}],
         "uncertain": ["<open-question>"],
-        "files": ["docs/<file-a>.md", "libs/<file-b>.py"],
+        "files": ["notes/<file-a>.md", "libs/<file-b>.py"],
         "gate_clean": True,
         "model": "<model>",
         "wall_s": 1.5,
@@ -2991,7 +2991,7 @@ def registry_proofs() -> tuple[tuple[str, bool], ...]:
     )
     surfaced: tuple[object, ...] = (
         {**template, "class_id": "<class-d>", "landed_surfaces": []},
-        {**template, "class_id": "<class-e>", "landed_surfaces": ["docs/<file-a>.md"]},
+        {**template, "class_id": "<class-e>", "landed_surfaces": ["notes/<file-a>.md"]},
     )
     unfound = Path("<no-repo>")
     fired = tuple(tuple(fault.code for fault in verdict.faults) for verdict in rows_checked(entries, frozenset({"<standing-a>"})))
@@ -3087,22 +3087,25 @@ def stream_proofs() -> tuple[tuple[str, bool], ...]:
 def routing_proofs() -> tuple[tuple[str, bool], ...]:
     pairs = (
         ("shard-a", ShardReport(routing=(msgspec.Raw(b'{"target_file": "libs/<file-c>.py", "needed_change": "<change-a>"}'),))),
-        ("shard-b", ShardReport(routing=(msgspec.Raw(b'{"target_file": "docs/<file-d>.md", "needed_change": "<change-b>"}'),))),
+        ("shard-b", ShardReport(routing=(msgspec.Raw(b'{"target_file": "notes/<file-d>.md", "needed_change": "<change-b>"}'),))),
     )
     rows = routing_mined(pairs)
     closers = (CloserReport(rows=(LedgerRow(id="a:libs/<file-c>.py", verdict="landed"),), files=("libs/<file-c>.py",)),)
     drain = routing_drained(rows, closers)
-    bare = routing_drained(rows, (CloserReport(rows=(LedgerRow(id="docs/<file-d>.md", verdict="refuted"),)),))
+    bare = routing_drained(rows, (CloserReport(rows=(LedgerRow(id="notes/<file-d>.md", verdict="refuted"),)),))
     cut = closer_sliced(rows, 2, "coderabbit")
     flat = tuple(file for slice_ in cut for file in slice_.manifest.files)
     deferred = replace(drain, deferred=True)
     return (
-        ("routing-rows-mined-keyed", tuple(row.key for row in rows) == ("a:libs/<file-c>.py", "b:docs/<file-d>.md")),
-        ("routing-drain-counts", (drain.total, drain.drained) == (2, 1) and tuple(row.key for row in drain.pending) == ("b:docs/<file-d>.md",)),
+        ("routing-rows-mined-keyed", tuple(row.key for row in rows) == ("a:libs/<file-c>.py", "b:notes/<file-d>.md")),
+        ("routing-drain-counts", (drain.total, drain.drained) == (2, 1) and tuple(row.key for row in drain.pending) == ("b:notes/<file-d>.md",)),
         ("routing-drain-verdicts", drain.verdicts == {"landed": 1}),
         ("routing-drain-bare-file-id", bare.drained == 1 and tuple(row.key for row in bare.pending) == ("a:libs/<file-c>.py",)),
         ("closer-territories-disjoint", len(cut) == 2 and len(flat) == len(set(flat))),
-        ("closer-cut-keeps-keys", tuple(sorted(row.id for slice_ in cut for row in slice_.findings)) == ("a:libs/<file-c>.py", "b:docs/<file-d>.md")),
+        (
+            "closer-cut-keeps-keys",
+            tuple(sorted(row.id for slice_ in cut for row in slice_.findings)) == ("a:libs/<file-c>.py", "b:notes/<file-d>.md"),
+        ),
         ("routing-deferral-recorded", deferred.deferred and deferred.pending == drain.pending),
     )
 
@@ -3123,13 +3126,10 @@ def spawn_proofs() -> tuple[tuple[str, bool], ...]:
 
 def fill_proofs() -> tuple[tuple[str, bool], ...]:
     return (
-        (
-            "tiers-package-resolves",
-            tiers_of("libs/csharp/<package-a>/<file>.cs") == ("libs/csharp/<package-a>", "libs/csharp/.api", "docs/stacks/csharp"),
-        ),
-        ("tiers-substrate-only", tiers_of("libs/python/<file>.py") == ("", "libs/python/.api", "docs/stacks/python")),
-        ("tiers-tests-substrate", tiers_of("tests/typescript/<file>.ts") == ("", "tests/typescript/.api", "docs/stacks/typescript")),
-        ("tiers-unplaced", tiers_of("docs/<file>.md") == ("", "", "")),
+        ("tiers-package-resolves", tiers_of("libs/csharp/<package-a>/<file>.cs") == ("libs/csharp/<package-a>", "libs/csharp/.api", "")),
+        ("tiers-substrate-only", tiers_of("libs/python/<file>.py") == ("", "libs/python/.api", "")),
+        ("tiers-tests-substrate", tiers_of("tests/typescript/<file>.ts") == ("", "tests/typescript/.api", "")),
+        ("tiers-unplaced", tiers_of("notes/<file>.md") == ("", "", "")),
     )
 
 
@@ -3215,7 +3215,7 @@ def selftest_proofs(repo: Path, /) -> tuple[tuple[str, bool], ...]:
             ("capability-roster-mined", len(rosters) == 1),
             ("routing-populated", bool(report.routing)),
             ("uncertain-populated", bool(report.uncertain)),
-            ("report-files-surface", report.files == ("docs/<file-a>.md", "libs/<file-b>.py")),
+            ("report-files-surface", report.files == ("notes/<file-a>.md", "libs/<file-b>.py")),
             (
                 "ledger-shape-mix",
                 dict(Counter(row.shape or "unstamped" for row in report.ledger))

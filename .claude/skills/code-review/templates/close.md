@@ -13,7 +13,7 @@ Done is exactly one verdict row per routed demand, each proven by its re-read la
 
 <context_gathering>
 Read fully, in order, before the first edit:
-1. <arming-ladder: sized to row weight — a small closer reads the 2-3 docs/stacks/<language>/ pages owning the row's concern; a full-arming closer reads the full stack root set, the ARCHITECTURE strata map when rows cross folders, and the RULINGS.md registries on the rows' tier chain as settled law>.
+1. <arming-ladder: sized to row weight — a small closer reads the 2-3 doctrine pages owning the row's concern; a full-arming closer reads the full stack root set, the ARCHITECTURE strata map when rows cross folders, and the RULINGS.md registries on the rows' tier chain as settled law>.
 2. Your routed rows: <routed-rows: each row's COMPLETE text inlined, or a pointer to the <round-dir>/shard-*-report.json .routing[] arrays with the instruction to grep them per target file before editing — a paraphrase drops constraints>.
 3. Each target page, in full, from current disk before its edit.
 </context_gathering>

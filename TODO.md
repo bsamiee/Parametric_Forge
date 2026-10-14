@@ -1,23 +1,5 @@
 # TODO
 
-Cleanup pass planned on 2026-09-14 and stopped before any edit landed. The tree already carries an uncommitted `flake.lock` bump and
-advanced `overlays/_sources` pins (verapdf 1.31.170, biome 2.5.13); neither has been built or switched.
-
-## [01]-[BUMP_AND_DEPLOY]
-
-- Build and switch the bumped inputs: `redeploy --switch`, fix every warning, then trim to one generation
-  (`sudo -H nix-env -p /nix/var/nix/profiles/system --delete-generations old`, `nix-collect-garbage -d`, `nix store optimise`).
-- Homebrew is already upgraded and cleaned; nine casks stay outdated only because their `--greedy` auto-update rows are upstream-owned.
-
-## [02]-[DOCS_REMOVAL]
-
-- `git rm -r docs/` and scrub every reference: `CLAUDE.md` [02] and [04], `AGENTS.md` :19 :39, `README.md` :50 :92 :130-135 :174,
-  `.coderabbit.yaml` :3 :47-71 :230-232, `.greptile/rules.md` :9 :12 :14 :15, `.greptile/config.json` :46 :67 :81,
-  `.greptile/files.json` every `docs/` path row, `nvfetcher.toml` :2.
-- Shared skill surfaces still name `docs/stacks/` and `docs/standards/` as a sibling-repo convention (`.claude/agents/reviewer-harvest.md`,
-  `.claude/skills/code-review/templates/{fix,harvest,close}.md`, `refuted-classes.yaml`, `scripts/review_rail.py`); those byte-copy to the
-  sibling repos, so decide whether the convention dies estate-wide before scrubbing them.
-
 ## [03]-[DANGLING_REFERENCES]
 
 - `modules/home/programs/languages/default.nix` :7 :22 — `estate/packages/manifest.json` projection has zero readers; delete with
@@ -62,7 +44,3 @@ Keep: `redeploy`, `provision`, `gha`, `loc`, the `terminal.nix` yazi→zellij→
 - Single-consumer option indirection worth folding if the pass has room: `estate.lsp` (`nixd.nix` :34), `estate.ssh` (`ssh.nix` :41),
   `estate.ignoreEstate` (`fd.nix` :16), `estate.secrets.sessionCache` (`1password.nix` :60), `programs.zellij.popupGeometry` and
   `pluginGrants` (`zellij/default.nix` :46 :77).
-
-## [05]-[CLOSE]
-
-- `redeploy --switch` clean, generation trim, garbage collect, optimise, then commit under `home:`/`nix:`/`docs:` scopes and push.
