@@ -9,17 +9,11 @@
   tomlFormat = pkgs.formats.toml {};
 in {
   home.packages = [pkgs.serpl];
+  # Bindings added to serpl's own, which it keeps for every key this file leaves unbound.
   xdg.configFile."serpl/config.toml".source = tomlFormat.generate "serpl-config" {
     keybindings = {
-      "<Ctrl-d>" = "Quit";
-      "<Ctrl-c>" = "Quit";
       "<Ctrl-q>" = "Quit";
-      "<Ctrl-z>" = "Suspend";
-      "<Ctrl-r>" = "Refresh";
       "<Ctrl-h>" = "ShowHelp";
-      "<Ctrl-o>" = "ProcessReplace";
-      "<Tab>" = "LoopOverTabs";
-      "<Backtab>" = "BackLoopOverTabs";
     };
   };
 }

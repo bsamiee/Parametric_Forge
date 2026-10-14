@@ -88,13 +88,13 @@ in {
       '';
 
       # SQL house style projected from the style vocabulary (postgres default dialect). Fallback order per tool: sqruff rides the wrapper above,
-      # one config per dialect; pg_format auto-reads ./.pg_format before this rc; sqlfluff resolves user-level config behind every
-      # project/pyproject location, so project law always wins.
+      # one config per dialect; pg_format auto-reads ./.pg_format before this rc; sqlfluff reads the .sqlfluff inside its ~/.config/sqlfluff
+      # directory behind every project/pyproject location, so project law always wins.
       "pg_format/pg_format.conf".text = ''
         spaces=${toString style.indent}
         wrap-limit=${toString style.width}
       '';
-      "sqlfluff".text = style.sql "sqlfluff" "postgres";
+      "sqlfluff/.sqlfluff".text = style.sql "sqlfluff" "postgres";
     }
     // lib.listToAttrs (map (d: {
         name = "sqruff/${d}.cfg";

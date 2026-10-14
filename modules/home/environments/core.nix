@@ -10,7 +10,6 @@
     # --- [LOCALE_TIME]
     TZ = host.timeZone;
     LANG = "en_US.UTF-8";
-    LC_ALL = "";
 
     # EDITOR/VISUAL are owned by programs.neovim.defaultEditor.
   };

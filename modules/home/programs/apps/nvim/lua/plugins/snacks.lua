@@ -60,18 +60,14 @@ require("snacks").setup({
             { section = "recent_files", indent = 1, padding = 2, limit = 8 },
         },
     },
-    explorer = { enabled = false },
     indent = { enabled = true },
-    input = { enabled = false },
     picker = { enabled = true },
     notifier = { enabled = true },
     quickfile = { enabled = true },
     scope = { enabled = true },
     statuscolumn = { enabled = true },
     words = { enabled = true },
-    rename = { enabled = true },
     zen = {
-        enabled = true,
         -- Every id resolves to a registered toggle: dim/diagnostics/line_number/indent are Snacks factories; signcolumn is the option toggle below.
         toggles = {
             dim = true,

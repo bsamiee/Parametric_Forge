@@ -216,27 +216,28 @@ in {
     };
 
     help = {
-      on = fg p.green;
-      run = fg p.cyan;
-      desc = fg p.foreground;
+      chord = fg p.green;
+      action = fg p.foreground;
       hovered = badge p.cyan;
-      footer = fg p.yellow;
     };
 
     filetype.rules = map ruleRow fileRules;
 
-    # git.yazi linemode vocabulary: the plugin's theme keys bind glyph + hue to the owner git rows, killing its plugin-default set. `updated`
-    # carries git's unmerged patterns (U/AA/DD), so it reads the conflict row; ignored keeps muted text and renders no sign (ignore is a
-    # visibility tier, not an owner git state); clean/unknown stay empty.
+    # git.yazi linemode vocabulary: the plugin's theme keys bind glyph + hue to the owner git rows, killing its plugin-default set. The plugin
+    # splits a modified file by side: `unstaged` (worktree) reads the modified row, `staged` (index) the staged row. `updated` carries git's
+    # unmerged patterns (U/AA/DD), so it reads the conflict row; ignored keeps muted text and renders no sign (ignore is a visibility tier, not
+    # an owner git state); clean/unknown stay empty.
     git = {
       added = fg g.added.color;
-      modified = fg g.modified.color;
+      staged = fg g.staged.color;
+      unstaged = fg g.modified.color;
       deleted = fg g.deleted.color;
       untracked = fg g.untracked.color;
       updated = fg g.conflict.color;
       ignored = fg p.comment;
       added_sign = g.added.glyph;
-      modified_sign = g.modified.glyph;
+      staged_sign = g.staged.glyph;
+      unstaged_sign = g.modified.glyph;
       deleted_sign = g.deleted.glyph;
       untracked_sign = g.untracked.glyph;
       updated_sign = g.conflict.glyph;

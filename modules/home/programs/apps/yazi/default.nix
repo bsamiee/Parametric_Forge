@@ -175,7 +175,6 @@
     edit = [
       {
         run = "nvim-edit.sh %s";
-        block = false;
         for = "unix";
       }
     ];

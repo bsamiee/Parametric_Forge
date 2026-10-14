@@ -14,10 +14,15 @@
 }: let
   inherit (config.estate.theme) roles;
   toml = pkgs.formats.toml {};
+  scrollbar = {
+    thumb_symbol = "█";
+    begin_symbol = "▲";
+    end_symbol = "▼";
+  };
+  # pik merges this file over its embedded default table by table, so a row here differs from that default.
   configToml = toml.generate "pik-config.toml" {
     screen_size = "fullscreen";
     ignore = {
-      threads = true;
       other_users = false;
       # macOS system trees, systemd services, and kernel worker classes.
       paths = [
@@ -31,14 +36,9 @@
     ui = {
       icons = "nerd_font_v3";
       process_table = {
-        title = {
-          alignment = "center";
-          position = "top";
-        };
-        border = {
-          type = "rounded";
-          style.fg = roles.accent.primary.hex;
-        };
+        inherit scrollbar;
+        title.alignment = "center";
+        border.style.fg = roles.accent.primary.hex;
         row = {
           selected_symbol = "❯";
           even.fg = roles.text.primary.hex;
@@ -58,41 +58,15 @@
           fg = roles.state.success.hex;
           bg = roles.surface.base.hex;
         };
-        scrollbar = {
-          track_symbol = "│";
-          thumb_symbol = "█";
-          begin_symbol = "▲";
-          end_symbol = "▼";
-          margin = {
-            horizontal = 0;
-            vertical = 1;
-          };
-        };
       };
       process_details = {
-        title = {
-          alignment = "center";
-          position = "top";
-        };
-        border = {
-          type = "rounded";
-          style.fg = roles.accent.secondary.hex;
-        };
-        scrollbar = {
-          track_symbol = "│";
-          thumb_symbol = "█";
-          begin_symbol = "▲";
-          end_symbol = "▼";
-          margin = {
-            horizontal = 0;
-            vertical = 1;
-          };
-        };
+        inherit scrollbar;
+        title.alignment = "center";
+        border.style.fg = roles.accent.secondary.hex;
       };
       search_bar.cursor_style = {
         fg = roles.text.primary.hex;
         bg = roles.accent.secondary.hex;
-        add_modifier = "REVERSED";
       };
       popups = {
         # Selection rides the focus fill with inverse text.
@@ -101,10 +75,7 @@
           bg = roles.focus.active.hex;
         };
         primary.fg = roles.accent.primary.hex;
-        border = {
-          type = "rounded";
-          style.fg = roles.state.attention.hex;
-        };
+        border.style.fg = roles.state.attention.hex;
       };
     };
   };

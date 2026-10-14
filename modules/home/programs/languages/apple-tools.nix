@@ -138,7 +138,6 @@ in
       "swiftformat/config".text = ''
         --indent ${toString style.indent}
         --max-width ${toString style.width}
-        --linebreaks lf
       '';
       # indentation_width is opt-in; line_length warns at the house width.
       "swiftlint/config.yml".text = ''
@@ -146,7 +145,6 @@ in
           - indentation_width
         line_length:
           warning: ${toString style.width}
-          error: 200
         indentation_width:
           indentation_width: ${toString style.indent}
       '';

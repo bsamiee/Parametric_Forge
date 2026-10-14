@@ -34,14 +34,13 @@ in {
         "--prompt='❯ '"
         "--marker='✓'"
         "--pointer='❯'"
-        "--separator='─'"
         "--scrollbar=│" # unquoted: quote chars would survive FZF_DEFAULT_OPTS re-split and trip fzf's 1-2 char scrollbar validation
         "--info=right"
         "--highlight-line"
         # Previews are widget-scoped, never a global default
         "--height=80%"
         "--layout=reverse"
-        "--preview-window=right:50%:border-bold"
+        "--preview-window=border-bold"
         "--bind=ctrl-k:preview-page-up"
         "--bind=ctrl-j:preview-page-down"
       ];

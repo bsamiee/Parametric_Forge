@@ -63,17 +63,9 @@ in {
         followTags = true;
       };
 
-      core = {
-        autocrlf = "input";
-        whitespace = "trailing-space,space-before-tab";
-        preloadindex = true;
-        untrackedCache = true; # 2x faster untracked file detection
-        commitGraph = true; # Cache commit DAG for faster git log
-      };
+      core.autocrlf = "input";
 
-      feature.manyFiles = true;
-      index.threads = 0;
-      pack.threads = 0;
+      feature.manyFiles = true; # index.version 4, index.skipHash, and the untracked cache
 
       diff = {
         algorithm = "histogram";
@@ -105,11 +97,9 @@ in {
       fetch = {
         prune = true;
         prunetags = true;
-        fsckObjects = true;
         writeCommitGraph = true; # Update commit graph cache on fetch
       };
-      receive.fsckObjects = true;
-      transfer.fsckobjects = true;
+      transfer.fsckobjects = true; # fetch and receive both read it
 
       branch = {
         sort = "-committerdate";
@@ -177,9 +167,7 @@ in {
       commit-decoration-style = "bold box ul";
 
       # Blame configuration
-      blame-format = "{timestamp:<15} {author:<15.14} {commit:<8}";
       blame-palette = projections.blameRamp;
-      blame-separator-format = "│{n:^4}│";
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
 
@@ -193,21 +181,11 @@ in {
       grep-output-type = "ripgrep";
       grep-match-line-style = "syntax";
       grep-match-word-style = "bold magenta";
-      grep-line-number-style = "green";
       grep-file-style = "blue bold";
-      grep-separator-symbol = ":";
 
       # Advanced diff features
       word-diff-regex = "\\w+|[^[:space:]]";
-      whitespace-error-style = "magenta reverse";
       relative-paths = true;
-      default-language = "txt";
-
-      # Line wrapping
-      wrap-max-lines = 2;
-      wrap-left-symbol = "↵";
-      wrap-right-symbol = "↴";
-      wrap-right-prefix-symbol = "…";
 
       # UI elements
       syntax-theme = "estate-dracula"; # Owner-generated bat theme; delta reads the bat cache

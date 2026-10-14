@@ -127,26 +127,17 @@
       };
     };
   };
-  # Mouse/chrome toggles live under k9s.ui only; top-level twins are ignored.
+  # Rows differ from k9s's defaults; the mouse toggle lives under k9s.ui only, a top-level twin is ignored.
   k9sConfig.k9s = {
     liveViewAutoRefresh = true;
-    refreshRate = 2;
-    maxConnRetry = 5;
     readOnly = true;
-    noExitOnCtrlC = false;
     ui = {
       enableMouse = true;
-      headless = false;
-      logoless = false;
-      crumbsless = false;
-      noIcons = false;
       skin = "estate";
     };
     logger = {
       tail = 200;
-      buffer = 5000;
       sinceSeconds = 300;
-      textWrap = false;
       showTime = true;
     };
   };
@@ -186,7 +177,6 @@
       description = "Previous container logs";
       scopes = ["pods"];
       command = "kubectl";
-      background = false;
       args = ["logs" "$NAME" "-n" "$NAMESPACE" "--previous" "--tail=100"];
     };
   };

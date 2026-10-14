@@ -26,12 +26,8 @@ in {
   home.sessionVariables = {
     # --- [IMAGEMAGICK]
     # Freetype text (annotate/caption) resolves fonts through fontconfig, so no MAGICK_FONT_PATH row: ImageMagick reads that variable as one
-    # directory, and a colon-joined list makes every named -font fail.
-    MAGICK_CONFIGURE_PATH = lib.concatStringsSep ":" [
-      "${config.xdg.configHome}/ImageMagick"
-      "${pkgs.imagemagick-current}/etc/ImageMagick-7"
-      "${pkgs.imagemagick-current}/share/ImageMagick-7"
-    ];
+    # directory, and a colon-joined list makes every named -font fail. Configuration needs no row either: ImageMagick searches
+    # $XDG_CONFIG_HOME/ImageMagick and its compiled-in etc and share directories by default.
     MAGICK_TEMPORARY_PATH = "${config.xdg.cacheHome}/ImageMagick";
     MAGICK_MEMORY_LIMIT = "2147483648";
     MAGICK_DISK_LIMIT = "2147483648";

@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Input device defaults for keyboard, mouse, and trackpad.
 _: let
-  # One trackpad row set serves both driver domains (USB and Bluetooth), as macOS keeps them in lockstep.
+  # One trackpad row set serves both driver domains (built-in and Bluetooth), as macOS keeps them in lockstep.
   trackpad = {
     Clicking = false;
     TrackpadRightClick = true;
@@ -21,7 +21,7 @@ _: let
     TrackpadThreeFingerVertSwipeGesture = 2;
     TrackpadThreeFingerHorizSwipeGesture = 2;
     TrackpadCornerSecondaryClick = 0;
-    TrackpadTwoFingerDoubleTapGesture = true; # smart zoom
+    TrackpadTwoFingerDoubleTapGesture = 1; # smart zoom
     TrackpadFourFingerVertSwipeGesture = 2;
     TrackpadFourFingerHorizSwipeGesture = 2;
     TrackpadFourFingerPinchGesture = 2;
@@ -36,23 +36,17 @@ _: let
 in {
   estate.userDefaults = {
     # --- [TRACKPAD_CONFIGURATION]
-    "com.apple.AppleMultitouchTrackpad" =
-      trackpad
-      // {
-        TrackpadFiveFingerPinchGesture = 2;
-        TrackpadHandResting = true;
-      };
-    "com.apple.driver.AppleBluetoothMultitouch.trackpad" = trackpad;
+    "com.apple.AppleMultitouchTrackpad" = trackpad // {TrackpadFiveFingerPinchGesture = 2;};
+    "com.apple.driver.AppleBluetoothMultitouch.trackpad" = trackpad // {TrackpadHandResting = true;};
     # --- [MAGIC_MOUSE_SETTINGS]
     "com.apple.AppleMultitouchMouse" = magicmouse;
-    "com.apple.driver.AppleMultitouchMouse.mouse" = magicmouse;
-    # --- [BLUETOOTH_MOUSE_CONFIGURATION]
-    "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
-      MouseButtonMode = "TwoButton";
-      MouseVerticalScroll = true;
-      MouseHorizontalScroll = true;
-      MouseMomentumScroll = true;
-    };
+    "com.apple.driver.AppleBluetoothMultitouch.mouse" =
+      magicmouse
+      // {
+        MouseVerticalScroll = true;
+        MouseHorizontalScroll = true;
+        MouseMomentumScroll = true;
+      };
     # --- [FN_KEY]
     # Fn cycles the three input sources (U.S., Persian-ISIRI 2901, Arabic); holding Fn exposes the hardware F1-F12 row per fnState below.
     # 0 = do nothing, 1 = change input source, 2 = show emoji & symbols, 3 = start dictation.

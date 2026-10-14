@@ -15,47 +15,37 @@
   inherit (config.estate.theme) palette;
   toml = pkgs.formats.toml {};
   rgb = c: {rgb = [c.r c.g c.b];};
-  style = color: extra:
-    {
-      inherit color;
-      background = "default";
-      bold = false;
-      underline = false;
-      italic = false;
-      dim = false;
-      strikethrough = false;
-    }
-    // extra;
+  # Rows differ from tlrc's defaults (`tldr --gen-config`). A style table that names a color starts from the plain style, so the weight and
+  # slant tlrc gives that element by default are restated beside the color.
   configToml = toml.generate "tlrc-config.toml" {
     cache = {
       dir = "${config.xdg.cacheHome}/tlrc";
-      mirror = "https://github.com/tldr-pages/tldr/releases/latest/download";
-      auto_update = true;
-      max_age = 336;
       languages = ["en"];
     };
     output = {
-      show_title = true;
-      platform_title = false;
       show_hyphens = true;
-      example_prefix = "- ";
       compact = true;
-      raw_markdown = false;
-    };
-    indent = {
-      title = 2;
-      description = 2;
-      bullet = 2;
-      example = 4;
     };
     style = {
-      title = style (rgb palette.magenta) {bold = true;};
-      description = style (rgb palette.purple) {};
-      bullet = style (rgb palette.green) {};
-      example = style (rgb palette.cyan) {};
-      url = style (rgb palette.orange) {italic = true;};
-      inline_code = style (rgb palette.yellow) {italic = true;};
-      placeholder = style (rgb palette.red) {italic = true;};
+      title = {
+        color = rgb palette.magenta;
+        bold = true;
+      };
+      description.color = rgb palette.purple;
+      bullet.color = rgb palette.green;
+      example.color = rgb palette.cyan;
+      url = {
+        color = rgb palette.orange;
+        italic = true;
+      };
+      inline_code = {
+        color = rgb palette.yellow;
+        italic = true;
+      };
+      placeholder = {
+        color = rgb palette.red;
+        italic = true;
+      };
     };
   };
 in {

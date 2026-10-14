@@ -19,7 +19,3 @@ catalog:
     # toolchain — TypeScript 7 (the native compiler) is the one gate; the Nix roster carries the same major for the editor
     typescript: 7.0.2
     "@types/node": 26.1.1
-    "@effect/language-service": 0.87.2
-
-minimumReleaseAgeExclude:
-    - "@effect/language-service@0.87.2"

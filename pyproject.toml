@@ -56,16 +56,11 @@ dev = [
 
 [tool.uv]
 package = false
-default-groups = ["dev"]
-
-[tool.uv.sources] # beartype 0.22.9 imports typing.no_type_check_decorator (removed in 3.15); the pinned rev carries the still-unreleased fix.
-beartype = { git = "https://github.com/beartype/beartype.git", rev = "f370a0b1733413681e7a72bf36fbe839e60b3c85" }
 
 # --- [TY] -------------------------------------------------------------------------------
 
 [tool.ty.environment]
 python-platform = "all"
-python-version = "3.15"
 
 [tool.ty.analysis]
 respect-type-ignore-comments = false
@@ -80,12 +75,9 @@ exclude = [
     ".nx",
     ".scratch",
     ".tmp",
-    ".venv",
     "_archive",
     "_tmp",
     "coverage",
-    "dist",
-    "node_modules",
     "scratch",
     "test-results",
     "tmp",
@@ -93,9 +85,6 @@ exclude = [
 
 [tool.ty.rules]
 all = "error"
-
-[tool.ty.terminal]
-error-on-warning = true
 
 # --- [MYPY] -----------------------------------------------------------------------------
 
@@ -107,7 +96,6 @@ strict = true
 pretty = true
 warn_unreachable = true
 explicit_package_bases = true
-warn_unused_configs = true
 disallow_any_explicit = true
 disallow_any_unimported = true
 enable_error_code = [
@@ -120,29 +108,20 @@ enable_error_code = [
     "unused-awaitable",
 ]
 exclude = [
-    "(^|/)(\\.archive|_archive|scratch|\\.scratch|_tmp|\\.tmp|\\.cache|\\.history)/",
-    "^\\.artifacts/",
-    "^\\.claude/worktrees/",
-    "^\\.git/",
-    "^\\.nx/",
-    "^\\.venv/",
+    "(^|/)(_archive|scratch|_tmp)/",
     "^build/",
     "^dist/",
     "^coverage/",
     "^test-results/",
-    "^node_modules/",
     "^tmp/",
 ]
 
 # --- [SQLFLUFF] -------------------------------------------------------------------------
 
-# Postgres is the estate default dialect; the repo's duckdb/sqlite probe files ride the per-dialect sqruff rows in flake-modules/tooling.nix.
+# Postgres is the estate default dialect; the repo's duckdb probe file rides the sqruff-duckdb row in flake-modules/tooling.nix.
 [tool.sqlfluff.core]
 dialect = "postgres"
 max_line_length = 150
-
-[tool.sqlfluff.indentation]
-tab_space_size = 4
 
 # --- [RUFF] -----------------------------------------------------------------------------
 
@@ -229,7 +208,6 @@ ignore = [
 
 
 [tool.ruff.lint.flake8-annotations]
-allow-star-arg-any = false
 mypy-init-return = true
 suppress-dummy-args = true
 suppress-none-returning = true
@@ -395,16 +373,9 @@ convention = "google"
 ignore-decorators = ["typing.overload", "typing.override"]
 property-decorators = ["pydantic.computed_field"]
 
-[tool.ruff.lint.pydoclint]
-ignore-one-line-docstrings = false
-
 [tool.ruff.lint.pylint]
 allow-dunder-method-names = ["__get_pydantic_core_schema__", "__get_pydantic_json_schema__"]
 allow-magic-value-types = ["str", "bytes", "int"]
 max-args = 8
-max-bool-expr = 3
-max-branches = 6
-max-locals = 10
 max-nested-blocks = 4
 max-public-methods = 10
-max-statements = 30

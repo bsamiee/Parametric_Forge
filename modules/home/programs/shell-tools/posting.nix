@@ -32,7 +32,6 @@
     {
       name = "github-identity";
       description = "Authenticated GitHub identity behind the services PAT";
-      method = "GET";
       url = "https://api.github.com/user";
       source = "agent";
       headers = [
@@ -49,7 +48,6 @@
     {
       name = "github-rulesets";
       description = "Live main-guard ruleset state; compare against services/topology.ts";
-      method = "GET";
       url = "https://api.github.com/repos/bsamiee/Parametric_Forge/rulesets";
       source = "agent";
       headers = [
@@ -66,7 +64,6 @@
     {
       name = "greptile-index";
       description = "Greptile index currency for the Forge repo (status + sha)";
-      method = "GET";
       url = "https://api.greptile.com/v2/repositories/github%3Amain%3Absamiee%2FParametric_Forge";
       source = "agent";
       headers = [
@@ -82,9 +79,8 @@
     }
     {
       name = "cachix-cache";
-      description = "${config.home.sessionVariables.CACHIX_CACHE} cache metadata";
-      method = "GET";
-      url = "https://app.cachix.org/api/v1/cache/${config.home.sessionVariables.CACHIX_CACHE}";
+      description = "${config.estate.cachix.cache} cache metadata";
+      url = "https://app.cachix.org/api/v1/cache/${config.estate.cachix.cache}";
       source = "machine";
       headers = [
         {
@@ -97,10 +93,7 @@
 
   collectionFiles = lib.listToAttrs (map (row: {
       name = "posting/collections/services/${row.name}.posting.yaml";
-      value.source = yamlFormat.generate "posting-${row.name}" {
-        inherit (row) name description method url headers;
-        params = row.params or [];
-      };
+      value.source = yamlFormat.generate "posting-${row.name}" {inherit (row) name description url headers;};
     })
     probes);
 
@@ -118,12 +111,10 @@
     '';
   };
 
+  # User themes load from $XDG_DATA_HOME/posting/themes and request variables come from explicit --env files alone, both posting's defaults.
   postingConfig = {
     theme = "estate";
-    load_user_themes = true;
     watch_themes = false;
-    theme_directory = "${config.xdg.dataHome}/posting/themes";
-    use_host_environment = false; # request variables come from explicit --env files only
   };
 
   postingTheme = {

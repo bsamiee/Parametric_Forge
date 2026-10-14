@@ -15,17 +15,13 @@
   imports = [(modulesPath + "/profiles/qemu-guest.nix") ./disko.nix];
 
   # --- [BOOT]
-  # BIOS GRUB; disko projects the install device from the EF02 partition row.
-  boot.loader.grub.enable = true;
+  # BIOS GRUB is the NixOS default loader; disko projects the install device from the EF02 partition row.
   boot.tmp.cleanOnBoot = true;
   zramSwap.enable = true;
 
-  # --- [LOCALE]
-  # Time zone projects from the host-context row through the host factory.
-  i18n.defaultLocale = "en_US.UTF-8";
-
   # --- [NETWORK]
-  # Static addressing projected from the host-context network row — the provider serves no DHCP. SSH is the only admitted ingress.
+  # Static addressing projected from the host-context network row — the provider serves no DHCP. SSH is the only admitted ingress: the
+  # firewall is on by default and the openssh module opens its port.
   networking = {
     usePredictableInterfaceNames = false;
     useDHCP = false;
@@ -42,22 +38,16 @@
       inherit (host.network) interface;
     };
     inherit (host.network) nameservers;
-
-    firewall = {
-      enable = true;
-      allowedTCPPorts = [22];
-    };
   };
 
   # --- [SERVICES]
   services = {
+    # Key-only for every account; root keeps the module's prohibit-password default, the nixos-rebuild --target-host activation rail.
     openssh = {
       enable = true;
       settings = {
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
-        # Key-only root: nixos-rebuild --target-host activation rail.
-        PermitRootLogin = "prohibit-password";
       };
     };
 
@@ -78,7 +68,7 @@
     };
   };
 
-  # Store hygiene: timer-driven GC (Darwin runs its GC by hand).
+  # Store hygiene: timer-driven generation expiry (Darwin expires generations by hand).
   nix.gc = {
     automatic = true;
     dates = "weekly";

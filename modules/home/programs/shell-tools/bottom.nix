@@ -11,27 +11,15 @@
 in {
   programs.bottom = {
     enable = true;
+    # Rows differ from bottom's defaults; a key bottom does not declare is dropped without a diagnostic.
     settings = {
       # --- [GENERAL_FLAGS]
       flags = {
-        # Display Performance
-        temperature_type = "c";
         rate = 2000;
         table_gap = "none";
-        disable_click = false;
         show_table_scroll_position = true;
         disable_gpu = true;
-
-        # Data & Performance
         retention = "5m";
-        time_delta = 15000;
-
-        # Initial View
-        default_widget_type = "process";
-        default_widget_count = 1;
-        expanded = false;
-        basic = false;
-        use_old_network_legend = false;
         battery = true;
       };
 
@@ -43,10 +31,6 @@ in {
           selected_border_color = roles.focus.active.hex;
           widget_title = {
             color = roles.accent.primary.hex;
-          };
-          table_header = {
-            color = roles.accent.primary.hex;
-            bold = true;
           };
           text = {
             color = roles.text.primary.hex;
@@ -61,7 +45,6 @@ in {
           };
           thread_text = {
             color = roles.accent.structural.hex;
-            bold = false;
           };
         };
         tables = {
@@ -74,7 +57,6 @@ in {
           graph_color = roles.surface.selected.hex;
           legend_text = {
             color = roles.accent.primary.hex;
-            bold = false;
           };
         };
         cpu = {
@@ -92,10 +74,10 @@ in {
           ];
         };
         memory = {
-          ram = roles.state.success.hex;
-          swap = roles.state.attention.hex;
-          cache = roles.accent.primary.hex;
-          arc = roles.accent.structural.hex;
+          ram_color = roles.state.success.hex;
+          swap_color = roles.state.attention.hex;
+          cache_color = roles.accent.primary.hex;
+          arc_color = roles.accent.structural.hex;
           gpu_colors = [
             palette.pink.hex # GPU 0
             palette.cyan.hex # GPU 1
@@ -104,28 +86,22 @@ in {
           ];
         };
         network = {
-          rx = roles.state.success.hex;
-          tx = roles.accent.tertiary.hex;
-          rx_total = roles.accent.primary.hex;
-          tx_total = roles.state.attention.hex;
+          rx_color = roles.state.success.hex;
+          tx_color = roles.accent.tertiary.hex;
+          rx_total_color = roles.accent.primary.hex;
+          tx_total_color = roles.state.attention.hex;
         };
         battery = {
-          high_battery = roles.state.success.hex; # Healthy (50%+)
-          medium_battery = roles.state.warning.hex; # Caution (10-50%) — warning role (amber)
-          low_battery = roles.state.danger.hex; # Critical (<10%)
+          high_battery_color = roles.state.success.hex; # Healthy (50%+)
+          medium_battery_color = roles.state.warning.hex; # Caution (10-50%) — warning role (amber)
+          low_battery_color = roles.state.danger.hex; # Critical (<10%)
         };
       };
       # --- [PROCESS_CONFIGURATION]
       processes = {
         current_usage = true;
         default_grouped = true;
-        default_tree = false;
         default_memory_value = true;
-        case_sensitive = false;
-        whole_word = false;
-        regex = false;
-        process_command = false;
-        disable_advanced_kill = false;
         columns = [
           "PID"
           "Name"
@@ -136,33 +112,14 @@ in {
         ];
       };
       # --- [DISK_CONFIGURATION]
+      # Each filter list is a deny list, bottom's default.
       disk = {
         columns = ["Disk" "Mount" "Used%" "Free" "R/s" "W/s"];
         name_filter = {
-          is_list_ignored = true;
           list = ["/dev/loop*" "devfs" "devtmpfs" "tmpfs" "overlay" "run"];
           regex = true;
-          case_sensitive = false;
-          whole_word = false;
         };
-        mount_filter = {
-          is_list_ignored = true;
-          list = ["/boot" "/boot/efi" "/var/snap" "/var/lib/docker"];
-          regex = false;
-          case_sensitive = false;
-          whole_word = false;
-        };
-      };
-      # --- [TEMPERATURE_CONFIGURATION]
-      # macOS withholds temperature sensors from bottom.
-      temperature = {
-        sensor_filter = {
-          is_list_ignored = true;
-          list = [];
-          regex = false;
-          case_sensitive = false;
-          whole_word = false;
-        };
+        mount_filter.list = ["/boot" "/boot/efi" "/var/snap" "/var/lib/docker"];
       };
       # --- [MEMORY_GRAPH_CONFIGURATION]
       memory_graph = {
@@ -171,21 +128,10 @@ in {
       # --- [NETWORK_GRAPH]
       network_graph = {
         use_binary_prefix = true;
-        use_bytes = false;
-        use_log = false;
         interface_filter = {
-          is_list_ignored = true;
           list = ["lo" "lo0"];
-          regex = false;
-          case_sensitive = false;
           whole_word = true;
         };
-      };
-      # --- [CPU_CONFIGURATION]
-      cpu = {
-        default = "all";
-        hide_avg_cpu = false;
-        left_legend = false;
       };
     };
   };

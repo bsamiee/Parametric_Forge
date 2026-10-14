@@ -40,7 +40,7 @@
   ...
 }: let
   settings = {
-    "$schema" = "https://schema.linearmouse.app/0.12.0-beta.6";
+    "$schema" = "https://schema.linearmouse.app/0.13.0-beta.3";
     schemes = [
       {
         "if".device.category = "mouse";
@@ -62,7 +62,6 @@
         };
         scrolling.smoothed = {
           vertical = {
-            enabled = true;
             preset = "easeIn";
             response = 0;
             speed = 0.9;
@@ -71,7 +70,6 @@
             bouncing = false;
           };
           horizontal = {
-            enabled = true;
             preset = "smooth";
             response = 0.15;
             speed = 6.5;

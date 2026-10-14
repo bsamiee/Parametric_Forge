@@ -11,30 +11,15 @@ in {
   programs.lazygit = {
     enable = true;
 
+    # Rows differ from lazygit's defaults (`lazygit --config`).
     settings = {
-      # --- [INTERNATIONALIZATION]
-      language = "auto";
-      timeFormat = "02 Jan 06";
-      shortTimeFormat = "3:04PM";
-
       gui = {
         # --- [DISPLAY_SETTINGS]
-        showFileTree = true;
         showCommandLog = false;
         showBottomLine = false;
         showBranchCommitHash = true;
         showDivergenceFromBaseBranch = "arrowAndNumber";
-        border = "rounded";
-        sidePanelWidth = 0.3333;
         nerdFontsVersion = "3";
-
-        # --- [ENHANCED_DISPLAY_OPTIONS]
-        commitAuthorLongLength = 17;
-        commitHashLength = 8;
-        showRandomTip = true;
-        showFileIcons = true;
-        splitDiff = "auto";
-        screenMode = "normal";
 
         # File-status glyphs are lazygit-built-in NFv3 (not themable — the tool-owned-glyph exception beside eza); the themable git-state
         # surface is color, and unstaged-worktree reads the owner modified hue.
@@ -67,37 +52,7 @@ in {
           }
         ];
 
-        # --- [GIT_BEHAVIOR_SETTINGS]
-        autoRefresh = true;
-        autoFetch = true;
-        autoForwardBranches = "onlyMainBranches";
-        fetchAll = true;
         mainBranches = ["main" "master" "develop" "dev"];
-        skipHookPrefix = "WIP";
-
-        # --- [LOG_DISPLAY_SETTINGS]
-        log = {
-          order = "topo-order";
-          showGraph = "always";
-        };
-
-        # --- [COMMIT_SETTINGS]
-        commit = {
-          signOff = false;
-          autoWrapCommitMessage = true;
-          autoWrapWidth = 72;
-        };
-
-        # --- [MERGING_CONFIGURATION]
-        merging = {
-          manualCommit = false;
-          args = "";
-        };
-      };
-
-      refresher = {
-        refreshInterval = 10;
-        fetchInterval = 60;
       };
 
       # Preset owns edit/editAtLine/openDirInEditor ({{filename}}/{{line}} are the only template vars); the darwin platform default owns open/openLink.
@@ -106,8 +61,6 @@ in {
       # Store-managed binary: self-update writes are impossible.
       update.method = "never";
 
-      confirmOnQuit = false;
-      quitOnTopLevelReturn = false;
       disableStartupPopups = true;
     };
   };

@@ -18,7 +18,6 @@
     default_options = [
       "--follow"
       "--timeout=30"
-      "--check-status" # Exit with error on HTTP errors (4xx/5xx)
       "--max-redirects=5"
     ];
   };

@@ -16,18 +16,13 @@
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   toml = pkgs.formats.toml {};
   # Apple Container startup config. `container system start` snapshots this into its app root and re-saves it, so the file must be a real
-  # writable file — a store symlink fails the save and aborts the start.
+  # writable file — a store symlink fails the save and aborts the start. Rows differ from the CLI's defaults.
   containerConfigToml = toml.generate "container-config.toml" {
     build = {
-      rosetta = true;
       cpus = 4;
       memory = "8192mb";
     };
-    container = {
-      cpus = 4;
-      memory = "4g";
-    };
-    registry.domain = "docker.io";
+    container.memory = "4g";
   };
 in {
   # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad + restart-on-clean-exit), session env. colimaHomeDir stays on dataHome —
@@ -56,12 +51,11 @@ in {
         cpu = 6;
         memory = 12;
         disk = 60; # grow-only resize; applied at next VM restart
+        # A profile file replaces the CLI flag defaults: colima copies its arch and runtime verbatim and reads an absent runtime as an empty
+        # config. vmType (vz) and mountType (virtiofs) are the keys it fills itself.
         arch = "aarch64";
         runtime = "docker";
-        vmType = "vz";
         rosetta = true;
-        binfmt = true;
-        mountType = "virtiofs";
         mountInotify = true;
         # The launchd-spawned start skips colima's implicit default mounts, leaving the guest without the home tree bind mounts resolve in.
         mounts = [
@@ -79,35 +73,23 @@ in {
   };
 
   # Owns DOCKER_CONFIG and config.json on both platforms under the module's XDG default ($XDG_CONFIG_HOME/docker at stateVersion 26.05). NO
-  # credsStore: docker-credential-osxkeychain is the Docker Desktop cask's /usr/local/bin link, unused; empty inline auths are correct for Colima + public images.
+  # credsStore: docker-credential-osxkeychain is the Docker Desktop cask's /usr/local/bin link, unused; Colima + public images need no auths row.
   # currentContext is injected by the colima module when the profile is active; docker context meta stays Colima-owned — a store-owned meta.json
   # breaks context creation.
-  programs.docker-cli = {
-    enable = true;
-    settings.auths = {};
-  };
+  programs.docker-cli.enable = true;
 
   home.sessionVariables = {
     # --- [CONTAINERS_IMAGE_AND_OCI_TOOLING]
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
     CONTAINERS_STORAGE_CONF = "${config.xdg.configHome}/containers/storage.conf";
-    CONTAINERS_CONF = "${config.xdg.configHome}/containers/containers.conf";
     # Write-target: registry login materializes it; absent = anonymous. KUBECONFIG is a cross-surface row of modules/common/toolchain-env.nix.
     REGISTRY_AUTH_FILE = "${config.xdg.configHome}/containers/auth.json";
 
     # --- [KUBERNETES]
     K9S_CONFIG_DIR = "${config.xdg.configHome}/k9s";
 
-    # --- [HELM]
-    HELM_CONFIG_HOME = "${config.xdg.configHome}/helm";
-    HELM_DATA_HOME = "${config.xdg.dataHome}/helm";
-    HELM_CACHE_HOME = "${config.xdg.cacheHome}/helm";
-
     # --- [KUBECOLOR]
     KUBECOLOR_FORCE_COLORS = "auto";
-
-    # --- [CONTAINER_TOOLS]
-    LAZYDOCKER_CONFIG_DIR = "${config.xdg.configHome}/lazydocker";
   };
 
   # Forge owns the Apple Container config content; the file lands writable. A drifted app-root snapshot is cleared so the next
@@ -124,19 +106,7 @@ in {
   '');
 
   xdg.configFile = {
-    "containers/registries.conf".source = toml.generate "registries.conf" {
-      unqualified-search-registries = ["docker.io"];
-      registry = [
-        {
-          prefix = "docker.io";
-          location = "docker.io";
-        }
-      ];
-    };
+    "containers/registries.conf".source = toml.generate "registries.conf" {unqualified-search-registries = ["docker.io"];};
     "containers/storage.conf".source = toml.generate "storage.conf" {storage = {};};
-    "containers/containers.conf".source = toml.generate "containers.conf" {
-      containers = {};
-      engine = {};
-    };
   };
 }

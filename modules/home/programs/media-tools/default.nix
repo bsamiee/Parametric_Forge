@@ -5,14 +5,7 @@
 # Path          : modules/home/programs/media-tools/default.nix
 # ----------------------------------------------------------------------------
 # Media tool inventory; imports carry real configuration only.
-{pkgs, ...}: let
-  # HarfBuzz's command-line shaper. nixpkgs passes no `utilities` meson option, so the library package's bin output (outputBin = "dev") ships
-  # empty; the utilities build lands hb-shape, hb-subset, and hb-info. No cairo: hb-view (specimen raster) is the one utility that needs it, and
-  # pango-view covers that lane; the build rides its own derivation so no libharfbuzz consumer re-keys.
-  harfbuzzTools = pkgs.harfbuzz-current.overrideAttrs (prev: {
-    mesonFlags = prev.mesonFlags ++ [(pkgs.lib.mesonEnable "utilities" true)];
-  });
-in {
+{pkgs, ...}: {
   # Yazi's documented dependency set (ffmpeg video thumbnails, poppler PDF, resvg SVG, ImageMagick raster, Chafa as the adapter of last resort
   # inside the Zellij popup) resolves by bare name on PATH; the rows below are those tools.
   home.packages = [
@@ -24,7 +17,9 @@ in {
     # nixpkgs row on purpose: the 16.x release tarball fails on Darwin three ways (no autogen.sh, plugin modules with unresolved libgvc symbols,
     # a bundled libltdl missing argz), and nothing in 16.x is load-bearing for dot; the pin returns when nixpkgs or upstream fixes the lane.
     pkgs.graphviz # dot layout family; ImageMagick's shipped `dot` delegate renders .dot sources through it
-    harfbuzzTools.dev # hb-shape, hb-subset, hb-info: shaping traces and font subsetting; harfbuzz seats its utilities in the dev output
+    # HarfBuzz builds its utilities by default (meson `utilities` is enabled) and seats them in the dev output. No hb-view: it is the one
+    # utility that needs cairo, which harfbuzz-current disables, and pango-view covers that lane.
+    pkgs.harfbuzz-current.dev # hb-shape, hb-subset, hb-info, hb-vector: shaping traces, font subsetting, face dumps, vector render
     pkgs.imagemagick-current
     pkgs.mediainfo # Yazi `inspect` opener row
     pkgs.mpv # Playback backend for media aliases

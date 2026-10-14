@@ -33,7 +33,6 @@
       User = remote.user;
       HostName = remote.hostName;
       IdentitiesOnly = true;
-      AddKeysToAgent = "yes";
       ConnectTimeout = 10;
     })
   sshHosts;
@@ -65,7 +64,6 @@ in {
             User = "git";
             HostName = "github.com";
             IdentitiesOnly = true;
-            AddKeysToAgent = "yes";
           };
           "*" =
             lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {IdentityAgent = "\"${identityAgent}\"";}
@@ -74,7 +72,6 @@ in {
               ControlPath = "${homeDir}/.ssh/sockets/%C";
               ControlPersist = "10m";
               ServerAliveInterval = 60;
-              ServerAliveCountMax = 3;
               AddKeysToAgent = "yes";
               HashKnownHosts = true;
               UserKnownHostsFile = "${homeDir}/.ssh/known_hosts ${knownHostsFile}";

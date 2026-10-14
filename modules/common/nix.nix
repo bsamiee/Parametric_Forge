@@ -62,17 +62,13 @@
     narinfo-cache-positive-ttl = 86400;
   };
 
-  # determinate.enable defaults true, so the module reroutes the generated nix.conf to nix.custom.conf and swaps the daemon for determinate-nixd.
+  # determinateNix.enable (darwin) and determinate.enable (nixos) default true, so each module routes these settings to nix.custom.conf; the
+  # nixos module also swaps the daemon for determinate-nixd. Background GC is determinate-nixd-owned by its own default
+  # (garbageCollector.strategy automatic, free-space targeted); generation retention and optimise are manual (`nix-collect-garbage -d`,
+  # `nix store optimise`).
   osProjections = {
     darwin = {
-      determinateNix = {
-        enable = true;
-
-        # Background GC is determinate-nixd-owned (free-space targeted); generation retention and optimise are manual (`nix-collect-garbage -d`, `nix store optimise`).
-        determinateNixd.garbageCollector.strategy = "automatic";
-
-        inherit customSettings;
-      };
+      determinateNix = {inherit customSettings;};
     };
     nixos = {
       nix.settings = customSettings;

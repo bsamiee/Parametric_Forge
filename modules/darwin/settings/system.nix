@@ -20,7 +20,6 @@ in {
     loginwindow = {
       SHOWFULLNAME = true; # Name+password fields, never the user icon list
       GuestEnabled = false;
-      autoLoginUser = null;
       # LoginwindowText stays unset — a set value duplicates the name display
       ShutDownDisabled = false;
       SleepDisabled = false;

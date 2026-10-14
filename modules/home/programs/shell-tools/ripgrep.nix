@@ -5,7 +5,7 @@
 # Path          : modules/home/programs/shell-tools/ripgrep.nix
 # ----------------------------------------------------------------------------
 # Agent-first search defaults: raw `rg` must never silently miss corpus content. The rg binary is a project's mise.toml row; this file owns
-# the config file RIPGREP_CONFIG_PATH (environments/shell.nix) hands every rg.
+# the config file RIPGREP_CONFIG_PATH (common/toolchain-env.nix) hands every rg.
 {lib, ...}: let
   # Miss-prevention only: hidden dotfiles/dirs and symlinked trees (HM configs resolve into the store) are searched by default, with .git/ as the
   # sole exclusion — everything else stays gitignore-owned. Match semantics, error visibility, engine selection, and presentation keep upstream
@@ -18,8 +18,7 @@
     "--glob=!.git/"
 
     # --- [TYPE_DEFINITIONS]
-    # Additive vocabulary: inert until a -t/--type selection names it.
-    "--type-add=nix:*.nix"
+    # Additive vocabulary: inert until a -t/--type selection names it. A glob extends the built-in type of the same name (`rg --type-list`).
     "--type-add=nix:flake.lock"
 
     "--type-add=agent:{AGENTS,CLAUDE,SKILL}.md"
@@ -43,14 +42,11 @@
 
     "--type-add=lock:*lock.json"
     "--type-add=lock:*lock.yaml"
-    "--type-add=lock:Cargo.lock"
-    "--type-add=lock:flake.lock"
 
-    "--type-add=log:*.{log,logs}"
+    "--type-add=log:*.logs"
 
     "--type-add=build:Makefile*"
     "--type-add=build:*.{mk,cmake,bazel,BUILD}"
-    "--type-add=proto:*.proto"
     "--type-add=headers:*.{h,hpp,hxx,hh}"
   ];
 in {

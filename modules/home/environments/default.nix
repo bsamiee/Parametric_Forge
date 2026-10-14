@@ -11,7 +11,6 @@
     ./shell.nix
     ./languages.nix
     ./development.nix
-    ./applications.nix
     ./containers.nix
     ./media.nix
   ];

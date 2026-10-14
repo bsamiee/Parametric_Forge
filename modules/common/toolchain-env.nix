@@ -88,26 +88,19 @@
       };
     # PROJ 9.1 renamed PROJ_LIB to PROJ_DATA and every reader here (libproj, pyproj, rasterio) consults PROJ_DATA first, so the old name carries no row.
     # The Nix PROJ_DATA ships no datum grids; PROJ_NETWORK streams them from cdn.proj.org into the XDG data cache (300 MB cap).
+    # GDAL_DATA carries no row: libgdal compiles in its own share/gdal, and a set value replaces the data a rasterio wheel bundles for its
+    # own libgdal. GEOS carries none either: shapely's meson build resolves GEOS through pkg-config or CMake and rejects GEOS_CONFIG.
+    # pyproj's build takes the library directory from PROJ_DIR/lib; PROJ_INCDIR names the split dev output PROJ_DIR lacks.
     geoEnv = {
       GDAL_CONFIG = "${pkgs.gdal}/bin/gdal-config";
-      GDAL_DATA = "${pkgs.gdal}/share/gdal";
-      GEOS_CONFIG = "${pkgs.geos}/bin/geos-config";
       PROJ_DATA = "${pkgs.proj}/share/proj";
       PROJ_NETWORK = "ON";
       PROJ_DIR = "${pkgs.proj}";
       PROJ_INCDIR = "${pkgs.proj.dev}/include";
-      PROJ_LIBDIR = "${pkgs.proj}/lib";
     };
     # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get an empty energy row, so downstream folds and exports stay
-    # polymorphic. Layout facts fold from each package's manifest-derived runtimeEnv; the session EXE keys re-point at the env-exporting wrappers.
-    energyEnv = lib.optionalAttrs isDarwin (
-      pkgs.energyplus.runtimeEnv
-      // pkgs.openstudio.runtimeEnv
-      // {
-        ENERGYPLUS_EXE = lib.getExe pkgs.energyplus;
-        OPENSTUDIO_EXE = lib.getExe pkgs.openstudio;
-      }
-    );
+    # polymorphic. Layout facts fold from each package's manifest-derived runtimeEnv.
+    energyEnv = lib.optionalAttrs isDarwin (pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv);
     shellExports = env:
       lib.concatStringsSep "\n" (
         lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg (toString value)}") env
@@ -155,9 +148,14 @@
         KUBECONFIG = "${xdgConfigHome}/kube/config";
         GITLEAKS_CONFIG = "${xdgConfigHome}/gitleaks/gitleaks.toml";
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
+        RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config"; # ripgrep reads no config file without this row
         # pnpm's home directory, where `pnpm add -g` lands packages and their bin links; the macOS default is ~/Library/pnpm. pnpm itself is a
         # project's mise.toml row, this row is data only.
         PNPM_HOME = "${xdgDataHome}/pnpm";
+        # npm's cache and the Pulumi CLI home (plugins, workspaces, credentials, logs) default to ~/.npm and ~/.pulumi. An editor's type
+        # acquisition runs npm from the GUI domain and a Pulumi run starts outside a login shell, a project's [env] row wins through the floor.
+        npm_config_cache = "${xdgCacheHome}/npm";
+        PULUMI_HOME = "${xdgDataHome}/pulumi";
         # CPython mirrors bytecode under the prefix in place of __pycache__ beside each source, a project's [env] row wins through the floor
         PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
         # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
@@ -166,7 +164,6 @@
       session =
         {
           BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
-          MANROFFOPT = "-c";
           MANPAGER = "env BATMAN_IS_BEING_MANPAGER=yes bash ${pkgs.bat-extras.batman}/bin/batman"; # static batman export-env, no per-shell fork
           SQLITE_HISTORY = "${xdgStateHome}/sqlite/history"; # sqlite3's default is ~/.sqlite_history
         }
@@ -174,6 +171,9 @@
           # The one `brew shellenv` row PATH resolution does not cover: macOS manpath derives /opt/homebrew/share/man from /opt/homebrew/bin,
           # GNU info reads INFOPATH alone; the trailing colon appends info's built-in directories.
           INFOPATH = "/opt/homebrew/share/info:";
+        }
+        // lib.optionalAttrs (!isDarwin) {
+          MANROFFOPT = "-c"; # man-db passes it to the formatter; the macOS man script reads no such variable
         };
     };
     # Never-clobber floor: shells whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED recover the `all` rows; the fold owns the :- idiom.

@@ -16,25 +16,15 @@ in {
 
       # --- [DISPLAY_CONFIGURATION]
       display = {
-        size = {
-          binaryPrefix = "iec"; # Use IEC (GiB, MiB) not SI (GB, MB)
-          ndigits = 1;
-        };
+        size.ndigits = 1;
         separator = " ";
-        key = {
-          width = 6;
-          type = "string";
-        };
+        key.width = 6;
         bar = {
           char = {
             elapsed = "━";
             total = "─";
           };
           width = 18;
-          border = {
-            left = "[ ";
-            right = " ]";
-          };
           color = {
             elapsed = roles.state.success.hex;
             total = roles.surface.selected.hex;
@@ -42,7 +32,6 @@ in {
         };
         percent = {
           type = 3;
-          ndigits = 0;
           # Traffic-light health thresholds ride the state ladder; the `yellow` key carries the warning role (amber), never string-yellow.
           color = {
             green = roles.state.success.hex;
@@ -50,7 +39,6 @@ in {
             red = roles.state.danger.hex;
           };
         };
-        brightColor = true;
         color = {
           keys = roles.accent.primary.hex;
           title = roles.accent.tertiary.hex;
@@ -68,8 +56,6 @@ in {
           right = 3;
           left = 0;
         };
-        printRemaining = true;
-        preserveAspectRatio = true;
       };
 
       # --- [MODULES_CONFIGURATION]
@@ -170,7 +156,7 @@ in {
           type = "cpu";
           key = " ├   ";
           temp = true;
-          format = "{name} ({cores-physical}) @ {freqMax}";
+          format = "{name} ({cores-physical}) @ {freq-max}";
         }
         {
           type = "memory";
@@ -180,13 +166,13 @@ in {
         {
           type = "swap";
           key = " ├ 󰓡  ";
-          format = "{used} / {total} ({percentage}%)";
+          format = "{used} / {total} ({percentage})";
         }
         {
           type = "disk";
           key = " ├ 󰋊  ";
           folders = "/";
-          format = "{size-used} / {size-total} ({size-percentage}%)";
+          format = "{size-used} / {size-total} ({size-percentage})";
         }
         {
           type = "display";
@@ -209,8 +195,6 @@ in {
           type = "localip";
           key = " ├   ";
           format = "{ipv4}";
-          showIpv6 = false;
-          showLoop = false;
           compact = true;
         }
         {

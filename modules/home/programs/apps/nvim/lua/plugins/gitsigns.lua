@@ -24,5 +24,4 @@ require("gitsigns").setup({
     signs = signs,
     signs_staged = signs,
     attach_to_untracked = true,
-    current_line_blame = false,
 })

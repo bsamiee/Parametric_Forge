@@ -68,7 +68,7 @@
       fi
 
       flake_root="${config.estate.lsp.flakeRoot}"
-      cache="${config.home.sessionVariables.CACHIX_CACHE}"
+      cache="${config.estate.cachix.cache}"
       secrets_file="${config.estate.secrets.sessionCache}"
       custom_conf="/etc/nix/nix.custom.conf"
       profile="/nix/var/nix/profiles/system"
@@ -198,13 +198,21 @@
     '';
   };
 in {
-  home.packages = [redeploy];
+  # The Cachix cache the deploy rail pushes to and the posting probe reads; cachix takes the name as an argument and reads no variable for it.
+  options.estate.cachix.cache = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    default = "bsamiee";
+    description = "Name of the Cachix binary cache built store paths are pushed to.";
+  };
+
+  config.home.packages = [redeploy];
 
   # Homebrew's user environment file (bin/brew reads $XDG_CONFIG_HOME/homebrew/brew.env before every command): the one owner of the standing
   # HOMEBREW_* rows for the interactive session and activation's `brew bundle`, which both carry XDG_CONFIG_HOME. Values are literal per the
   # manpage (no shell expansion). An `auto_updates` cask stays with its own updater: `brew upgrade` otherwise replaces the app whenever its bundle
   # trails the tap and quits it first, and the 1password cask's quit stops the SSH agent and commit signer with nothing to relaunch them.
-  xdg.configFile."homebrew/brew.env" = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+  config.xdg.configFile."homebrew/brew.env" = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     text = ''
       HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1
       HOMEBREW_NO_ANALYTICS=1

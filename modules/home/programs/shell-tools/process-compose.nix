@@ -43,7 +43,6 @@
       fgColor = roles.text.primary.hex;
       keyColor = roles.accent.primary.hex;
       hlColor = roles.state.success.hex;
-      buttonBgColor = palette.comment.hex;
       categoryFgColor = roles.accent.structural.hex;
     };
     dialog = {

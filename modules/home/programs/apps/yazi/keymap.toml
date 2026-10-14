@@ -121,7 +121,7 @@ keymap = [
     { on = ["y", "h"], run = "hardlink", desc = "Hardlink yanked files" },
     # Copy
     { on = ["c", "c"], run = "copy path", desc = "Copy the file path" },
-    { on = ["c", "d"], run = "copy dirname", desc = "Copy the directory path" },
+    { on = ["c", "d"], run = "copy dirpath", desc = "Copy the directory path" },
     { on = ["c", "f"], run = "copy filename", desc = "Copy the filename" },
     { on = ["c", "n"], run = "copy name_without_ext", desc = "Copy the filename without extension" },
     # Paste
@@ -273,11 +273,11 @@ keymap = [
     { on = "<C-f>", run = "move 1", desc = "Move forward a character" },
     # Word-wise movement
     { on = "b", run = "backward", desc = "Move back to the start of the current or previous word" },
-    { on = "B", run = "backward --far", desc = "Move back to the start of the current or previous WORD" },
+    { on = "B", run = "backward wide", desc = "Move back to the start of the current or previous WORD" },
     { on = "w", run = "forward", desc = "Move forward to the start of the next word" },
-    { on = "W", run = "forward --far", desc = "Move forward to the start of the next WORD" },
+    { on = "W", run = "forward wide", desc = "Move forward to the start of the next WORD" },
     { on = "e", run = "forward --end-of-word", desc = "Move forward to the end of the current or next word" },
-    { on = "E", run = "forward --far --end-of-word", desc = "Move forward to the end of the current or next WORD" },
+    { on = "E", run = "forward wide --end-of-word", desc = "Move forward to the end of the current or next WORD" },
     { on = "<A-b>", run = "backward", desc = "Move back to the start of the current or previous word" },
     { on = "<A-f>", run = "forward --end-of-word", desc = "Move forward to the end of the current or next word" },
     # Line-wise movement
@@ -368,8 +368,6 @@ keymap = [
     # --- [CORE]
     { on = "<Esc>", run = "escape", desc = "Clear the filter, or hide the help" },
     { on = "<C-w>", run = "close", desc = "Hide the help" },
-    # Filtering
-    { on = "f", run = "filter", desc = "Filter help items" },
 
     # --- [NAVIGATION]
     # Arrow Keys

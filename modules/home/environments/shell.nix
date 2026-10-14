@@ -53,12 +53,10 @@ in {
       RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
 
       # --- [TOOL_CONFIGURATIONS]
-      # ripgrep reads no config file without this row; watchexec, fd, rclone, bat, xh, and trippy read their XDG paths on their own.
-      RIPGREP_CONFIG_PATH = "${config.xdg.configHome}/ripgrep/config";
+      # watchexec, fd, rclone, bat, xh, and trippy read their XDG paths on their own; ripgrep's path row rides the toolchain-env `all` class.
       # Timeout drops are by-design (command_timeout keeps the prompt under budget); error level stops the [WARN] pair a
       # cold toolchain spawn (first node exec after boot) would otherwise print into the terminal.
       STARSHIP_LOG = "error";
-      STARSHIP_CACHE = "${config.xdg.cacheHome}/starship"; # starship joins $HOME/.cache itself (src/logger.rs get_log_dir) and reads no XDG_CACHE_HOME
       EZA_CONFIG_DIR = "${config.xdg.configHome}/eza"; # eza's fallback is dirs::config_dir (~/Library/Application Support on macOS), and only this path loads theme.yml (src/options/theme.rs)
       ATUIN_LOG = "error";
       # act caches under XDG_CACHE_HOME/act natively; it reads no ACT_* path var.

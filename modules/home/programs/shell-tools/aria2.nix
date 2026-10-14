@@ -9,6 +9,7 @@ _: {
   programs.aria2 = {
     enable = true;
 
+    # Rows differ from aria2's defaults (`aria2c --help=#all`).
     settings = {
       # --- [PERFORMANCE_SETTINGS]
       max-connection-per-server = 8;
@@ -18,7 +19,6 @@ _: {
 
       # --- [RELIABILITY_SETTINGS]
       continue = true;
-      max-tries = 5;
       retry-wait = 30;
       timeout = 600;
 
@@ -26,26 +26,14 @@ _: {
       file-allocation = "none"; # Faster startup for SSDs
       disk-cache = "32M";
 
-      # --- [CONNECTION_SETTINGS]
-      max-overall-download-limit = 0;
-      max-download-limit = 0;
-      lowest-speed-limit = 0;
-
-      # --- [FILE_MANAGEMENT]
-      auto-file-renaming = true;
-      allow-overwrite = false;
-
       # --- [PROTOCOL_SETTINGS]
-      enable-http-keep-alive = true;
       enable-http-pipelining = true;
       user-agent = "aria2";
 
       # --- [BITTORRENT_SETTINGS]
-      enable-dht = true;
       enable-dht6 = true;
       bt-enable-lpd = true;
       bt-seed-unverified = true;
-      bt-max-peers = 55;
     };
   };
 }

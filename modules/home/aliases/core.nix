@@ -62,6 +62,8 @@
     ["psmem" "procs --sortd mem" "Processes by memory"]
     ["psw" "procs --watch" "Watch processes"]
     ["top" "btm" "System monitor"]
+    ["load" "top -l 2 -n 12 -o cpu -stats pid,command,cpu,mem,state | tail -n 24" "One-shot load, CPU, memory, swap I/O, and top 12 processes by CPU"]
+    ["memhog" ''ps -axo rss=,comm= | awk '{n=$0; sub(/^ *[0-9]+ +/,"",n); sub(/.*\//,"",n); m[n]+=$1} END {for (c in m) printf "%7d MB  %s\n", m[c]/1024, c}' | sort -rn | head -n 20'' "Resident memory summed per program, top 20"]
     ["dfi" "dua i" "Interactive disk usage"]
     ["killi" "pik" "Interactive process killer" "destructive"]
   ];

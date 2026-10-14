@@ -31,12 +31,11 @@ in {
       showhidden = false;
       expose-group-apps = false;
       mru-spaces = false;
-      # Static, animation-minimal dock: instant autohide timing, fast Mission Control, stock gestures pinned. Launchpad died with Tahoe's
-      # Spotlight apps view, so its gesture row never lands.
+      # Static, animation-minimal dock: instant autohide timing, stock gestures pinned. Launchpad died with Tahoe's Spotlight apps view, so
+      # its gesture row never lands.
       appswitcher-all-displays = false;
       autohide-delay = 0.0;
       autohide-time-modifier = 0.0;
-      expose-animation-duration = 0.1;
       scroll-to-open = false;
       slow-motion-allowed = false;
       mouse-over-hilite-stack = false;
@@ -146,9 +145,7 @@ in {
       NSTableViewDefaultSizeMode = 1;
       AppleWindowTabbingMode = "manual";
       NSNavPanelExpandedStateForSaveMode = true;
-      NSNavPanelExpandedStateForSaveMode2 = true;
       PMPrintingExpandedStateForPrint = true;
-      PMPrintingExpandedStateForPrint2 = true;
       NSDocumentSaveNewDocumentsToCloud = false;
       NSWindowResizeTime = 0.001; # instant window resize
       NSWindowShouldDragOnGesture = false;

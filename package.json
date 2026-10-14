@@ -11,10 +11,9 @@
         "up": "node services/driver.ts up",
         "scopes": "node services/driver.ts scopes doctor",
         "reviewers": "node services/driver.ts reviewers",
-        "typecheck": "tsc -p tsconfig.json"
+        "typecheck": "tsc"
     },
     "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/platform": "catalog:",
         "@effect/platform-node": "catalog:",
         "@pulumi/github": "catalog:",

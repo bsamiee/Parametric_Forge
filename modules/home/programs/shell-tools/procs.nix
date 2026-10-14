@@ -5,14 +5,16 @@
 # Path          : modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
 # ps replacement; renders process state, resource usage, and ports with estate-themed columns.
-{
-  config,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   # Styles are ANSI-16 slots; the terminal palette (estate.theme.ansi16 projected through WezTerm) resolves them to estate colors.
   tomlFormat = pkgs.formats.toml {};
+  separator = {
+    kind = "Separator";
+    style = "White|BrightBlack";
+  };
 
+  # Rows differ from procs' defaults: a column's style is ByUnit, both searches false, and align Left unless a row says otherwise. The docker
+  # socket is procs' own default, the DOCKER_HOST of the calling environment.
   procsConfig = {
     # --- [COLUMN_CONFIGURATION]
     columns = [
@@ -20,144 +22,89 @@
         kind = "Pid";
         style = "BrightYellow|Yellow";
         numeric_search = true;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "Ppid";
         style = "Yellow|Yellow";
         numeric_search = true;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "User";
         style = "BrightGreen|Green";
-        numeric_search = false;
         nonnumeric_search = true;
-        align = "Left";
         min_width = 8;
       }
-      {
-        kind = "Separator";
-        style = "White|BrightBlack";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
-      }
+      separator
       {
         kind = "State";
         style = "ByState";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "UsageCpu";
         style = "ByPercentage";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
       {
         kind = "UsageMem";
         style = "ByPercentage";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
       {
         kind = "VmSize";
-        style = "ByUnit";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
       {
         kind = "VmRss";
-        style = "ByUnit";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
       {
         kind = "TcpPort";
         style = "BrightCyan|Cyan";
         numeric_search = true;
-        nonnumeric_search = false;
-        align = "Left";
         max_width = 20;
       }
       {
         kind = "UdpPort";
         style = "BrightCyan|Cyan";
         numeric_search = true;
-        nonnumeric_search = false;
-        align = "Left";
         max_width = 20;
       }
       {
         kind = "ReadBytes";
-        style = "ByUnit";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
       {
         kind = "WriteBytes";
-        style = "ByUnit";
-        numeric_search = false;
-        nonnumeric_search = false;
         align = "Right";
       }
-      {
-        kind = "Separator";
-        style = "White|BrightBlack";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
-      }
+      separator
       {
         # Insertion slot: --sortd/--sorta/--insert land their column here and hard-fail without one.
         kind = "Slot";
         style = "BrightWhite|Black";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "CpuTime";
         style = "BrightCyan|Cyan";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "StartTime";
         style = "BrightMagenta|Magenta";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "ElapsedTime";
         style = "Magenta|Magenta";
-        numeric_search = false;
-        nonnumeric_search = false;
-        align = "Left";
       }
       {
         kind = "Command";
         style = "BrightWhite|Black";
-        numeric_search = false;
         nonnumeric_search = true;
-        align = "Left";
       }
     ];
 
     # --- [STYLE_CONFIGURATION]
+    # A by_* table is read whole: procs gives its rows no per-row default.
     style = {
-      header = "BrightWhite|Black";
       unit = "Blue|Black";
       tree = "Cyan|Black";
 
@@ -180,45 +127,11 @@
         color_w = "BrightBlue|Blue"; # Waking
         color_p = "BrightYellow|Yellow"; # Parked
       };
-
-      by_unit = {
-        color_k = "BrightBlue|Blue"; # Kilo
-        color_m = "BrightGreen|Green"; # Mega
-        color_g = "BrightYellow|Yellow"; # Giga
-        color_t = "BrightRed|Red"; # Tera
-        color_p = "BrightRed|Red"; # Peta
-        color_x = "BrightBlue|Blue"; # Other
-      };
-    };
-
-    # --- [SEARCH_CONFIGURATION]
-    search = {
-      numeric_search = "Exact";
-      nonnumeric_search = "Partial";
-      logic = "And";
-      case = "Smart";
     };
 
     # --- [DISPLAY_CONFIGURATION]
     display = {
-      show_self = false;
-      show_self_parents = false;
-      show_thread = false;
-      show_thread_in_tree = true;
-      show_parent_in_tree = true;
-      show_children_in_tree = true;
-      show_header = true;
       show_footer = true; # process counts
-      cut_to_terminal = true;
-      cut_to_pager = false;
-      cut_to_pipe = false;
-      color_mode = "Auto"; # TTY-detected: colored interactively, verbatim in pipes
-      separator = "│";
-      ascending = "▲";
-      descending = "▼";
-      tree_symbols = ["│" "─" "┬" "├" "└"];
-      abbr_sid = true;
-      theme = "Auto";
       show_kthreads = false;
     };
 
@@ -229,21 +142,10 @@
       order = "Descending";
     };
 
-    # --- [DOCKER_CONFIGURATION]
-    # The DOCKER_HOST row services.colima publishes on Darwin (containers.nix); a host without one serves the system default.
-    docker.path = config.home.sessionVariables.DOCKER_HOST or "unix:///var/run/docker.sock";
-
     # --- [PAGER_CONFIGURATION]
     pager = {
-      mode = "Auto";
       detect_width = true;
-      use_builtin = false;
       command = "less -SRX"; # -S no wrap, -R ANSI colors, -X no screen clear
-    };
-
-    # --- [WATCH_MODE_CONFIGURATION]
-    watch = {
-      interval = 2; # seconds
     };
   };
 in {

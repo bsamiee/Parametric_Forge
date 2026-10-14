@@ -36,9 +36,6 @@
         "node_modules"
         "vendor"
         ".bundle"
-        # IDE and editor
-        ".idea"
-        ".vscode"
         # macOS system
         ".Spotlight-V100"
         ".Trashes"
@@ -86,5 +83,6 @@
     };
   };
 
-  config.xdg.configFile."fd/ignore".text = config.estate.ignoreEstate.dirText;
+  # `.git/` prunes the directory during traversal; `.git/**` also empties a search rooted at a `.git` directory, which the walker never prunes.
+  config.xdg.configFile."fd/ignore".text = config.estate.ignoreEstate.dirText + "\n.git/**";
 }

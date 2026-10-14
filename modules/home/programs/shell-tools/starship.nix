@@ -92,8 +92,8 @@ in {
         vimcmd_replace_one_symbol = "[❮](bold accent2)";
       };
 
+      # Renders only for root or over SSH, the upstream default.
       username = {
-        show_always = false; # Renders only for root or over SSH
         style_user = "primary";
         style_root = "bold danger";
         format = "[$user]($style) ";
@@ -102,7 +102,6 @@ in {
       # Remote-host badge binds the shared context vocabulary (projections.contextBadges.remote) — wezterm's domain
       # strip and the yazi header read the same row, so a VPS file carries one identical badge on every surface.
       hostname = {
-        ssh_only = true;
         ssh_symbol = "${badges.remote.glyph} ";
         style = "bold ${badgeRole badges.remote}";
         format = "[$ssh_symbol$hostname]($style) ";
@@ -117,17 +116,12 @@ in {
       };
 
       directory = {
-        truncation_length = 3;
-        truncate_to_repo = true;
         truncation_symbol = "${glyph.ellipsis}/";
-        home_symbol = "~";
         read_only = " 󰌾";
         read_only_style = "danger";
         style = "accent";
         before_repo_root_style = "muted"; # Ancestors dim, repo name carries the weight
         repo_root_style = "bold accent";
-        repo_root_format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)[$read_only]($read_only_style) ";
-        format = "[$path]($style)[$read_only]($read_only_style) ";
         substitutions."~/Developer" = "${glyph.github} ";
       };
 
@@ -136,7 +130,6 @@ in {
       # each — branch identity, detached hash, in-progress operation, counted tree state. git_metrics is deliberately
       # absent: line churn is a passive magnitude meter, redundant with the file counts, banned from standing chrome.
       vcs = {
-        disabled = false;
         order = ["git"];
         git_modules = "$git_branch$git_commit$git_state$git_status";
       };
@@ -152,18 +145,14 @@ in {
       };
 
       git_commit = {
-        only_detached = true;
         tag_disabled = false;
         tag_symbol = " #";
         style = "bold attention";
         format = "[@$hash$tag]($style) ";
       };
 
-      # Transient in-progress operation: parens per the enclosure law, plain weight — self-clearing, never an anchor.
-      git_state = {
-        style = "attention";
-        format = "\\([$state( $progress_current/$progress_total)]($style)\\) ";
-      };
+      # Transient in-progress operation: parens per the enclosure law (the upstream format), plain weight — self-clearing, never an anchor.
+      git_state.style = "attention";
 
       # One outer bracket, semiotic marker grammar: the cluster reads `main [ +10 ~69 ?12 ^3 ]` — each state is a
       # space-terminated `<marker><count>` token whose marker char is the theme vocabulary's ASCII register, and one
@@ -191,7 +180,6 @@ in {
       nix_shell = {
         symbol = "${icons.process.nix} ";
         style = "structural";
-        heuristic = false;
         format = "[$symbol$state( $name)]($style) ";
       };
 
@@ -215,9 +203,7 @@ in {
         not_capable_style = "danger";
         version_format = "v\${major}";
         format = "[$symbol]($style)[($version)](subtle) ";
-        detect_extensions = ["js" "mjs" "cjs" "ts" "mts" "cts"];
         detect_files = ["package.json" ".node-version" ".nvmrc"];
-        detect_folders = ["node_modules"];
       };
 
       dotnet = {
@@ -252,12 +238,9 @@ in {
         symbol = "${icons.alphabet.running.glyph} ";
         style = "accent";
         number_threshold = 1;
-        symbol_threshold = 1;
-        format = "[$symbol$number]($style) ";
       };
 
       cmd_duration = {
-        min_time = 2000;
         style = "warning";
         format = "[󱎫 $duration]($style) ";
       };
@@ -268,10 +251,7 @@ in {
         disabled = false;
         symbol = "${icons.alphabet.failure.glyph} ";
         style = "bold danger";
-        recognize_signal_code = true;
-        map_symbol = false;
         pipestatus = true;
-        pipestatus_separator = "|";
         pipestatus_format = "[\\[$symbol$pipestatus\\]]($style) ";
         pipestatus_segment_format = "[$status]($style)";
         format = "[\\[$symbol$status( $common_meaning)( $signal_name)\\]]($style) ";

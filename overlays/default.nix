@@ -87,11 +87,10 @@ final: prev: let
     then ''cp -R ${src}/. ${dst}/ && chmod -R u+w ${dst}''
     else ''lndir -silent ${src} ${dst}'';
 
-  # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root, root-relative subpaths, or the row version.
+  # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root or to root-relative subpaths.
   runtimeEnvAt = row: root:
     lib.genAttrs row.runtime.env.roots (_: root)
-    // lib.mapAttrs (_: sub: "${root}/${sub}") row.runtime.env.paths
-    // lib.genAttrs row.runtime.env.version (_: row.version);
+    // lib.mapAttrs (_: sub: "${root}/${sub}") row.runtime.env.paths;
 
   # One derivation template for every binary-release row; recipes carry only the install kernel and unpack facts,
   # with finalAttrs threaded through for passthru projections.
@@ -366,7 +365,7 @@ final: prev: let
     };
     harfbuzz-current = old: {
       # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack. It takes no cairo backend:
-      # media-tools builds the command-line utilities from the same source as their own package.
+      # media-tools lands the command-line utilities this build seats in its dev output.
       mesonFlags = (map (flag: lib.replaceStrings ["-Dgraphite="] ["-Dgraphite2="] flag) (old.mesonFlags or [])) ++ [(lib.mesonEnable "gpu_demo" false)];
     };
     poppler-utils-current = old: let

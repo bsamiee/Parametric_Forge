@@ -23,7 +23,7 @@
 
   geoTools = with pkgs; [
     gdal # gdalinfo, gdal_translate, ogr2ogr, and the gdal-config the GDAL_CONFIG row names
-    geos # geosop and the geos-config the GEOS_CONFIG row names
+    geos # geosop
     proj # proj, cs2cs, projinfo
     netcdf # ncdump, nccopy, ncgen
   ];

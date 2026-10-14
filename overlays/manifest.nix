@@ -412,16 +412,11 @@ in rec {
       runtime = {
         root = "opt/openstudio";
         shebangDirs = ["bin"];
+        # OpenStudio reads none of its layout from the environment; the one name is the session's route to the bundled Radiance binaries,
+        # which land on no PATH.
         env = {
-          roots = ["OPENSTUDIO_ROOT" "OPENSTUDIO_DIR"];
-          paths = {
-            OPENSTUDIO_EXE = "bin/openstudio";
-            OPENSTUDIO_RUBY_ROOT = "Ruby";
-            OPENSTUDIO_PYTHON_ROOT = "Python";
-            OPENSTUDIO_RADIANCE_ROOT = "Radiance";
-            OPENSTUDIO_ENERGYPLUSDIR = "EnergyPlus";
-          };
-          version = ["OPENSTUDIO_VERSION"];
+          roots = [];
+          paths = {OPENSTUDIO_RADIANCE_ROOT = "Radiance";};
         };
         wrappers = {
           openstudio = "bin/openstudio";
@@ -453,10 +448,10 @@ in rec {
       runtime = {
         root = "opt/energyplus";
         shebangDirs = ["."];
+        # runenergyplus, runepmacro, and runreadvars read ENERGYPLUS_DIR and fall back to /usr on macOS without it.
         env = {
-          roots = ["ENERGYPLUSDIR" "ENERGYPLUS_DIR"];
-          paths = {ENERGYPLUS_EXE = "energyplus";};
-          version = ["ENERGYPLUS_VERSION"];
+          roots = ["ENERGYPLUS_DIR"];
+          paths = {};
         };
         wrappers = {
           energyplus = "energyplus";

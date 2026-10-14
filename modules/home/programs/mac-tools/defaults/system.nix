@@ -11,8 +11,6 @@
     "com.apple.ActivityMonitor" = {
       ShowCategory = 100;
       IconType = 0;
-      SortColumn = "CPUUsage";
-      SortDirection = 0;
       OpenMainWindow = true;
     };
     # --- [SCREENSHOTS]
@@ -27,9 +25,7 @@
     };
     # --- [MENU_BAR_CLOCK]
     "com.apple.menuextra.clock" = {
-      Show24Hour = true;
       ShowDate = 1;
-      ShowDayOfMonth = true;
       ShowDayOfWeek = true;
       ShowSeconds = false;
       FlashDateSeparators = false;

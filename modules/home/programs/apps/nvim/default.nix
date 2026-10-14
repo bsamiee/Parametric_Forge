@@ -97,27 +97,21 @@
       filetypes = ["sh" "bash"];
       root_markers = [".git"];
       # Editor side disables the LSP shellcheck lane: nvim-lint owns shellcheck (namespace separation, one diagnostic per fault).
-      settings.bashIde = {
-        shellcheckPath = "";
-        shfmt.path = "shfmt";
-      };
+      settings.bashIde.shellcheckPath = "";
     };
     # Python (ty), TypeScript (tsc), and Biome carry no row: each project's mise.toml and uv.lock own those toolchains, so the machine roster
     # names only profile-installed servers.
     postgres_lsp = {
       cmd = ["postgrestools" "lsp-proxy"];
       filetypes = ["sql"];
-      root_markers = ["postgrestools.jsonc" ".git"];
+      root_markers = ["postgres-language-server.jsonc" ".git"];
       settings = {};
     };
     yamlls = {
       cmd = ["yaml-language-server" "--stdio"];
       filetypes = ["yaml"];
       root_markers = [".git"];
-      settings.yaml = {
-        schemaStore.enable = true;
-        validate = true;
-      };
+      settings = {};
     };
     # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
     # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
