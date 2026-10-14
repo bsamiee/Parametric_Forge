@@ -12,11 +12,10 @@ _: {
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, so only a greedy upgrade refreshes it.
-    {
-      name = "wezterm@nightly";
-      greedy = true;
-    }
+    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, and the cask carries no quit stanza, so a greedy row would
+    # swap the running terminal's bundle under it on every redeploy. The manual Homebrew pass (`brew upgrade --greedy-latest wezterm@nightly`)
+    # refreshes it on the operator's schedule.
+    "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy" # AirPods management
