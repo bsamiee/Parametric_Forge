@@ -238,26 +238,26 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.10.2";
+    version = "2026.10.10";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.2/mise-v2026.10.2-macos-arm64.tar.gz";
-      sha256 = "sha256-o/Z/8AnxQ2AT7uN4ZMHBhV2dmp5JgqZgtklViWNThOc=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-macos-arm64.tar.gz";
+      sha256 = "sha256-b5mzlcjSpDZP1c9qc1Ift/hESDGjMNtqTHzqmljWmTA=";
     };
   };
   mise-aarch64-linux = {
     pname = "mise-aarch64-linux";
-    version = "2026.10.2";
+    version = "2026.10.10";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.2/mise-v2026.10.2-linux-arm64-musl.tar.gz";
-      sha256 = "sha256-P4WaQhzSRHqOMZ0fifNY2p83ffr8Zqa+v4iC1Fj0b+A=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-linux-arm64-musl.tar.gz";
+      sha256 = "sha256-Meur9o5qD5IwRG7tEx6daxl/OReATVg/0VQallMd734=";
     };
   };
   mise-x86_64-linux = {
     pname = "mise-x86_64-linux";
-    version = "2026.10.2";
+    version = "2026.10.10";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.2/mise-v2026.10.2-linux-x64-musl.tar.gz";
-      sha256 = "sha256-if2Lh+Bt3KY+UIV6mrv8ACPqPn4xqXzkmOHdVFoCfiY=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-linux-x64-musl.tar.gz";
+      sha256 = "sha256-/nwfORnDUIJcQJ44VHHbBG+YeyJ4pbPeIFewgNPZTeY=";
     };
   };
   rdkafka = {
