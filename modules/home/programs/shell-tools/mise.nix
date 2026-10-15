@@ -14,10 +14,12 @@
 # freely while a foreign checkout's config never executes implicitly.
 {
   config,
-  lib,
   pkgs,
   ...
-}: {
+}: let
+  # One .NET root every SDK installs into, so a process holding DOTNET_ROOT or this PATH segment resolves each SDK a later global.json names
+  dotnetRoot = "${config.xdg.dataHome}/mise/dotnet-root";
+in {
   programs.mise = {
     enable = true;
     package = pkgs.mise;
@@ -31,13 +33,15 @@
         # environment resolution for that reason.
         auto_install = false;
         disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
-        # A shared-store SDK install overwrites the running `dotnet` host in place, and macOS then kills every process it hosts
-        dotnet.isolated = true;
+        # Named, since mise otherwise installs into whatever DOTNET_ROOT the installing shell sets
+        dotnet.dotnet_root = dotnetRoot;
       };
-      # Points the link /etc/dotnet/install_location_arm64 names (darwin/settings/system.nix) at the project's SDK, else the newest installed
-      hooks.postinstall = ''
-        if root="$(${lib.getExe config.programs.mise.package} where dotnet 2>/dev/null)"; then
-          ln -sfn "$root" "${config.xdg.dataHome}/mise/dotnet-current"
+      # dotnet-install rewrites the root's `dotnet` host in place, and macOS kills every process mapping a rewritten signed binary: a fresh
+      # inode before each install leaves running hosts on the unlinked one
+      hooks.preinstall = ''
+        if [ -f "${dotnetRoot}/dotnet" ]; then
+          cp -p "${dotnetRoot}/dotnet" "${dotnetRoot}/dotnet.next"
+          mv -f "${dotnetRoot}/dotnet.next" "${dotnetRoot}/dotnet"
         fi
       '';
     };

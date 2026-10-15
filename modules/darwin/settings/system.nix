@@ -64,7 +64,7 @@ in {
     allowSignedApp = true;
   };
 
-  # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory
-  # Target is a link the mise postinstall hook (home/programs/shell-tools/mise.nix) points at an isolated SDK folder, never a version literal
-  environment.etc."dotnet/install_location_arm64".text = "${dataHome}/mise/dotnet-current\n";
+  # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory: the
+  # shared root every mise SDK installs into (home/programs/shell-tools/mise.nix), each repository's global.json still selecting the SDK
+  environment.etc."dotnet/install_location_arm64".text = "${dataHome}/mise/dotnet-root\n";
 }
