@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
-# Zsh .zshenv floor for every shell: the PATH assertion, the scientific library exports, the never-clobber session-variable floor, and the
-# op-injected session secrets.
+# Zsh .zshenv floor for every shell: the PATH assertion, the scientific library exports, the never-clobber session-variable floor, the
+# op-injected session secrets, and the non-interactive mise refresh.
 {
   config,
   toolchainEnvFor,
@@ -45,6 +45,11 @@ in {
       # The mode-600 cache activation publishes (shell-tools/1password.nix): every shell, login and script ones included, carries the tokens
       # gh, the deploy rail, and the MCP rows read, so a process its multiplexer starts through a login shell holds them too.
       [[ ! -f ${lib.escapeShellArg config.estate.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.estate.secrets.sessionCache}
+
+      # A non-interactive shell (an agent harness's `zsh -lc` command, a script) never draws the prompt `mise activate` refreshes at, and
+      # inherits whatever mise state its launcher held. hook-env reverts that inherited diff and applies the current directory's tools and
+      # [env] rows once, last, so a project row outranks the floor above; interactive zsh activates at the end of .zshrc (zsh/init.nix).
+      [[ -o interactive ]] || eval "$(${lib.getExe config.programs.mise.package} hook-env -s zsh)"
     '';
   };
 }

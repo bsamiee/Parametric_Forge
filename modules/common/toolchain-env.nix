@@ -44,8 +44,8 @@
     ];
     # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, a GUI app, and a
     # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
-    # whose tool has no version there execs the next copy on PATH. `mise env` writes a project's tool paths where this segment sits, so an agent
-    # session that applies its output resolves project tools first. Interactive zsh drops the segment when `mise activate` runs (zsh/init.nix).
+    # whose tool has no version there execs the next copy on PATH. A shell that applies `mise hook-env` (non-interactive zsh, every Claude Code
+    # command through CLAUDE_ENV_FILE) puts a project's install paths ahead of this segment; interactive zsh drops it when `mise activate` runs.
     shimPathEntries = ["${xdgDataHome}/mise/shims"];
     pathEntries = shimPathEntries ++ userPathEntries ++ fallbackPathEntries;
     # ctypes/dlopen consumers (weasyprint's gobject/pango/harfbuzz/fontconfig chain, python-magic's libmagic, pyvips's libvips/gobject/glib)
@@ -164,6 +164,9 @@
         PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
         # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
         PUPPETEER_EXECUTABLE_PATH = puppeteerExecutablePath;
+        # Claude Code restores the PATH its session-start shell snapshot captured in every Bash command, then runs this file: hook-env reverts the
+        # launch shell's mise diff and applies the current directory's tools and [env] rows, so each command sees mise state as it is now.
+        CLAUDE_ENV_FILE = "${pkgs.writeText "mise-hook-env.sh" ''eval "$(${lib.getExe pkgs.mise} hook-env -s bash)"''}";
       };
       session =
         {
