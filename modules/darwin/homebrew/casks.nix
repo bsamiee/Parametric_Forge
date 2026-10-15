@@ -74,7 +74,7 @@ _: {
     "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask
 
     # --- [3D_CREATION]
-    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch, which Casks/blender@daily.rb reads from the builder's index on every load, so activation's upgrade moves it; the cask links its blender command wrapper into /opt/homebrew/bin
+    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch; a greedy :latest row would download the full image on every activation to compare its checksum, so the manual Homebrew pass moves it; the cask links its blender command wrapper into /opt/homebrew/bin
     "epic-games" # Epic Games Launcher; Unreal Engine and Twinmotion install into /Users/Shared/Epic Games and update through it, and the launcher self-updates, so activation only realigns Homebrew's record
     "inkscape" # Bonsai's SVG to DXF/PDF sheet converter, read at its app bundle; the cask links its inkscape command wrapper into /opt/homebrew/bin
     "xquartz" # X11 server the VI-Suite LiVi preview (Radiance rvu) opens its window on

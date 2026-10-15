@@ -168,7 +168,7 @@ Day-2 rebuilds: `redeploy --switch`. `nixos-anywhere` with disko bootstraps each
 - Provisioner: `nix build .#provision`; smoke with `nix run .#provision -- self-test`.
 - Inputs, in order, each proven before the next: clean working tree, `nix flake update` proven by `redeploy --build`, `nix develop -c nvfetcher -o overlays/_sources`, `redeploy --switch`, the Homebrew pass, then the store trim; closure diffs review through `nvd`/`nix-diff` before switching.
 
-Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly && brew cleanup`.
+Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly blender@daily && brew cleanup`.
 
 ## [16]-[LICENSE]
 

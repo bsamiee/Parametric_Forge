@@ -1,17 +1,10 @@
 cask "blender@daily" do
-  # The builder replaces main's build daily and keeps no stable link to the newest one, so a version written into
-  # this file goes stale the next day. The cask reads the newest main build from the builder's index each time
-  # Homebrew loads it: `brew upgrade` moves to every new daily with no edit here, and the build's published .sha256
-  # checks the download.
-  index = ::Utils::Curl.curl("https://builder.blender.org/download/daily/?format=json&v=1", print_stdout: false)
-  rows = JSON.parse(index.stdout, symbolize_names: true)
-  build = rows.select { |row| row in { branch: "main", platform: "darwin", architecture: "arm64", file_extension: "dmg" } }
-              .max_by { |row| row[:file_mtime] }
+  # The builder replaces main's build daily and deletes the one before it, so no version written here outlives a day.
+  # Its download action redirects to the one build its filters select, and main is the only alpha track.
+  version :latest
+  sha256 :no_check
 
-  version "#{build[:version]}-#{build[:risk_id]},#{build[:hash]}"
-  sha256 ::Utils::Curl.curl("#{build[:url]}.sha256", print_stdout: false).stdout.strip
-
-  url build[:url]
+  url "https://builder.blender.org/download/daily/?action=download&platform=darwin&architecture=arm64&release_cycle=alpha"
   name "Blender Daily"
   desc "3D creation suite at the newest daily build of the main branch"
   homepage "https://builder.blender.org/download/daily/"
