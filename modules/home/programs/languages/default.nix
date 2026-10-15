@@ -16,6 +16,7 @@
     ./apple-tools.nix
     ./lua-tools.nix
     ./node-tools.nix
+    ./rust-tools.nix
   ];
 
   # Machine-readable projection of overlays/manifest.nix with live-resolved admission versions; consumers read rows here, never derivation source.

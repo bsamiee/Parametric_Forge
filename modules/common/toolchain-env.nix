@@ -149,13 +149,17 @@
         GITLEAKS_CONFIG = "${xdgConfigHome}/gitleaks/gitleaks.toml";
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
         RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config"; # ripgrep reads no config file without this row
-        # pnpm's home directory, where `pnpm add -g` lands packages and their bin links; the macOS default is ~/Library/pnpm. pnpm itself is a
-        # project's mise.toml row, this row is data only.
+        # pnpm's home directory: `pnpm add -g` packages and bin links, and `$PNPM_HOME/store`, the one content-addressed store every project on
+        # the Data volume hard-links from; the macOS default is ~/Library/pnpm. The metadata cache follows XDG_CACHE_HOME to ~/.cache/pnpm. pnpm
+        # itself is a project's mise.toml row, this row is data only.
         PNPM_HOME = "${xdgDataHome}/pnpm";
         # npm's cache and the Pulumi CLI home (plugins, workspaces, credentials, logs) default to ~/.npm and ~/.pulumi. An editor's type
         # acquisition runs npm from the GUI domain and a Pulumi run starts outside a login shell, a project's [env] row wins through the floor.
         npm_config_cache = "${xdgCacheHome}/npm";
         PULUMI_HOME = "${xdgDataHome}/pulumi";
+        # One NuGet packages folder for every restore (repository, scratch probe, editor, `dotnet dnx`): the variable outranks a repository
+        # NuGet.config and the folder a project's DOTNET_CLI_HOME row would move it to, and roslyn-codelens trusts analyzers by this exact path.
+        NUGET_PACKAGES = "${home}/.nuget/packages";
         # CPython mirrors bytecode under the prefix in place of __pycache__ beside each source, a project's [env] row wins through the floor
         PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
         # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
