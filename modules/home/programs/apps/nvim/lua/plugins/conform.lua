@@ -13,7 +13,7 @@ require("conform").setup({
     formatters = {
         prettier = { command = "prettier" },
     },
-    -- LSP fallback sits in the defaults so a filetype row's lsp_format (TOML: never) outranks it.
+    -- LSP fallback formats a filetype that carries no formatter row.
     default_format_opts = {
         lsp_format = "fallback",
     },

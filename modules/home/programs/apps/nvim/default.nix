@@ -113,16 +113,6 @@
       root_markers = [".git"];
       settings = {};
     };
-    # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
-    # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
-    # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
-    # TOML: taplo's LSP mode; the SchemaStore catalog is on by default, and a project taplo.toml at the root is the one config it reads.
-    taplo = {
-      cmd = ["taplo" "lsp" "stdio"];
-      filetypes = ["toml"];
-      root_markers = [".taplo.toml" "taplo.toml" ".git"];
-      settings = {};
-    };
     # jdtls imports a folder without a build file as an invisible project; its source roots, referenced jars, and project JDK arrive as
     # `java.project.sourcePaths`, `java.project.referencedLibraries`, and `java.configuration.runtimes` settings, so the machine row carries no
     # project facts: a project's Eclipse .classpath owns them.
@@ -132,6 +122,9 @@
       root_markers = ["pom.xml" "build.gradle" "build.gradle.kts" ".git"];
       settings = {};
     };
+    # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
+    # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
+    # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
     roslyn_ls = {
       cmd = [
         "Microsoft.CodeAnalysis.LanguageServer"
@@ -243,7 +236,6 @@
         sh = ["shfmt"];
         bash = ["shfmt"];
         lua = ["stylua"];
-        toml.lsp_format = "never";
         sql = ["sqruff"];
       }
       // lib.genAttrs

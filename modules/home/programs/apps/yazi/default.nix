@@ -46,9 +46,9 @@
   # a build, never network. Hover latency stays bounded by head caps.
   diagPreview = pkgs.writeShellApplication {
     name = "yazi-diag-preview.sh";
-    runtimeInputs = [pkgs.alejandra pkgs.deadnix pkgs.statix pkgs.taplo pkgs.jq pkgs.yq-go pkgs.bat pkgs.coreutils];
+    runtimeInputs = [pkgs.alejandra pkgs.deadnix pkgs.statix pkgs.jq pkgs.yq-go pkgs.bat pkgs.coreutils];
     text = ''
-      # Usage: yazi-diag-preview.sh <lane> <file>; lanes: nix toml json yaml kdl
+      # Usage: yazi-diag-preview.sh <lane> <file>; lanes: nix json yaml kdl
       lane="''${1:?lane required}"
       file="''${2:?file required}"
       size="$(wc -c <"$file")" # full-parse diagnostics stay off huge files
@@ -62,13 +62,6 @@
             fi
             deadnix --no-underscore "$file" 2>/dev/null | head -10 || true
             statix check --format errfmt "$file" 2>/dev/null | head -10 || true
-            ;;
-          toml)
-            if taplo lint "$file" >/dev/null 2>&1; then
-              printf '[PARSE] toml ok\n'
-            else
-              taplo lint "$file" 2>&1 | head -10 || true
-            fi
             ;;
           json)
             if err="$(jq empty "$file" 2>&1)"; then
@@ -106,7 +99,6 @@
   diagLanes = {
     nix = "*.nix";
     kdl = "*.kdl";
-    toml = "*.toml";
     json = "*.json";
     yaml = "*.{yaml,yml}";
   };

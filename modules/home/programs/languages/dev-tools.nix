@@ -95,9 +95,8 @@ in {
         shfmt # Shell formatter (let-bound house-style fallback wrapper)
         bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)
 
-        # --- [YAML_TOML]
+        # --- [YAML]
         yaml-language-server # YAML LSP (SchemaStore-backed validation + completion)
-        taplo # TOML validator and LSP (SchemaStore-backed validation + completion)
 
         # --- [GENERAL_DATA_TOOLS]
         miller # CSV/TSV/JSON processor (mlr)
