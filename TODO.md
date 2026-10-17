@@ -10,12 +10,12 @@
 - `modules/home/programs/apps/chords.nix` :536-537 :659 :681 — the `[REGISTER_PROJECTION]` block and `register` attribute have no reader.
 - `modules/home/theme.nix` :218 — `macos-accent` row names `modules/darwin/settings` after the accent rows moved to `mac-tools/defaults/interface.nix`.
 - Stale comments: `flake-modules/tooling.nix` :81
-  ("the PATH wrapper"), `overlays/manifest.nix` :107 :117 :421-422 :649 :653, `CLAUDE.md` :43 ("fmt lane") :104 (duckdb row),
+  ("the PATH wrapper"), `overlays/manifest.nix` :107 :117 :421-422 :649 :653, `CLAUDE.md` :43 ("fmt lane"),
   `.coderabbit.yaml` :47 and `.greptile/rules.md` :12 ("the fmt router").
 
 ## [04]-[HAND_ROLLED_TOOLING_TO_TEAR_OUT]
 
-Keep: `redeploy`, `provision`, `gha`, `loc`, the `terminal.nix` yazi→zellij→nvim rail, `osa`, `services-console`,
+Keep: `redeploy`, `gha`, `loc`, the `terminal.nix` yazi→zellij→nvim rail, `osa`, `services-console`,
 `gui-op-secrets`, `default-applications`, `known-hosts`, the zellij grant pruner, the karabiner/yazi config proofs.
 
 - Flag-injection wrappers, install the bare package instead: `shfmt` (`languages/dev-tools.nix` :18), `stylua`
@@ -37,9 +37,8 @@ Keep: `redeploy`, `provision`, `gha`, `loc`, the `terminal.nix` yazi→zellij→
   asserts, `checkAdmission`, `checkExtensionLane`, `requiredFields`, and the fields nothing builds from: `overlayReason`, `consumers`,
   `cacheClass`, `versionPolicy`, `capability`, `capabilityFloor`, `proof`, `chords`, `completion`/`completionArgs` (and its
   `manifest-completions` consumer, `shell-tools/default.nix` :34), `themeCarrier`, `rowStates`/`resolved`, the dead `ca1` install
-  mode, `projection.{package,app,default,overlay}`. Keep the nvfetcher pin-existence assert; keep every field a builder reads.
-- Flake modules: `flake-modules/packages.nix` literal package/app list instead of `projection.*` folding (keep `nix run .#provision`),
-  drop the `defaultName`/`apps.default` throws; `flake-modules/qa.nix` drop the `pkg-<name>` smoke checks (flake check builds packages);
+  mode, `projection.{package,app,overlay}`. Keep the nvfetcher pin-existence assert; keep every field a builder reads.
+- Flake modules: `flake-modules/packages.nix` literal package/app list instead of `projection.*` folding; `flake-modules/qa.nix` drop the `pkg-<name>` smoke checks (flake check builds packages);
   `flake-modules/tooling.nix` :93 point ruff-format at `pyproject.toml` instead of transcribing keys.
 - Single-consumer option indirection worth folding if the pass has room: `estate.lsp` (`nixd.nix` :34), `estate.ssh` (`ssh.nix` :41),
   `estate.ignoreEstate` (`fd.nix` :16), `estate.secrets.sessionCache` (`1password.nix` :60), `programs.zellij.popupGeometry` and

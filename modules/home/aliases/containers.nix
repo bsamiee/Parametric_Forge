@@ -4,13 +4,8 @@
 # License       : MIT
 # Path          : modules/home/aliases/containers.nix
 # ----------------------------------------------------------------------------
-# Container and Kubernetes register rows.
+# Kubernetes register rows.
 {
-  docker = [
-    ["dps" "docker ps" "Running containers"]
-    ["di" "docker images" "List images"]
-    ["dcp" "docker compose" "Compose shorthand"]
-  ];
   kube-debug = [
     ["klog" "stern" "Multi-pod log tailing"]
     ["kcap" "kube-capacity" "Resource usage"]

@@ -204,30 +204,6 @@
       sha256 = "sha256-wgu/J56uh/0yU42zlGQOZ7zAzMm9fzk+V3AC8KVkhqo=";
     };
   };
-  duckdb-aarch64-darwin = {
-    pname = "duckdb-aarch64-darwin";
-    version = "1.5.6";
-    src = fetchurl {
-      url = "https://github.com/duckdb/duckdb/releases/download/v1.5.6/duckdb_cli-osx-universal.zip";
-      sha256 = "sha256-gKgMaHNr196lPosCRH6XWdsMhZbqFWR2ujlsRPVMWBA=";
-    };
-  };
-  duckdb-aarch64-linux = {
-    pname = "duckdb-aarch64-linux";
-    version = "1.5.6";
-    src = fetchurl {
-      url = "https://github.com/duckdb/duckdb/releases/download/v1.5.6/duckdb_cli-linux-arm64.zip";
-      sha256 = "sha256-xUTpLJt8MfxTwhOYAsq9ji0bKz4/kzEX8xYRI5wUAts=";
-    };
-  };
-  duckdb-x86_64-linux = {
-    pname = "duckdb-x86_64-linux";
-    version = "1.5.6";
-    src = fetchurl {
-      url = "https://github.com/duckdb/duckdb/releases/download/v1.5.6/duckdb_cli-linux-amd64.zip";
-      sha256 = "sha256-bonerB67w27tApHK+LVnsDDHuGrDWZj3GFTiKzxdXi8=";
-    };
-  };
   jdt-language-server = {
     pname = "jdt-language-server";
     version = "1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz";
@@ -238,26 +214,26 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.10.10";
+    version = "2026.10.12";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-macos-arm64.tar.gz";
-      sha256 = "sha256-b5mzlcjSpDZP1c9qc1Ift/hESDGjMNtqTHzqmljWmTA=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-macos-arm64.tar.gz";
+      sha256 = "sha256-bcErYIfUiHz4B+mp88KqCuDZCm9GXGvZxdSgeEf4irM=";
     };
   };
   mise-aarch64-linux = {
     pname = "mise-aarch64-linux";
-    version = "2026.10.10";
+    version = "2026.10.12";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-linux-arm64-musl.tar.gz";
-      sha256 = "sha256-Meur9o5qD5IwRG7tEx6daxl/OReATVg/0VQallMd734=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-arm64-musl.tar.gz";
+      sha256 = "sha256-iaQtd6xN6Ch185f3IgGPiNnTE5uqrAjOFiu6QkxDaqk=";
     };
   };
   mise-x86_64-linux = {
     pname = "mise-x86_64-linux";
-    version = "2026.10.10";
+    version = "2026.10.12";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.10/mise-v2026.10.10-linux-x64-musl.tar.gz";
-      sha256 = "sha256-/nwfORnDUIJcQJ44VHHbBG+YeyJ4pbPeIFewgNPZTeY=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-x64-musl.tar.gz";
+      sha256 = "sha256-bAeINyOvqh2kE6Oaf3ZPHU0qQwV/FFdiW2sRW2CO0Ec=";
     };
   };
   rdkafka = {

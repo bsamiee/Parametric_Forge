@@ -51,12 +51,6 @@
             "scope": ["modules/**", "overlays/**", "flake-modules/**", ".claude/**"]
         },
         {
-            "id": "provision-contract",
-            "rule": "provision emits schema-v3 JSON envelopes only; agent-facing JSON never carries socket paths, host absolute paths, or token material; every envelope change lands with its README contract row; jq programs live in jq/ files, never inlined in Bash.",
-            "severity": "high",
-            "scope": ["overlays/provision/**"]
-        },
-        {
             "id": "services-effect-rails",
             "rule": "services/ TypeScript law: Effect rails, tagged faults, Config.redacted, Schema boundary decodes, typed Pulumi rows, secrets never in unredacted state outputs. Dependency movement is forward-only: a downgrade or stale pin without a recorded reason is a defect.",
             "severity": "high",

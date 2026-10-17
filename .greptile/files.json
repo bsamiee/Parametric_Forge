@@ -2,7 +2,7 @@
     "files": [
         {
             "path": "CLAUDE.md",
-            "description": "Execution standards: model dispatch, nix requirements, code density bar, shell and provisioning law, commit grammar"
+            "description": "Execution standards: model dispatch, nix requirements, code density bar, shell and python law, commit grammar"
         },
         {
             "path": "AGENTS.md",
@@ -11,11 +11,6 @@
         {
             "path": "README.md",
             "description": "Repo structure register: module split, overlays, services, hosts"
-        },
-        {
-            "path": "overlays/provision/README.md",
-            "description": "Schema-v3 JSON envelope contract for provisioning commands",
-            "scope": ["overlays/**"]
         }
     ]
 }

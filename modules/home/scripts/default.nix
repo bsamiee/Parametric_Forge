@@ -8,14 +8,9 @@
 {
   host,
   lib,
-  pkgs,
   ...
 }: {
   imports =
     [./gha.nix ./loc.nix]
     ++ lib.optionals (host.os == "darwin") [./terminal.nix];
-
-  home.packages = [
-    pkgs.provision
-  ];
 }

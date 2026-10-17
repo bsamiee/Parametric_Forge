@@ -15,7 +15,7 @@
   style = import ../../../style.nix;
   sqlDialects = ["postgres" "duckdb" "sqlite"];
 
-  # PostgreSQL 18 client roster; server extensions stay Docker-owned by provision.
+  # PostgreSQL 18 client roster.
   postgres18ClientTools = pkgs.runCommand "postgres18-client-tools" {nativeBuildInputs = [pkgs.makeWrapper];} ''
     mkdir -p "$out/bin"
     for bin in psql pg_dump pg_dumpall pg_restore pg_isready pgbench pg_amcheck createdb dropdb createuser dropuser vacuumdb reindexdb clusterdb; do

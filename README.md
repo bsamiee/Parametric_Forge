@@ -1,6 +1,6 @@
 # Parametric Forge
 
-Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, SSH estate, provisioning, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
+Parametric Forge is the machine estate: one flake owns the macOS workstation and the NixOS VPS — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, SSH estate, and cache policy. Consumer repos assume this estate on `PATH` and never import it; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
 
 ## [01]-[LAYOUT]
 
@@ -45,7 +45,6 @@ Parametric_Forge/
 │       │   └── zsh/
 │       └── scripts/               # Integration and analysis kernels
 ├── overlays/                      # Manifest-folded package admissions
-│   └── provision/                 # Local provisioning CLI
 ├── services/                      # Doppler and GitHub IaC rows
 ├── .claude/                       # Harness agents, commands, skills, scripts
 ├── .greptile/                     # Per-repo reviewer configuration
@@ -110,10 +109,8 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 ## [10]-[TOOLCHAINS]
 
 - [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster and `pkg-config`; `toolchain-env.nix` exports the store-referenced search keys a source build reads (pkg-config, CMake, compiler, OpenMP, GDAL, GEOS, PROJ, CRC32C) and the `runtime-dylibs` tree ctypes consumers dlopen by name.
-- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL 18 client tools are Home Manager-owned, PostgreSQL server extensions stay Docker-owned by `provision`.
+- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL 18 client tools are Home Manager-owned.
 - [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. Every SDK installs into one shared root (mise `dotnet.dotnet_root`, the root `/etc/dotnet/install_location_arm64` names), so a process that captured `DOTNET_ROOT` or the root's PATH segment reaches each SDK a later `global.json` names. That `dotnet` reaches PATH through the mise shim segment `toolchain-env.nix` puts first on the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
-- [PROVISIONING]: `provision` (overlay-owned, Home Manager-installed) is the local service provisioner — schema-v3 sanitized JSON, deterministic ports, preserved volumes, noninteractive by contract; `provision --help` is the live verb list. Direct calls are Forge-level debugging.
-
 ## [11]-[TERMINAL_MESH_AND_THEME]
 
 `modules/home/theme.nix` owns the estate palette and serializes it into every visual consumer. `modules/home/programs/apps/chords.nix` owns the chord vocabulary and projects each row into Karabiner, Zellij, and hint content. `modules/home/scripts/terminal.nix` binds the mesh: WezTerm attaches Zellij, Yazi opens as a floating popup, and edits route into the tab's Neovim RPC socket.
@@ -165,7 +162,6 @@ Day-2 rebuilds: `redeploy --switch`. `nixos-anywhere` with disko bootstraps each
 ## [15]-[MAINTENANCE]
 
 - Format: `nix fmt -- --ci` — full proof: `nix flake check`.
-- Provisioner: `nix build .#provision`; smoke with `nix run .#provision -- self-test`.
 - Inputs, in order, each proven before the next: clean working tree, `nix flake update` proven by `redeploy --build`, `nix develop -c nvfetcher -o overlays/_sources`, `redeploy --switch`, the Homebrew pass, then the store trim; closure diffs review through `nvd`/`nix-diff` before switching.
 
 Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly blender@daily && brew cleanup`.

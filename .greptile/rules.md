@@ -7,7 +7,7 @@ Machine-owner repo: nix-darwin + Home Manager flake for one macOS Apple Silicon 
 - Fewer, deeper polymorphic surfaces beat many loose files. Optimization means collapsing types/options/functions into denser dispatch surfaces in the same file — never extraction, never capability loss. LOC is measured in lines, never bytes.
 - Parameterize ingress and egress. Hardcoded strings, repo paths, usernames, ports, or geometry numbers are defects; values are rows, parameters, or model-derived.
 - One owner per axis: each vocabulary axis (color, keybind, tool admission, generated config) has one declaring owner module; a value placed outside its owner or duplicated into a consumer is a defect, whatever the owner's current file name.
-- Service estate is IaC: external service state lives as typed Pulumi rows under services/; container provisioning rides the schema-v3 JSON envelope contract under overlays/provision.
+- Service estate is IaC: external service state lives as typed Pulumi rows under services/.
 - Deploy rail: redeploy owns switch lifecycle and exact-closure activation; its deploy arm is proven — treat edits there as high-risk.
 - Formatters and gates own mechanics (the fmt router, alejandra/deadnix/statix, shellcheck, ruff, biome, stylua), so findings target suppressions and bypasses. Shellcheck directives, `noqa`, and `biome-ignore` demand ownership justification; suppression-as-fix is the defect.
 - Fix-to-root completeness: a change that patches a symptom while its root cause stands, leaves a known defect unfixed because it sits outside the diff's scope, or defers a residual for a later pass is a defect — the root fix belongs in the same change, and a genuinely blocked item is an explicit unreachable naming its owner, never a silent residual.
@@ -21,7 +21,7 @@ Anticipate 10x functionality growth: surfaces absorb new modalities as rows, cas
 
 ## [03]-[REVIEW_PRIORITIES]
 
-1. Regression against a landed law (vocabulary ownership, schema-v3 envelopes, pnpm-only node, no-LFS) outranks style.
+1. Regression against a landed law (vocabulary ownership, pnpm-only node, no-LFS) outranks style.
 2. New public surface (option, command, flag, file) demands justification against extending an existing owner.
 3. Secret-adjacent code: values must never reach agent-facing JSON, logs, or Pulumi outputs unredacted; parsing never touches secret bytes with eval/source.
 

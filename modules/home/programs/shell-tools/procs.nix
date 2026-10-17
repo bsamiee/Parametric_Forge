@@ -13,8 +13,7 @@
     style = "White|BrightBlack";
   };
 
-  # Rows differ from procs' defaults: a column's style is ByUnit, both searches false, and align Left unless a row says otherwise. The docker
-  # socket is procs' own default, the DOCKER_HOST of the calling environment.
+  # Rows differ from procs' defaults: a column's style is ByUnit, both searches false, and align Left unless a row says otherwise.
   procsConfig = {
     # --- [COLUMN_CONFIGURATION]
     columns = [

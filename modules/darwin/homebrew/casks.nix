@@ -42,7 +42,6 @@ _: {
     "onedrive"
 
     # --- [DEVELOPMENT]
-    "docker-desktop" # VI-Suite FloVi probes /Applications/Docker.app; Colima stays the DOCKER_HOST owner and the Nix profile precedes its /usr/local/bin links
     "visual-studio-code"
     # Typeface Beta is installed and updated through its native vendor channel.
     "sf-symbols" # Apple's symbol library

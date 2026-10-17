@@ -5,13 +5,47 @@
 # Path          : modules/home/programs/apps/zellij/config.nix
 # ----------------------------------------------------------------------------
 # Nix-generated Zellij configuration: leader, entry, and normal-mode chord rows project from the chord owner (chords.nix); mode-interior binds and
-# their hint ribbons render from ONE per-mode row table, so a bind and its ribbon hint cannot drift apart.
+# their hint ribbons render from ONE per-mode row table, so a bind and its ribbon hint cannot drift apart. The resurrect hook and the bare-claude
+# session identity it reads are one pair here.
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   inherit (config.estate.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles
+
+  # --- [RESURRECT_COMMAND]
+  # zellij runs the discovery hook under `sh -c` once a minute per pane with a foreground command, handing it that command line alone
+  # (RESURRECT_COMMAND), and serializes what it prints; empty output rebuilds the pane as a plain shell in its directory. A Claude Code pane
+  # rebuilds as the conversation its process holds now: Claude Code keeps one record per live process (sessions/<pid>.json) whose
+  # sessionId follows /clear and /resume, and the one interactive process running this exact command line names it. A session writes its
+  # transcript at its first entry and --resume refuses an id without one, so a session still empty reopens under --session-id. Bare `claude`
+  # gains a --session-id at launch (initContent below), so no two panes share a command line; a line no single process holds rebuilds as a
+  # shell, since `--continue` would land every pane of one directory in the same transcript.
+  claudeHome = "${config.home.homeDirectory}/.claude";
+  resurrectCommand = pkgs.writeShellApplication {
+    name = "zellij-resurrect-command";
+    runtimeInputs = [pkgs.jq];
+    text = ''
+      read -ra argv <<<"$RESURRECT_COMMAND"
+      [[ ''${argv[0]##*/} == claude ]] || exit 0
+      shopt -s nullglob
+      held=()
+      for record in ${claudeHome}/sessions/*.json; do
+        entry=$(jq -er 'select(.kind == "interactive") | "\(.pid) \(.sessionId)"' "$record") || continue
+        args=$(/bin/ps -o args= -p "''${entry%% *}") || continue
+        if [[ $args == "$RESURRECT_COMMAND" ]]; then held+=("''${entry#* }"); fi
+      done
+      ((''${#held[@]} == 1)) || exit 0
+      transcripts=(${claudeHome}/projects/*/"''${held[0]}".jsonl)
+      if ((''${#transcripts[@]})); then
+        printf 'claude --resume %s\n' "''${held[0]}"
+      else
+        printf 'claude --session-id %s\n' "''${held[0]}"
+      fi
+    '';
+  };
   chords = config.estate.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
@@ -359,6 +393,15 @@
 in {
   imports = [../chords.nix];
 
+  # --- [CLAUDE_SESSION_IDENTITY]
+  # A bare launch names its own session id (Claude Code's documented --session-id), the identity the resurrect hook reads off the command line.
+  programs.zsh.initContent = ''
+    claude() {
+      (($#)) || set -- --session-id ''${(L)$(/usr/bin/uuidgen)}
+      command claude "$@"
+    }
+  '';
+
   xdg.configFile."zellij/config.kdl".text = ''
         // Title         : config.kdl
         // Author        : Bardia Samiee
@@ -375,11 +418,10 @@ in {
         default_shell               "${lib.getExe config.programs.zsh.package}"
         // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
         // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted) rebuilds the session from its
-        // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: it
-        // runs under `sh -c` once a minute per pane with a foreground command, keeps `claude` (a bare invocation gains `--continue`, so the
-        // pane resumes its directory's last conversation), and prints nothing for anything else, which rebuilds that pane as a plain shell
-        // in its directory. The stale WEZTERM_* variables a surviving server hands its panes are cleared in zsh init, not here.
-        post_command_discovery_hook r#"set -- $RESURRECT_COMMAND; case "''${1##*/}:$*" in claude:*' -c'*|claude:*' --continue'*|claude:*' -r'*|claude:*' --resume'*) echo "$*" ;; claude:*) echo "$* --continue" ;; esac"#
+        // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: a
+        // Claude Code pane resumes its own conversation, every other pane rebuilds as a plain shell in its directory. The stale WEZTERM_*
+        // variables a surviving server hands its panes are cleared in zsh init, not here.
+        post_command_discovery_hook "${lib.getExe resurrectCommand}"
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true

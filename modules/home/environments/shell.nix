@@ -22,7 +22,7 @@
     xdgStateHome = config.xdg.stateHome;
   };
   # A fresh GUI domain carries no locale, XDG roots, or toolchain PATH, and `launchctl setenv` state dies with the login session, so the rows
-  # replay at every login. The colima and docker-cli modules derive the Docker rows, the HM xdg module the XDG rows.
+  # replay at every login. The HM xdg module derives the XDG rows.
   guiEnvRows =
     toolchainEnv.scientificSessionEnv
     // toolchainEnv.launchdEnv
@@ -31,7 +31,7 @@
       # The 1Password agent for every process the domain launches afterwards (1Password's SSH client compatibility form), in place of the
       # identity-less agent launchd hands out.
       SSH_AUTH_SOCK = config.estate.ssh.identityAgent;
-      inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME DOCKER_HOST COLIMA_HOME DOCKER_CONFIG;
+      inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };
   guiEnv = pkgs.writeShellApplication {
     name = "gui-env";

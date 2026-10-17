@@ -4,80 +4,14 @@
 # License       : MIT
 # Path          : modules/home/environments/containers.nix
 # ----------------------------------------------------------------------------
-# Container runtime and OCI environment. services.colima + programs.docker-cli own DOCKER_HOST/COLIMA_HOME/DOCKER_CONFIG on Darwin; Linux talks
-# to the system Docker socket unpointed with docker-cli owning config.json only.
+# Registry and Kubernetes client environment: the containers/*.conf files and session paths the runtime-less OCI and cluster tools read.
 {
   config,
-  launchdAgent,
-  lib,
   pkgs,
   ...
 }: let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   toml = pkgs.formats.toml {};
-  # Apple Container startup config. `container system start` snapshots this into its app root and re-saves it, so the file must be a real
-  # writable file — a store symlink fails the save and aborts the start. Rows differ from the CLI's defaults.
-  containerConfigToml = toml.generate "container-config.toml" {
-    build = {
-      cpus = 4;
-      memory = "8192mb";
-    };
-    container.memory = "4g";
-  };
 in {
-  # Declarative Colima: store-owned profile, launchd lifecycle (RunAtLoad + restart-on-clean-exit), session env. colimaHomeDir stays on dataHome —
-  # the module default (configHome) would orphan the live VM. Intentional shutdown is `launchctl bootout` of the colima-default agent; a bare
-  # `colima stop` re-triggers start. The VM+engine teardown needs minutes; launchd's default 20s ExitTimeOut SIGKILLs the stop mid-flight and
-  # orphans the VM, so the window is widened to cover a full 8-container drain.
-  launchd.agents.colima-default.config.ExitTimeOut = 300;
-
-  # Apple Container autostart: `system start` registers the apiserver and helpers under the com.apple.container. launchd prefix and returns —
-  # no keep-alive. Colima stays the DOCKER_HOST owner; this runtime is additive. The binary is the Homebrew `container` row of the same profile.
-  estate.bundleApps = lib.mkIf isDarwin {container-system = "Apple Container System";};
-  launchd.agents.container-system = lib.mkIf isDarwin (launchdAgent {
-    name = "container-system";
-    argv = ["/opt/homebrew/bin/container" "system" "start" "--enable-kernel-install"];
-    RunAtLoad = true;
-  });
-
-  services.colima = {
-    enable = isDarwin;
-    colimaHomeDir = "${config.xdg.dataHome}/colima";
-    profiles.default = {
-      isActive = true; # docker context "colima" stays current
-      isService = true; # launchd agent colima-default
-      setDockerHost = true; # DOCKER_HOST=unix://$COLIMA_HOME/default/docker.sock
-      settings = {
-        cpu = 6;
-        memory = 12;
-        disk = 60; # grow-only resize; applied at next VM restart
-        # A profile file replaces the CLI flag defaults: colima copies its arch and runtime verbatim and reads an absent runtime as an empty
-        # config. vmType (vz) and mountType (virtiofs) are the keys it fills itself.
-        arch = "aarch64";
-        runtime = "docker";
-        rosetta = true;
-        mountInotify = true;
-        # The launchd-spawned start skips colima's implicit default mounts, leaving the guest without the home tree bind mounts resolve in.
-        mounts = [
-          {
-            location = "~";
-            writable = true;
-          }
-          {
-            location = "/tmp/colima";
-            writable = true;
-          }
-        ];
-      };
-    };
-  };
-
-  # Owns DOCKER_CONFIG and config.json on both platforms under the module's XDG default ($XDG_CONFIG_HOME/docker at stateVersion 26.05). NO
-  # credsStore: docker-credential-osxkeychain is the Docker Desktop cask's /usr/local/bin link, unused; Colima + public images need no auths row.
-  # currentContext is injected by the colima module when the profile is active; docker context meta stays Colima-owned — a store-owned meta.json
-  # breaks context creation.
-  programs.docker-cli.enable = true;
-
   home.sessionVariables = {
     # --- [CONTAINERS_IMAGE_AND_OCI_TOOLING]
     CONTAINERS_REGISTRIES_CONF = "${config.xdg.configHome}/containers/registries.conf";
@@ -91,19 +25,6 @@ in {
     # --- [KUBECOLOR]
     KUBECOLOR_FORCE_COLORS = "auto";
   };
-
-  # Forge owns the Apple Container config content; the file lands writable. A drifted app-root snapshot is cleared so the next
-  # start re-copies it; kernel/vminit/network/dns stay upstream-owned.
-  home.activation.appleContainerConfig = lib.mkIf isDarwin (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run mkdir -p "${config.xdg.configHome}/container"
-    run rm -f "${config.xdg.configHome}/container/config.toml"
-    run cp ${containerConfigToml} "${config.xdg.configHome}/container/config.toml"
-    run chmod 0644 "${config.xdg.configHome}/container/config.toml"
-    appRootConfig="$HOME/Library/Application Support/com.apple.container/config/config.toml"
-    if [[ -e "$appRootConfig" || -L "$appRootConfig" ]] && ! cmp -s ${containerConfigToml} "$appRootConfig"; then
-      run rm -f "$appRootConfig"
-    fi
-  '');
 
   xdg.configFile = {
     "containers/registries.conf".source = toml.generate "registries.conf" {unqualified-search-registries = ["docker.io"];};

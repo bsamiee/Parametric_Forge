@@ -212,13 +212,6 @@
       argv = ["nh" "darwin" "switch" "--dry" flakeRoot];
       mode = "pane";
     }
-    {
-      id = "provision-doctor";
-      label = "provision doctor";
-      argv = ["provision" "doctor" "--json"];
-      mode = "scratch";
-      ft = "json";
-    }
   ];
 
   toolFacts = {

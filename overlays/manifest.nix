@@ -35,11 +35,6 @@ let
     aarch64-linux = "biome-aarch64-linux";
     x86_64-linux = "biome-x86_64-linux";
   };
-  duckdbPins = pinFamily {
-    aarch64-darwin = "duckdb-aarch64-darwin";
-    aarch64-linux = "duckdb-aarch64-linux";
-    x86_64-linux = "duckdb-x86_64-linux";
-  };
   misePins = pinFamily {
     aarch64-darwin = "mise-aarch64-darwin";
     aarch64-linux = "mise-aarch64-linux";
@@ -289,27 +284,6 @@ in rec {
       mainProgram = "biome";
     };
 
-    duckdb = {
-      upstream = "github:duckdb/duckdb";
-      inherit (duckdbPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection = {
-        overlay = "override";
-        package = true;
-        app = true;
-      };
-      overlayReason = "the top-level attr becomes the upstream binary CLI for every consumer; pythonPackagesExtensions pins python duckdb (Harlequin engine) back to the nixpkgs source-built lineage the header-less binary cannot satisfy";
-      consumers = ["provision"];
-      description = "DuckDB command line client";
-      homepage = "https://duckdb.org/";
-      mainProgram = "duckdb";
-    };
-
     mise = {
       upstream = "github:jdx/mise";
       inherit (misePins) version assets;
@@ -471,28 +445,6 @@ in rec {
       mainProgram = "energyplus";
     };
 
-    provision = {
-      upstream = "repo:overlays/provision";
-      versionPolicy = "repo-owned";
-      sourceKind = "repo";
-      sourceInputs = ["overlays/provision"]; # fileset whose change re-keys the derivation
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "manual";
-      projection = {
-        overlay = "new";
-        package = true;
-        app = true;
-        default = true;
-      };
-      kernel = true;
-      consumers = ["scripts" "nvim"];
-      description = "Local PostgreSQL provisioning rail for the estate";
-      homepage = "https://github.com/bardiasamiee/Parametric_Forge";
-      mainProgram = "provision";
-    };
-
     sqlite-extended = {
       upstream = "repo:overlays";
       versionPolicy = "repo-owned";
@@ -515,7 +467,7 @@ in rec {
           fileio = ["fileio"];
         };
       };
-      consumers = ["db-tools" "provision"];
+      consumers = ["db-tools"];
       description = "SQLite shell kernel preloading the SQLean module profiles";
       homepage = "https://github.com/bardiasamiee/Parametric_Forge";
       mainProgram = "sqlite-extended";

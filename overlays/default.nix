@@ -6,8 +6,7 @@
 # ----------------------------------------------------------------------------
 # Row-folded package projection over overlays/manifest.nix: one binary-release template consumes asset rows; opt-runtime rows (energyplus,
 # openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-extended shell kernel generates from its row's profile data;
-# patch rows override upstream packages with row-owned facts; provision is the one hand-authored kernel directory. Vocabulary validation runs
-# here and is forced by the package-manifest build.
+# patch rows override upstream packages with row-owned facts. Vocabulary validation runs here and is forced by the package-manifest build.
 final: prev: let
   manifest = import ./manifest.nix;
   generatedSources = import ./_sources/generated.nix {
@@ -287,15 +286,6 @@ final: prev: let
         runHook postInstall
       '';
     };
-    duckdb = _: {
-      nativeBuildInputs = [prev.unzip];
-      sourceRoot = ".";
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 duckdb "$out/bin/duckdb"
-        runHook postInstall
-      '';
-    };
     # Release tarball: the binary and its man page. Completions generate from the installed binary (they resolve usage-cli on PATH at
     # completion time, as the generated scripts do everywhere); the nixpkgs self-update marker keeps `mise self-update` a typed refusal
     # on a store-owned binary, so the update path stays the pin.
@@ -443,15 +433,6 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
-    # The binary duckdb overlay carries a release tree, not the crate/source layout the python distribution patches and builds from, so the python
-    # package pins back to its nixpkgs source-built lineage: duckdb is harlequin's engine.
-    pythonPackagesExtensions =
-      (prev.pythonPackagesExtensions or [])
-      ++ [
-        (_pyFinal: pyPrev: {
-          duckdb = pyPrev.duckdb.override {inherit (prev) duckdb;};
-        })
-      ];
     package-manifest = prev.writeTextFile {
       name = "package-manifest";
       destination = "/share/estate/manifest.json";
@@ -493,7 +474,6 @@ in
           manifest.admissions;
       };
     };
-    provision = final.callPackage ./provision {};
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-extended = let
       row = rowOf "sqlite-extended";

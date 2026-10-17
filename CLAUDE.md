@@ -25,13 +25,13 @@ Rankings, higher is better. Cost reflects actual operator spend, not list price.
 
 The Nix estate is machine configuration, not application code: every Nix line configures the system/user environment, deploys files/packages, or activates services — a line doing none of these does not belong here. One module graph serves every host; the OS branch keys on the static host context (`hosts/context.nix`), never on `pkgs`. `services/` owns live service state as Pulumi rows, and `overlays/` admits an upstream package only with a real consumer now.
 
-- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas no repo surface records, and dispatched agents reach them only through this route.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, or propagation work — memories carry machine laws and estate gotchas no repo surface records, and dispatched agents reach them only through this route.
 - System scope (`modules/darwin/`, `modules/nixos/`) and home scope (`modules/home/`) never mix in one module; nothing Darwin-owned — Homebrew, launchd, macOS defaults — generalizes into `modules/nixos/`.
 - Latest nixpkgs-unstable always; a pin exists only with a named incompatibility and dies when compatibility lands.
 - `redeploy` is the only activation path, and switches happen freely — deploy early to catch runtime-only bugs, never batch changes behind ceremony. It gates on `nix flake check` (formatting, lint, both hosts' evals) and the per-host toplevel build; a failing check is a real blocker resolved at the source, never bypassed.
 - Recurring work is a declared launchd agent under the `dev.bsamiee.<name>` grammar, beside the surface it serves; ad-hoc background processes and manual `launchctl` state are defects.
 - Probe the machine before attributing a failure to the estate: `which -a <bin>` catches a shadowed binary, `launchctl list | grep dev.bsamiee` an unloaded agent, `readlink /run/current-system` generation-versus-`$HOME` drift — each of those reads as a code bug from inside a session.
-- Storage questions ride `dust -d 1 -n 20 -r ~` and each tool's own prune verb — `uv cache prune`, `pnpm store prune`, `docker system prune`, `mise prune --configs`; store maintenance runs `sudo -H nix-env -p /nix/var/nix/profiles/system --delete-generations old`, `nix-collect-garbage -d`, and `nix store optimise`, and Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly blender@daily && brew cleanup`.
+- Storage questions ride `dust -d 1 -n 20 -r ~` and each tool's own prune verb — `uv cache prune`, `pnpm store prune`, `mise prune --configs`; store maintenance runs `sudo -H nix-env -p /nix/var/nix/profiles/system --delete-generations old`, `nix-collect-garbage -d`, and `nix store optimise`, and Homebrew currency runs `brew update && brew upgrade && brew upgrade --greedy-latest wezterm@nightly blender@daily && brew cleanup`.
 - [NEVER]: kill live terminal sessions — no `zellij kill-session`/`kill-all-sessions`, no WezTerm restarts. Fix in repo, redeploy; the operator restarts on their own schedule.
 - `.claude/scripts/` is Forge-mastered and copies to the sibling repos, `~/.claude/`, and `~/.codex/`; every other `.claude/` surface carries no master and byte-copies bidirectionally on change, skills byte-copying to `~/.codex/skills/`. Claude-caller skills such as `codex` stay outside `~/.codex/skills/` to prevent recursive triggering; never build sync tooling.
 
@@ -94,16 +94,7 @@ Durable Markdown passes the docgen skill's `prose_gate.py`: bare invocation chec
 - 3.15 only, never older; `uv` for package management; `ruff` for all linting/formatting.
 - Type checking: `ty` with `mypy` as the strict secondary gate, both from the project's `uv.lock`; no machine copy exists outside a project.
 
-## [05]-[LOCAL_PROVISIONING]
-
-- `provision` is the canonical Forge-owned local provisioning and debugging command: the overlay package owns the implementation, and Home Manager only installs that derivation. Use the packaged executable or `nix run .#provision -- <command>`, never the raw overlay script. Direct `provision`, `psql`, `paths`, `prune`, `self-test`, Docker/Compose, and diagnostic JSON are Forge-level debugging surfaces.
-- Clean renames over compatibility shims: retired provisioning command names never survive as aliases, wrappers, fallbacks, or silent environment-variable compatibility.
-- Provisioning stays agent-first and noninteractive: no host `sudo`, no keychain prompt, no DB password prompt, no Docker credential-helper dependency for public images.
-- Read-only provisioning commands avoid durable repo writes unless the command explicitly documents state creation.
-- Home Manager DB tooling is client/tooling-owned: `psql`, `pg_dump`, `pg_restore`, `pg_isready`, optional `pg_config`, SQLFluff/Postgres LSP, DuckDB, SQLite/SQLean, SpatiaLite, and sqlite-vec. PostgreSQL server extensions stay Docker-owned by `provision` — shared-preload rows may include pg_cron, with `pg_cron` extension creation row-gated and opt-in.
-- Forge provisioning JSON is schema v3 only — no earlier-schema emitters or compatibility adapters. Doctor and extension JSON expose sanitized runtime booleans/kinds and catalog metadata only; raw sockets, Docker config paths, helper names, logs, DSNs, token material, mount paths, and host absolute paths stay out of agent-facing JSON.
-
-## [06]-[COMMIT_STANDARDS]
+## [05]-[COMMIT_STANDARDS]
 
 ```text
 scope: action

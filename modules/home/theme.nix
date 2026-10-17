@@ -155,12 +155,11 @@
       zsh = "󰆍";
       python = "󰌠";
       node = "󰎙";
-      docker = "󰡨";
       ssh = "󰣀";
       git = "󰊢";
       nix = "󱄅";
       claude = "󰙴";
-      container = builtins.fromJSON ''"\uf4b7"''; # oct-container: in-container rootfs, distinct from the docker-CLI whale
+      container = builtins.fromJSON ''"\uf4b7"''; # oct-container: in-container rootfs
     };
     # Status alphabet: the CLOSED glyph vocabulary for terminal-bound render surfaces — single-codepoint codicons (Symbols Nerd Font Mono,
     # 1-cell advance proven at font install), each with the ASCII twin persisted surfaces use instead. Rows live on the symbols family

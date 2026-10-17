@@ -143,21 +143,6 @@ src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
 src.regex = "op_linux_amd64_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.zip"
 fetch.tarball = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_linux_amd64_v$ver.zip"
 
-[duckdb-aarch64-darwin]
-src.github = "duckdb/duckdb"
-src.prefix = "v"
-fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-osx-universal.zip"
-
-[duckdb-aarch64-linux]
-src.github = "duckdb/duckdb"
-src.prefix = "v"
-fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-arm64.zip"
-
-[duckdb-x86_64-linux]
-src.github = "duckdb/duckdb"
-src.prefix = "v"
-fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb_cli-linux-amd64.zip"
-
 # vl-convert: Vega and Vega-Lite to SVG/PNG/JPEG/PDF with V8 linked into one executable; nixpkgs carries only the python binding, never the CLI.
 # `src.github` tracks the latest non-prerelease, so the 2.0.0-rc line stays out until it ships stable. The assets are zips, pinned unpacked.
 [vl-convert-aarch64-darwin]

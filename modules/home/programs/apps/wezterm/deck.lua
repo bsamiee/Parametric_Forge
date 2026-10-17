@@ -23,13 +23,16 @@ M.palette = {} -- populated in apply(); events.lua replays it per palette open
 
 -- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
 -- so windows in different workspaces never mirror one shared session. The client starts through a login shell: the server it forks keeps
--- that session environment for every pane and every command a rebuilt session execs without a shell. A rebuilt session (the server died
--- with the machine) runs its recorded commands at once instead of parking each behind a Press-ENTER banner; the zellij discovery hook
--- decides what gets recorded. A gated client waits for one line: zellij sends its startup size before installing its SIGWINCH handler, so
--- a resize inside that gap strands the session at the startup size.
+-- that session environment for every pane and every command a rebuilt session execs without a shell. The login shell's mise refresh ran in
+-- the launch directory and dropped the shim segment, so the body resets PATH to the server vector and clears that refresh's state: a
+-- command a rebuilt session execs then resolves its project's tools through the shims from its own directory, and a pane shell activates
+-- from a clean slate. A rebuilt session (the server died with the machine) runs its recorded commands at once instead of parking each
+-- behind a Press-ENTER banner; the zellij discovery hook decides what gets recorded. A gated client waits for one line: zellij sends its
+-- startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup size.
 function M.session_args(name, gated)
-    local body = gated and 'read -r _; exec "$@"' or 'exec "$@"'
-    return { rows.paths.zsh, "-lc", body, "zsh", rows.paths.zellij, "attach", "--create", "--force-run-commands", name }
+    local launch = 'unset __MISE_DIFF __MISE_SESSION; PATH=$1; shift; exec "$@"'
+    local body = gated and "read -r _; " .. launch or launch
+    return { rows.paths.zsh, "-lc", body, "zsh", rows.server_path, rows.paths.zellij, "attach", "--create", "--force-run-commands", name }
 end
 
 function M.workspace_row(name)

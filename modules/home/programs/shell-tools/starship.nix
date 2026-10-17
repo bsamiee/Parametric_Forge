@@ -213,8 +213,6 @@ in {
         format = "[$symbol]($style)[($version)](subtle) ";
       };
 
-      # docker_context is deliberately absent: the estate exports DOCKER_HOST=unix://... (colima) into every session,
-      # and starship hard-hides the module for unix-socket contexts — the row could never render on either host.
       # Context-gated: visible only where kube work is provable in the directory (manifests, chart/kustomize roots);
       # prod contexts go danger. No detect_env_vars row — scan config present makes it dead (Option::or short-circuits),
       # and the estate exports KUBECONFIG globally, so an env gate would carry zero directory signal anyway.

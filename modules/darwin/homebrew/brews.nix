@@ -13,8 +13,5 @@ _: {
 
     # --- [REVIEWERS]
     "greptileai/tap/greptile" # Official Greptile CLI; the qualified name scopes the module's default trust to this formula, not the tap
-
-    # --- [CONTAINER_RUNTIMES]
-    "container" # Apple Container; requires macOS 26 (arm64); coexistence runtime, never DOCKER_HOST owner
   ];
 }

@@ -2,15 +2,10 @@
 
 ## [01]-[PROJECT_OWNER]
 
-- `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, provisioning contract, commit standards. This file carries only agent-runtime deltas.
+- `CLAUDE.md` is the project execution standard — model dispatch, estate law, Nix code law, language routing, commit standards. This file carries only agent-runtime deltas.
 - This repository is the machine/user toolchain owner for every estate host: shell, PATH, tool, wrapper, launcher, and credential behavior is fixed here, never patched in a sibling project.
-- Apple Container is a coexistence runtime, never a Docker/Compose replacement or `DOCKER_HOST` owner. Install ownership: `modules/darwin/homebrew/brews.nix`; runtime/env ownership: `modules/home/environments/containers.nix`; diagnostics: `provision doctor`.
-- Runtime routing — Colima runs Docker Engine API, `DOCKER_HOST`, Compose, Pulumi Docker providers, Docker SDKs, Testcontainers, `docker cp`/`docker exec`, and Buildx-into-daemon.
-- Runtime routing — registry/image movement without a runtime uses `skopeo`/`crane`/`oras`/`regctl`.
-- Runtime routing — Apple Container runs single isolated OCI run/build, `container machine`, and per-container-VM benchmarking.
-- Runtime routing — Kubernetes stays on the kubectl/kind/helm chain; Apple Container is not a Kubernetes owner.
 - `~/.codex` is the sole Codex configuration home; no file in this repository is Codex configuration source of truth. Repo `.claude/` state serves the Claude harness, and this file carries policy, never configuration.
-- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, propagation, or provisioning work — memories carry machine laws and estate gotchas no repo surface records.
+- Open the memory index at `~/.claude/projects/-Users-bardiasamiee-Developer-Parametric-Forge/memory/MEMORY.md` before module, launchd, or propagation work — memories carry machine laws and estate gotchas no repo surface records.
 
 ## [02]-[ESTATE_PROPAGATION]
 
@@ -25,9 +20,9 @@
 - Python work uses the project or tool-owner interpreter (`uv run`, `.venv/bin/python`, or the repo-declared command), never ambient `python3`, unless the task is explicitly the machine Python.
 - Nix option and package truth is probed against the locked inputs and module source, never recalled; `CLAUDE.md` [03] carries the division of labor with `search-context7`.
 
-## [04]-[PROVISIONING_AND_LAUNCHERS]
+## [04]-[PROJECT_OWNED_RUNTIMES]
 
-- The `provision` mechanism — packaged executable, campaign entry, rename-over-shim policy, DB-tooling ownership, schema-v3 JSON contract — is owned by `CLAUDE.md`; provisioning stays noninteractive for agents by contract.
+- Container runtimes are project-owned: a repository that runs containers declares its Docker client and VM in its own `mise.toml`; Forge provisions no VM, engine, endpoint, or Docker client, and carries only the runtime-less registry tools (`skopeo`/`crane`/`oras`/`regctl`) and the Kubernetes clients.
 - MCP servers are project-owned: each repository registers its servers with their upstream commands in its own `.mcp.json` and `.codex/config.toml`; Forge provisions no MCP server, package, wrapper, launcher, or credential directory.
 
 ## [05]-[AGENT_RUNTIME]

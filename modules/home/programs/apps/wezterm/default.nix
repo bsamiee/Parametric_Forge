@@ -11,9 +11,18 @@
   config,
   lib,
   pkgs,
+  toolchainEnvFor,
   ...
 }: let
   inherit (config.estate.theme) roles projections;
+  toolchainEnv = toolchainEnvFor {
+    home = config.home.homeDirectory;
+    username = config.home.username;
+    xdgCacheHome = config.xdg.cacheHome;
+    xdgConfigHome = config.xdg.configHome;
+    xdgDataHome = config.xdg.dataHome;
+    xdgStateHome = config.xdg.stateHome;
+  };
   chordRows = config.estate.chords.wezterm.rows;
   sshHosts = config.estate.ssh.hosts;
   manifest = import ../../../../../overlays/manifest.nix;
@@ -276,6 +285,8 @@
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
     };
+    # The zellij server holds no mise hook, like a launchd agent, so it carries the launchd vector with the shim segment first (deck.lua).
+    server_path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
     host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;

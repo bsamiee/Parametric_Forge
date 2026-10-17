@@ -44,8 +44,8 @@
     ];
     # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, a GUI app, and a
     # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
-    # whose tool has no version there execs the next copy on PATH. A shell that applies `mise hook-env` (non-interactive zsh, every Claude Code
-    # command through CLAUDE_ENV_FILE) puts a project's install paths ahead of this segment; interactive zsh drops it when `mise activate` runs.
+    # whose tool has no version there execs the next copy on PATH. A shell that applies `mise hook-env` (zsh at startup, every Claude Code
+    # command through CLAUDE_ENV_FILE) drops this segment and puts a project's install paths first.
     shimPathEntries = ["${xdgDataHome}/mise/shims"];
     pathEntries = shimPathEntries ++ userPathEntries ++ fallbackPathEntries;
     # ctypes/dlopen consumers (weasyprint's gobject/pango/harfbuzz/fontconfig chain, python-magic's libmagic, pyvips's libvips/gobject/glib)
@@ -144,7 +144,7 @@
         # fontconfig consumers (fc-*, magick, vips text, gs, Pango) and Typst each resolve fonts through one of these two rows on every surface.
         FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
         TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
-        # Config files whose defaults are dotfiles in $HOME: kind, kubectl, and helm read KUBECONFIG, gitleaks its machine policy allowlists.
+        # Config files whose defaults are dotfiles in $HOME: kubectl and helm read KUBECONFIG, gitleaks its machine policy allowlists.
         KUBECONFIG = "${xdgConfigHome}/kube/config";
         GITLEAKS_CONFIG = "${xdgConfigHome}/gitleaks/gitleaks.toml";
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
