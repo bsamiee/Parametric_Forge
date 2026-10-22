@@ -20,7 +20,7 @@ in {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      nixpkgs.expr = "import ${flake}.inputs.nixpkgs { }";
+      nixpkgs.expr = "${flake}.legacyPackages.${host.system}";
       formatting.command = ["alejandra"];
       options = {
         nix-darwin.expr = hostOptions;

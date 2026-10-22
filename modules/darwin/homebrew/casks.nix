@@ -4,17 +4,16 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications, and the faces with no nixpkgs source that font casks install: the Apple-proprietary families, whose pkg
-# installers land in /Library/Fonts, and the Google OFL Arabic-script families, which land in ~/Library/Fonts. The design apps need both
-# permanently active (the design-tools store is Typeface-activated on demand, so a store copy never reaches an app font menu on its own).
+# Homebrew GUI applications, and the font casks Homebrew serves newer than nixpkgs: the Apple-proprietary families, whose pkg installers land in
+# /Library/Fonts, and the Google OFL Arabic-script families, whose casks track google/fonts main into ~/Library/Fonts while nixpkgs google-fonts
+# trails it. The design apps need both permanently active (the design-tools store is Typeface-activated on demand).
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]
     "1password"
     "cleanshot"
-    # Nightly conflicts with the stable cask; a :latest cask never reads outdated, and the cask carries no quit stanza, so a greedy row would
-    # swap the running terminal's bundle under it on every redeploy. The manual Homebrew pass (`brew upgrade --greedy-latest wezterm@nightly`)
-    # refreshes it on the operator's schedule.
+    # Nightly conflicts with the stable cask. A :latest row never reads outdated to activation, so a redeploy never swaps the running
+    # terminal; HOMEBREW_UPGRADE_GREEDY_CASKS (homebrew/default.nix) lets the manual Homebrew pass refresh it.
     "wezterm@nightly"
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
@@ -69,12 +68,9 @@ _: {
     "font-reem-kufi" # Arabic kufi display face, variable weight
     "font-qahiri" # Arabic kufic display face
 
-    # --- [ADOBE_CREATIVE_SUITE]
-    "bsamiee/forge/aescripts-zxp-installer" # CEP and UXP extension installer; the qualified name scopes the module's default trust to this cask
-
     # --- [3D_CREATION]
-    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch; a greedy :latest row would download the full image on every activation to compare its checksum, so the manual Homebrew pass moves it; the cask links its blender command wrapper into /opt/homebrew/bin
-    "epic-games" # Epic Games Launcher; Unreal Engine and Twinmotion install into /Users/Shared/Epic Games and update through it, and the launcher self-updates, so activation only realigns Homebrew's record
+    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch; the manual Homebrew pass refreshes it through HOMEBREW_UPGRADE_GREEDY_CASKS; the cask links its blender command wrapper into /opt/homebrew/bin
+    "epic-games" # Epic Games Launcher; Unreal Engine and Twinmotion install into /Users/Shared/Epic Games and update through the self-updating launcher
     "inkscape" # Bonsai's SVG to DXF/PDF sheet converter, read at its app bundle; the cask links its inkscape command wrapper into /opt/homebrew/bin
     "xquartz" # X11 server the VI-Suite LiVi preview (Radiance rvu) opens its window on
 

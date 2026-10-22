@@ -9,9 +9,10 @@
   description = "nix-darwin + Home Manager for the Mac";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # Hydra-gated channel tarball: locks rev and lastModified through its immutable Link URL and resolves without api.github.com.
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz";
 
-    # No nixpkgs follows: pinning against Forge nixpkgs causes FlakeHub cache misses.
+    # Supplies darwinModules.default alone, a configuration-only module; its own inputs are fetched only when its packages are forced.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
     flake-parts = {
@@ -40,27 +41,18 @@
     };
   };
 
-  outputs = inputs @ {
-    flake-parts,
-    nix-darwin,
-    home-manager,
-    ...
-  }:
+  outputs = inputs @ {flake-parts, ...}:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         inputs.treefmt-nix.flakeModule
+        inputs.nix-darwin.flakeModules.default
         ./flake-modules/nixpkgs.nix
+        ./flake-modules/hosts.nix
         ./flake-modules/packages.nix
         ./flake-modules/qa.nix
         ./flake-modules/tooling.nix
       ];
 
-      systems = ["aarch64-darwin"];
-
-      flake =
-        {
-          overlays.default = import ./overlays;
-        }
-        // import ./hosts {inherit inputs nix-darwin home-manager;};
+      flake.overlays.default = import ./overlays;
     };
 }

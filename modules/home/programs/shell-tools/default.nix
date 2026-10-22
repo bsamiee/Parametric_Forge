@@ -4,7 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/default.nix
 # ----------------------------------------------------------------------------
-# Shell tool inventory; imports carry real configuration only.
+# Shell tool inventory; imports carry real configuration only, and each imported file declares its own package. The table holds tools with
+# no configuration.
 {pkgs, ...}: {
   imports = [
     ./1password.nix
@@ -18,7 +19,6 @@
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
-    ./redeploy.nix
     ./fzf.nix
     ./jnv.nix
     ./mise.nix
@@ -26,14 +26,12 @@
     ./posting.nix
     ./process-compose.nix
     ./procs.nix
-    ./rclone.nix
-    ./rsync.nix
+    ./redeploy.nix
     ./serpl.nix
     ./ssh.nix
     ./starship.nix
     ./tlrc.nix
     ./trippy.nix
-    ./watchexec.nix
     ./xh.nix
     ./zoxide.nix
   ];
@@ -44,7 +42,6 @@
     pkgs.choose # Human-friendly column extraction
     pkgs.dua # Interactive disk usage analyzer
     pkgs.duf # Disk free overview
-    pkgs.dust # Directory size tree; config owned by dust.nix
     pkgs.fq # jq for binary formats; structured decode of media, executables, captures
     pkgs.gawk # GNU awk on the interactive PATH; macOS ships BSD awk only, scripts carry gawk via runtimeInputs
     pkgs.grex # Regex generator from test cases
@@ -52,10 +49,11 @@
     pkgs.oha # HTTP load generator with real-time TUI and JSON/CSV output
     pkgs.ookla-speedtest # Official Ookla speed test CLI
     pkgs.ouch # Archive compression and extraction
-    pkgs.posting # Terminal API workspace; config owned by posting.nix
-    pkgs.process-compose # Non-container process orchestrator; config owned by process-compose.nix
     pkgs.ratchet # GitHub Actions version pinning
+    pkgs.rclone # Cloud storage sync; a move that removes emptied source directories is `rclone move --delete-empty-src-dirs` (aliases `rcmv`)
     pkgs.rich-cli # Rich terminal rendering
+    pkgs.rsync # File transfer and mirroring
     pkgs.sshs # Interactive SSH host picker
+    pkgs.watchexec # File-watch runner; each project's .gitignore and .ignore files steer what it watches
   ];
 }

@@ -23,13 +23,10 @@
     screen_size = "fullscreen";
     ignore = {
       other_users = false;
-      # macOS system trees, systemd services, and kernel worker classes.
+      # macOS system trees.
       paths = [
         "^/System/.*"
         "^/usr/libexec/.*"
-        "^/nix/store/.*/systemd.*"
-        ".*kworker.*"
-        ".*ksoftirqd.*"
       ];
     };
     ui = {

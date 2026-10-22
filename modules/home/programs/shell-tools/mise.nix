@@ -13,17 +13,12 @@
 # global auto-install gate stays off so a missing tool is a typed failure, never a mid-command download. Trust covers every config under
 # ~/Developer without a prompt, so that root holds the operator's own checkouts alone: a clone placed there runs its mise config's hooks and
 # [env] directives unasked.
-{
-  config,
-  pkgs,
-  ...
-}: let
+{config, ...}: let
   # One .NET root every SDK installs into, so a process holding DOTNET_ROOT or this PATH segment resolves each SDK a later global.json names
   dotnetRoot = "${config.xdg.dataHome}/mise/dotnet-root";
 in {
   programs.mise = {
     enable = true;
-    package = pkgs.mise;
     # HM's integration has no order; zsh/init.nix evals `mise activate zsh` as the last interactive line, where mise documents it belongs.
     enableZshIntegration = false;
     globalConfig = {

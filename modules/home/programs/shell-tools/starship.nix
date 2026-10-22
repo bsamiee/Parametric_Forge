@@ -31,6 +31,7 @@
 in {
   programs.starship = {
     enable = true;
+    validateFiles.config = true; # build-time check of the generated starship.toml against the package's JSON schema
 
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";

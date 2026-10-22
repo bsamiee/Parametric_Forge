@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
-# Root-scope system defaults (loginwindow, Software Update) and the launchd user PATH; user-scope defaults live in the home scope under
-# forge.userDefaults, which imports each domain only when it changes, and the rest of the GUI launchd environment replays from the home
-# scope (environments/shell.nix).
+# Root-scope system defaults (loginwindow, Software Update), the every-shell environment, and the launchd user PATH; user-scope defaults
+# live in the home scope as Home Manager targets.darwin.defaults (mac-tools/defaults), imported on every switch, and the rest of the GUI
+# launchd environment replays from the home scope (environments/shell.nix).
 {
   config,
   lib,
@@ -15,28 +15,22 @@
 }: let
   inherit (config.system) primaryUser;
   userHome = config.home-manager.users.${primaryUser};
-  launchdPath =
-    lib.concatStringsSep ":"
-    (toolchainEnvFor {
-      home = userHome.home.homeDirectory;
-      username = primaryUser;
-      xdgCacheHome = userHome.xdg.cacheHome;
-      xdgDataHome = userHome.xdg.dataHome;
-    }).launchdPathEntries;
+  toolchainEnv = toolchainEnvFor {
+    home = userHome.home.homeDirectory;
+    username = primaryUser;
+    xdgCacheHome = userHome.xdg.cacheHome;
+    xdgConfigHome = userHome.xdg.configHome;
+    xdgDataHome = userHome.xdg.dataHome;
+    xdgStateHome = userHome.xdg.stateHome;
+  };
 in {
   system.defaults = {
     # --- [LOGIN_WINDOW]
+    # Auto-login boots straight into the session so launchd agents resume after a restart; /etc/kcpassword is set once through
+    # System Settings › Users & Groups › Automatically log in as.
     loginwindow = {
       SHOWFULLNAME = true; # Name+password fields, never the user icon list
-      GuestEnabled = false;
-      # LoginwindowText stays unset — a set value duplicates the name display
-      ShutDownDisabled = false;
-      SleepDisabled = false;
-      RestartDisabled = false;
-      ShutDownDisabledWhileLoggedIn = false;
-      PowerOffDisabledWhileLoggedIn = false;
-      RestartDisabledWhileLoggedIn = false;
-      DisableConsoleAccess = false;
+      autoLoginUser = primaryUser;
     };
     # --- [SOFTWARE_UPDATES]
     # Downloads stay automatic (the pane's default); an automatic install reboots the machine under a running build or agent session.
@@ -52,17 +46,23 @@ in {
     computer = "never";
   };
 
-  # --- [PROFILES]
-  # The login-shell profile list (PATH, NIX_PROFILES, fpath, XDG_*_DIRS through set-environment): the per-user packages profile Home Manager
-  # fills under useUserPackages, the system profile, and the default profile. nix-darwin's own list also carries ~/.nix-profile, which
-  # use-xdg-base-directories (modules/common/nix.nix) moves under $XDG_STATE_HOME/nix and useUserPackages leaves empty — a dead PATH segment.
-  environment.profiles = lib.mkForce ["/etc/profiles/per-user/$USER" "/run/current-system/sw" "/nix/var/nix/profiles/default"];
+  # --- [SHELL_ENVIRONMENT]
+  # set-environment is sourced by /etc/zshenv and /etc/bashrc, so every shell kind reads the one PATH vector and the cross-surface rows; the
+  # plain-priority rows replace nix-darwin's EDITOR/PAGER defaults at their owner, and the vector replaces its profile-derived PATH.
+  environment = {
+    # The profile list set-environment reads for NIX_PROFILES (zsh fpath) and XDG_*_DIRS: the per-user packages profile Home Manager fills
+    # under useUserPackages, the system profile, and the default profile. nix-darwin's own list also carries ~/.nix-profile, which
+    # use-xdg-base-directories (modules/common/nix.nix) moves under $XDG_STATE_HOME/nix and useUserPackages leaves empty — a dead segment.
+    profiles = lib.mkForce ["/etc/profiles/per-user/$USER" "/run/current-system/sw" "/nix/var/nix/profiles/default"];
+    systemPath = lib.mkForce toolchainEnv.pathEntries;
+    variables = toolchainEnv.sharedEnv;
+  };
 
   # --- [LAUNCHD_USER_PATH]
   # launchd hands every user-domain process (Dock and Finder launches, launchd agents) the PATH `launchctl config user path` stores, read once
   # at boot, so a changed vector takes effect after the next reboot; `launchctl setenv PATH` never reaches them. The write is idempotent.
   system.activationScripts.postActivation.text = ''
-    /bin/launchctl config user path ${lib.escapeShellArg launchdPath} >/dev/null
+    /bin/launchctl config user path ${lib.escapeShellArg config.environment.systemPath} >/dev/null
   '';
 
   # --- [SHELL_RESOURCES]
@@ -72,13 +72,8 @@ in {
   '';
 
   # --- [APPLICATION_FIREWALL]
-  # Off, with signed software allowed to accept connections: the localhost listeners here are unsigned nix and mise binaries, which an enabled
-  # firewall would prompt for one by one.
-  networking.applicationFirewall = {
-    enable = false;
-    allowSigned = true;
-    allowSignedApp = true;
-  };
+  # Off: the localhost listeners here are unsigned nix and mise binaries, which an enabled firewall would prompt for one by one.
+  networking.applicationFirewall.enable = false;
 
   # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory: the
   # shared root every mise SDK installs into (home/programs/shell-tools/mise.nix), each repository's global.json still selecting the SDK

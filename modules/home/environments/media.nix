@@ -8,7 +8,6 @@
 {
   config,
   pkgs,
-  lib,
   toolchainEnvFor,
   ...
 }: let
@@ -43,22 +42,24 @@ in {
     FFMPEG_DATADIR = "${config.xdg.dataHome}/ffmpeg";
   };
 
-  # The XML generator orders children by element name (cachedir, dir, include), so the base include lands after the font roots; fontconfig
-  # unions directories regardless of order, and precedence is by match score, so the generated order is inert.
-  # Home Manager rsyncs the font payload with preserved store mtimes (epoch 1), so fontconfig's mtime-keyed directory cache never notices a
-  # generation swap on its own; the forced rescan after the file phase keeps the Pango/ImageMagick lane current with every switch.
-  home.activation.fontconfigCache = lib.hm.dag.entryAfter ["onFilesChange"] ''
-    [ ! -d "$HOME/Library/Fonts/HomeManager" ] || run env FONTCONFIG_FILE=${config.xdg.configHome}/fontconfig/fonts.conf ${pkgs.fontconfig}/bin/fc-cache -f "$HOME/Library/Fonts/HomeManager"
-  '';
-
+  # Root fontconfig file (FONTCONFIG_FILE): the store fonts.conf includes only /etc/fonts/conf.d, absent on macOS, so the stock conf.d chain is
+  # included by store path; its 50-user.conf loads ~/.config/fontconfig/conf.d, where Home Manager writes the profile font dirs (with their
+  # store-built cache) and the default families. The Home Manager font copies under ~/Library/Fonts keep store-epoch mtimes that fontconfig's
+  # directory cache never sees change, so they are rejected and the store profile serves those faces. The XML generator orders children by
+  # element name; fontconfig unions directories regardless of order, and precedence is by match score, so the generated order is inert.
   xdg.configFile."fontconfig/fonts.conf".source = (pkgs.formats.xml {}).generate "fonts.conf" {
     fontconfig = {
-      include = {
-        "@ignore_missing" = "yes";
-        "#text" = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
-      };
+      include =
+        map (path: {
+          "@ignore_missing" = "yes";
+          "#text" = path;
+        }) [
+          "${pkgs.fontconfig.out}/etc/fonts/fonts.conf"
+          "${pkgs.fontconfig.out}/etc/fonts/conf.d"
+        ];
       dir = fontDirectories;
       cachedir = "${config.xdg.cacheHome}/fontconfig";
+      selectfont.rejectfont.glob = "${config.home.homeDirectory}/Library/Fonts/HomeManager/*";
     };
   };
 }

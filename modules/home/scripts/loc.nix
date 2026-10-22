@@ -12,24 +12,7 @@
     text = ''
       shopt -s inherit_errexit
 
-      # Whole-body deadline: the entire run re-execs under timeout, so NO internal stage — scan, jq report, or pipe setup — can wedge a caller
-      # past the budget. Decimal normalization precedes arithmetic because Bash reads a leading zero as octal; malformed or oversized values use
-      # the safe outer fallback, then the invoked body rejects them unless help already terminated the CLI. Payloads ride pipelines, never <<<.
-      _deadline_value() {
-        local -r raw="$1"
-        local -n _result="$2"
-        [[ "$raw" =~ ^0*([0-9]{1,5})$ ]] || return 1
-        local -r value=$((10#''${BASH_REMATCH[1]}))
-        ((value <= 840)) || return 1
-        _result="$value"
-      }
-      if [[ -z "''${_LOC_DEADLINE_ACTIVE:-}" ]]; then
-        _outer="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
-        _outer_seconds=120
-        _deadline_value "$_outer" _outer_seconds || true
-        _LOC_DEADLINE_ACTIVE=1 exec timeout -k 10 "$((_outer_seconds + 30))" "$0" "$@"
-      fi
-
+      # Payloads ride pipelines, never <<<.
       # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
       _usage() { printf 'usage: %s [--json] [target...]\n' "''${0##*/}"; }
 
@@ -76,13 +59,6 @@
       done
       [[ -n "$root" ]] || root="/"
       readonly root dirs_only json_mode
-      readonly deadline="''${LOC_SCAN_DEADLINE_SECONDS:-120}"
-      deadline_seconds=0
-      _deadline_value "$deadline" deadline_seconds || {
-        printf 'loc: LOC_SCAN_DEADLINE_SECONDS must be 0..840 decimal seconds\n' >&2
-        exit 2
-      }
-      readonly deadline_seconds
       readonly tab=$'\t'
       targets_json="$(jq -nc '$ARGS.positional' --args -- "''${resolved[@]}")"
       readonly targets_json
@@ -92,18 +68,8 @@
       scc_flags=(--by-file --format json --no-cocomo --no-size --sort code)
       ((dirs_only)) && scc_flags+=(--no-min-gen --no-large)
 
-      # Detached stdin + deadline: a dead invoking session must never strand this command substitution as an orphaned subshell. TERM first, KILL
-      # after a 10s grace — a scan wedged on a dead mount ignores TERM.
-      json="$(timeout -k 10 "$deadline_seconds" scc "''${resolved[@]}" "''${scc_flags[@]}" </dev/null)" || {
-        rc=$?
-        # Failure keeps the envelope rail: machine consumers get one typed error shape, never empty stdout beside a human stderr line.
-        if ((json_mode)); then
-          jq -nc --argjson rc "$rc" --argjson deadline "$deadline_seconds" \
-            '{error: {surface: "loc", kind: "scan", rc: $rc, deadline: $deadline}}'
-        fi
-        printf 'loc: scc scan failed (rc=%s, deadline=%ss)\n' "$rc" "$deadline_seconds" >&2
-        exit "$rc"
-      }
+      # Detached stdin: a dead invoking session never strands this command substitution as an orphaned subshell.
+      json="$(scc "''${resolved[@]}" "''${scc_flags[@]}" </dev/null)"
       readonly json
 
       # jq owns $root/$targets inside this single-quoted filter.

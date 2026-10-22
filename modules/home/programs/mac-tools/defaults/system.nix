@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # System-behavior and per-application user defaults.
 {config, ...}: {
-  forge.userDefaults = {
+  targets.darwin.defaults = {
     # --- [ACTIVITY_MONITOR]
     "com.apple.ActivityMonitor" = {
       ShowCategory = 100;
@@ -56,14 +56,16 @@
       UniversalSearchEnabled = false;
     };
     # --- [APPLICATION_SPECIFIC_SETTINGS]
-    # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative), and Siri/Apple
-    # Intelligence disablement is Settings-owned on Tahoe — neither surface carries a truthful defaults row.
+    # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative). The Apple
+    # Intelligence knowledge pipelines (spotlightknowledged embeddings) run independent of Siri and of the suggestion blocklist, and macOS 27
+    # carries no unsupervised switch for them (the intelligence settings declaration needs a supervised Mac); Spotlight exclusions are the
+    # scope lever.
     "com.apple.Terminal".SecureKeyboardEntry = false;
     "com.apple.dt.Xcode".DVTTextEditorTrimTrailingWhitespace = true;
     "com.lujjjh.LinearMouse" = {
       showInDock = false; # menu-bar-only posture; the launchd agent owns startup
       menuBarBatteryDisplayMode = "\"below20\""; # MX battery surfaces at 20% — Codable string, embedded quotes required
-      betaChannelOn = true; # Sparkle stays on the beta feed the installed release (the apps/linearmouse schema row's version) ships from
+      betaChannelOn = true; # Sparkle stays on the beta feed the installed linearmouse@beta cask ships from
       autoSwitchToActiveDevice = true;
       # Sparkle: check and install in the background, send no system profile; unset, Sparkle asks on the second launch.
       SUEnableAutomaticChecks = true;
@@ -71,16 +73,16 @@
       SUSendProfileInfo = false;
     };
     # --- [ARCHIVES]
-    # BetterZip: double-click extracts, the Finder toolbar button and contextual menu carry every preset, extracted apps keep their
-    # quarantine flag, the stable Sparkle feed (a SUFeedURL row would select the beta feed), no menu-bar icon. Archive Types and the
-    # Finder-extension mirror in the app group container are written by the app from these rows.
+    # BetterZip: double-click extracts, the Finder toolbar button and contextual menu carry every preset, extracted apps carry no quarantine
+    # flag, the stable Sparkle feed (a SUFeedURL row would select the beta feed), no menu-bar icon. Archive Types and the Finder-extension
+    # mirror in the app group container are written by the app from these rows.
     "com.macitbetter.betterzip" = {
       SUEnableAutomaticChecks = true;
       MIBDirectExtractByDefault = true;
       MIBShowFinderButton = true;
       MIBShowFinderContextualMenu = true;
       MIBShowAdditionalFinderActions = true;
-      MIBDontQuarantineApps = false;
+      MIBDontQuarantineApps = true;
       MIBPostNotifications = true;
       MIBMenubarItem = false;
     };
@@ -98,7 +100,8 @@
       SUSendProfileInfo = false;
     };
     # Suspicious Package reaches a selected .pkg through its Finder service (macOS 13.3 dropped it from Open With); pbs holds the
-    # Services Settings election the vendor FAQ names under the Development group.
+    # Services Settings election the vendor FAQ names under the Development group. NSServicesStatus is owned whole: every Services election
+    # is a row here, and the import replaces the key each switch.
     pbs.NSServicesStatus."com.mothersruin.SuspiciousPackageApp - Open With Suspicious Package - openSelectedPackage" = {
       enabled_context_menu = true;
       enabled_services_menu = true;
@@ -108,4 +111,9 @@
       };
     };
   };
+
+  # --- [AIRBUDDY]
+  # One Mac: multi-Mac discovery (the _abm-mhp-v2 Bonjour browse over AWDL every 10 minutes) stays off. Proximity scanning is how the app
+  # reads battery levels and has no off switch.
+  forge.groupDefaults."8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
 }

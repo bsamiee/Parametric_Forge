@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/common/toolchain-env.nix
 # ----------------------------------------------------------------------------
-# Shared PATH vectors and toolchain env factory installed as the toolchainEnvFor module argument; session, launchd,
-# and zsh owners call it with their own home/username/cache context.
+# The one PATH vector and toolchain env factory installed as the toolchainEnvFor module argument; the system environment, the GUI launchd
+# replay, and the zsh floor call it with their own home/username/XDG context.
 {
   lib,
   pkgs,
@@ -15,8 +15,8 @@
     home,
     username,
     xdgCacheHome,
-    xdgConfigHome ? "${home}/.config", # XDG default; session/resilient/launchd owners pass their scope's configHome, PATH-only callers inherit.
-    xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it, so a PATH-only caller inherits the XDG default.
+    xdgConfigHome ? "${home}/.config", # XDG default; env and PATH owners pass their scope's configHome, font-only callers inherit.
+    xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it.
     xdgStateHome ? "${home}/.local/state", # Same convention: the interactive history rows read it.
   }: let
     # The operator-installed Rhino bundle no cask owns: its bin directory joins the PATH vector, and its default handler rows read the bundle path.
@@ -28,8 +28,9 @@
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"
       "/opt/homebrew/bin"
-      "/opt/homebrew/sbin"
       "${rhinoApp}/Contents/Resources/bin"
+      # carapace's zsh snippet prepends this directory unless PATH already holds it; listing it here keeps the vector the one PATH owner.
+      "${xdgConfigHome}/carapace/bin"
     ];
     fallbackPathEntries = [
       "/usr/local/bin"
@@ -42,8 +43,8 @@
     # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
     # whose tool has no version there execs the next copy on PATH. A shell that applies `mise hook-env` (zsh at startup, every Claude Code
     # command through CLAUDE_ENV_FILE) drops this segment and puts a project's install paths first.
-    shimPathEntries = ["${xdgDataHome}/mise/shims"];
-    pathEntries = shimPathEntries ++ userPathEntries ++ fallbackPathEntries;
+    shimPath = "${xdgDataHome}/mise/shims";
+    pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
     # macOS default is ~/.matplotlib; the directory holds font and tex caches, no rc file
     pythonEnv.MPLCONFIGDIR = "${xdgCacheHome}/matplotlib";
     # Runtime data for the geo CLI roster: PROJ 9.1 renamed PROJ_LIB to PROJ_DATA, which libproj consults first, so the old name carries no row.
@@ -54,8 +55,8 @@
     };
     # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
     energyEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
-    # One class-partitioned env owner feeding the session (home.sessionVariables), the .zshenv never-clobber floor, and the launchd GUI surfaces.
-    # `all` rows land byte-identical everywhere so an interactive shell and a Dock-launched agent never resolve divergent pager/config env;
+    # One class-partitioned env owner: `all` rows feed nix-darwin's set-environment (every zsh and bash), the .zshenv never-clobber floor, and the
+    # GUI launchd replay, byte-identical everywhere so a shell of any kind and a Dock-launched agent never resolve divergent editor/pager/config env;
     # `session` rows are interactive-only (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
     # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
     # its own config key. A new cross-surface var is one `all` row.
@@ -68,6 +69,8 @@
     ];
     envByClass = {
       all = {
+        EDITOR = "nvim";
+        VISUAL = "nvim";
         PAGER = "less";
         LESS = "-RFX";
         GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
@@ -122,10 +125,10 @@
       rhinoApp
       ;
 
-    sessionPathEntries = pathEntries;
-    launchdPathEntries = pathEntries;
-    scientificSessionEnv = pythonEnv // geoEnv // energyEnv;
-    sessionEnv = envByClass.all // envByClass.session;
-    launchdEnv = envByClass.all;
+    inherit pathEntries shimPath;
+    # Rows every surface carries: set-environment for every shell kind, the GUI launchd domain, and the .zshenv floor; the session class is
+    # interactive-only and stays in Home Manager.
+    sharedEnv = pythonEnv // geoEnv // energyEnv // envByClass.all;
+    sessionEnv = envByClass.session;
   };
 }

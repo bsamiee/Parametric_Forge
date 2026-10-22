@@ -43,9 +43,6 @@ in {
           disabled_text = {
             color = roles.text.muted.hex;
           };
-          thread_text = {
-            color = roles.accent.structural.hex;
-          };
         };
         tables = {
           headers = {
@@ -76,8 +73,6 @@ in {
         memory = {
           ram_color = roles.state.success.hex;
           swap_color = roles.state.attention.hex;
-          cache_color = roles.accent.primary.hex;
-          arc_color = roles.accent.structural.hex;
           gpu_colors = [
             palette.pink.hex # GPU 0
             palette.cyan.hex # GPU 1
@@ -112,24 +107,22 @@ in {
         ];
       };
       # --- [DISK_CONFIGURATION]
-      # Each filter list is a deny list, bottom's default.
+      # Each filter list is a deny list, bottom's default; the mount rows are the APFS system-role volumes beside the data volume.
       disk = {
         columns = ["Disk" "Mount" "Used%" "Free" "R/s" "W/s"];
-        name_filter = {
-          list = ["/dev/loop*" "devfs" "devtmpfs" "tmpfs" "overlay" "run"];
+        name_filter.list = ["devfs"];
+        mount_filter = {
+          list = ["^/System/Volumes/(VM|Preboot|Update|xarts|iSCPreboot|Hardware)$" "^/Volumes/Recovery$"];
           regex = true;
         };
-        mount_filter.list = ["/boot" "/boot/efi" "/var/snap" "/var/lib/docker"];
-      };
-      # --- [MEMORY_GRAPH_CONFIGURATION]
-      memory_graph = {
-        cache_memory = true;
       };
       # --- [NETWORK_GRAPH]
+      # Loopback, tunnels, AWDL/low-latency WLAN, Apple's internal network, bridges, and the access-point interface.
       network_graph = {
         use_binary_prefix = true;
         interface_filter = {
-          list = ["lo" "lo0"];
+          list = ["lo0" "utun.*" "awdl0" "llw0" "anpi.*" "bridge.*" "ap1"];
+          regex = true;
           whole_word = true;
         };
       };

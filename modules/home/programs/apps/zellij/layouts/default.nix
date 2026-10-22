@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
 _: {
-  xdg.configFile."zellij/layouts/default.kdl".text = ''
+  programs.zellij.layouts.default = ''
     // Title         : default.kdl
     // Author        : Bardia Samiee
     // Project       : Parametric Forge

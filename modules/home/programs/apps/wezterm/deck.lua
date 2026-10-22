@@ -168,21 +168,29 @@ local function focused_cwd(session)
     return nil
 end
 
+-- The one "file:line -> editor" route: nvim at the line in a utility float, at the cwd of the pane the workspace's zellij client focuses. The
+-- quick-select edit kind and the open-uri handler (delta's file:// links, events.lua) both land here. The editor starts through zsh so
+-- .zshenv seats the session environment the launchd PATH lacks.
+function M.edit(window, file, line)
+    local cwd = focused_cwd(window:active_workspace())
+    if not cwd then
+        return
+    end
+    M.spawn_float({
+        id = "quick-edit",
+        float = "utility",
+        cwd = cwd,
+        args = { rows.paths.zsh, "-c", 'exec "$@"', "zsh", rows.paths.nvim, "+" .. line, file },
+    })
+end
+
 -- Quick-select action bus: per-row `select` arms convert the selected span to a deck action; rows without an arm keep the native clipboard default.
--- The editor starts through zsh so .zshenv seats the session environment the launchd PATH lacks.
 local select_kinds = {
     ["edit"] = function(window, _, sel)
         local file, line = sel:match("^(.-):(%d+)")
-        local cwd = file and focused_cwd(window:active_workspace())
-        if not cwd then
-            return
+        if file then
+            M.edit(window, file, line)
         end
-        M.spawn_float({
-            id = "quick-edit",
-            float = "utility",
-            cwd = cwd,
-            args = { rows.paths.zsh, "-c", 'exec "$@"', "zsh", rows.paths.nvim, "+" .. line, file },
-        })
     end,
 }
 

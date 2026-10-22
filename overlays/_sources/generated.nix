@@ -8,50 +8,34 @@
 {
   "1password-cli-aarch64-darwin" = {
     pname = "1password-cli-aarch64-darwin";
-    version = "2.41.0";
+    version = "2.41.1";
     src = fetchurl {
-      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.0/op_apple_universal_v2.41.0.pkg";
-      sha256 = "sha256-6rF+DJKcEbYim1droOfS12THR4ysnK+fv6Ef5hvDVkc=";
+      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.1/op_apple_universal_v2.41.1.pkg";
+      sha256 = "sha256-8UfSuRG7QvHjdEINMYbmUTzjkhna2KzB2ZzAAffcqoI=";
     };
   };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.5.15";
+    version = "2.6.2";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-darwin-arm64";
-      sha256 = "sha256-NjZ5bYx4v8/g1FlG3JPiHhLSeknrp0AeGK8eqFTSVQM=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.2/biome-darwin-arm64";
+      sha256 = "sha256-vma3bcuTCx42W9NsT12FV8LdpwsxVn+L0VUJ5Id1Omk=";
     };
   };
   design-geist-font = {
     pname = "design-geist-font";
-    version = "1.8.1";
-    src = fetchurl {
-      url = "https://github.com/vercel/geist-font/releases/download/v1.8.1/geist-font-v1.8.1.zip";
-      sha256 = "sha256-cPQsFFL7bfEuoYPiCmWZkVc1T5HRHawYtMcT44OAjsI=";
-    };
-  };
-  design-ghostscript = {
-    pname = "design-ghostscript";
-    version = "gs10080/ghostscript-10.08.0.tar.xz";
-    src = fetchurl {
-      url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz";
-      sha256 = "sha256-wgSSvI67lsh/ouUqCSbhzajN6V1mFF4BiscT/tXaOM8=";
+    version = "1.8.2";
+    src = fetchTarball {
+      url = "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip";
+      sha256 = "sha256-s2A+S77Ik7BnMnT+zxNBJZD9LhgUPF24OWIK9Qu3Zmc=";
     };
   };
   design-harfbuzz = {
     pname = "design-harfbuzz";
-    version = "14.6.0";
+    version = "15.0.0";
     src = fetchurl {
-      url = "https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz";
-      sha256 = "sha256-0HoAcycndwiipzrkN4h8268oKTf20DylRncj6Qma9YY=";
-    };
-  };
-  design-imagemagick = {
-    pname = "design-imagemagick";
-    version = "7.1.2-34";
-    src = fetchurl {
-      url = "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-34/ImageMagick-7.1.2-34.tar.xz";
-      sha256 = "sha256-Vf4OwkYkW0bEKfnmvGUpStSnima4ir2YF5ccoVeFYyM=";
+      url = "https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz";
+      sha256 = "sha256-loU26avXgvB/eVQETAxAIBmfzdObQdIh7ELSo75KRN8=";
     };
   };
   design-mupdf = {
@@ -70,50 +54,12 @@
       sha256 = "sha256-NOhVJJZcMhYCI+/EY8KeXO5NHq4yaUNOMHf/7hYsCFw=";
     };
   };
-  design-poppler = {
-    pname = "design-poppler";
-    version = "26.10.0";
-    src = fetchurl {
-      url = "https://poppler.freedesktop.org/poppler-26.10.0.tar.xz";
-      sha256 = "sha256-Z5LLfGkgUAeth9LpNs7MWzox+sKatU/8MXX9trKmzjU=";
-    };
-  };
-  design-poppler-test-data = {
-    pname = "design-poppler-test-data";
-    version = "48b6219b84fc0a708040cb279d51095cc4e1c603";
-    src = fetchgit {
-      url = "https://gitlab.freedesktop.org/poppler/test.git";
-      rev = "48b6219b84fc0a708040cb279d51095cc4e1c603";
-      fetchSubmodules = false;
-      deepClone = false;
-      leaveDotGit = false;
-      sparseCheckout = [ ];
-      sha256 = "sha256-2eH4dZs2J0CeTWrXOYEHb0Xnpfa7tX8mi7AX2E9D41U=";
-    };
-    date = "2026-08-14";
-  };
-  design-qpdf = {
-    pname = "design-qpdf";
-    version = "12.4.2";
-    src = fetchurl {
-      url = "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2.tar.gz";
-      sha256 = "sha256-ilivW2FBMZKHwYg77IvRvVRbdWe3/F5s5dJaHIXzY5c=";
-    };
-  };
   design-scheherazade-new = {
     pname = "design-scheherazade-new";
     version = "4.500";
-    src = fetchurl {
-      url = "https://github.com/silnrsi/font-scheherazade/releases/download/v4.500/ScheherazadeNew-4.500.zip";
-      sha256 = "sha256-SceJwhMFvtE9kNdQCHe1DWLbHo5Nb3cVF45VYxndvak=";
-    };
-  };
-  design-temurin-aarch64-darwin = {
-    pname = "design-temurin-aarch64-darwin";
-    version = "jdk-26.0.2.1+1";
     src = fetchTarball {
-      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse";
-      sha256 = "sha256-J2GzzlHHtdRdoXDxufhaTPIjpTAcVgkAz0wOyk9P+nI=";
+      url = "https://github.com/silnrsi/font-scheherazade/releases/download/v4.500/ScheherazadeNew-4.500.zip";
+      sha256 = "sha256-UFBywGKFMpboDAIloRDhJihf/KMGh+O+4sIEfpGx0MU=";
     };
   };
   design-utiluti = {
@@ -126,10 +72,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.203";
+    version = "1.31.206";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.203/cli-1.31.203.jar";
-      sha256 = "sha256-zE34ZUZZRes1eg0gpgC3aNbb+WifQzxPDz7EXczl23w=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.206/cli-1.31.206.jar";
+      sha256 = "sha256-Ag7AUh5miZcZvsYBqTGoQtOXUWydejLA3+b2amWvmIs=";
     };
   };
   energyplus-aarch64-darwin = {
@@ -172,12 +118,12 @@
       sha256 = "sha256-qsUO6lEbTVcYthsU8qaGDYVJSvCtNT8Dep3Cfna39RU=";
     };
   };
-  zjstatus = {
-    pname = "zjstatus";
-    version = "0.25.0";
-    src = fetchurl {
-      url = "https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm";
-      sha256 = "sha256-KCzqshnlbhkIyfrDOQckH+bD4e99hfqrPl9DjO+HuP4=";
+  watchexec-aarch64-darwin = {
+    pname = "watchexec-aarch64-darwin";
+    version = "2.8.0";
+    src = fetchTarball {
+      url = "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz";
+      sha256 = "sha256-33cZozNm/IxiVg/ISXRPO6eMyGDwg0QoaB8TSePxwkE=";
     };
   };
 }

@@ -34,7 +34,7 @@ _: let
   # The Magic Mouse row set likewise projects onto both of its driver domains.
   magicmouse.MouseButtonMode = "TwoButton";
 in {
-  forge.userDefaults = {
+  targets.darwin.defaults = {
     # --- [TRACKPAD_CONFIGURATION]
     "com.apple.AppleMultitouchTrackpad" = trackpad // {TrackpadFiveFingerPinchGesture = 2;};
     "com.apple.driver.AppleBluetoothMultitouch.trackpad" = trackpad // {TrackpadHandResting = true;};
@@ -67,6 +67,7 @@ in {
       NSAutomaticDashSubstitutionEnabled = false;
       NSAutomaticInlinePredictionEnabled = false;
       "com.apple.trackpad.enableSecondaryClick" = true;
+      "com.apple.trackpad.forceClick" = false; # the Trackpad pane writes this key beside the driver domains' ForceSuppressed
       AppleEnableMouseSwipeNavigateWithScrolls = false;
       AppleEnableSwipeNavigateWithScrolls = false;
       "com.apple.mouse.linear" = true; # flat curve; driverless mice inherit the acceleration hump otherwise

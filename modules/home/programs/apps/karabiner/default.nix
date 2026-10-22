@@ -12,7 +12,6 @@
   ...
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
-  assetDir = "${cfgDir}/assets/complex_modifications";
 
   # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
   chordRules = config.forge.chords.karabiner.rules;
@@ -26,12 +25,6 @@
         virtual_hid_keyboard.keyboard_type_v2 = "ansi";
       }
     ];
-  });
-
-  # Inert import material for the Settings UI; active rules live in karabiner.json.
-  stagedAssetJson = pkgs.writeText "leader-chords.json" (builtins.toJSON {
-    title = "Leader chords";
-    rules = chordRules;
   });
 
   jq = "${pkgs.jq}/bin/jq";
@@ -54,11 +47,20 @@
       ))
       + [$l.profiles[]? | select(.name as $n | $names | index($n) | not)]
   '';
+  target = "${cfgDir}/karabiner.json";
+in {
+  imports = [../chords.nix];
 
-  # Atomic write-if-changed: mktemp in the target directory, compare, rename.
-  stageFile = target: renderTmp: ''
+  # Symlinks on the config path break Karabiner change detection, so a real writable file is staged in place: atomic write-if-changed
+  # (mktemp in the target directory, compare, rename).
+  home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
+    mkdir -p "${cfgDir}"
     tmp="$(mktemp "${target}.XXXXXX")"
-    ${renderTmp}
+    if [ -f "${target}" ] && ${jq} -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${target}" >/dev/null 2>&1; then
+      ${jq} --slurpfile live "${target}" '${mergeProgram}' ${karabinerJson} >"$tmp"
+    else
+      cat ${karabinerJson} >"$tmp"
+    fi
     chmod 600 "$tmp"
     if ! cmp -s "$tmp" "${target}" 2>/dev/null; then
       mv "$tmp" "${target}"
@@ -66,22 +68,5 @@
       rm -f "$tmp"
     fi
     chmod 600 "${target}"
-  '';
-in {
-  imports = [../chords.nix];
-
-  # Symlinks on the config path break Karabiner change detection, so real writable files are staged in place.
-  home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    mkdir -p "${assetDir}"
-    ${stageFile "${cfgDir}/karabiner.json" ''
-      if [ -f "${cfgDir}/karabiner.json" ] && ${jq} -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${cfgDir}/karabiner.json" >/dev/null 2>&1; then
-        ${jq} --slurpfile live "${cfgDir}/karabiner.json" '${mergeProgram}' ${karabinerJson} >"$tmp"
-      else
-        cat ${karabinerJson} >"$tmp"
-      fi
-    ''}
-    ${stageFile "${assetDir}/leader-chords.json" ''
-      cat ${stagedAssetJson} >"$tmp"
-    ''}
   '';
 }

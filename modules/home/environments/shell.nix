@@ -25,8 +25,7 @@
   # login. The HM xdg module derives the XDG rows. PATH is no row: launchd takes the user domain's PATH from `launchctl config user path`
   # alone, which nix-darwin activation writes (modules/darwin/settings/system.nix).
   guiEnvRows =
-    toolchainEnv.scientificSessionEnv
-    // toolchainEnv.launchdEnv
+    toolchainEnv.sharedEnv
     // {
       # The 1Password agent for every process the domain launches afterwards (1Password's SSH client compatibility form), in place of the
       # identity-less agent launchd hands out.
@@ -58,13 +57,9 @@ in {
       // removeAttrs row ["name" "argv"];
   };
 
-  # --- [USER_SESSION_PATH]
-  # One vector for the session and the launchd domain; Home Manager prepends it to the inherited PATH, so a non-login shell (VS Code) resolves
-  # the same order as a login shell.
-  home.sessionPath = toolchainEnv.sessionPathEntries;
-
-  # sessionEnv folds the class-gated pager/gcloud/gws vocabulary and the interactive man/bat/info rows; the rows below are session-only concerns
-  # whose tool default is not already the declared path (zsh zle rows live in programs.zsh.localVariables, never the process environment).
+  # sessionEnv folds the interactive man/bat/info rows; PATH and the cross-surface rows are nix-darwin's set-environment
+  # (modules/darwin/settings/system.nix). The rows below are session-only concerns whose tool default is not already the declared path (zsh zle
+  # rows live in programs.zsh.localVariables, never the process environment).
   home.sessionVariables =
     toolchainEnv.sessionEnv
     // {
@@ -87,9 +82,7 @@ in {
 
       # --- [FZF_FORGIT_CONFIGURATION]
       # forgit's pager defaults to git's core.pager (delta through the HM delta integration); only the fzf chrome per command is declared.
-      # Its commands reach the shell through the alias register (aliases/git.nix), so its own alias table stays off; forgit reads every knob
-      # from the environment and warns at load on one it finds set but unexported, so each is a session row rather than a shell variable.
-      FORGIT_NO_ALIASES = "1";
+      # git-forgit runs as a git subcommand process, so every knob it reads is an exported session row rather than a shell variable.
       FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
       FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
       FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";

@@ -73,11 +73,11 @@ in {
           # ordinary switch that left the secret set alone reads its own provenance and never unlocks 1Password.
           marker="# op-template: $(readlink -f "$template_file")"
           if [[ -s "$cache_file" && "$(head -n1 "$cache_file")" == "$marker" ]]; then
-            echo "Secret template unchanged; skipping op inject" >&2
+            verboseEcho "Secret template unchanged; skipping op inject"
           else
             # Resolve tokens from 1Password into a mode-600 cache; temp lives in the target directory so the publish rename stays same-filesystem.
             # The marker leads the file, then the exports (a brace group's status is op inject's, so a failed unlock still short-circuits).
-            echo "Injecting secrets from 1Password vault..." >&2
+            verboseEcho "Injecting secrets from 1Password vault"
             tmp_file="$(mktemp "$cache_file.XXXXXX")"
             if {
               printf '%s\n' "$marker"
@@ -85,14 +85,10 @@ in {
             } >"$tmp_file"; then
               chmod 600 "$tmp_file"
               mv -f "$tmp_file" "$cache_file"
-              echo "Tokens cached" >&2
+              verboseEcho "Tokens cached"
             else
               echo "WARNING: op inject failed - 1Password may not be authenticated. Run: op signin" >&2
               rm -f "$tmp_file"
-              if [[ ! -f "$cache_file" ]]; then
-                touch "$cache_file"
-                chmod 600 "$cache_file"
-              fi
             fi
           fi
 

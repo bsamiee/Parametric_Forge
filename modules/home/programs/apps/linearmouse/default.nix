@@ -32,9 +32,13 @@
 # detent and leaves zoom at one step. Blender applies a fixed 1.2 zoom factor per wheel event and has no zoom scale
 # setting, so the Blender row takes the same shape on the same device: one detent, one event, one 1.2 step. launchd
 # owns login start.
-{launchdAgent, ...}: let
+{
+  config,
+  launchdAgent,
+  ...
+}: let
+  inherit (config.forge) apps;
   settings = {
-    "$schema" = "https://schema.linearmouse.app/0.13.0-beta.3";
     schemes = [
       {
         "if".device.category = "mouse";
@@ -75,7 +79,7 @@
       }
       {
         "if" = {
-          app = "com.mcneel.rhinoceros.9";
+          app = apps.rhino.id;
           device = {
             vendorID = "0x046d";
             productID = "0xb034";
@@ -91,7 +95,7 @@
       }
       {
         "if" = {
-          app = "org.blenderfoundation.blender";
+          app = apps.blender.id;
           device = {
             vendorID = "0x046d";
             productID = "0xb034";
@@ -114,7 +118,7 @@ in {
   # since `open` needs the login-window session; `open` exits once the app is launched, so the row is one-shot.
   launchd.agents.linearmouse = launchdAgent {
     name = "linearmouse";
-    argv = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];
+    argv = ["/usr/bin/open" "-gj" apps.linearmouse.path];
     RunAtLoad = true;
     ProcessType = "Interactive";
     LimitLoadToSessionType = "Aqua";

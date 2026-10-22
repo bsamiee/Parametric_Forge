@@ -4,15 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/posting.nix
 # ----------------------------------------------------------------------------
-# Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the palette
-# and roles of modules/home/theme.nix; request collections stay mutable user state.
-{
-  config,
-  pkgs,
-  ...
-}: let
+# Terminal API workspace with versionable request collections. Theme is projected from the palette and roles of modules/home/theme.nix;
+# request collections stay mutable user state.
+{config, ...}: let
   inherit (config.forge.theme) palette roles;
-  yamlFormat = pkgs.formats.yaml {};
 
   # User themes load from $XDG_DATA_HOME/posting/themes and request variables come from explicit --env files alone, both posting's defaults.
   postingConfig = {
@@ -63,6 +58,9 @@
     };
   };
 in {
-  xdg.configFile."posting/config.yaml".source = yamlFormat.generate "posting-config" postingConfig;
-  xdg.dataFile."posting/themes/forge.yaml".source = yamlFormat.generate "posting-theme" postingTheme;
+  programs.posting = {
+    enable = true;
+    settings = postingConfig;
+    themes.forge = postingTheme;
+  };
 }

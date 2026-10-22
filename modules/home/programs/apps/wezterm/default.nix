@@ -97,14 +97,14 @@
       id = "redeploy-build";
       label = "deploy: redeploy build";
       float = "log";
-      args = ["${profileBin}/redeploy" "--build"];
+      args = ["${profileBin}/redeploy" "build"];
     }
     {
       id = "redeploy-switch";
       label = "deploy: redeploy SWITCH";
       float = "log";
       destructive = true;
-      args = ["${profileBin}/redeploy" "--switch"];
+      args = ["${profileBin}/redeploy" "switch"];
     }
     {
       id = "telemetry";
@@ -117,7 +117,7 @@
       label = "deck: scratch shell";
       float = "utility";
       scope = "workspace";
-      args = ["${profileBin}/zsh" "-l"];
+      args = [config.forge.shell "-l"];
     }
   ];
 
@@ -196,7 +196,7 @@
   # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
     paths = {
-      zsh = "${profileBin}/zsh";
+      zsh = config.forge.shell;
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
     };

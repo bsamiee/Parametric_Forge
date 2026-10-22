@@ -5,12 +5,12 @@
 # Path          : modules/home/environments/core.nix
 # ----------------------------------------------------------------------------
 # Core system environment variables
-{host, ...}: {
+_: {
   home.sessionVariables = {
-    # --- [LOCALE_TIME]
-    TZ = host.timeZone;
+    # --- [LOCALE]
+    # The time zone is macOS's automatic zone through /etc/localtime, never a TZ row.
     LANG = "en_US.UTF-8";
 
-    # EDITOR/VISUAL are owned by programs.neovim.defaultEditor.
+    # EDITOR/VISUAL are cross-surface rows of modules/common/toolchain-env.nix.
   };
 }

@@ -11,7 +11,7 @@
   pkgs,
   ...
 }: let
-  # Plugin admission rows (wasm url, hash, permissions) are the zellij-plugins lane of overlays/manifest.nix.
+  # Plugin admission rows (nixpkgs attr or wasm url and hash, plus permissions) are the zellij-plugins lane of overlays/manifest.nix.
   pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
 in {
   imports = [
@@ -20,7 +20,7 @@ in {
     ./layouts/default.nix # Shell-first layout
   ];
 
-  options.programs.zellij = {
+  options.forge.zellij = {
     # One geometry owner per floating popup; the layout KDL and the integration scripts both render from these rows, never from inline literals.
     # Percent strings only: both KDL and the zellij CLI accept them verbatim, and a malformed value fails at eval instead of misrendering a popup.
     popupGeometry = lib.mkOption {
@@ -48,7 +48,7 @@ in {
   };
 
   config = {
-    home.packages = [pkgs.zellij];
+    programs.zellij.enable = true;
 
     # Grant reconcile, not append: a 1-row bar pane cannot render the interactive permission prompt, so the manifest rows' exact upstream
     # grant names seed zellij's permission cache. plugDir-scoped rows PROJECT from those rows every activation — stale plugin rows are pruned,
@@ -84,8 +84,16 @@ in {
     '');
 
     # --- [PLUGIN_INSTALLATION]
-    # Every third-party wasm is file-owned and hash-pinned from its manifest row; aliases resolve through file: locations, so plugin load never
-    # depends on the network.
-    xdg.configFile = lib.mapAttrs' (name: row: lib.nameValuePair "zellij/plugins/${name}.wasm" {source = pkgs.fetchurl {inherit (row) url hash;};}) pluginRows;
+    # Every third-party wasm is file-owned from its manifest row: a row with `attr` resolves in nixpkgs zellijPlugins, a row with url/hash is a
+    # pinned release wasm nixpkgs omits. Aliases resolve through file: locations, so plugin load never depends on the network. The plugins
+    # block lives in config.kdl (programs.zellij.extraConfig); programs.zellij.plugins would add a second one plus load_plugins.
+    xdg.configFile = lib.mapAttrs' (name: row:
+      lib.nameValuePair "zellij/plugins/${name}.wasm" {
+        source =
+          if row ? attr
+          then pkgs.zellijPlugins.${row.attr}
+          else pkgs.fetchurl {inherit (row) url hash;};
+      })
+    pluginRows;
   };
 }

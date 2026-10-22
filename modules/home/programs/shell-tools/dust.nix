@@ -14,5 +14,7 @@
     skip-total = true; # Suppress the root total row
   };
 in {
+  home.packages = [pkgs.dust];
+
   xdg.configFile."dust/config.toml".source = tomlFormat.generate "dust-config" dustConfig;
 }

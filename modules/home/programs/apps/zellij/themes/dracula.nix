@@ -38,7 +38,7 @@
     ${name} {
     ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
-  xdg.configFile."zellij/themes/dracula.kdl".text = ''
+  programs.zellij.themes.dracula = ''
     // Title         : dracula.kdl
     // Author        : Bardia Samiee
     // Project       : Parametric Forge

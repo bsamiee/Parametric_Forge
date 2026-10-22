@@ -4,27 +4,33 @@
 # License       : MIT
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
-# Developer-tool authorization, admin authorization rights, Touch ID for sudo, and the passwordless sudo row.
+# Developer-tool authorization, Gatekeeper, admin authorization rights, SSH host trust, and the passwordless sudo row.
 {config, ...}: {
-  # Debugger/developer-tool authorization without per-launch prompts: developer mode plus _developer membership are idempotent root activations. TCC
-  # stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
+  # Debugger/developer-tool authorization without per-launch prompts: developer mode is a root activation, and the admin group already nests
+  # into _developer. Every write is idempotent. TCC stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
   system.activationScripts.postActivation.text = ''
-    /usr/sbin/DevToolsSecurity -status | grep -q "currently enabled" \
-      || /usr/sbin/DevToolsSecurity -enable
-    dsmemberutil checkmembership -U ${config.system.primaryUser} -G _developer | grep -q "^user is a member" \
-      || /usr/sbin/dseditgroup -o edit -t user -a ${config.system.primaryUser} _developer
-    # Authorization rights behind the System Settings unlock, installer, network, and launchd daemon dialogs: the is-admin rule, idempotent
+    /usr/sbin/DevToolsSecurity -enable >/dev/null
+    # Authorization rights behind the System Settings unlock, installer, network, and launchd daemon dialogs: each right reconciles to the
+    # is-admin rule against its live definition; `authorizationdb write` reports its status on stderr, so only a drifted right is written.
     for right in system.preferences system.preferences.security system.preferences.network system.privilege.admin system.install.software com.apple.ServiceManagement.daemons.modify; do
-      /usr/bin/security authorizationdb read "$right" 2>/dev/null | grep -q "<string>is-admin</string>" \
-        || /usr/bin/security authorizationdb write "$right" is-admin
+      [[ $(/usr/bin/security authorizationdb read "$right" 2>/dev/null | /usr/bin/plutil -extract rule.0 raw -o - -) == is-admin ]] ||
+        /usr/bin/security authorizationdb write "$right" is-admin
     done
   '';
 
-  # --- [PAM_AUTHENTICATION]
-  security.pam.services.sudo_local.touchIdAuth = true;
+  # --- [GATEKEEPER]
+  # "Allow applications from → Anywhere" is a one-time bootstrap step: `sudo spctl --global-disable` only reveals the option and exits 1 until
+  # it is confirmed in System Settings, whose SystemPolicy-prefs.plist write is SIP-restricted. Once chosen, syspolicyd's daily rearm activity
+  # would restore assessments after 30 days unless GKAutoRearm is false; the domain is the absolute /Library path because nix-darwin writes
+  # CustomSystemPreferences as root.
+  system.defaults.CustomSystemPreferences."/Library/Preferences/com.apple.security".GKAutoRearm = false;
+
+  # --- [SSH_KNOWN_HOSTS]
+  # /etc/ssh/ssh_known_hosts, which every ssh client reads beside ~/.ssh/known_hosts: GitHub's published ed25519 host key (api.github.com/meta).
+  programs.ssh.knownHosts."github.com".publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+
   # --- [SUDOERS_CONFIGURATION]
-  # The primary user runs every command as any user without a password, so every shell, agent, and the deploy rail's activation pass; Touch ID
-  # (sudo_local above) serves every other admin account.
+  # The primary user, the only admin, runs every command as any user without a password: every shell, agent, and nh's elevated activation.
   security.sudo.extraConfig = ''
     ${config.system.primaryUser} ALL=(ALL) NOPASSWD: ALL
   '';

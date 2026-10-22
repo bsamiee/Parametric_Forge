@@ -7,11 +7,11 @@
 # Media register rows: playback, ffmpeg.
 {
   media = [
-    ["play" "mpv" "Quick playback"]
-    ["playl" "mpv --loop-file=inf" "Loop current file"]
-    ["plays" "mpv --shuffle" "Shuffle playlist"]
-    ["yt" "mpv --ytdl-format='bestvideo[height<=?1080]+bestaudio/best'" "YouTube playback; mpv's wrapper carries yt-dlp"]
-    ["ffprobeh" "ffprobe -hide_banner" "Clean media info"]
-    ["ffplayh" "ffplay -hide_banner" "Clean playback"]
+    ["play" "mpv"]
+    ["playl" "mpv --loop-file=inf"]
+    ["plays" "mpv --shuffle"]
+    ["yt" "mpv --ytdl-format='bestvideo[height<=?1080]+bestaudio/best'"]
+    ["ffprobeh" "ffprobe -hide_banner"]
+    ["ffplayh" "ffplay -hide_banner"]
   ];
 }

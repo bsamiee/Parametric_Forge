@@ -4,38 +4,23 @@
 # License       : MIT
 # Path          : modules/home/programs/mac-tools/defaults/default.nix
 # ----------------------------------------------------------------------------
-# User-defaults owner: each domain row renders one plist under the config root, and Home Manager's onChange hook imports it — restarting the
-# domain's launch-time reader — only on the generation that changed it. nix-darwin's system.defaults rewrites every user key through
-# launchctl+sudo+defaults and restarts the Dock on every activation (defaults-write.nix), which is a WindowServer/Finder/Electron redraw storm per
-# pass; user rows therefore live here and only the root-scope rows (loginwindow, SoftwareUpdate) stay on system.defaults.
+# User-defaults owner: rows are Home Manager targets.darwin.defaults, imported every switch, so a GUI toggle is reasserted. Readers that load
+# their domain at launch reread it once, after the import, on the generation that changed the domain's data. An app-group suite
+# (<TEAMID>.group.<id>) lives in its group container, which defaults(1) reaches by path alone, so its rows import by that path. The
+# screen-capture privacy hint dates live in replayd's approvals plist, which is a dictionary keyed by client rather than a defaults domain.
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
-  cfg = config.forge.userDefaults;
-  # Readers that load their domain at launch only: a changed plist restarts them. Every other domain is picked up live through cfprefsd.
-  restart = {"com.apple.dock" = "Dock";};
-  # The global domain rides its defaults(1) import spelling; every other row imports under its own name.
-  importDomain = domain:
-    if domain == "NSGlobalDomain"
-    then "-globalDomain"
-    else domain;
-  root = "${config.xdg.configHome}/forge/defaults";
-  domains = lib.filterAttrs (_: keys: keys != {}) (lib.mapAttrs (_: lib.filterAttrs (_: v: v != null)) cfg);
-  mkRow = domain: keys: let
-    path = "${root}/${domain}.plist";
-  in
-    lib.nameValuePair path {
-      text = lib.generators.toPlist {escape = true;} keys;
-      onChange =
-        ''
-          run /usr/bin/defaults import ${lib.escapeShellArg (importDomain domain)} ${lib.escapeShellArg path}
-        ''
-        + lib.optionalString (restart ? ${domain}) ''
-          run /usr/bin/killall -q ${restart.${domain}} || true
-        '';
-    };
+  readers = {
+    "com.apple.dock" = "/usr/bin/killall Dock";
+    "com.apple.finder" = "/usr/bin/killall Finder";
+    pbs = "/System/Library/CoreServices/pbs -update";
+  };
+  rendered = domain: lib.removePrefix "${config.home.homeDirectory}/" "${config.xdg.stateHome}/forge/defaults/${domain}.plist";
+  plist = lib.generators.toPlist {escape = true;};
 in {
   imports = [
     ./input.nix
@@ -43,11 +28,54 @@ in {
     ./system.nix
   ];
 
-  options.forge.userDefaults = lib.mkOption {
+  options.forge.groupDefaults = lib.mkOption {
     type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
     default = {};
-    description = "macOS user defaults, domain -> keys (a null key is left unwritten); each domain is one plist, imported (a merge into the live domain) only on the generation that changed it.";
+    description = "App-group suite defaults, suite -> keys; each suite imports into its group container's plist every switch.";
   };
 
-  config.home.file = lib.mapAttrs' mkRow domains;
+  config = {
+    home.file = lib.mapAttrs' (domain: _:
+      lib.nameValuePair (rendered domain) {
+        text = plist (lib.filterAttrs (_: v: v != null) config.targets.darwin.defaults.${domain});
+      })
+    readers;
+
+    home.activation = {
+      rereadDefaults = lib.hm.dag.entryAfter ["setDarwinDefaults"] (lib.concatStrings (lib.mapAttrsToList (domain: command: ''
+          if ! cmp -s "''${oldGenPath:-/dev/null}/home-files/${rendered domain}" "$newGenPath/home-files/${rendered domain}"; then
+            run ${command}
+          fi
+        '')
+        readers));
+
+      setGroupDefaults = lib.hm.dag.entryAfter ["writeBoundary"] (lib.concatStrings (lib.mapAttrsToList (suite: keys: ''
+          run /usr/bin/defaults import ${lib.escapeShellArg "${config.home.homeDirectory}/Library/Group Containers/${suite}/Library/Preferences/${suite}"} ${pkgs.writeText "${suite}.plist" (plist keys)}
+        '')
+        config.forge.groupDefaults));
+
+      # --- [SCREEN_CAPTURE_HINTS]
+      # replayd re-presents its periodic privacy hint once a client's kScreenCapturePrivacyHintDate passes and rewrites the date only when it
+      # presents one, so a far-future date per approved client ends the cycle. replayd holds the approvals in memory and persists them over the
+      # file, so a changed file is followed by a SIGKILL (SIGTERM is ignored) and launchd relaunches it on demand. The supported bypass
+      # (forceBypassScreenCaptureAlert) is MDM-only, and the SCKPolicyTime/SCKPrivacyIndicatorTime defaults are internal builds only. replayd
+      # creates the file at the first approval; with replayd not running there is no in-memory copy to reload.
+      screenCaptureHints = lib.hm.dag.entryAfter ["writeBoundary"] ''
+        approvals="$HOME/Library/Group Containers/group.com.apple.replayd/ScreenCaptureApprovals.plist"
+        if [ -f "$approvals" ]; then
+          changed=0
+          while IFS= read -r client; do
+            keypath="$(printf '%s' "$client" | /usr/bin/sed 's/\./\\./g').kScreenCapturePrivacyHintDate"
+            if [ "$(/usr/bin/plutil -extract "$keypath" raw -o - "$approvals")" != 4000-01-01T00:00:00Z ]; then
+              run /usr/bin/plutil -replace "$keypath" -date 4000-01-01T00:00:00Z "$approvals"
+              changed=1
+            fi
+          done < <(/usr/bin/plutil -convert xml1 -o - "$approvals" | /usr/bin/xmllint --xpath '/plist/dict/key/text()' -)
+          if [ "$changed" = 1 ] && /usr/bin/pgrep -qx replayd; then
+            run /usr/bin/killall -9 replayd
+          fi
+        fi
+      '';
+    };
+  };
 }

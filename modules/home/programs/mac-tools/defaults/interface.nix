@@ -6,15 +6,9 @@
 # ----------------------------------------------------------------------------
 # Visual interface and desktop environment defaults.
 {config, ...}: let
-  # Dock tiles in their raw plist shape: a spacer row and one file-data tile per pinned bundle path.
-  tile = path: {
-    tile-data.file-data = {
-      _CFURLString = path;
-      _CFURLStringType = 0;
-    };
-  };
+  inherit (config.forge) apps;
 in {
-  forge.userDefaults = {
+  targets.darwin.defaults = {
     # --- [DOCK_CONFIGURATION]
     "com.apple.dock" = {
       orientation = "bottom";
@@ -50,29 +44,8 @@ in {
       no-bouncing = false;
       enable-spring-load-actions-on-all-items = true;
       # Pin sources: Drafts is masApp-declared; Claude, ChatGPT, and the Adobe suite (Creative Cloud installer-owned) are intentional manual installs.
-      persistent-apps =
-        [
-          {
-            tile-data = {};
-            tile-type = "spacer-tile";
-          }
-        ]
-        ++ map tile [
-          "/Applications/Heptabase.app"
-          "/Applications/Drafts.app"
-          "/Applications/Visual Studio Code.app"
-          "/Applications/Arc.app"
-          "/Applications/WezTerm.app"
-          "/Applications/ChatGPT.app"
-          "/Applications/Claude.app"
-          "/Applications/Superhuman.app"
-          "/System/Applications/Messages.app"
-          "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app"
-          "/Applications/Adobe InDesign 2027 (Beta)/Adobe InDesign 2027 (Beta).app"
-          "/Applications/Adobe Photoshop (Beta)/Adobe Photoshop (Beta).app"
-          "/Applications/Adobe Illustrator (Beta)/Adobe Illustrator.app"
-          "/Applications/Adobe Acrobat DC/Adobe Acrobat.app"
-        ];
+      # Paths read from the application rows (mac-tools/default-applications.nix).
+      persistent-apps = [{spacer = {};}] ++ map (name: apps.${name}.path) ["heptabase" "drafts" "vscode" "arc" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat"];
       persistent-others = [];
     };
     # --- [FINDER_CONFIGURATION]
@@ -90,7 +63,7 @@ in {
       _FXSortFoldersFirst = true;
       NewWindowTarget = "PfLo"; # PfLo = the NewWindowTargetPath location
       NewWindowTargetPath = "file://${config.home.homeDirectory}/Downloads/";
-      ShowPathbar = true;
+      ShowPathbar = true; # Finder reads ShowPathbar; Home Manager's typed ShowPathBar is a key Finder never reads
       ShowStatusBar = false;
       _FXShowPosixPathInTitle = false;
       QuitMenuItem = false;
@@ -136,7 +109,7 @@ in {
       AppleICUForce24HourTime = true;
       AppleTemperatureUnit = "Fahrenheit";
       AppleMeasurementUnits = "Inches";
-      AppleMetricUnits = 0;
+      AppleMetricUnits = false;
       AppleFontSmoothing = 0;
       # Menu-bar density: native is 16/16; 12/6 tightens one step without crowding.
       NSStatusItemSpacing = 12;

@@ -4,35 +4,41 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/plugins.nix
 # ----------------------------------------------------------------------------
-# Sourced-plugin roster: HM sources each row at order 950. Widget-order-bound surfaces live elsewhere by design: fzf-tab and zsh-completions belong to
-# completions.nix (pre-wrapper / pre-compinit), autosuggestions and syntax highlighting to HM options in options.nix. A new sourced plugin is one row.
+# Sourced plugin surface: forgit's git subcommand on the profile with the two worktree commands that cd as site functions, and alias coaching
+# deferred past the first prompt. Widget-order-bound surfaces live elsewhere: fzf-tab and zsh-completions in completions.nix, autosuggestions
+# and syntax highlighting in options.nix.
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
   inherit (config.forge.theme) roles;
   sgr = c: "\\e[38;2;${toString c.r};${toString c.g};${toString c.b}m";
 in {
-  programs.zsh = {
-    plugins = [
-      {
-        # Its commands reach the shell through the alias register (aliases/git.nix, git-forgit rows), never its own alias table: seven of its
-        # default names (ga gd gcp grb gbd gco grs) collide with register rows, and FORGIT_NO_ALIASES is the documented opt-out.
-        name = "forgit";
-        src = pkgs.zsh-forgit;
-        file = "share/zsh/zsh-forgit/forgit.plugin.zsh";
-      }
-      {
-        # Alias coaching kept deliberately: operator-ruled behavioral surface.
-        name = "you-should-use";
-        src = pkgs.zsh-you-should-use;
-        file = "share/zsh/plugins/you-should-use/you-should-use.plugin.zsh";
-      }
-    ];
+  # git-forgit and its _git-forgit completion ride the profile; every FORGIT_*_FZF_OPTS row stays an env read by git-forgit itself.
+  home.packages = [pkgs.zsh-forgit];
 
-    # Pre-source knob you-should-use reads at load; the coaching line carries the warning and accent tiers of the theme as truecolor SGR.
-    # forgit's own knobs are environment rows (environments/shell.nix): it warns on any config option it finds unexported.
+  programs.zsh = {
+    siteFunctions = {
+      gwt = ''
+        (( $# )) && { git forgit worktree "$@"; return }
+        local tree
+        tree=$(git forgit worktree) || return
+        [[ -d $tree ]] && builtin cd -- "$tree"
+      '';
+      gwa = ''
+        local tree
+        tree=$(git forgit worktree_add "$@") || return
+        [[ -d $tree ]] || return 0
+        builtin cd -- "$tree"
+      '';
+    };
+    # you-should-use registers only a preexec hook, so it loads at the first zle idle (zsh-defer) and its five tput forks leave the prompt path.
     localVariables.YSU_MESSAGE_FORMAT = "${sgr roles.state.warning}Found existing %alias_type for ${sgr roles.accent.primary}\"%command\"${sgr roles.state.warning}. You should use: ${sgr roles.accent.primary}\"%alias\"\\e[0m";
+    initContent = lib.mkOrder 950 ''
+      source ${pkgs.zsh-defer}/share/zsh-defer/zsh-defer.plugin.zsh
+      zsh-defer source ${pkgs.zsh-you-should-use}/share/zsh/plugins/you-should-use/you-should-use.plugin.zsh
+    '';
   };
 }

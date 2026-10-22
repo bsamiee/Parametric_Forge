@@ -9,7 +9,6 @@
   imports = [
     ./core.nix
     ./shell.nix
-    ./languages.nix
     ./development.nix
     ./media.nix
   ];

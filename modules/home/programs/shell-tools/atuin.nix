@@ -9,9 +9,8 @@
   inherit (config.forge.theme) roles;
 in {
   programs.atuin = {
-    enable = true;
     # HM evals `atuin init zsh` at order 1000: after fzf (910, whose ^R binding is off), so Atuin owns ^R and the up arrow.
-    enableZshIntegration = true;
+    enable = true;
 
     # Rows here differ from Atuin's documented defaults; the database and key sit at their XDG defaults under ~/.local/share/atuin.
     settings = {
@@ -21,7 +20,6 @@ in {
         enabled = true;
         autostart = true;
       };
-      logs.dir = "${config.xdg.stateHome}/atuin/logs"; # the daemon's default log root is the hard-coded ~/.atuin/logs
       # History remains local until a new sync owner is deliberately configured.
       auto_sync = false;
       update_check = false;

@@ -65,7 +65,7 @@
 
   # One Lua fact inventory serves lua_ls settings (any workspace root, the repo sources included) and the generated .luarc.json in the config dir.
   luaLibrary =
-    ["${pkgs.neovim-unwrapped}/share/nvim/runtime/lua"]
+    ["${config.programs.neovim.package}/share/nvim/runtime/lua"]
     ++ lib.mapAttrsToList (_: p: "${p}/lua") plugins;
 
   # --- [LSP_INVENTORY]
@@ -169,8 +169,8 @@
     {
       # sort -V: lexicographic ls misorders generations across digit widths.
       id = "generation-diff";
-      label = "Generation diff (nvd)";
-      argv = ["sh" "-c" "nvd diff $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2)"];
+      label = "Generation diff (dix)";
+      argv = ["sh" "-c" "dix $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2)"];
       mode = "scratch";
     }
     {
@@ -178,7 +178,7 @@
       # before launch, an inner-drv abort rails into the same typed verdict line.
       id = "nix-diff";
       label = "Generation diff, derivation level (nix-diff)";
-      argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the nvd row\n' ''];
+      argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the dix row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the dix row\n' ''];
       mode = "scratch";
     }
     {
@@ -190,8 +190,8 @@
     }
     {
       id = "redeploy-build";
-      label = "redeploy --build";
-      argv = ["redeploy" "--build"];
+      label = "redeploy build";
+      argv = ["redeploy" "build"];
       cwd = flakeRoot;
       mode = "pane";
     }
@@ -241,12 +241,8 @@
 
   genLuaModule = value: "-- Generated from the Forge Nix owner (apps/nvim/default.nix).\nreturn ${toLua value}\n";
 in {
-  # defaultEditor projects EDITOR and VISUAL as nvim into home.sessionVariables. withPython3 makes the wrapper build a store-owned
-  # python3.withPackages [pynvim] host and seat it as vim.g.python3_host_prog ahead of every user Lua file.
   programs.neovim = {
     enable = true;
-    defaultEditor = true;
-    withPython3 = true;
     initLua = builtins.readFile ./init.lua;
     plugins = lib.attrValues plugins;
     # Editor-only search engines for the snacks pickers and grug-far: ripgrep, fd, and ast-grep left the machine PATH for each project's mise.toml,

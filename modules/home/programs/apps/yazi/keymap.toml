@@ -4,22 +4,18 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/keymap.toml
 # ----------------------------------------------------------------------------
-# Primary Modifier:		Right Command   → Hyper (⌘⌥⌃⇧)  leader "<D-A-C-S>"	| Zellij-owned
-# Secondary Modifier:	Right Option    → Super (⌘⌥⌃)   leader "<D-A-C>" 	| Zellij-owned
-# Tertiary Modifier: 	Right Shift     → Power (⌥⌃⇧)   leader "<A-C-S>" 	| Free for Yazi binds
-
-# `<D>` Super (Command/⌘), `<A>` Alt (Option/⌥), `<C>` Ctrl (Control/⌃), `<S>` Shift (⇧)
+# Power-leader binds spell `<POWER-x>`; the Nix owner substitutes the leader prefix derived from the chord owner's Power layer.
 
 [mgr]
 keymap = [
     # --- [SYSTEM_INTEGRATION]
-    { on = "<A-C-S-e>", run = "plugin augment-command.editor", desc = "Open in $EDITOR" },
-    { on = "<A-C-S-l>", run = "plugin augment-command.pager", desc = "Open in $PAGER" },
+    { on = "<POWER-e>", run = "plugin augment-command.editor", desc = "Open in $EDITOR" },
+    { on = "<POWER-l>", run = "plugin augment-command.pager", desc = "Open in $PAGER" },
     { on = "<C-p>", run = "shell -- qlmanage -p %s", desc = "macOS Quick Look" },
 
     # --- [SPECIAL]
     # Command Palette
-    { on = "<A-C-S-k>", run = "plugin augment-command.emit -- --augmented", desc = "Augment command palette" },
+    { on = "<POWER-k>", run = "plugin augment-command.emit -- --augmented", desc = "Augment command palette" },
     # Shell Related
     { on = ";", run = "shell --interactive", desc = "Run a shell command" },
     { on = ":", run = "shell --block --interactive", desc = "Run a shell command (block until finishes)" },
@@ -46,8 +42,8 @@ keymap = [
 
     # --- [NAVIGATION]
     # Commands
-    { on = "<A-C-S-h>", run = "plugin augment-command.parent-arrow -- -1", desc = "Navigate parent up" },
-    { on = "<A-C-S-j>", run = "plugin augment-command.parent-arrow -- 1", desc = "Navigate parent down" },
+    { on = "<POWER-h>", run = "plugin augment-command.parent-arrow -- -1", desc = "Navigate parent up" },
+    { on = "<POWER-j>", run = "plugin augment-command.parent-arrow -- 1", desc = "Navigate parent down" },
     # Seeking
     { on = "K", run = "seek -5", desc = "Seek up 5 units in the preview" },
     { on = "J", run = "seek 5", desc = "Seek down 5 units in the preview" },
@@ -73,7 +69,7 @@ keymap = [
     { on = ["g", "c"], run = "cd ~/.config", desc = "Go ~/.config" },
     { on = ["g", "d"], run = "cd ~/Downloads", desc = "Go ~/Downloads" },
     { on = ["g", "<Space>"], run = "cd --interactive", desc = "Jump interactively" },
-    { on = ["g", "z"], run = "shell --block 'yazi-zoxide-cdi.sh'", desc = "Jump to a directory via zoxide (cdi)" },
+    { on = ["g", "z"], run = "plugin zoxide", desc = "Jump to a directory via zoxide" },
     { on = ["g", "f"], run = "follow", desc = "Follow hovered symlink" },
     # History
     { on = "<A-Left>", run = "back", desc = "Back to previous directory in history" },
@@ -86,7 +82,7 @@ keymap = [
     { on = "<C-[>", run = "tab_swap -1", desc = "Swap current tab with previous tab" },
     { on = "<C-]>", run = "tab_swap 1", desc = "Swap current tab with next tab" },
     { on = "t", run = "plugin augment-command.tab-create", desc = "Create a new tab from the hovered selection" },
-    { on = "<A-C-S-r>", run = "tab_rename --interactive", desc = "Rename current tab (Power+r)" },
+    { on = "<POWER-r>", run = "tab_rename --interactive", desc = "Rename current tab (Power+r)" },
     { on = "1", run = "plugin augment-command.tab-switch -- 0", desc = "Switch to first tab" },
     { on = "2", run = "plugin augment-command.tab-switch -- 1", desc = "Switch to second tab" },
     { on = "3", run = "plugin augment-command.tab-switch -- 2", desc = "Switch to third tab" },
@@ -103,8 +99,8 @@ keymap = [
     # Task manager (the quit confirm references it)
     { on = "w", run = "tasks:show", desc = "Show task manager" },
     # Exiting & Cancelling
-    { on = "<A-C-S-w>", run = "close", desc = "Close current tab (Power+w), or quit if last" },
-    { on = "<A-C-S-q>", run = "plugin augment-command.quit", desc = "Quit Yazi (Power+q)" },
+    { on = "<POWER-w>", run = "close", desc = "Close current tab (Power+w), or quit if last" },
+    { on = "<POWER-q>", run = "plugin augment-command.quit", desc = "Quit Yazi (Power+q)" },
     { on = "<Esc>", run = "escape", desc = "Exit VI mode, clear selection, or cancel search" },
     { on = "<C-z>", run = "suspend", desc = "Suspend the process" },
     # Opening

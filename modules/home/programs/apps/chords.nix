@@ -148,7 +148,7 @@
     // {keys = lib.toList r.keys;}
     // lib.optionalAttrs (r ? forgot) {forgot = mkForgot r.forgot;}
     // lib.optionalAttrs (r ? ribbon) {ribbon = mkRibbon r.ribbon;};
-  popupGeometry = config.programs.zellij.popupGeometry;
+  popupGeometry = config.forge.zellij.popupGeometry;
   runFloat = cmdWords: g:
     lib.concatStringsSep "\n" [
       "          Run ${lib.concatMapStringsSep " " (w: "\"${w}\"") cmdWords} {"
@@ -194,8 +194,8 @@
       body = runFloat ["yazi-dispatch.sh" "toggle"] popupGeometry.dispatcher;
       pre = lib.concatStringsSep "\n" [
         "        // Floating dispatcher: toggles the per-tab Yazi popup (create /"
-        "        // show+focus / hide). Never in_place: an attached client on 0.44.3"
-        "        // strands exited in-place panes and their suppressed hosts."
+        "        // show+focus / hide). Never in_place: on 0.45.1 an in-place run from an"
+        "        // attached client returns a pane id that never surfaces."
       ];
     }
     {
@@ -224,7 +224,7 @@
     [260 "json explore" "jqi -> jnv"]
     [270 "loc report" "loc <path>"]
     [280 "folder map" "tree <path>"]
-    [290 "deploy" "redeploy --build / --switch"]
+    [290 "deploy" "redeploy build / switch"]
     [300 "http" "GET/POST/PUT -> xh"]
   ];
 

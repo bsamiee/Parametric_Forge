@@ -105,6 +105,16 @@ local handlers = {
     ["augment-command-palette"] = function()
         return deck.palette
     end,
+
+    -- delta's file://<path>:<line> hyperlinks open in the deck's editor route; false suppresses the default `open`. Every other URI keeps it.
+    ["open-uri"] = function(window, _, uri)
+        local file, line = uri:match("^file://(.-):(%d+)$")
+        if not file then
+            return
+        end
+        deck.edit(window, file, line)
+        return false
+    end,
 }
 
 function M.apply()

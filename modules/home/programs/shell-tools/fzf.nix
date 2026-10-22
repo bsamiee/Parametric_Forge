@@ -17,9 +17,8 @@
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";
 in {
   programs.fzf = {
-    enable = true;
     # HM sources `fzf --zsh` at order 910: after fzf-tab (580), so ^I keeps fzf-tab behind the ** trigger, and before atuin (1000).
-    enableZshIntegration = true;
+    enable = true;
 
     # --- [DEFAULT_CONFIGURATION]
     defaultCommand = fdFiles;

@@ -4,11 +4,10 @@
 # License       : MIT
 # Path          : flake-modules/tooling.nix
 # ----------------------------------------------------------------------------
-# Developer shell and formatting surfaces.
+# Formatting and lint surfaces.
 _: {
   perSystem = {
-    config,
-    overlaidPkgs,
+    pkgs,
     lib,
     ...
   }: let
@@ -29,25 +28,17 @@ _: {
         else "${path}/**"
     ) (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
   in {
-    # Repository-maintenance shell: formatter plus flake proof/update helpers. Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
-    devShells.default = overlaidPkgs.mkShell {
-      packages = [
-        config.formatter
-        overlaidPkgs.nix-fast-build
-        overlaidPkgs.nix-init
-        overlaidPkgs.nix-update
-        overlaidPkgs.nixpkgs-review
-        overlaidPkgs.nvfetcher
-        overlaidPkgs.nurl
-      ];
-    };
-
     # treefmt-nix owns the formatter and the `treefmt` flake check natively; `nix fmt -- --ci` is the proving spelling.
     treefmt = {
       settings.excludes = ["overlays/_sources/**"];
       # Rows carry the house style (4-space indent, 150 width) explicitly: the sandboxed formatting check cannot see machine-level XDG tool configs.
       programs = {
         alejandra.enable = true;
+        # Nix static analysis rides the same cache and excludes: deadnix and statix fix in place under `nix fmt`, nixf-diagnose reports, and the
+        # treefmt check fails on any diff they leave (statix's unfixable lints gate through flake-modules/qa.nix).
+        deadnix.enable = true;
+        statix.enable = true;
+        nixf-diagnose.enable = true;
         # Native rows generate the config file and pin --config-path, which is what keeps the sandboxed check independent of any repo-root or
         # XDG config; simplify stays off because -s rewrites code, not layout.
         stylua = {
@@ -77,8 +68,8 @@ _: {
         # The style vocabulary is the single law; its bytes ride the row so the sandboxed check needs no XDG config and the treefmt cache busts
         # whenever the law changes. pnpm owns its lockfile pair and rewrites both in its own layout.
         yamlfmt = {
-          command = "${overlaidPkgs.yamlfmt}/bin/yamlfmt";
-          options = ["-conf" (toString (overlaidPkgs.writeText "yamlfmt-conf" style.yamlfmt))];
+          command = "${pkgs.yamlfmt}/bin/yamlfmt";
+          options = ["-conf" (toString (pkgs.writeText "yamlfmt-conf" style.yamlfmt))];
           includes = ["*.yaml" "*.yml"];
           excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
         };

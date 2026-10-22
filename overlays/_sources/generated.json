@@ -8,11 +8,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-6rF+DJKcEbYim1droOfS12THR4ysnK+fv6Ef5hvDVkc=",
+            "sha256": "sha256-8UfSuRG7QvHjdEINMYbmUTzjkhna2KzB2ZzAAffcqoI=",
             "type": "url",
-            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.0/op_apple_universal_v2.41.0.pkg"
+            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.1/op_apple_universal_v2.41.1.pkg"
         },
-        "version": "2.41.0"
+        "version": "2.41.1"
     },
     "biome-aarch64-darwin": {
         "cargoLock": null,
@@ -23,11 +23,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-NjZ5bYx4v8/g1FlG3JPiHhLSeknrp0AeGK8eqFTSVQM=",
+            "sha256": "sha256-vma3bcuTCx42W9NsT12FV8LdpwsxVn+L0VUJ5Id1Omk=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-darwin-arm64"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.2/biome-darwin-arm64"
         },
-        "version": "2.5.15"
+        "version": "2.6.2"
     },
     "design-geist-font": {
         "cargoLock": null,
@@ -37,27 +37,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-cPQsFFL7bfEuoYPiCmWZkVc1T5HRHawYtMcT44OAjsI=",
-            "type": "url",
-            "url": "https://github.com/vercel/geist-font/releases/download/v1.8.1/geist-font-v1.8.1.zip"
+            "sha256": "sha256-s2A+S77Ik7BnMnT+zxNBJZD9LhgUPF24OWIK9Qu3Zmc=",
+            "type": "tarball",
+            "url": "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip"
         },
-        "version": "1.8.1"
-    },
-    "design-ghostscript": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-ghostscript",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-wgSSvI67lsh/ouUqCSbhzajN6V1mFF4BiscT/tXaOM8=",
-            "type": "url",
-            "url": "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs10080/ghostscript-10.08.0.tar.xz"
-        },
-        "version": "gs10080/ghostscript-10.08.0.tar.xz"
+        "version": "1.8.2"
     },
     "design-harfbuzz": {
         "cargoLock": null,
@@ -68,26 +52,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-0HoAcycndwiipzrkN4h8268oKTf20DylRncj6Qma9YY=",
+            "sha256": "sha256-loU26avXgvB/eVQETAxAIBmfzdObQdIh7ELSo75KRN8=",
             "type": "url",
-            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz"
+            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz"
         },
-        "version": "14.6.0"
-    },
-    "design-imagemagick": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-imagemagick",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Vf4OwkYkW0bEKfnmvGUpStSnima4ir2YF5ccoVeFYyM=",
-            "type": "url",
-            "url": "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-34/ImageMagick-7.1.2-34.tar.xz"
-        },
-        "version": "7.1.2-34"
+        "version": "15.0.0"
     },
     "design-mupdf": {
         "cargoLock": null,
@@ -118,56 +87,6 @@
         },
         "version": "3.12.1"
     },
-    "design-poppler": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-poppler",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Z5LLfGkgUAeth9LpNs7MWzox+sKatU/8MXX9trKmzjU=",
-            "type": "url",
-            "url": "https://poppler.freedesktop.org/poppler-26.10.0.tar.xz"
-        },
-        "version": "26.10.0"
-    },
-    "design-poppler-test-data": {
-        "cargoLock": null,
-        "date": "2026-08-14",
-        "extract": null,
-        "name": "design-poppler-test-data",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "deepClone": false,
-            "fetchSubmodules": false,
-            "leaveDotGit": false,
-            "name": null,
-            "rev": "48b6219b84fc0a708040cb279d51095cc4e1c603",
-            "sha256": "sha256-2eH4dZs2J0CeTWrXOYEHb0Xnpfa7tX8mi7AX2E9D41U=",
-            "sparseCheckout": [],
-            "type": "git",
-            "url": "https://gitlab.freedesktop.org/poppler/test.git"
-        },
-        "version": "48b6219b84fc0a708040cb279d51095cc4e1c603"
-    },
-    "design-qpdf": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-qpdf",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-ilivW2FBMZKHwYg77IvRvVRbdWe3/F5s5dJaHIXzY5c=",
-            "type": "url",
-            "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2.tar.gz"
-        },
-        "version": "12.4.2"
-    },
     "design-scheherazade-new": {
         "cargoLock": null,
         "date": null,
@@ -176,26 +95,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-SceJwhMFvtE9kNdQCHe1DWLbHo5Nb3cVF45VYxndvak=",
-            "type": "url",
+            "sha256": "sha256-UFBywGKFMpboDAIloRDhJihf/KMGh+O+4sIEfpGx0MU=",
+            "type": "tarball",
             "url": "https://github.com/silnrsi/font-scheherazade/releases/download/v4.500/ScheherazadeNew-4.500.zip"
         },
         "version": "4.500"
-    },
-    "design-temurin-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-temurin-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-J2GzzlHHtdRdoXDxufhaTPIjpTAcVgkAz0wOyk9P+nI=",
-            "type": "tarball",
-            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/mac/aarch64/jre/hotspot/normal/eclipse"
-        },
-        "version": "jdk-26.0.2.1+1"
     },
     "design-utiluti": {
         "cargoLock": null,
@@ -221,11 +125,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-zE34ZUZZRes1eg0gpgC3aNbb+WifQzxPDz7EXczl23w=",
+            "sha256": "sha256-Ag7AUh5miZcZvsYBqTGoQtOXUWydejLA3+b2amWvmIs=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.203/cli-1.31.203.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.206/cli-1.31.206.jar"
         },
-        "version": "1.31.203"
+        "version": "1.31.206"
     },
     "energyplus-aarch64-darwin": {
         "cargoLock": null,
@@ -299,19 +203,18 @@
         },
         "version": "1.9.0"
     },
-    "zjstatus": {
+    "watchexec-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
         "extract": null,
-        "name": "zjstatus",
+        "name": "watchexec-aarch64-darwin",
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-KCzqshnlbhkIyfrDOQckH+bD4e99hfqrPl9DjO+HuP4=",
-            "type": "url",
-            "url": "https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm"
+            "sha256": "sha256-33cZozNm/IxiVg/ISXRPO6eMyGDwg0QoaB8TSePxwkE=",
+            "type": "tarball",
+            "url": "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz"
         },
-        "version": "0.25.0"
+        "version": "2.8.0"
     }
 }

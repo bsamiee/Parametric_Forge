@@ -26,10 +26,6 @@ _: {
       file-allocation = "none"; # Faster startup for SSDs
       disk-cache = "32M";
 
-      # --- [PROTOCOL_SETTINGS]
-      enable-http-pipelining = true;
-      user-agent = "aria2";
-
       # --- [BITTORRENT_SETTINGS]
       enable-dht6 = true;
       bt-enable-lpd = true;

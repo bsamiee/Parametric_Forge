@@ -57,7 +57,7 @@ in {
   };
   Geist.package = geist;
   "Symbols Nerd Font Mono" = {
-    package = pkgs.nerd-fonts.symbols-only;
+    package = selectPaths pkgs.nerd-fonts.symbols-only ["share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf"];
     inherit statusAlphabet gitAlphabet;
   };
   "Scheherazade New".package = pkgs.scheherazade-new;

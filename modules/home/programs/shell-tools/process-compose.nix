@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/process-compose.nix
 # ----------------------------------------------------------------------------
-# Non-container process orchestration for project-local service meshes; the package row lives in the owner table. Container-tools owns the
-# container axis and launchd owns durable machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
+# Non-container process orchestration for project-local service meshes. Container-tools owns the container axis and launchd owns durable
+# machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
 {
   config,
   lib,
@@ -60,6 +60,8 @@
     };
   };
 in {
+  home.packages = [pkgs.process-compose];
+
   xdg.configFile."process-compose/theme.yaml".source = yamlFormat.generate "process-compose-theme" processComposeTheme;
 
   # settings.yaml is TUI-mutated state (theme/sort auto-save); seed the custom style selection once, never overwrite later user edits.

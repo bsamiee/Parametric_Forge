@@ -12,11 +12,12 @@
   # A workspace with its own `build.build-dir` keeps it. Nightly cargo locks each unit under `fine-grain-locking`, so concurrent builds sharing
   # the directory proceed together; stable cargo ignores the `[unstable]` table and locks the whole directory for each build. `cargo clean`
   # empties the whole shared directory, a finished project deletes its own target directory alone.
-  home.file.".cargo/config.toml".text = ''
-    [build]
-    build-dir = "${config.xdg.cacheHome}/cargo/build"
-
-    [unstable]
-    fine-grain-locking = true
-  '';
+  programs.cargo = {
+    enable = true;
+    package = null;
+    settings = {
+      build.build-dir = "${config.xdg.cacheHome}/cargo/build";
+      unstable.fine-grain-locking = true;
+    };
+  };
 }

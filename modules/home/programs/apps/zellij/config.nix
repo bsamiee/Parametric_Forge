@@ -398,7 +398,7 @@ in {
     }
   '';
 
-  xdg.configFile."zellij/config.kdl".text = ''
+  programs.zellij.extraConfig = ''
         // Title         : config.kdl
         // Author        : Bardia Samiee
         // Project       : Parametric Forge
@@ -408,10 +408,10 @@ in {
         // Core Zellij options referencing the shared Parametric Forge theme
 
         // --- [CORE_CONFIGURATION]
-        // Rows differ from zellij's documented defaults. default_shell takes the shell's path: the $SHELL default is the account's /bin/zsh,
-        // not the profile zsh every other spawn runs.
+        // Rows differ from zellij's documented defaults. default_shell names the one zsh every spawn runs: the $SHELL default is whatever
+        // the server's launcher exported, which an agent harness sets to bash.
         theme                       "dracula"
-        default_shell               "${lib.getExe config.programs.zsh.package}"
+        default_shell               "${config.forge.shell}"
         // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
         // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted) rebuilds the session from its
         // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: a

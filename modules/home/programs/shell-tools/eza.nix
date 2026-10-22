@@ -163,5 +163,5 @@ in {
     ];
     theme = ezaTheme;
   };
-  home.file.".local/bin/tree".source = "${treeCommand}/bin/tree";
+  home.packages = [treeCommand];
 }

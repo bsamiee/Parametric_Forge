@@ -18,12 +18,12 @@
     # HarfBuzz builds its utilities by default (meson `utilities` is enabled) and seats them in the dev output. No hb-view: it is the one
     # utility that needs cairo, which harfbuzz-current disables, and pango-view covers that lane.
     pkgs.harfbuzz-current.dev # hb-shape, hb-subset, hb-info, hb-vector: shaping traces, font subsetting, face dumps, vector render
-    pkgs.imagemagick-current
+    pkgs.imagemagick
     pkgs.mediainfo # Yazi `inspect` opener row
     pkgs.mpv # Playback backend for media aliases
     pkgs.oxipng # Lossless PNG recompression for exported raster; no config or env surface
     pkgs.pandoc-current
-    pkgs.poppler-utils-current # Current PDF utilities; app dependencies keep nixpkgs' compatible Poppler library.
+    pkgs.poppler-utils
     pkgs.resvg # SVG to PNG renderer
     pkgs.typst
     pkgs.vl-convert # Vega and Vega-Lite specs to SVG/PNG/JPEG/PDF; V8 is linked in, so no Node and no browser

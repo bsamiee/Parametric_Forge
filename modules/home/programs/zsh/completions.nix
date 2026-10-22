@@ -15,8 +15,9 @@
 }: let
   inherit (config.forge.theme) palette projections;
 
-  # Package rows whose share/zsh/site-functions precede compinit on fpath.
-  completionPackages = [pkgs.zsh-completions];
+  # Package rows whose share/zsh/site-functions precede compinit on fpath. nix-zsh-completions carries the legacy nix-* commands (the new CLI's
+  # _nix ships with Determinate's default profile); nix-darwin's copy is off (programs.zsh.enableCompletion), so this row is its one owner.
+  completionPackages = [pkgs.zsh-completions pkgs.nix-zsh-completions];
   siteFunctions =
     map (p: "${p}/share/zsh/site-functions") completionPackages
     ++ [
@@ -24,14 +25,13 @@
       "/opt/homebrew/share/zsh/site-functions"
     ];
 
-  # Dump key: the pre-compinit fpath surface — completion packages, sourced-plugin srcs, and the profile package set. The per-user profile
-  # site-functions dir is pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without /etc/profiles/per-user)
-  # otherwise permanently misses home.packages completions under compinit -C. Any change names a new dump file, so compinit -C rebuilds once
-  # per fingerprint, never per shell.
-  fingerprint = builtins.substring 0 12 (builtins.hashString "sha256"
-    (builtins.toJSON (map toString (completionPackages
-      ++ map (p: p.src) config.programs.zsh.plugins
-      ++ config.home.packages))));
+  # Dump key: the pre-compinit fpath surface — completion packages and the profile package set. The per-user profile site-functions dir is
+  # pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without /etc/profiles/per-user) otherwise permanently
+  # misses home.packages completions under compinit -C. Any change names a new dump file, so compinit -C rebuilds once per fingerprint, never
+  # per shell.
+  fingerprint =
+    builtins.substring 0 12 (builtins.hashString "sha256"
+      (builtins.toJSON (map toString (completionPackages ++ config.home.packages))));
 
   cacheDir = "${config.xdg.cacheHome}/zsh";
 
@@ -157,15 +157,18 @@
 in {
   programs.zsh = {
     # -C trusts the fingerprint-keyed dump: the fingerprint in its name owns invalidation, so no interactive shell ever pays the fpath rescan or
-    # compaudit walk.
+    # compaudit walk. The staleness test runs in the shell, so a current dump forks nothing; a fresh dump compiles in the background and drops
+    # every superseded fingerprint's dump in the same step (extended_glob stays inside the background subshell).
     completionInit = ''
       autoload -U compinit
       compinit -C -d "$ZSH_COMPDUMP"
-      {
-        if [[ ! -f "$ZSH_COMPDUMP.zwc" || "$ZSH_COMPDUMP" -nt "$ZSH_COMPDUMP.zwc" ]]; then
+      if [[ ! -f $ZSH_COMPDUMP.zwc || $ZSH_COMPDUMP -nt $ZSH_COMPDUMP.zwc ]]; then
+        {
+          setopt extended_glob
           zcompile "$ZSH_COMPDUMP"
-        fi
-      } &!
+          rm -f -- ${cacheDir}/zcompdump-*~$ZSH_COMPDUMP*(N)
+        } &!
+      fi
     '';
 
     initContent = lib.mkMerge [

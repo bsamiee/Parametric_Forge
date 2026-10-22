@@ -13,25 +13,21 @@ let
   w = toString width;
 in {
   inherit indent width;
-  # Machine-level editor law: the [*] block is the whole contract — per-repo .editorconfig files layer on top and win via nearest-first resolution.
-  editorconfig = ''
-    root = true
-
-    [*]
-    charset = utf-8
-    end_of_line = lf
-    insert_final_newline = true
-    trim_trailing_whitespace = true
-    indent_style = space
-    indent_size = ${i}
-    max_line_length = ${w}
-
-    [*.{sh,bash}]
-    switch_case_indent = true
-
-    [{Makefile,*.mk,*.go}]
-    indent_style = tab
-  '';
+  # Machine-level editor law as Home Manager editorconfig.settings sections: the [*] block is the whole contract — per-repo .editorconfig
+  # files layer on top and win via nearest-first resolution.
+  editorconfig = {
+    "*" = {
+      charset = "utf-8";
+      end_of_line = "lf";
+      insert_final_newline = true;
+      trim_trailing_whitespace = true;
+      indent_style = "space";
+      indent_size = indent;
+      max_line_length = width;
+    };
+    "*.{sh,bash}".switch_case_indent = true;
+    "{Makefile,*.mk,*.go}".indent_style = "tab";
+  };
   yamlfmt = ''
     formatter:
         type: basic

@@ -50,7 +50,7 @@ in {
       # --- [LOGO_CONFIGURATION]
       logo = {
         type = "file";
-        source = "${config.xdg.configHome}/fastfetch/logo.txt";
+        source = "${../../assets/ascii/irgc-ascii-art.txt}";
         padding = {
           top = 1;
           right = 3;
@@ -92,19 +92,14 @@ in {
         {
           type = "packages";
           key = " └ 󰏖  ";
-          format = "{nix-default} (nix), {brew} (brew), {brew-cask} (cask)";
+          format = "{nix-all} (nix), {brew} (brew), {brew-cask} (cask)";
         }
         {type = "break";}
 
         # Desktop Section
         {
-          type = "de";
-          key = "UI   ";
-          format = "{pretty-name}";
-        }
-        {
           type = "wm";
-          key = " ├ 󰧨  ";
+          key = "UI   ";
           format = "{pretty-name}";
         }
         {
@@ -116,24 +111,9 @@ in {
           key = " ├ 󰉼  ";
         }
         {
-          type = "theme";
-          key = " ├ 󰉼  ";
-          format = "Dracula";
-        }
-        {
-          type = "icons";
-          key = " ├ 󰀻  ";
-          format = "Nerd Fonts";
-        }
-        {
           type = "shell";
           key = " ├   ";
           format = "{pretty-name} {version}";
-        }
-        {
-          type = "terminal";
-          key = " ├   ";
-          format = "WezTerm";
         }
         {
           type = "terminal";
@@ -180,8 +160,9 @@ in {
           format = "{width}x{height} @ {refresh-rate}Hz";
         }
         {
-          type = "opengl";
+          type = "gpu";
           key = " └ 󰍛  ";
+          format = "{name} ({core-count})";
         }
         {type = "break";}
 

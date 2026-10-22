@@ -4,29 +4,31 @@
 # License       : MIT
 # Path          : modules/home/programs/git-tools/git.nix
 # ----------------------------------------------------------------------------
-# Git identity, op-backed SSH signing, workflow settings, delta + difftastic
+# Git identity, op-backed SSH signing, workflow settings, delta
 {
   config,
   host,
   lib,
-  pkgs,
   ...
 }: let
   inherit (config.forge.theme) roles projections;
   # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
   git = projections.gitHex;
-  # One universal identity; the one key (in the Personal vault, the first hosts/context.nix authorized key without its comment)
+  # One universal identity; the one key (in the Personal vault, the hosts/context.nix ssh.publicKey without its comment)
   # authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
     name = "Bardia Samiee";
     email = "b.samiee93@gmail.com";
-    publicKey = lib.concatStringsSep " " (lib.take 2 (lib.splitString " " (lib.head host.ssh.authorizedKeys)));
+    publicKey = lib.concatStringsSep " " (lib.take 2 (lib.splitString " " host.ssh.publicKey));
   };
   # Principal table for local `git log --show-signature` verification.
   trustedPrincipals = [identity.email];
 in {
   programs.git = {
     enable = true;
+
+    # Machine-wide excludes for macOS noise; each repo's .gitignore names its own outputs.
+    ignores = [".DS_Store"];
 
     # allowedSigners lands the $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
     signing = {
@@ -53,7 +55,7 @@ in {
         followTags = true;
       };
 
-      core.autocrlf = "input";
+      core.fsmonitor = true; # git's built-in fsmonitor daemon feeds the untracked cache manyFiles turns on
 
       feature.manyFiles = true; # index.version 4, index.skipHash, and the untracked cache
 
@@ -62,16 +64,7 @@ in {
         renames = "copies";
         colorMoved = "default";
         submodule = "log"; # Show submodule changes in diffs
-        tool = "difftastic"; # Structural lane: `git difftool` / `git dft`; delta owns the pager lane
       };
-
-      difftool = {
-        prompt = false;
-        # GIT_EXTERNAL_DIFF calling convention: difft renders rename/mode data. The store path is a Nix-side dependency; difft is on no PATH here.
-        difftastic.cmd = ''${lib.getExe pkgs.difftastic} "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"'';
-      };
-      pager.difftool = true;
-      alias.dft = "difftool";
 
       merge = {
         conflictstyle = "zdiff3";
@@ -83,7 +76,6 @@ in {
         prunetags = true;
         writeCommitGraph = true; # Update commit graph cache on fetch
       };
-      transfer.fsckobjects = true; # fetch and receive both read it
 
       branch = {
         sort = "-committerdate";
@@ -176,7 +168,7 @@ in {
 
       # Interactive features
       hyperlinks = true;
-      hyperlinks-file-link-format = "vscode://file/{path}:{line}";
+      hyperlinks-file-link-format = "file://{path}:{line}"; # WezTerm's open-uri handler routes file:line links to the quick-edit float
     };
   };
 }

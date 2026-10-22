@@ -12,10 +12,9 @@
     name = "macbook";
     label = "Bardia's MacBook Pro";
     system = "aarch64-darwin";
-    timeZone = "America/Chicago";
     stateVersion = {
       system = 7;
-      home = "26.05";
+      home = "26.11";
     };
     user = {
       name = "bardiasamiee";
@@ -24,8 +23,6 @@
     # Forge checkout the deploy rail builds from and the editor's nixd evaluates.
     flakeRoot = "${home}/Developer/Parametric_Forge";
     # 1Password-held key: SSH auth and commit signing.
-    ssh.authorizedKeys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Bardia SSH Key"
-    ];
+    ssh.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Bardia SSH Key";
   };
 }

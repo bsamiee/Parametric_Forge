@@ -21,18 +21,13 @@ let
       then {fetch = "zip";}
       else {}
     );
-  # `versionFrom`: a regex whose first group is the version when the publisher's release tag is path-shaped; null when the tag is already bare.
-  designSource = name: versionFrom: let
+  # A source row rebuilds a nixpkgs recipe at the pinned release: `sourcePackage` names the recipe, the pin's asset replaces its source.
+  designSource = name: let
     pin = "design-${name}";
   in {
     sourcePackage = name;
-    sourcePin = pin;
-    version = builtins.head (builtins.match (
-        if versionFrom == null
-        then "(.*)"
-        else versionFrom
-      )
-      generatedPins.${pin}.version);
+    asset = pinAsset pin;
+    inherit (generatedPins.${pin}) version;
   };
   # EnergyPlus and OpenStudio asset names carry a build hash, so each pin's release tag is `v<version>/<asset>` and the bare version is the
   # tag's; the wrapper names below carry it.
@@ -54,23 +49,21 @@ in {
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
-    # New attrs beside nixpkgs' imagemagick and qpdf: an override re-keys vips, yazi, fastfetch, pikepdf, and every package above them off the cache.
-    imagemagick-current = designSource "imagemagick" null;
     # The font projection and every typography consumer render the current Geist release, whose Mono ligatures nixpkgs' copy lacks.
-    geist-font = designSource "geist-font" null;
+    geist-font = designSource "geist-font";
     # The script fallback chain and the design apps render the current SIL release, which nixpkgs lags.
-    scheherazade-new = designSource "scheherazade-new" null;
+    scheherazade-new = designSource "scheherazade-new";
     # A new attr beside nixpkgs' harfbuzz: an override re-keys pango, libass, libraqm, and every package above them off the binary cache.
-    harfbuzz-current = designSource "harfbuzz" null;
-    poppler-utils-current =
-      designSource "poppler" null
+    # `sourceOverride` feeds the recipe's own flags: the experimental vector and GPU libraries carry hb-vector and libharfbuzz-gpu.
+    harfbuzz-current =
+      designSource "harfbuzz"
       // {
-        sourcePackage = "poppler-utils";
-        testDataPin = "design-poppler-test-data";
+        sourceOverride = {
+          withVector = true;
+          withGPU = true;
+        };
       };
-    mupdf = designSource "mupdf" null;
-    qpdf-current = designSource "qpdf" null;
-    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz";
+    mupdf = designSource "mupdf";
 
     utiluti = {
       version = generatedPins.design-utiluti.version;
@@ -104,21 +97,9 @@ in {
       version = generatedPins.design-verapdf-cli.version;
       assets.aarch64-darwin = pinAsset "design-verapdf-cli";
       license = "mpl20"; # The unmodified upstream JAR retains the alternative GPLv3+ license and third-party notices.
-      description = "Current veraPDF conformance inspection with a private Java runtime";
+      description = "Current veraPDF conformance inspection on the current Temurin Java runtime";
       homepage = "https://verapdf.org/";
       mainProgram = "verapdf";
-    };
-
-    temurin-jre-current = let
-      release = generatedPins.design-temurin-aarch64-darwin.version;
-    in {
-      version = builtins.substring 4 (builtins.stringLength release) release;
-      # The Adoptium URL carries no file extension; fetchzip picks its unpacker by extension, so the asset names the archive format.
-      assets.aarch64-darwin = pinAsset "design-temurin-aarch64-darwin" // {extension = "tar.gz";};
-      license = "gpl2Only"; # OpenJDK also grants the Classpath exception; its original legal files ship with the runtime.
-      description = "Private current Temurin Java runtime for veraPDF";
-      homepage = "https://adoptium.net/";
-      mainProgram = "java";
     };
 
     # nixpkgs source-builds biome behind the upstream release line; the override routes the treefmt row through the official release binary.
@@ -140,6 +121,17 @@ in {
       description = "mise runtime manager: per-project toolchains, env, and tasks";
       homepage = "https://mise.jdx.dev/";
       mainProgram = "mise";
+    };
+
+    # nixpkgs source-builds watchexec behind the upstream release line; the override routes the shell-tools row through the official release
+    # tarball, which carries the binary, man page, and completions.
+    watchexec = {
+      version = generatedPins.watchexec-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "watchexec-aarch64-darwin";
+      license = "asl20";
+      description = "Executes commands in response to file modifications";
+      homepage = "https://watchexec.github.io/";
+      mainProgram = "watchexec";
     };
 
     sqlean = {
@@ -250,10 +242,12 @@ in {
       };
     };
     zellij-plugins = {
-      source = "fetchurl"; # one release wasm per row, hash-pinned into ~/.config/zellij/plugins; `permissions` seeds the grant cache
+      # One release wasm per row into ~/.config/zellij/plugins: a row with `attr` resolves in nixpkgs zellijPlugins, a row with url/hash pins an
+      # upstream release nixpkgs omits; `permissions` seeds the grant cache.
+      source = "nixpkgs:zellijPlugins | fetchurl";
       rows = {
         zjstatus = {
-          inherit (pinAsset "zjstatus") url hash;
+          attr = "zjstatus";
           license = "MIT";
           permissions = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
         };
@@ -322,8 +316,8 @@ in {
     nvim-plugins = {
       source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable
       rows = {
-        dracula-vim = {
-          attr = "dracula-vim";
+        dracula-nvim = {
+          attr = "dracula-nvim";
           license = "MIT";
         };
         snacks-nvim = {

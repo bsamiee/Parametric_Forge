@@ -15,6 +15,7 @@ _: {
     settings = {
       git_protocol = "ssh";
       pager = "delta";
+      telemetry = "disabled";
     };
   };
 }

@@ -7,25 +7,26 @@
 # Nix and Darwin register rows: deploy rail, nix ops, flake ops.
 {
   darwin = [
-    ["drs" "redeploy --switch" "Activate the last build, else check, build, diff, activate"]
-    ["drb" "redeploy --build" "Check, build, diff"]
+    ["drs" "redeploy switch"]
+    ["drb" "redeploy build"]
   ];
   flake = [
-    ["nfu" "nix flake update && nix flake check" "Update all inputs + validate"]
-    ["nfn" "nix flake update nixpkgs && redeploy --build" "Update nixpkgs + build"]
-    ["nfl" "nix flake lock" "Lock missing inputs"]
-    ["nfc" "nix flake check && nix flake show" "Validate + explore outputs"]
+    ["nfu" "nix flake update && redeploy build"]
+    ["nfn" "nix flake update nixpkgs && redeploy build"]
+    ["nfl" "nix flake lock"]
+    ["nfc" "nix flake check && nix flake show"]
   ];
   nix = [
-    ["ns" "nix search nixpkgs" "Search packages"]
-    ["nw" "nix-locate -w" "Find package providing command"]
-    ["nconfig" "nix config show" "Show Nix configuration"]
-    ["ncheck" "nix config check" "Check Nix config health"]
-    ["nparse" "nix-instantiate --parse" "Parse Nix expressions"]
-    ["nfetch" "nix-prefetch-github --nix" "Prefetch GitHub repo (Nix output)"]
-    ["nfetchj" "nix-prefetch-github --json" "Prefetch GitHub repo (JSON output)"]
-    ["nhash" "nix hash convert --to sri" "Convert hash to SRI"]
-    ["nversion" "determinate-nixd version" "Show determinate-nixd version"]
-    ["nupdate" "sudo determinate-nixd upgrade" "Upgrade determinate-nixd" "sudo"]
+    ["ns" "nix search nixpkgs"]
+    ["nw" "nix-locate -w"]
+    ["nps" "nix ps"]
+    ["nconfig" "nix config show"]
+    ["ncheck" "nix config check"]
+    ["nparse" "nix-instantiate --parse"]
+    ["nfetch" "nurl"]
+    ["nfetchj" "nurl --json"]
+    ["nhash" "nix hash convert --to sri"]
+    ["nversion" "determinate-nixd version"]
+    ["nupdate" "sudo determinate-nixd upgrade"]
   ];
 }

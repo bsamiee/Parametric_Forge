@@ -162,26 +162,12 @@ final: prev: let
       installPhase = ''
         runHook preInstall
         install -Dm644 "$src" "$out/share/verapdf.jar"
-        makeWrapper ${lib.getExe final.temurin-jre-current} "$out/bin/verapdf" --add-flags "-Dapp.home=$out/bin -jar $out/share/verapdf.jar"
+        makeWrapper ${lib.getExe prev.temurin-jre-bin-27} "$out/bin/verapdf" --add-flags "-Dapp.home=$out/bin -jar $out/share/verapdf.jar"
         runHook postInstall
       '';
       doInstallCheck = true;
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
-    };
-    temurin-jre-current = {finalAttrs, ...}: {
-      nativeBuildInputs = [prev.makeWrapper prev.lndir];
-      dontStrip = true;
-      dontUnpack = true;
-      installPhase = ''
-        runHook preInstall
-        runtime="$src/Contents/Home"
-        mkdir -p "$out/lib/openjdk" "$out/bin"
-        ${linkTree ''"$runtime"'' ''"$out/lib/openjdk"''}
-        makeWrapper "$out/lib/openjdk/bin/java" "$out/bin/java"
-        runHook postInstall
-      '';
-      passthru.home = "${finalAttrs.finalPackage}/lib/openjdk";
     };
     # Flat single-binary release: no archive, the fetched file IS the tool.
     biome = _: {
@@ -211,6 +197,24 @@ final: prev: let
         runHook postInstall
       '';
     };
+    # Release tarball, pinned unpacked: the binary, its man page, and the shipped completions.
+    watchexec = _: {
+      dontUnpack = true;
+      nativeBuildInputs = [prev.installShellFiles];
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 "$src/watchexec" "$out/bin/watchexec"
+        installManPage "$src/watchexec.1"
+        installShellCompletion --cmd watchexec \
+          --bash "$src/completions/bash" \
+          --fish "$src/completions/fish" \
+          --zsh "$src/completions/zsh"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/watchexec";
+    };
     # Library-only release: a flat zip of extension modules with no top directory and no CLI binary.
     sqlean = _: {
       nativeBuildInputs = [prev.unzip];
@@ -238,70 +242,9 @@ final: prev: let
     openstudio = optRuntime;
   };
 
+  # Source rows rebuild a nixpkgs recipe at the pinned release, its tests left to upstream and Hydra: the pin replaces `srcs` where the recipe
+  # unpacks a list (fonts), else `src`, and `sourceOverride` row data feeds the recipe's own flags.
   sourceRecipes = {
-    geist-font = old: {
-      # The native font installer consumes srcs; retain it and unpack the official release archive without rewriting font programs.
-      src = null;
-      srcs = [generatedSources.${manifest.packages.geist-font.sourcePin}.src];
-      nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
-    };
-    # nixpkgs fetches an unpacked zip; the generated pin is the flat release archive, so unzip joins the native install phase unchanged.
-    scheherazade-new = old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [prev.unzip];
-    };
-    imagemagick-current = old: {
-      configureFlags = (old.configureFlags or []) ++ ["--enable-hdri=yes" "--with-quantum-depth=16" "--with-lcms=yes"];
-    };
-    harfbuzz-current = old: {
-      # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack. It takes no cairo backend:
-      # media-tools lands the command-line utilities this build seats in its dev output.
-      mesonFlags = (map (flag: lib.replaceStrings ["-Dgraphite="] ["-Dgraphite2="] flag) (old.mesonFlags or [])) ++ [(lib.mesonEnable "gpu_demo" false)];
-      # harfbust.tests runs Apple's CoreText shaper over the HarfBust demo font and expects separate glyphs; CoreText on macOS 27 ligates them,
-      # so the row tests the host shaper rather than this build.
-      postPatch =
-        (old.postPatch or "")
-        + ''
-          sed -i "/'harfbust.tests',/d" test/shape/data/in-house/meson.build
-        '';
-    };
-    poppler-utils-current = old: let
-      testData = generatedSources.${manifest.packages.poppler-utils-current.testDataPin}.src;
-      testFonts = final.makeFontsConf {
-        fontDirectories = [(final.noto-fonts.override {variants = ["Noto Sans"];}) final.noto-fonts-cjk-sans-static];
-        impureFontDirectories = [];
-        includes = [];
-      };
-    in {
-      # The sole old nixpkgs patch is merged in 26.09; HarfBuzz is now required for font subsetting.
-      patches = [];
-      buildInputs = old.buildInputs ++ [final.harfbuzz-current];
-      # The new font-subsetting checks require August's form fixture and explicit Latin/Japanese fallback fonts.
-      preConfigure = lib.replaceStrings [(toString old.passthru.testData)] [(toString testData)] old.preConfigure;
-      # Nixpkgs' consumer tests close over its top-level Poppler. Retaining them here would test 26.06 while presenting the result as 26.09 coverage.
-      passthru = (removeAttrs old.passthru ["tests" "updateScript"]) // {inherit testData;};
-      disallowedReferences = map (ref:
-        if ref == old.passthru.testData
-        then testData
-        else ref)
-      old.disallowedReferences;
-      preCheck =
-        (old.preCheck or "")
-        + ''
-          export FONTCONFIG_FILE=${testFonts}
-          export XDG_CACHE_HOME="$TMPDIR/fontconfig-cache"
-          mkdir -p "$XDG_CACHE_HOME"
-        '';
-    };
-    qpdf-current = old: {
-      # Completion checks require bind/compgen/progcomp; stdenv's stripped Bash is not an interactive shell.
-      nativeCheckInputs = (old.nativeCheckInputs or []) ++ [final.bashInteractive final.zsh];
-      cmakeFlags = (old.cmakeFlags or []) ++ ["-DREQUIRE_SHELLS=ON"];
-      preCheck =
-        (old.preCheck or "")
-        + ''
-          export PATH=${lib.makeBinPath [final.bashInteractive final.zsh]}:$PATH
-        '';
-    };
     # 1.28.5 grew a cmark-gfm row inside the Makerules section nixpkgs' Darwin system-deps patch lifts out of its Linux branch; the same lift
     # rebased onto the pinned tree replaces it, and nixpkgs' C++ wrap patch still applies as shipped.
     mupdf = old: {
@@ -309,20 +252,21 @@ final: prev: let
       postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf.version] old.postInstall;
     };
   };
-  mkSourceRelease = name: _: let
-    row = manifest.packages.${name};
-    source = generatedSources.${row.sourcePin};
-    base =
-      if name == "imagemagick-current"
-      then prev.imagemagick.override {lcms2Support = true;}
-      else prev.${row.sourcePackage};
+  mkSourceRelease = name: row: let
+    src = srcOf row.asset;
   in
-    base.overrideAttrs (old:
+    (prev.${row.sourcePackage}.override (row.sourceOverride or {})).overrideAttrs (old:
       {
         inherit (row) version;
-        inherit (source) src;
+        doCheck = false;
+        doInstallCheck = false;
         passthru = removeAttrs (old.passthru or {}) ["updateScript"];
       }
+      // (
+        if old ? srcs
+        then {srcs = [src];}
+        else {inherit src;}
+      )
       // (sourceRecipes.${name} or (_: {})) old);
 in
   # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest

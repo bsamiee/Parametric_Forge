@@ -131,7 +131,6 @@
     # --- [DISPLAY_CONFIGURATION]
     display = {
       show_footer = true; # process counts
-      show_kthreads = false;
     };
 
     # --- [SORT_CONFIGURATION]

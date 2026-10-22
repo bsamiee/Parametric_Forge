@@ -5,18 +5,20 @@
 # Path          : modules/home/programs/shell-tools/trippy.nix
 # ----------------------------------------------------------------------------
 # Network diagnostic tool combining traceroute and ping. Rows land under the sections trippy reads (`trip --print-config-template`); every
-# strategy, tui, and binding default stays upstream, so only the resolver family and the theme carry rows.
+# strategy, tui, and binding default stays upstream, so only the privilege mode, the resolver family, and the theme carry rows.
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
   # palette retained for the one hue with no semantic role: string-yellow (radius ring, current-flow label).
   inherit (config.forge.theme) roles palette;
-  tomlFormat = pkgs.formats.toml {};
 
   trippyConfig = {
+    # --- [TRIPPY]
+    # IPPROTO_ICMP datagram sockets trace without root, so `trip` runs without sudo.
+    trippy.unprivileged = true;
+
     # --- [STRATEGY]
     # The OS resolver's first answer decides the family; the upstream default tries IPv4 before IPv6 regardless of what the resolver returned.
     strategy.addr-family = "system";
@@ -62,8 +64,10 @@
     };
   };
 in {
-  home.packages = [pkgs.trippy];
-
-  xdg.configFile."trippy/trippy.toml".source =
-    tomlFormat.generate "trippy-config" trippyConfig;
+  # forceUserConfig only adds a `trip -c` alias for sudo runs; unprivileged ICMP sockets drop sudo, and aliases/core.nix owns the trip aliases.
+  programs.trippy = {
+    enable = true;
+    forceUserConfig = false;
+    settings = trippyConfig;
+  };
 }

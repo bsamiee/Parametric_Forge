@@ -11,12 +11,11 @@
   ...
 }: let
   actConfig = [
-    # --- [APPLE_SILICON_COMPATIBILITY]
-    "--container-architecture=linux/amd64"
-
     # --- [RUNNER_IMAGES]
+    # Multi-arch images run as native arm64; `--container-architecture=linux/amd64` on one invocation serves a job shipping x86-only binaries.
     "-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest"
     "-P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04"
+    "-P ubuntu-24.04-arm=ghcr.io/catthehacker/ubuntu:act-24.04"
     "-P ubuntu-22.04=ghcr.io/catthehacker/ubuntu:act-22.04"
 
     # --- [PERFORMANCE]

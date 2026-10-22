@@ -7,9 +7,10 @@
 # Siri Suggestions per-application owner. macOS 27 carries no global switch for suggestion harvesting: suggestd admits an app's CoreSpotlight
 # and user-activity donations into ProactiveHarvesting and PersonalizationPortrait unless com.apple.suggestions SiriCanLearnFromAppBlacklist
 # names its bundle identifier ("Learn from this application"), and AppCanShowSiriSuggestionsBlacklist is the sibling "Show Siri Suggestions in
-# application" row; both are the rows the Siri Suggestions & Privacy sheet writes. The rows are a set of installed applications, so a static
-# plist row cannot own them: the agent folds every application Spotlight indexes into both lists, keeps every identifier already listed
-# (uninstalled apps, sheet edits), and posts the sheet's change notification, which reloads the admission and portrait lists in place.
+# application" row; both are the rows the Siri pane's App Access sheet writes. The lists gate suggestd alone: spotlightknowledged embeds the
+# same donations whatever they hold. The rows are a set of installed applications, so a static plist row cannot own them: the agent folds
+# every application Spotlight indexes into both lists, keeps every identifier already listed (uninstalled apps, sheet edits), and posts the
+# sheet's change notification, which reloads the admission and portrait lists in place.
 {
   config,
   launchdAgent,

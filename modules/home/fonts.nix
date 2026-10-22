@@ -17,8 +17,8 @@
   catalog = import ./fonts-catalog.nix {inherit pkgs;};
 
   # --- [ROLES_CHAINS_SURFACES_FEATURES]
-  # Roles are the swap surface: one family per role, scripts ordered by shaping preference, each a catalog row. The mono chain is the fallback expression CoreText and Chromium renderers read; fontconfig is
-  # inert against them. Emoji is system-owned (Apple Color Emoji): a chain member so WezTerm's bundled Noto Color Emoji never wins, never a package row.
+  # Roles are the swap surface: one family per role, scripts ordered by shaping preference, each a catalog row. The mono chain is the fallback expression CoreText and Chromium renderers read, and fontconfig's
+  # monospace family. Emoji is system-owned (Apple Color Emoji): a chain member so WezTerm's bundled Noto Color Emoji never wins, never a package row.
   roles = {
     mono = "Geist Mono";
     sans = "Geist";
@@ -58,5 +58,16 @@ in {
     description = "Forge font owner: family catalog, roles, chains, per-surface typography, projections.";
   };
 
-  config.home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
+  # fontconfig consumers (Pango, ImageMagick) resolve their generic families from the same roles.
+  config = {
+    home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
+    fonts.fontconfig = {
+      enable = true;
+      defaultFonts = {
+        monospace = chains.mono;
+        sansSerif = [roles.sans] ++ roles.scripts;
+        emoji = ["Apple Color Emoji"];
+      };
+    };
+  };
 }

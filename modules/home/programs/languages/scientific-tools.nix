@@ -12,12 +12,6 @@
   pkgs,
   ...
 }: let
-  # KTX-Software builds portably under plain CMake; nixpkgs still caps meta.platforms at linux, so the lift is
-  # the entire darwin admission. Carries the ktx/ktx2check/toktx CLIs.
-  ktxTools = pkgs.ktx-tools.overrideAttrs (prev: {
-    meta = prev.meta // {platforms = lib.platforms.unix;};
-  });
-
   geoTools = with pkgs; [
     gdal # gdalinfo, gdal_translate, ogr2ogr
     geos # geosop
@@ -29,7 +23,7 @@
   # which zsh/completions.nix already has on fpath ahead of compinit.
   qpdfCompletion = pkgs.runCommand "qpdf-zsh-completion" {} ''
     mkdir -p "$out/share/zsh/site-functions"
-    ${lib.getExe pkgs.qpdf-current} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
+    ${lib.getExe pkgs.qpdf} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
   '';
 
   columnarTools = [pkgs.arrow-cpp]; # parquet-reader, parquet-scan, parquet-dump-*
@@ -38,7 +32,7 @@
     file # file
     fontconfig # fc-list, fc-match, fc-cache
     ghostscript
-    ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs a consumer spawns to encode textures
+    ktx-tools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs a consumer spawns to encode textures
     lcms2
     libheif # heif-enc, heif-dec, heif-info
     libjpeg_turbo
@@ -47,7 +41,7 @@
     mupdf
     openjpeg
     pango # pango-view
-    qpdf-current
+    qpdf
     qpdfCompletion
     tesseract
     vips # vips, vipsthumbnail

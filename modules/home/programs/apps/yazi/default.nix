@@ -7,18 +7,29 @@
 # Yazi file workbench owner: store-owned plugin rows and typed previewer/opener/fetcher/preloader rows generating yazi.toml. File-action routing
 # is rows here, never inline TOML literals; upstream-default rows are deleted, so every settings row below diverges from the upstream preset.
 {
+  config,
   lib,
   pkgs,
   ...
 }: let
   manifest = import ../../../../../overlays/manifest.nix;
 
-  # The wrapper seats every previewer runtime on yazi's own PATH: the RAR-capable 7zip as the one archive runtime, the current ImageMagick,
-  # Poppler, and FFmpeg builds the media tools install, and DuckDB for the data lane, which stays off the machine PATH.
+  # Power-leader prefix from the chord owner's Power layer modifiers, in yazi's key-notation letters.
+  powerLeader = lib.concatMapStringsSep "-" (m:
+    {
+      left_command = "D";
+      left_option = "A";
+      left_control = "C";
+      left_shift = "S";
+    }.${
+      m.kc
+    })
+  config.forge.chords.layers.power.mods;
+
+  # The wrapper seats every previewer runtime on yazi's own PATH: the RAR-capable 7zip as the one archive runtime, the FFmpeg build the media
+  # tools install, and DuckDB for the data lane, which stays off the machine PATH.
   yaziPkg = pkgs.yazi.override {
     _7zz = pkgs._7zz-rar;
-    imagemagick = pkgs.imagemagick-current;
-    poppler-utils = pkgs.poppler-utils-current;
     ffmpeg-headless = pkgs.ffmpeg-full;
     extraPackages = [pkgs.duckdb];
   };
@@ -161,9 +172,9 @@ in {
 
   programs.yazi = {
     enable = true;
-    enableZshIntegration = true;
     package = yaziPkg;
     initLua = builtins.readFile ./init.lua;
+    keymap = fromTOML (builtins.replaceStrings ["<POWER-"] ["<${powerLeader}-"] (builtins.readFile ./keymap.toml));
 
     # Store-owned plugins, no runtime fetching: the set derives from overlays/manifest.nix extensions.yazi-plugins — a row with `attr` resolves in
     # nixpkgs `yaziPlugins`, a row with owner/repo/rev/hash is a pinned upstream tree nixpkgs omits.
@@ -242,6 +253,4 @@ in {
       };
     };
   };
-
-  xdg.configFile."yazi/keymap.toml".source = ./keymap.toml;
 }
