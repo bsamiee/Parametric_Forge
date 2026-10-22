@@ -7,7 +7,6 @@
 # Media and document processing environment variables
 {
   config,
-  host,
   pkgs,
   lib,
   toolchainEnvFor,
@@ -34,7 +33,7 @@ in {
 
     # --- [TYPST]
     # Typst resolves both package roots through the `dirs` crate, so macOS lands them under ~/Library/Caches and ~/Library/Application Support,
-    # never XDG; the flags' env spellings are the only lever. pandoc needs no row: it reads XDG_DATA_HOME itself (xdg.nix keeps its data dir).
+    # never XDG; the flags' env spellings are the only lever. pandoc needs no row: it reads XDG_DATA_HOME itself.
     TYPST_PACKAGE_CACHE_PATH = "${config.xdg.cacheHome}/typst/packages";
     TYPST_PACKAGE_PATH = "${config.xdg.dataHome}/typst/packages";
 
@@ -44,13 +43,13 @@ in {
     FFMPEG_DATADIR = "${config.xdg.dataHome}/ffmpeg";
   };
 
-  # The XML generator orders children by element name (cachedir, dir, include), so the base include lands after the estate dirs; fontconfig
+  # The XML generator orders children by element name (cachedir, dir, include), so the base include lands after the font roots; fontconfig
   # unions directories regardless of order, and precedence is by match score, so the generated order is inert.
   # Home Manager rsyncs the font payload with preserved store mtimes (epoch 1), so fontconfig's mtime-keyed directory cache never notices a
   # generation swap on its own; the forced rescan after the file phase keeps the Pango/ImageMagick lane current with every switch.
-  home.activation.fontconfigCache = lib.mkIf (host.os == "darwin") (lib.hm.dag.entryAfter ["onFilesChange"] ''
+  home.activation.fontconfigCache = lib.hm.dag.entryAfter ["onFilesChange"] ''
     [ ! -d "$HOME/Library/Fonts/HomeManager" ] || run env FONTCONFIG_FILE=${config.xdg.configHome}/fontconfig/fonts.conf ${pkgs.fontconfig}/bin/fc-cache -f "$HOME/Library/Fonts/HomeManager"
-  '');
+  '';
 
   xdg.configFile."fontconfig/fonts.conf".source = (pkgs.formats.xml {}).generate "fonts.conf" {
     fontconfig = {

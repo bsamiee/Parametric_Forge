@@ -14,19 +14,14 @@ local deck = require("deck")
 local M = {}
 
 local roles = rows.theme.roles
-local badges = rows.theme.badges
 
--- Strip chips are alarm- or machine-context-class, so every cell carries the estate hierarchy's bold weight (prompt hostname and yazi header match).
+-- Strip chips are alarm-class, so every cell carries the bold weight.
 local function cell(fg, text)
     return {
         { Attribute = { Intensity = "Bold" } },
         { Foreground = { Color = fg } },
         { Text = " " .. text .. " " },
     }
-end
-
-local function domain_name(pane)
-    return pane:get_domain_name()
 end
 
 -- Pane id -> spawn size of each gated startup client; the first resize off that size releases it.
@@ -38,9 +33,11 @@ local handlers = {
     ["gui-startup"] = function(cmd)
         local spawn = cmd or {}
         local ws = wezterm.mux.get_active_workspace()
-        spawn.cwd = spawn.cwd or deck.workspace_cwd(ws)
         local gate = spawn.args == nil
-        spawn.args = spawn.args or deck.session_args(ws, true)
+        if gate then
+            spawn.args = deck.session_args(ws, true)
+            spawn.cwd = wezterm.home_dir
+        end
         local _, pane, window = wezterm.mux.spawn_window(spawn)
         local gui = window:gui_window()
         if gate then
@@ -63,12 +60,12 @@ local handlers = {
 
     ["mux-startup"] = function()
         local ws = wezterm.mux.get_active_workspace()
-        wezterm.mux.spawn_window({ cwd = deck.workspace_cwd(ws), args = deck.session_args(ws) })
+        wezterm.mux.spawn_window({ cwd = wezterm.home_dir, args = deck.session_args(ws) })
     end,
 
-    -- Outer facts only: key table, sync state, non-local domain. Agent/quota cells and location live on the zellij zjstatus bar — the one top
+    -- Outer facts only: key table and sync state. Agent/quota cells and location live on the zellij zjstatus bar — the one top
     -- bar; this strip surfaces only when a second WezTerm tab raises the tab bar.
-    ["update-status"] = function(window, pane)
+    ["update-status"] = function(window)
         local items = {}
         local function push(fragments)
             for _, fragment in ipairs(fragments) do
@@ -84,16 +81,6 @@ local handlers = {
         end
         if deck.sync and deck.sync.is_synced(window) then
             push(cell(roles.state.danger, "[SYNC]"))
-        end
-
-        -- Remote-domain chip: the shared contextBadges.remote row, so a VPS pane reads identically to the prompt hostname and yazi header.
-        local domain = "local"
-        if pane then
-            local ok, name = pcall(domain_name, pane)
-            domain = ok and name and name ~= "" and name or domain
-        end
-        if domain ~= "local" then
-            push(cell(badges.remote.color, badges.remote.glyph .. " " .. domain))
         end
 
         window:set_right_status(wezterm.format(items))
@@ -120,7 +107,7 @@ local handlers = {
     end,
 }
 
-function M.apply(config) -- luacheck: no unused args
+function M.apply()
     for name, handler in pairs(handlers) do
         wezterm.on(name, handler)
     end

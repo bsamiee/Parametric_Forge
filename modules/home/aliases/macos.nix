@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/aliases/macos.nix
 # ----------------------------------------------------------------------------
-# Darwin-bound register rows: expansions resolve only against macOS binaries or the Rhino PATH entry, so the register gates this file on host.os.
+# macOS register rows: expansions resolve against macOS binaries or the Rhino PATH entry.
 {
   dev = [
     ["rhproject" "dotnet new rhino -sample" "Rhino plugin template"]

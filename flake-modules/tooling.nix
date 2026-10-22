@@ -13,8 +13,8 @@ _: {
     ...
   }: let
     style = import ../modules/style.nix;
-    # Repo law files are the single source: the biome row carries biome.json's bytes, its treefmt excludes are the same file's negation rows, and the
-    # ruff row projects pyproject [tool.ruff] — a value changed in the law file busts the treefmt cache and lands in the row with zero edits here.
+    # biome.json is the single source: the biome row carries its bytes and its treefmt excludes are the same file's negation rows, so a value
+    # changed there busts the treefmt cache and lands in the row with zero edits here.
     biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
     # Biome 2.2+ spells a folder ignore as `!dir` while treefmt's exclude globs need `dir/**`: a row whose basename carries a glob or a file
     # extension (a non-dot leading name with a dot) passes verbatim, every other row is a folder and gains the recursive suffix here.
@@ -28,28 +28,13 @@ _: {
         then path
         else "${path}/**"
     ) (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
-    ruffLaw = (fromTOML (builtins.readFile ../pyproject.toml)).tool.ruff;
-    # SQL dialect is a per-file fact; each row binds its files to a generated config projected from the style vocabulary. sqruff discovery is
-    # cwd-only, so the explicit --config keeps rows hermetic inside the sandboxed check.
-    sqruffRow = dialect: includes: {
-      command = "${overlaidPkgs.sqruff}/bin/sqruff";
-      options = [
-        "--config"
-        (toString (overlaidPkgs.writeText "sqruff-${dialect}" (style.sql "sqruff" dialect)))
-        "fix"
-      ];
-      inherit includes;
-    };
   in {
     # Repository-maintenance shell: formatter plus flake proof/update helpers. Machine tooling (git, shellcheck, shfmt, LSPs) is Home Manager-owned.
     devShells.default = overlaidPkgs.mkShell {
       packages = [
         config.formatter
-        overlaidPkgs.deadnix
-        overlaidPkgs.statix
         overlaidPkgs.nix-fast-build
         overlaidPkgs.nix-init
-        overlaidPkgs.nix-output-monitor
         overlaidPkgs.nix-update
         overlaidPkgs.nixpkgs-review
         overlaidPkgs.nvfetcher
@@ -78,7 +63,7 @@ _: {
           indent_size = style.indent;
           simplify = false;
         };
-        # The repo-root biome.json is the single law for treefmt, the PATH wrapper, and the VSCode extension. The row must carry its bytes:
+        # The repo-root biome.json is the single law for treefmt and the VSCode extension. The row must carry its bytes:
         # treefmt-nix always pins --config-path, which disables biome's own root discovery, and an out-of-row config never busts the cache.
         biome = {
           enable = true;
@@ -89,28 +74,6 @@ _: {
       settings.formatter = {
         # biome.json's negation rows verbatim, so treefmt never offers biome the paths its own config ignores (an all-ignored batch is a biome error, not a no-op).
         biome.excludes = biomeExcludes;
-        # --isolated ties output to row options, treefmt's cache key, and --no-cache moves caching from the working directory's .ruff_cache to treefmt
-        ruff-format = {
-          command = "${overlaidPkgs.ruff}/bin/ruff";
-          options = [
-            "format"
-            "--isolated"
-            "--no-cache"
-            "--line-length"
-            (toString ruffLaw.line-length)
-            "--target-version"
-            ruffLaw.target-version
-            "--config"
-            "preview = ${lib.boolToString ruffLaw.preview}"
-            "--config"
-            "format.skip-magic-trailing-comma = ${lib.boolToString ruffLaw.format.skip-magic-trailing-comma}"
-            "--config"
-            ''format.line-ending = "${ruffLaw.format.line-ending}"''
-            "--config"
-            "format.docstring-code-format = ${lib.boolToString ruffLaw.format.docstring-code-format}"
-          ];
-          includes = ["*.py" "*.pyi"];
-        };
         # The style vocabulary is the single law; its bytes ride the row so the sandboxed check needs no XDG config and the treefmt cache busts
         # whenever the law changes. pnpm owns its lockfile pair and rewrites both in its own layout.
         yamlfmt = {
@@ -120,11 +83,6 @@ _: {
           excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
         };
         shfmt.options = ["-ci"];
-        # Leading * crosses directories in treefmt globs; a bare `duckdb-*.sql` anchors at the tree root and matches nothing nested. No sqlite
-        # row: sqruff's sqlite dialect rewrites virtual-table module arguments (float[2] -> float [2]), which extensions parse verbatim, so
-        # sqlite SQL stays formatter-unowned until that dialect matures.
-        sqruff-postgres = sqruffRow "postgres" ["*postgres*.sql"];
-        sqruff-duckdb = sqruffRow "duckdb" ["*duckdb-*.sql"];
       };
     };
   };

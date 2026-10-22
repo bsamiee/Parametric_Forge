@@ -80,7 +80,7 @@ Plugin hooks live in `hooks/hooks.json` with an optional top-level `description`
 
 A transmitter hook chains after the policy hook on the same event array, so the gate decides and the transmitter forwards without touching the verdict — wired `async: true`, its POST under a short timeout, exit 0 guaranteed unconditionally so a dead collector never gates the loop. Unconditional means one broad `except Exception` or a `finally` that exits 0, never a two-type `(DecodeError, HTTPError)` catch: `httpx.InvalidURL`, `CookieConflict`, and `StreamError` are not `HTTPError` subclasses, so a narrow catch lets a malformed sink URL escape as a non-zero exit.
 
-CloudEvents `time` is a true-UTC RFC3339 stamp (`datetime.now(UTC)` or `gmtime`), never a local `strftime` with a `Z` suffix — that mislabels the offset and corrupts the estate's ISO-8601 UTC ledger.
+CloudEvents `time` is a true-UTC RFC3339 stamp (`datetime.now(UTC)` or `gmtime`), never a local `strftime` with a `Z` suffix — that mislabels the offset and corrupts the ISO-8601 UTC ledger.
 
 Envelope shape is a two-tier policy. A private dashboard or registry takes the lightweight tier: the raw stdin payload nested whole, hot query keys (`tool_name`, `session_id`, `hook_event_name`, `agent_id`) hoisted flat beside it so the store indexes without a custom parser. A shared bus takes a CloudEvents 1.0 envelope — `specversion`, a reverse-DNS `type`, a `source` derived from `HOOK_PROVIDER` so a dual-provider fleet's events self-identify, an `id`, a `time`, and the raw payload in `data` with hook identity as flat lowercase extensions. Both tiers ride the telemetry-transmitter example.
 

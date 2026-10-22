@@ -24,7 +24,7 @@
       fi
 
       # --- [FZF_COMPGEN_PATH_DIR]
-      # fzf's documented hooks for ** completion: fd honors the ignore estate where fzf's built-in walker would not. The store path is a
+      # fzf's documented hooks for ** completion: fd honors each repository's ignore files where fzf's built-in walker would not. The store path is a
       # Nix-side dependency of these hooks; fd is on no PATH outside a project.
       _fzf_compgen_path() {
         ${lib.getExe pkgs.fd} --hidden --follow --exclude .git . "$1"
@@ -60,13 +60,13 @@
             local pointer=❯ pointer_color
             if [[ $KEYMAP == vicmd ]]; then
               pointer=❮
-              pointer_color="${config.estate.theme.roles.state.success.hex}"
+              pointer_color="${config.forge.theme.roles.state.success.hex}"
             elif (( _transient_prompt_status == 0 )); then
-              pointer_color="${config.estate.theme.roles.state.success.hex}"
+              pointer_color="${config.forge.theme.roles.state.success.hex}"
             else
-              pointer_color="${config.estate.theme.roles.state.danger.hex}"
+              pointer_color="${config.forge.theme.roles.state.danger.hex}"
             fi
-            PROMPT="%F{${config.estate.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
             zle .reset-prompt
           fi
         }

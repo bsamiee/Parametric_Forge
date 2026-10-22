@@ -7,7 +7,6 @@
 # Shared PATH vectors and toolchain env factory installed as the toolchainEnvFor module argument; session, launchd,
 # and zsh owners call it with their own home/username/cache context.
 {
-  host,
   lib,
   pkgs,
   ...
@@ -20,21 +19,18 @@
     xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it, so a PATH-only caller inherits the XDG default.
     xdgStateHome ? "${home}/.local/state", # Same convention: the interactive history rows read it.
   }: let
-    isDarwin = host.os == "darwin"; # OS branch keys on the static host context, never on pkgs (fixpoint safety).
+    # The operator-installed Rhino bundle no cask owns: its bin directory joins the PATH vector, and its default handler rows read the bundle path.
+    rhinoApp = "/Applications/RhinoBETA.app";
     # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return once provisioned.
-    userPathEntries =
-      [
-        "${home}/.local/bin"
-        "${home}/bin"
-        "/etc/profiles/per-user/${username}/bin"
-        "/run/current-system/sw/bin"
-        "/nix/var/nix/profiles/default/bin"
-      ]
-      ++ lib.optionals isDarwin [
-        "/opt/homebrew/bin"
-        "/opt/homebrew/sbin"
-        "/Applications/RhinoBETA.app/Contents/Resources/bin"
-      ];
+    userPathEntries = [
+      "${home}/.local/bin"
+      "/etc/profiles/per-user/${username}/bin"
+      "/run/current-system/sw/bin"
+      "/nix/var/nix/profiles/default/bin"
+      "/opt/homebrew/bin"
+      "/opt/homebrew/sbin"
+      "${rhinoApp}/Contents/Resources/bin"
+    ];
     fallbackPathEntries = [
       "/usr/local/bin"
       "/usr/bin"
@@ -48,94 +44,28 @@
     # command through CLAUDE_ENV_FILE) drops this segment and puts a project's install paths first.
     shimPathEntries = ["${xdgDataHome}/mise/shims"];
     pathEntries = shimPathEntries ++ userPathEntries ++ fallbackPathEntries;
-    # ctypes/dlopen consumers (weasyprint's gobject/pango/harfbuzz/fontconfig chain, python-magic's libmagic, pyvips's libvips/gobject/glib)
-    # resolve their dylibs by bare name at runtime, outside any build env. One linked lib tree behind DYLD_FALLBACK_LIBRARY_PATH serves them;
-    # dyld consults the fallback only after every standard location, so system libraries keep precedence. getLib pins each member's lib output:
-    # multi-output members otherwise contribute their default output, which for glib and pango carries no dylibs at all. The row rides the
-    # scientific set because the .zshenv floor re-exports that set in every shell: exec of a SIP-protected binary (/bin/bash, /usr/bin/env)
-    # purges every DYLD_* variable, and a child shell behind the inherited __HM_SESS_VARS_SOURCED guard never re-sources hm-session-vars.
-    runtimeDylibEnv = pkgs.buildEnv {
-      name = "runtime-dylibs";
-      paths = map lib.getLib [pkgs.file pkgs.fontconfig pkgs.glib pkgs.harfbuzz pkgs.pango pkgs.vips];
-      pathsToLink = ["/lib"];
-    };
-    pythonEnv =
-      {
-        MPLCONFIGDIR = "${xdgCacheHome}/matplotlib"; # macOS default is ~/.matplotlib; the directory holds font and tex caches, no rc file
-
-        UV_PYTHON_PREFERENCE = "only-system";
-        UV_PYTHON_DOWNLOADS = "never";
-
-        # Machine libraries a project's source builds read, each row the search key the build system documents and each value a store reference:
-        # pkg-config .pc files (pyicu: icu-i18n and icu-uc; h5py: hdf5; pi-heif: libheif), the CMake package configs find_package(Arrow),
-        # find_package(Eigen3), and find_package(PDAL) locate (pyarrow, small-gicp — which otherwise downloads Eigen at configure — and
-        # python-pdal), the compiler's own header and library search for a build that includes <librdkafka/rdkafka.h> and links -lrdkafka with
-        # no pkg-config (confluent-kafka), and the FindOpenMP prefix small-gicp reaches through find_package's <PackageName>_ROOT environment
-        # lookup (CMP0074) — one prefix joining the omp.h dev output with the libomp lib output, since either split output alone answers only
-        # find_path or only find_library.
-        PKG_CONFIG_PATH = lib.makeSearchPathOutput "dev" "lib/pkgconfig" [pkgs.icu pkgs.hdf5 pkgs.libheif];
-        CMAKE_PREFIX_PATH = lib.concatStringsSep ":" (map toString [pkgs.arrow-cpp pkgs.eigen pkgs.pdal]);
-        CPATH = "${lib.getDev pkgs.rdkafka-current}/include";
-        LIBRARY_PATH = "${lib.getLib pkgs.rdkafka-current}/lib";
-        OpenMP_ROOT = "${pkgs.symlinkJoin {
-          name = "openmp-prefix";
-          paths = [(lib.getDev pkgs.llvmPackages.openmp) (lib.getLib pkgs.llvmPackages.openmp)];
-        }}";
-        CRC32C_INSTALL_PREFIX = "${pkgs.crc32c}";
-      }
-      // lib.optionalAttrs isDarwin {
-        DYLD_FALLBACK_LIBRARY_PATH = "${runtimeDylibEnv}/lib";
-      };
-    # PROJ 9.1 renamed PROJ_LIB to PROJ_DATA and every reader here (libproj, pyproj, rasterio) consults PROJ_DATA first, so the old name carries no row.
+    # macOS default is ~/.matplotlib; the directory holds font and tex caches, no rc file
+    pythonEnv.MPLCONFIGDIR = "${xdgCacheHome}/matplotlib";
+    # Runtime data for the geo CLI roster: PROJ 9.1 renamed PROJ_LIB to PROJ_DATA, which libproj consults first, so the old name carries no row.
     # The Nix PROJ_DATA ships no datum grids; PROJ_NETWORK streams them from cdn.proj.org into the XDG data cache (300 MB cap).
-    # GDAL_DATA carries no row: libgdal compiles in its own share/gdal, and a set value replaces the data a rasterio wheel bundles for its
-    # own libgdal. GEOS carries none either: shapely's meson build resolves GEOS through pkg-config or CMake and rejects GEOS_CONFIG.
-    # pyproj's build takes the library directory from PROJ_DIR/lib; PROJ_INCDIR names the split dev output PROJ_DIR lacks.
     geoEnv = {
-      GDAL_CONFIG = "${pkgs.gdal}/bin/gdal-config";
       PROJ_DATA = "${pkgs.proj}/share/proj";
       PROJ_NETWORK = "ON";
-      PROJ_DIR = "${pkgs.proj}";
-      PROJ_INCDIR = "${pkgs.proj.dev}/include";
     };
-    # EnergyPlus/OpenStudio are macOS-only (operator ruling); Linux hosts get an empty energy row, so downstream folds and exports stay
-    # polymorphic. Layout facts fold from each package's manifest-derived runtimeEnv.
-    energyEnv = lib.optionalAttrs isDarwin (pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv);
-    shellExports = env:
-      lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg (toString value)}") env
-      );
-    # Nix chrome-headless-shell for headless render (mmdc/puppeteer, the mermaid validator); one owner feeds login-shell and launchd surfaces so a
-    # GUI-spawned agent never falls to an unpinned browser. The bare Mach-O shell never registers with LaunchServices, so a render failure never
-    # raises the macOS "quit unexpectedly" dialog; the full Chrome-for-Testing .app aborts at _RegisterApplication when spawned headless from an
-    # agent shell and is never a valid headless pin.
-    headlessShellBrowsers = pkgs.playwright-driver.browsers.override {
-      withChromium = false;
-      withChromiumHeadlessShell = true;
-      withFfmpeg = false;
-      withFirefox = false;
-      withWebkit = false;
-    };
-    chromiumShell =
-      if isDarwin
-      then "chrome-headless-shell-mac-arm64/chrome-headless-shell"
-      else "chrome-headless-shell-linux64/chrome-headless-shell";
-    puppeteerExecutablePath = "${headlessShellBrowsers}/chromium_headless_shell-${pkgs.playwright-driver.browsersJSON."chromium-headless-shell".revision}/${chromiumShell}";
-    # One class-partitioned env owner feeding the session (home.sessionVariables), the .zshenv resilient floor, and the launchd GUI surfaces.
+    # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
+    energyEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
+    # One class-partitioned env owner feeding the session (home.sessionVariables), the .zshenv never-clobber floor, and the launchd GUI surfaces.
     # `all` rows land byte-identical everywhere so an interactive shell and a Dock-launched agent never resolve divergent pager/config env;
-    # `session` rows are interactive-only (man/bat/info/sqlite). Every row moves a tool off a non-XDG default or names a fact its config file
+    # `session` rows are interactive-only (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
     # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
     # its own config key. A new cross-surface var is one `all` row.
     # One font root list feeds fontconfig's fonts.conf (media.nix) and Typst, which reads no fontconfig; the design store is operator-owned.
-    fontDirectories =
-      if isDarwin
-      then [
-        "/System/Library/Fonts"
-        "/Library/Fonts"
-        "${home}/Library/Fonts"
-        "${home}/Library/Application Support/design-tools/fonts"
-      ]
-      else ["/etc/profiles/per-user/${username}/share/fonts"];
+    fontDirectories = [
+      "/System/Library/Fonts"
+      "/Library/Fonts"
+      "${home}/Library/Fonts"
+      "${home}/Library/Application Support/design-tools/fonts"
+    ];
     envByClass = {
       all = {
         PAGER = "less";
@@ -144,58 +74,52 @@
         # fontconfig consumers (fc-*, magick, vips text, gs, Pango) and Typst each resolve fonts through one of these two rows on every surface.
         FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
         TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
-        # Config files whose defaults are dotfiles in $HOME: kubectl and helm read KUBECONFIG, gitleaks its machine policy allowlists.
-        KUBECONFIG = "${xdgConfigHome}/kube/config";
-        GITLEAKS_CONFIG = "${xdgConfigHome}/gitleaks/gitleaks.toml";
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
-        RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config"; # ripgrep reads no config file without this row
-        # pnpm's home directory: `pnpm add -g` packages and bin links, and `$PNPM_HOME/store`, the one content-addressed store every project on
-        # the Data volume hard-links from; the macOS default is ~/Library/pnpm. The metadata cache follows XDG_CACHE_HOME to ~/.cache/pnpm. pnpm
-        # itself is a project's mise.toml row, this row is data only.
-        PNPM_HOME = "${xdgDataHome}/pnpm";
-        # npm's cache and the Pulumi CLI home (plugins, workspaces, credentials, logs) default to ~/.npm and ~/.pulumi. An editor's type
-        # acquisition runs npm from the GUI domain and a Pulumi run starts outside a login shell, a project's [env] row wins through the floor.
+        # npm's cache, the Pulumi CLI home (plugins, workspaces, credentials, logs), and Doppler's login and scope store default to ~/.npm,
+        # ~/.pulumi, and ~/.doppler. An editor's type acquisition runs npm from the GUI domain and a Pulumi or Doppler run starts outside a
+        # login shell, a project's [env] row wins through the floor.
         npm_config_cache = "${xdgCacheHome}/npm";
         PULUMI_HOME = "${xdgDataHome}/pulumi";
-        # One NuGet packages folder for every restore (repository, scratch probe, editor, `dotnet dnx`): the variable outranks a repository
-        # NuGet.config and the folder a project's DOTNET_CLI_HOME row would move it to, and roslyn-codelens trusts analyzers by this exact path.
-        NUGET_PACKAGES = "${home}/.nuget/packages";
+        DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
         # CPython mirrors bytecode under the prefix in place of __pycache__ beside each source, a project's [env] row wins through the floor
         PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
-        # mmdc/puppeteer and the mermaid validator launch this pin from a login shell and from a GUI-spawned agent alike.
-        PUPPETEER_EXECUTABLE_PATH = puppeteerExecutablePath;
         # Claude Code restores the PATH its session-start shell snapshot captured in every Bash command, then runs this file: hook-env reverts the
-        # launch shell's mise diff and applies the current directory's tools and [env] rows, so each command sees mise state as it is now.
-        CLAUDE_ENV_FILE = "${pkgs.writeText "mise-hook-env.sh" ''eval "$(${lib.getExe pkgs.mise} hook-env -s bash)"''}";
+        # launch shell's mise diff and applies the current directory's tools and [env] rows, so each command sees mise state as it is now. The
+        # body names mise through that PATH and holds no store path, so every generation carries the same file and an inherited value stays
+        # current; under zsh, a no-op compdef makes the guard in mise's completion block skip compinit.
+        CLAUDE_ENV_FILE = builtins.toFile "mise-hook-env.sh" ''
+          if [ -n "''${ZSH_VERSION:-}" ]; then
+            (( $+functions[compdef] )) || compdef() { :; }
+            eval "$(mise hook-env -s zsh)"
+          else
+            eval "$(mise hook-env -s bash)"
+          fi
+        '';
       };
-      session =
-        {
-          BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
-          MANPAGER = "env BATMAN_IS_BEING_MANPAGER=yes bash ${pkgs.bat-extras.batman}/bin/batman"; # static batman export-env, no per-shell fork
-          SQLITE_HISTORY = "${xdgStateHome}/sqlite/history"; # sqlite3's default is ~/.sqlite_history
-        }
-        // lib.optionalAttrs isDarwin {
-          # The one `brew shellenv` row PATH resolution does not cover: macOS manpath derives /opt/homebrew/share/man from /opt/homebrew/bin,
-          # GNU info reads INFOPATH alone; the trailing colon appends info's built-in directories.
-          INFOPATH = "/opt/homebrew/share/info:";
-        }
-        // lib.optionalAttrs (!isDarwin) {
-          MANROFFOPT = "-c"; # man-db passes it to the formatter; the macOS man script reads no such variable
-        };
+      session = {
+        BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
+        MANPAGER = "env BATMAN_IS_BEING_MANPAGER=yes bash ${pkgs.bat-extras.batman}/bin/batman"; # static batman export-env, no per-shell fork
+        SQLITE_HISTORY = "${xdgStateHome}/sqlite/history"; # sqlite3's default is ~/.sqlite_history
+        NODE_REPL_HISTORY = "${xdgStateHome}/node_repl_history"; # the node REPL's default is ~/.node_repl_history
+        # The one `brew shellenv` row PATH resolution does not cover: macOS manpath derives /opt/homebrew/share/man from /opt/homebrew/bin,
+        # GNU info reads INFOPATH alone; the trailing colon appends info's built-in directories.
+        INFOPATH = "/opt/homebrew/share/info:";
+      };
     };
-    # Never-clobber floor: shells whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED recover the `all` rows; the fold owns the :- idiom.
-    resilientFloorExports = lib.concatStrings (
-      lib.mapAttrsToList (name: value: ''
-        export ${name}="''${${name}:-${value}}"
-      '')
-      envByClass.all
-    );
+    # Never-clobber floor: a row exports only where the caller left it unset or empty, so a scoped value (`doppler run`, a project's [env])
+    # survives every zsh child, and a shell whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED recovers it; the fold owns the :- idiom.
+    floorExports = env:
+      lib.concatStrings (
+        lib.mapAttrsToList (name: value: ''
+          export ${name}="''${${name}:-${toString value}}"
+        '')
+        env
+      );
   in {
     inherit
+      floorExports
       fontDirectories
-      puppeteerExecutablePath
-      resilientFloorExports
-      shellExports
+      rhinoApp
       ;
 
     sessionPathEntries = pathEntries;

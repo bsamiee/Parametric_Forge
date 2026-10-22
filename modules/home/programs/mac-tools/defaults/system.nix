@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # System-behavior and per-application user defaults.
 {config, ...}: {
-  estate.userDefaults = {
+  forge.userDefaults = {
     # --- [ACTIVITY_MONITOR]
     "com.apple.ActivityMonitor" = {
       ShowCategory = 100;
@@ -45,6 +45,16 @@
       "com.apple.sound.beep.sound" = "/System/Library/Sounds/Tink.aiff";
     };
     "com.apple.iCal"."first day of week" = 0; # 0 = system setting
+    # --- [SEARCH_SUGGESTIONS]
+    # Spotlight pane rows as macOS 27 writes them: the Custom.relatedContents rule turns Show Related Content (Apple partner content in
+    # Spotlight and Look Up) off, and sharing status 2 turns Help Apple Improve Search off. Safari's Search settings: no search engine
+    # suggestions, no Safari Suggestions. Per-app Siri Suggestions learning is the suggestion-blocklist agent's (mac-tools/suggestions.nix).
+    "com.apple.Spotlight".EnabledPreferenceRules = ["Custom.relatedContents"];
+    "com.apple.assistant.support"."Search Queries Data Sharing Status" = 2;
+    "com.apple.Safari" = {
+      SuppressSearchSuggestions = true;
+      UniversalSearchEnabled = false;
+    };
     # --- [APPLICATION_SPECIFIC_SETTINGS]
     # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative), and Siri/Apple
     # Intelligence disablement is Settings-owned on Tahoe — neither surface carries a truthful defaults row.

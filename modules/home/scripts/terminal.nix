@@ -13,6 +13,7 @@
   ...
 }: let
   yaziPkg = config.programs.yazi.package;
+  zsh = lib.getExe config.programs.zsh.package;
   # Geometry-owner projection: popup flags render from the zellij option rows.
   yaziPopup = config.programs.zellij.popupGeometry.yazi;
   yaziPopupArgs = lib.escapeShellArgs ["-x" yaziPopup.x "-y" yaziPopup.y "--width" yaziPopup.width "--height" yaziPopup.height];
@@ -23,7 +24,7 @@
   # its already-published row before binding the deterministic socket.
   nvimServer = pkgs.writeShellApplication {
     name = "nvim-server.sh";
-    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils];
+    runtimeInputs = [config.programs.neovim.finalPackage pkgs.zellij pkgs.jq pkgs.coreutils];
     text = ''
       # Outside Zellij: plain editor. Inside: per-pane RPC server + tab registry.
       if [[ -z "''${ZELLIJ:-}" ]]; then
@@ -72,7 +73,7 @@
 
   nvimEdit = pkgs.writeShellApplication {
     name = "nvim-edit.sh";
-    runtimeInputs = [pkgs.neovim pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock nvimServer];
+    runtimeInputs = [config.programs.neovim.finalPackage pkgs.zellij pkgs.jq pkgs.coreutils pkgs.flock nvimServer];
     text = ''
       # Yazi opener target: RPC into the tab's registered Neovim, else spawn one.
       if [[ $# -eq 0 ]]; then
@@ -152,7 +153,9 @@
           zellij action close-pane --pane-id "terminal_''${editor_pane}" >/dev/null 2>&1 || true
         fi
         rm -f -- "$registry"
-        created="$(zellij action new-pane --close-on-exit --name " [EDITOR] " --cwd "$PWD" -- nvim-server.sh "$@")"
+        # The editor pane starts through zsh so .zshenv seats the session environment the zellij server's launchd PATH lacks.
+        # shellcheck disable=SC2016  # zsh expands the positional parameters
+        created="$(zellij action new-pane --close-on-exit --name " [EDITOR] " --cwd "$PWD" -- ${zsh} -c 'exec "$@"' zsh nvim-server.sh "$@")"
         editor_pane="''${created#terminal_}"
         if [[ ! "$editor_pane" =~ ^[0-9]+$ ]]; then
           printf 'nvim-edit.sh: editor spawn returned an invalid pane id: %s\n' "$created" >&2
@@ -171,7 +174,7 @@
         zellij action focus-pane-id "terminal_''${editor_pane#terminal_}" >/dev/null 2>&1 || true
       fi
 
-      # Pane-scoped dismissal: close only the estate popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
+      # Pane-scoped dismissal: close only the Forge popup this ran inside, killing its own process tree, so it must stay the final statement. Shared
       # identity vocabulary; a yazi launched WITH args ("yazi-dispatch.sh <dir>") is never the popup.
       if [[ "$caller_is_popup" == "true" ]]; then
         zellij action close-pane --pane-id "terminal_''${caller}" >/dev/null 2>&1 || true
@@ -187,7 +190,7 @@
       #   (no args)          popup body: yazi + DDS bridge (client-id, local-events)
       #   toggle             per-tab popup dispatch (create / show+focus / hide)
       #   reveal|cd <path>   semantic DDS action on the tab popup via ya emit-to, creating the popup when absent — never key simulation
-      #   <entries...>       plain yazi with the estate editor handoff
+      #   <entries...>       plain yazi with the Forge editor handoff
       # DDS client ids derive deterministically from (session, pane_id), so the dispatcher recomputes the popup's id without a registry.
       session="''${ZELLIJ_SESSION_NAME:-default}"
       ${runtimeBaseSh}

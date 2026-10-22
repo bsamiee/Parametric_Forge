@@ -4,10 +4,10 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/bottom.nix
 # ----------------------------------------------------------------------------
-# Resource monitor themed from the estate palette owner
+# Resource monitor themed from the palette and roles of modules/home/theme.nix
 {config, ...}: let
   # palette retained for the categorical per-core / per-GPU rainbows — a chromatic spectrum wants stable distinct hues, not semantic roles.
-  inherit (config.estate.theme) roles palette;
+  inherit (config.forge.theme) roles palette;
 in {
   programs.bottom = {
     enable = true;

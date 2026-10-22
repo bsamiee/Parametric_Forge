@@ -17,5 +17,7 @@ cask "aescripts-zxp-installer" do
 
   app "ZXP Installer.app"
 
-  uninstall quit: "com.aescripts.ZXP-Installer"
+  uninstall launchctl: "com.aescripts.ZXP-Installer.helper",
+            quit:      "com.aescripts.ZXP-Installer",
+            delete:    "/Library/PrivilegedHelperTools/com.aescripts.ZXP-Installer.helper"
 end

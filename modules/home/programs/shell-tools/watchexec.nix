@@ -4,12 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/watchexec.nix
 # ----------------------------------------------------------------------------
-# watchexec owner: the package plus the global ignore estate (the noise taxonomy and its rendering).
-{
-  config,
-  pkgs,
-  ...
-}: {
+# watchexec package; each project's .gitignore and .ignore files steer what it watches.
+{pkgs, ...}: {
   home.packages = [pkgs.watchexec];
-  xdg.configFile."watchexec/ignore".text = config.estate.ignoreEstate.text;
 }

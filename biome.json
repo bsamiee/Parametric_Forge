@@ -34,20 +34,5 @@
         "parser": {
             "allowComments": true
         }
-    },
-    "overrides": [
-        {
-            "includes": [".claude/skills/coding-applescript/{examples,templates}/**"],
-            "linter": {
-                "rules": {
-                    "correctness": {
-                        "noUnusedVariables": "off"
-                    },
-                    "suspicious": {
-                        "noRedundantUseStrict": "off"
-                    }
-                }
-            }
-        }
-    ]
+    }
 }

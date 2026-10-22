@@ -4,15 +4,15 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/theme.nix
 # ----------------------------------------------------------------------------
-# Typed Yazi theme from the estate palette owner, rendered through the native TOML generator; syntect preview highlighting consumes the owner's shared
-# tmTheme artifact and icons project from the shared icon vocabulary plus the extension icon-family vocabulary below.
+# Typed Yazi theme from the Forge palette owner, rendered through the native TOML generator; syntect preview highlighting consumes the owner's shared
+# tmTheme store file and icons project from the shared icon vocabulary plus the extension icon-family vocabulary below.
 {
   config,
   lib,
   ...
 }: let
-  p = config.estate.theme.palette;
-  g = config.estate.theme.roles.git;
+  p = config.forge.theme.palette;
+  g = config.forge.theme.roles.git;
 
   # Style combinators over palette rows; badge is the dominant shape (background-colored text on a colored block).
   fg = c: {fg = c.hex;};
@@ -69,7 +69,6 @@
     ["mime" "application/{zip,rar,7z*,tar,gzip,xz,zstd,bzip*,lzma,compress,archive,cpio,arj,xar,ms-cab*}" p.yellow]
     ["mime" "application/pdf" p.red]
     ["mime" "inode/empty" p.cyan]
-    ["mime" "vfs/{absent,stale}" p.comment]
     ["url" "*.py" p.green]
     ["url" "*.js" p.yellow]
     ["url" "*.{ts,jsx,tsx}" p.orange]
@@ -117,7 +116,7 @@ in {
       count_cut = badge p.red;
       count_selected = badge p.cyan;
       border_style = fg p.cyan;
-      syntect_theme = "${config.xdg.configHome}/estate/theme/estate-dracula.tmTheme";
+      syntect_theme = "${config.forge.theme.projections.tmThemeFile}";
     };
 
     # Hovered-file styling: 26.5.6 moved mgr.hovered/preview_hovered here.
@@ -252,7 +251,7 @@ in {
           text = row.glyph;
           fg = row.color.hex;
         })
-        config.estate.theme.icons.dirs;
+        config.forge.theme.icons.dirs;
 
       prepend_exts = lib.concatLists (lib.mapAttrsToList (names: family:
         map (name:

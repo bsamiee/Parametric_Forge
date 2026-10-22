@@ -5,14 +5,7 @@
 # Path          : modules/home/scripts/loc.nix
 # ----------------------------------------------------------------------------
 # scc code counter + loc wrapper: grouped per-file / per-folder LOC and complexity. --json emits the machine envelope.
-{
-  lib,
-  pkgs,
-  ...
-}: let
-  style = import ../../style.nix;
-  # One transient vocabulary: style.nix scratch dirs unioned with build-output dirs. gitignore covers checkouts; these excludes cover non-git trees.
-  excludeDirs = builtins.concatStringsSep "," (lib.unique (style.transientDirs ++ [".git" ".hg" ".svn" "bin" "obj" ".cursor" ".artifacts" "dist" "build" "target" "vendor"]));
+{pkgs, ...}: let
   loc = pkgs.writeShellApplication {
     name = "loc";
     runtimeInputs = [pkgs.coreutils pkgs.jq pkgs.scc pkgs.util-linux];
@@ -91,13 +84,12 @@
       }
       readonly deadline_seconds
       readonly tab=$'\t'
-      readonly exclude_dirs="${excludeDirs}"
       targets_json="$(jq -nc '$ARGS.positional' --args -- "''${resolved[@]}")"
       readonly targets_json
 
       # Corpus filters ride directory scans only: minified/generated detection and the large-file guard would silently vanish an explicitly named
       # file from its own report, so explicit file targets always count verbatim.
-      scc_flags=(--by-file --format json --no-cocomo --no-size --exclude-dir "$exclude_dirs" --sort code)
+      scc_flags=(--by-file --format json --no-cocomo --no-size --sort code)
       ((dirs_only)) && scc_flags+=(--no-min-gen --no-large)
 
       # Detached stdin + deadline: a dead invoking session must never strand this command substitution as an orphaned subshell. TERM first, KILL

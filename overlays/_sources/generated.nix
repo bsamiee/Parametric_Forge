@@ -8,26 +8,10 @@
 {
   "1password-cli-aarch64-darwin" = {
     pname = "1password-cli-aarch64-darwin";
-    version = "2.40.0";
+    version = "2.41.0";
     src = fetchurl {
-      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_apple_universal_v2.40.0.pkg";
-      sha256 = "sha256-8e9slWDDMtsD/eMsgzdYyqLxI8QzXmdreevYNZ4025s=";
-    };
-  };
-  "1password-cli-aarch64-linux" = {
-    pname = "1password-cli-aarch64-linux";
-    version = "2.40.0";
-    src = fetchTarball {
-      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_linux_arm64_v2.40.0.zip";
-      sha256 = "sha256-vxj3hYB3af4PMLcNuelsfc7haajPXXz4GtU9j4deR0k=";
-    };
-  };
-  "1password-cli-x86_64-linux" = {
-    pname = "1password-cli-x86_64-linux";
-    version = "2.40.0";
-    src = fetchTarball {
-      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_linux_amd64_v2.40.0.zip";
-      sha256 = "sha256-ZZrxhmqYSFv0H8j1RsJ3XdZ5OgL0aaYKva8z9SUl7lo=";
+      url = "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.0/op_apple_universal_v2.41.0.pkg";
+      sha256 = "sha256-6rF+DJKcEbYim1droOfS12THR4ysnK+fv6Ef5hvDVkc=";
     };
   };
   biome-aarch64-darwin = {
@@ -38,36 +22,12 @@
       sha256 = "sha256-NjZ5bYx4v8/g1FlG3JPiHhLSeknrp0AeGK8eqFTSVQM=";
     };
   };
-  biome-aarch64-linux = {
-    pname = "biome-aarch64-linux";
-    version = "2.5.15";
-    src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-linux-arm64-musl";
-      sha256 = "sha256-GV1FJSgtK4dzV7qDd1RQYeNCgI2jeZcFEVNwjHtTJvo=";
-    };
-  };
-  biome-x86_64-linux = {
-    pname = "biome-x86_64-linux";
-    version = "2.5.15";
-    src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-linux-x64-musl";
-      sha256 = "sha256-Qrb9NmL8H8MHWjcEFEeKo+2C/UPShDC7+4Hr0Cy95lY=";
-    };
-  };
-  design-fontconfig = {
-    pname = "design-fontconfig";
-    version = "2.18.3";
-    src = fetchurl {
-      url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz";
-      sha256 = "sha256-T3tVSjjN94wDP2ZsiHHzdJ4UoJT2Wgf2MMke0LQ9NeM=";
-    };
-  };
   design-geist-font = {
     pname = "design-geist-font";
-    version = "1.7.2";
+    version = "1.8.1";
     src = fetchurl {
-      url = "https://github.com/vercel/geist-font/releases/download/v1.7.2/geist-font-v1.7.2.zip";
-      sha256 = "sha256-f8gA0qxrkoRIlRluUEGspV2BTBXbcMRPebO4OrgrBOI=";
+      url = "https://github.com/vercel/geist-font/releases/download/v1.8.1/geist-font-v1.8.1.zip";
+      sha256 = "sha256-cPQsFFL7bfEuoYPiCmWZkVc1T5HRHawYtMcT44OAjsI=";
     };
   };
   design-ghostscript = {
@@ -80,18 +40,18 @@
   };
   design-harfbuzz = {
     pname = "design-harfbuzz";
-    version = "14.5.1";
+    version = "14.6.0";
     src = fetchurl {
-      url = "https://github.com/harfbuzz/harfbuzz/releases/download/14.5.1/harfbuzz-14.5.1.tar.xz";
-      sha256 = "sha256-fi+k6MfJjo2BQGcfV3JUKvqqaszPvXRlBohrbYX3+NY=";
+      url = "https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz";
+      sha256 = "sha256-0HoAcycndwiipzrkN4h8268oKTf20DylRncj6Qma9YY=";
     };
   };
   design-imagemagick = {
     pname = "design-imagemagick";
-    version = "7.1.2-32";
+    version = "7.1.2-34";
     src = fetchurl {
-      url = "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-32/ImageMagick-7.1.2-32.tar.xz";
-      sha256 = "sha256-q8ONrUrfurZxhXgiSZ5pyHRSeKkU9dOFF7rs1AC4IMI=";
+      url = "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-34/ImageMagick-7.1.2-34.tar.xz";
+      sha256 = "sha256-Vf4OwkYkW0bEKfnmvGUpStSnima4ir2YF5ccoVeFYyM=";
     };
   };
   design-mupdf = {
@@ -104,26 +64,10 @@
   };
   design-pandoc-aarch64-darwin = {
     pname = "design-pandoc-aarch64-darwin";
-    version = "3.12";
+    version = "3.12.1";
     src = fetchTarball {
-      url = "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-arm64-macOS.zip";
-      sha256 = "sha256-I0ElCgIqas3mZadTlpNsXk6oIHn6JiVKeu6Kk1vtu7w=";
-    };
-  };
-  design-pandoc-aarch64-linux = {
-    pname = "design-pandoc-aarch64-linux";
-    version = "3.12";
-    src = fetchTarball {
-      url = "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-linux-arm64.tar.gz";
-      sha256 = "sha256-dZKvH4zOMJ4wqfmlgl/cHZxO8elCHznsgYgR/9pIAbs=";
-    };
-  };
-  design-pandoc-x86_64-linux = {
-    pname = "design-pandoc-x86_64-linux";
-    version = "3.12";
-    src = fetchTarball {
-      url = "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-linux-amd64.tar.gz";
-      sha256 = "sha256-j5rz4BRqAcNeicgQ6Pq+Ind0wctOKKQQdZmoR+MAYv8=";
+      url = "https://github.com/jgm/pandoc/releases/download/3.12.1/pandoc-3.12.1-arm64-macOS.zip";
+      sha256 = "sha256-NOhVJJZcMhYCI+/EY8KeXO5NHq4yaUNOMHf/7hYsCFw=";
     };
   };
   design-poppler = {
@@ -172,22 +116,6 @@
       sha256 = "sha256-J2GzzlHHtdRdoXDxufhaTPIjpTAcVgkAz0wOyk9P+nI=";
     };
   };
-  design-temurin-aarch64-linux = {
-    pname = "design-temurin-aarch64-linux";
-    version = "jdk-26.0.2.1+1";
-    src = fetchTarball {
-      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse";
-      sha256 = "sha256-ZMNLL5XntXogzLLklrZNmQECidDYUosnCzN0YHhIHoM=";
-    };
-  };
-  design-temurin-x86_64-linux = {
-    pname = "design-temurin-x86_64-linux";
-    version = "jdk-26.0.2.1+1";
-    src = fetchTarball {
-      url = "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse";
-      sha256 = "sha256-SNxG+XC44yrnD4CBBrIfrFVhEkLzud7I4bveYo2i2pA=";
-    };
-  };
   design-utiluti = {
     pname = "design-utiluti";
     version = "1.5";
@@ -198,77 +126,42 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.185";
+    version = "1.31.203";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.185/cli-1.31.185.jar";
-      sha256 = "sha256-wgu/J56uh/0yU42zlGQOZ7zAzMm9fzk+V3AC8KVkhqo=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.203/cli-1.31.203.jar";
+      sha256 = "sha256-zE34ZUZZRes1eg0gpgC3aNbb+WifQzxPDz7EXczl23w=";
     };
   };
-  jdt-language-server = {
-    pname = "jdt-language-server";
-    version = "1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz";
-    src = fetchurl {
-      url = "https://download.eclipse.org/jdtls/milestones/1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz";
-      sha256 = "sha256-M45+c9YYNmUbokU5GaDTT6dj6058AzQgkjCb/7iTTGQ=";
+  energyplus-aarch64-darwin = {
+    pname = "energyplus-aarch64-darwin";
+    version = "v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz";
+    src = fetchTarball {
+      url = "https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz";
+      sha256 = "sha256-+6LekCUx7zbFzloQs23CRCbq9+MykKin/JVJ8I2psyI=";
     };
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.10.12";
+    version = "2026.10.17";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-macos-arm64.tar.gz";
-      sha256 = "sha256-bcErYIfUiHz4B+mp88KqCuDZCm9GXGvZxdSgeEf4irM=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.17/mise-v2026.10.17-macos-arm64.tar.gz";
+      sha256 = "sha256-18UMFoNSSnZCYJhszJxBwN5eH81JFxS1ZAtle3Z4GvY=";
     };
   };
-  mise-aarch64-linux = {
-    pname = "mise-aarch64-linux";
-    version = "2026.10.12";
-    src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-arm64-musl.tar.gz";
-      sha256 = "sha256-iaQtd6xN6Ch185f3IgGPiNnTE5uqrAjOFiu6QkxDaqk=";
-    };
-  };
-  mise-x86_64-linux = {
-    pname = "mise-x86_64-linux";
-    version = "2026.10.12";
-    src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-x64-musl.tar.gz";
-      sha256 = "sha256-bAeINyOvqh2kE6Oaf3ZPHU0qQwV/FFdiW2sRW2CO0Ec=";
-    };
-  };
-  rdkafka = {
-    pname = "rdkafka";
-    version = "v2.16.0-RC4";
-    src = fetchFromGitHub {
-      owner = "confluentinc";
-      repo = "librdkafka";
-      rev = "v2.16.0-RC4";
-      fetchSubmodules = false;
-      sha256 = "sha256-/IlAJChS3FhyTjTBTCt3gVYvigjAozpzkDQ7SAVWOus=";
+  openstudio-aarch64-darwin = {
+    pname = "openstudio-aarch64-darwin";
+    version = "v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz";
+    src = fetchTarball {
+      url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz";
+      sha256 = "sha256-ahbG8fvp/4R4M03VCKGD6TWVyl2L21wre/KdaOK4sqo=";
     };
   };
   sqlean-aarch64-darwin = {
     pname = "sqlean-aarch64-darwin";
-    version = "0.28.4";
-    src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-macos-arm64.zip";
-      sha256 = "sha256-NlOnDIOnFdcMYnpMtjUjNfmfRox74cm82PQ06Y8IknI=";
-    };
-  };
-  sqlean-aarch64-linux = {
-    pname = "sqlean-aarch64-linux";
-    version = "0.28.4";
-    src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-arm64.zip";
-      sha256 = "sha256-TEOLpVaoUEw+Z5BeBhh2G7KgrPRtHfW/4UAudcAU7M4=";
-    };
-  };
-  sqlean-x86_64-linux = {
-    pname = "sqlean-x86_64-linux";
-    version = "0.28.4";
-    src = fetchTarball {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip";
-      sha256 = "sha256-e+tbjHjiG4cYtXomKK60h7586heIpc7S9vowb3R7RKI=";
+    version = "0.28.5";
+    src = fetchurl {
+      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.5/sqlean-macos-arm64.zip";
+      sha256 = "sha256-WM2fNerOiz6Zy00xBH/kkH/2ocU/20cgURgFf7QPGCw=";
     };
   };
   vl-convert-aarch64-darwin = {
@@ -279,20 +172,12 @@
       sha256 = "sha256-qsUO6lEbTVcYthsU8qaGDYVJSvCtNT8Dep3Cfna39RU=";
     };
   };
-  vl-convert-aarch64-linux = {
-    pname = "vl-convert-aarch64-linux";
-    version = "1.9.0";
-    src = fetchTarball {
-      url = "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-aarch64.zip";
-      sha256 = "sha256-IVm7jUV77hhnFmt4Xq5ePYgKHGRyMOkdfcb9A93Q3Co=";
-    };
-  };
-  vl-convert-x86_64-linux = {
-    pname = "vl-convert-x86_64-linux";
-    version = "1.9.0";
-    src = fetchTarball {
-      url = "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-64.zip";
-      sha256 = "sha256-1qkX/2jVh7Mj0KUBP4l7p5n/tBHIFOetqqKAd878Rq0=";
+  zjstatus = {
+    pname = "zjstatus";
+    version = "0.25.0";
+    src = fetchurl {
+      url = "https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm";
+      sha256 = "sha256-KCzqshnlbhkIyfrDOQckH+bD4e99hfqrPl9DjO+HuP4=";
     };
   };
 }

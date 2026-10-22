@@ -8,39 +8,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-8e9slWDDMtsD/eMsgzdYyqLxI8QzXmdreevYNZ4025s=",
+            "sha256": "sha256-6rF+DJKcEbYim1droOfS12THR4ysnK+fv6Ef5hvDVkc=",
             "type": "url",
-            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_apple_universal_v2.40.0.pkg"
+            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.0/op_apple_universal_v2.41.0.pkg"
         },
-        "version": "2.40.0"
-    },
-    "1password-cli-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "1password-cli-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-vxj3hYB3af4PMLcNuelsfc7haajPXXz4GtU9j4deR0k=",
-            "type": "tarball",
-            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_linux_arm64_v2.40.0.zip"
-        },
-        "version": "2.40.0"
-    },
-    "1password-cli-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "1password-cli-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-ZZrxhmqYSFv0H8j1RsJ3XdZ5OgL0aaYKva8z9SUl7lo=",
-            "type": "tarball",
-            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.40.0/op_linux_amd64_v2.40.0.zip"
-        },
-        "version": "2.40.0"
+        "version": "2.41.0"
     },
     "biome-aarch64-darwin": {
         "cargoLock": null,
@@ -57,51 +29,6 @@
         },
         "version": "2.5.15"
     },
-    "biome-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "biome-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-GV1FJSgtK4dzV7qDd1RQYeNCgI2jeZcFEVNwjHtTJvo=",
-            "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-linux-arm64-musl"
-        },
-        "version": "2.5.15"
-    },
-    "biome-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "biome-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Qrb9NmL8H8MHWjcEFEeKo+2C/UPShDC7+4Hr0Cy95lY=",
-            "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.5.15/biome-linux-x64-musl"
-        },
-        "version": "2.5.15"
-    },
-    "design-fontconfig": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-fontconfig",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-T3tVSjjN94wDP2ZsiHHzdJ4UoJT2Wgf2MMke0LQ9NeM=",
-            "type": "url",
-            "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz"
-        },
-        "version": "2.18.3"
-    },
     "design-geist-font": {
         "cargoLock": null,
         "date": null,
@@ -111,11 +38,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-f8gA0qxrkoRIlRluUEGspV2BTBXbcMRPebO4OrgrBOI=",
+            "sha256": "sha256-cPQsFFL7bfEuoYPiCmWZkVc1T5HRHawYtMcT44OAjsI=",
             "type": "url",
-            "url": "https://github.com/vercel/geist-font/releases/download/v1.7.2/geist-font-v1.7.2.zip"
+            "url": "https://github.com/vercel/geist-font/releases/download/v1.8.1/geist-font-v1.8.1.zip"
         },
-        "version": "1.7.2"
+        "version": "1.8.1"
     },
     "design-ghostscript": {
         "cargoLock": null,
@@ -141,11 +68,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-fi+k6MfJjo2BQGcfV3JUKvqqaszPvXRlBohrbYX3+NY=",
+            "sha256": "sha256-0HoAcycndwiipzrkN4h8268oKTf20DylRncj6Qma9YY=",
             "type": "url",
-            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.5.1/harfbuzz-14.5.1.tar.xz"
+            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz"
         },
-        "version": "14.5.1"
+        "version": "14.6.0"
     },
     "design-imagemagick": {
         "cargoLock": null,
@@ -156,11 +83,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-q8ONrUrfurZxhXgiSZ5pyHRSeKkU9dOFF7rs1AC4IMI=",
+            "sha256": "sha256-Vf4OwkYkW0bEKfnmvGUpStSnima4ir2YF5ccoVeFYyM=",
             "type": "url",
-            "url": "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-32/ImageMagick-7.1.2-32.tar.xz"
+            "url": "https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-34/ImageMagick-7.1.2-34.tar.xz"
         },
-        "version": "7.1.2-32"
+        "version": "7.1.2-34"
     },
     "design-mupdf": {
         "cargoLock": null,
@@ -185,39 +112,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-I0ElCgIqas3mZadTlpNsXk6oIHn6JiVKeu6Kk1vtu7w=",
+            "sha256": "sha256-NOhVJJZcMhYCI+/EY8KeXO5NHq4yaUNOMHf/7hYsCFw=",
             "type": "tarball",
-            "url": "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-arm64-macOS.zip"
+            "url": "https://github.com/jgm/pandoc/releases/download/3.12.1/pandoc-3.12.1-arm64-macOS.zip"
         },
-        "version": "3.12"
-    },
-    "design-pandoc-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-pandoc-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-dZKvH4zOMJ4wqfmlgl/cHZxO8elCHznsgYgR/9pIAbs=",
-            "type": "tarball",
-            "url": "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-linux-arm64.tar.gz"
-        },
-        "version": "3.12"
-    },
-    "design-pandoc-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-pandoc-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-j5rz4BRqAcNeicgQ6Pq+Ind0wctOKKQQdZmoR+MAYv8=",
-            "type": "tarball",
-            "url": "https://github.com/jgm/pandoc/releases/download/3.12/pandoc-3.12-linux-amd64.tar.gz"
-        },
-        "version": "3.12"
+        "version": "3.12.1"
     },
     "design-poppler": {
         "cargoLock": null,
@@ -298,34 +197,6 @@
         },
         "version": "jdk-26.0.2.1+1"
     },
-    "design-temurin-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-temurin-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-ZMNLL5XntXogzLLklrZNmQECidDYUosnCzN0YHhIHoM=",
-            "type": "tarball",
-            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/aarch64/jre/hotspot/normal/eclipse"
-        },
-        "version": "jdk-26.0.2.1+1"
-    },
-    "design-temurin-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "design-temurin-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-SNxG+XC44yrnD4CBBrIfrFVhEkLzud7I4bveYo2i2pA=",
-            "type": "tarball",
-            "url": "https://api.adoptium.net/v3/binary/version/jdk-26.0.2.1+1/linux/x64/jre/hotspot/normal/eclipse"
-        },
-        "version": "jdk-26.0.2.1+1"
-    },
     "design-utiluti": {
         "cargoLock": null,
         "date": null,
@@ -350,26 +221,25 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-wgu/J56uh/0yU42zlGQOZ7zAzMm9fzk+V3AC8KVkhqo=",
+            "sha256": "sha256-zE34ZUZZRes1eg0gpgC3aNbb+WifQzxPDz7EXczl23w=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.185/cli-1.31.185.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.203/cli-1.31.203.jar"
         },
-        "version": "1.31.185"
+        "version": "1.31.203"
     },
-    "jdt-language-server": {
+    "energyplus-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
         "extract": null,
-        "name": "jdt-language-server",
+        "name": "energyplus-aarch64-darwin",
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-M45+c9YYNmUbokU5GaDTT6dj6058AzQgkjCb/7iTTGQ=",
-            "type": "url",
-            "url": "https://download.eclipse.org/jdtls/milestones/1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz"
+            "sha256": "sha256-+6LekCUx7zbFzloQs23CRCbq9+MykKin/JVJ8I2psyI=",
+            "type": "tarball",
+            "url": "https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz"
         },
-        "version": "1.61.0/jdt-language-server-1.61.0-202609031315.tar.gz"
+        "version": "v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz"
     },
     "mise-aarch64-darwin": {
         "cargoLock": null,
@@ -380,62 +250,25 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-bcErYIfUiHz4B+mp88KqCuDZCm9GXGvZxdSgeEf4irM=",
+            "sha256": "sha256-18UMFoNSSnZCYJhszJxBwN5eH81JFxS1ZAtle3Z4GvY=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.10.17/mise-v2026.10.17-macos-arm64.tar.gz"
         },
-        "version": "2026.10.12"
+        "version": "2026.10.17"
     },
-    "mise-aarch64-linux": {
+    "openstudio-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
         "extract": null,
-        "name": "mise-aarch64-linux",
+        "name": "openstudio-aarch64-darwin",
         "passthru": null,
         "pinned": false,
         "src": {
-            "name": null,
-            "sha256": "sha256-iaQtd6xN6Ch185f3IgGPiNnTE5uqrAjOFiu6QkxDaqk=",
-            "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-arm64-musl.tar.gz"
+            "sha256": "sha256-ahbG8fvp/4R4M03VCKGD6TWVyl2L21wre/KdaOK4sqo=",
+            "type": "tarball",
+            "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz"
         },
-        "version": "2026.10.12"
-    },
-    "mise-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "mise-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-bAeINyOvqh2kE6Oaf3ZPHU0qQwV/FFdiW2sRW2CO0Ec=",
-            "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.10.12/mise-v2026.10.12-linux-x64-musl.tar.gz"
-        },
-        "version": "2026.10.12"
-    },
-    "rdkafka": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "rdkafka",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "deepClone": false,
-            "fetchSubmodules": false,
-            "leaveDotGit": false,
-            "name": null,
-            "owner": "confluentinc",
-            "repo": "librdkafka",
-            "rev": "v2.16.0-RC4",
-            "sha256": "sha256-/IlAJChS3FhyTjTBTCt3gVYvigjAozpzkDQ7SAVWOus=",
-            "sparseCheckout": [],
-            "type": "github"
-        },
-        "version": "v2.16.0-RC4"
+        "version": "v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
@@ -445,39 +278,12 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-NlOnDIOnFdcMYnpMtjUjNfmfRox74cm82PQ06Y8IknI=",
-            "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-macos-arm64.zip"
+            "name": null,
+            "sha256": "sha256-WM2fNerOiz6Zy00xBH/kkH/2ocU/20cgURgFf7QPGCw=",
+            "type": "url",
+            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.5/sqlean-macos-arm64.zip"
         },
-        "version": "0.28.4"
-    },
-    "sqlean-aarch64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "sqlean-aarch64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-TEOLpVaoUEw+Z5BeBhh2G7KgrPRtHfW/4UAudcAU7M4=",
-            "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-arm64.zip"
-        },
-        "version": "0.28.4"
-    },
-    "sqlean-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "sqlean-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-e+tbjHjiG4cYtXomKK60h7586heIpc7S9vowb3R7RKI=",
-            "type": "tarball",
-            "url": "https://github.com/nalgeon/sqlean/releases/download/0.28.4/sqlean-linux-x64.zip"
-        },
-        "version": "0.28.4"
+        "version": "0.28.5"
     },
     "vl-convert-aarch64-darwin": {
         "cargoLock": null,
@@ -493,32 +299,19 @@
         },
         "version": "1.9.0"
     },
-    "vl-convert-aarch64-linux": {
+    "zjstatus": {
         "cargoLock": null,
         "date": null,
         "extract": null,
-        "name": "vl-convert-aarch64-linux",
+        "name": "zjstatus",
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-IVm7jUV77hhnFmt4Xq5ePYgKHGRyMOkdfcb9A93Q3Co=",
-            "type": "tarball",
-            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-aarch64.zip"
+            "name": null,
+            "sha256": "sha256-KCzqshnlbhkIyfrDOQckH+bD4e99hfqrPl9DjO+HuP4=",
+            "type": "url",
+            "url": "https://github.com/dj95/zjstatus/releases/download/v0.25.0/zjstatus.wasm"
         },
-        "version": "1.9.0"
-    },
-    "vl-convert-x86_64-linux": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "vl-convert-x86_64-linux",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-1qkX/2jVh7Mj0KUBP4l7p5n/tBHIFOetqqKAd878Rq0=",
-            "type": "tarball",
-            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_linux-64.zip"
-        },
-        "version": "1.9.0"
+        "version": "0.25.0"
     }
 }

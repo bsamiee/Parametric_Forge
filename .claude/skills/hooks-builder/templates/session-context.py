@@ -7,7 +7,7 @@
 # ruff:file-ignore[docstring-missing-returns, hardcoded-temp-file]
 """Own SessionStart: inject only dynamic state a gated probe produces, capture the routing row, persist a scalar cache.
 
-Capture the session_id->{tty,pane} routing row a shared-worktree estate needs. Wire: SessionStart matcher "startup|resume|clear|compact". Inject nothing silent.
+Capture the session_id->{tty,pane} routing row a shared worktree needs. Wire: SessionStart matcher "startup|resume|clear|compact". Inject nothing silent.
 Boundary kernel: os.environ/subprocess admitted here. Every $CLAUDE_ENV_FILE value passes shlex.quote — the file is sourced into
 bash, so an unquoted $()/backtick in a branch, path, or fetched value would execute. Probes run in ctx.cwd and stay cheap; SessionStart blocks startup.
 """

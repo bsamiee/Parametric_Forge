@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/starship.nix
 # ----------------------------------------------------------------------------
-# Prompt themed from the estate palette owner. One $fill-composed top line (context left, telemetry right) over a bare pointer line; every
+# Prompt themed from the palette and roles of modules/home/theme.nix. One $fill-composed top line (context left, telemetry right) over a bare pointer line; every
 # segment is a round-paren conditional group so inactive modules vanish gap-free. Enclosure law: the branch is a bare WORD in its role color;
 # brackets wrap discrete marker clusters (the git-status readout, exit status) as ONE outer pair around space-separated `<marker><count>`
 # tokens; parens wrap transient operations (rebase/merge). Git markers project from the theme vocabulary's ASCII register (roles.git .ascii);
@@ -14,7 +14,7 @@
   lib,
   ...
 }: let
-  inherit (config.estate.theme) roles palette icons projections;
+  inherit (config.forge.theme) roles palette icons projections;
 
   # BMP private-use glyphs mint from codepoint escapes: the harness edit path strips raw 3-byte PUA literals, so rows
   # land as \uXXXX through fromJSON. Supplementary-plane glyphs (U+F0000+) survive writes and stay literal below.
@@ -27,7 +27,7 @@
   # metachars ($ for the stash marker) ride behind starship's backslash escape.
   m = lib.mapAttrs (_: r: lib.escape ["$"] (lib.removePrefix "[" (lib.removeSuffix "]" r.ascii))) roles.git;
   badges = projections.contextBadges;
-  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> estate palette token (leaf names match)
+  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> palette token (leaf names match)
 in {
   programs.starship = {
     enable = true;
@@ -36,7 +36,7 @@ in {
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- [GLOBAL_CONFIGURATION]
-      palette = "estate";
+      palette = "forge";
       continuation_prompt = "[❯](muted) ";
       format = lib.concatStrings [
         "$username"
@@ -49,7 +49,6 @@ in {
         "$python"
         "$nodejs"
         "$dotnet"
-        "$kubernetes"
         "$jobs"
         "$cmd_duration"
         "$status"
@@ -63,9 +62,9 @@ in {
       profiles.transient = "$time$character";
 
       # --- [SEMANTIC_ROLE_PALETTE]
-      # Styles reference the estate roles by intent, never raw hue names; `syntax` carries string-yellow, the one hue
+      # Styles reference the theme roles by intent, never raw hue names; `syntax` carries string-yellow, the one hue
       # with no semantic role. Only tokens a module style consumes get a row.
-      palettes.estate = {
+      palettes.forge = {
         primary = roles.text.primary.hex;
         subtle = roles.text.subtle.hex;
         muted = roles.text.muted.hex;
@@ -99,8 +98,7 @@ in {
         format = "[$user]($style) ";
       };
 
-      # Remote-host badge binds the shared context vocabulary (projections.contextBadges.remote) — wezterm's domain
-      # strip and the yazi header read the same row, so a VPS file carries one identical badge on every surface.
+      # Remote-host badge binds the shared context vocabulary (projections.contextBadges.remote).
       hostname = {
         ssh_symbol = "${badges.remote.glyph} ";
         style = "bold ${badgeRole badges.remote}";
@@ -183,7 +181,7 @@ in {
         format = "[$symbol$state( $name)]($style) ";
       };
 
-      # direnv is deliberately absent: the binary ships nowhere in the estate (nix-direnv rides the unratified adoption
+      # direnv is deliberately absent: the binary ships nowhere on the machine (nix-direnv rides the unratified adoption
       # menu), so the blocked/denied footgun row could never fire; it returns as one row with that adoption.
       # Toolchain hierarchy: the symbol keeps its brand hue, the version tail dims to subtle — static facts recede
       # under the live git state.
@@ -213,24 +211,6 @@ in {
         format = "[$symbol]($style)[($version)](subtle) ";
       };
 
-      # Context-gated: visible only where kube work is provable in the directory (manifests, chart/kustomize roots);
-      # prod contexts go danger. No detect_env_vars row — scan config present makes it dead (Option::or short-circuits),
-      # and the estate exports KUBECONFIG globally, so an env gate would carry zero directory signal anyway.
-      kubernetes = {
-        disabled = false;
-        symbol = "󱃾 ";
-        style = "structural";
-        detect_files = ["skaffold.yaml" "helmfile.yaml" "Chart.yaml" "kustomization.yaml"];
-        detect_folders = ["k8s" "kubernetes" "manifests"];
-        format = "[$symbol$context( \\($namespace\\))]($style) ";
-        contexts = [
-          {
-            context_pattern = ".*(prod|prd).*";
-            style = "bold danger";
-          }
-        ];
-      };
-
       # --- [TELEMETRY_MODULES]
       jobs = {
         symbol = "${icons.alphabet.running.glyph} ";
@@ -255,7 +235,7 @@ in {
         format = "[\\[$symbol$status( $common_meaning)( $signal_name)\\]]($style) ";
       };
 
-      # Rendered only through the transient profile: scrollback rows carry the estate display-time grammar.
+      # Rendered only through the transient profile: scrollback rows carry the theme display-time grammar.
       time = {
         disabled = false;
         style = "muted";

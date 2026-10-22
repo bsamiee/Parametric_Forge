@@ -1,8 +1,8 @@
-// Title         : estate.ts
+// Title         : program.ts
 // Author        : Bardia Samiee
 // Project       : Parametric Forge
 // License       : MIT
-// Path          : services/estate.ts
+// Path          : services/program.ts
 // ----------------------------------------------------------------------------
 // Inline Pulumi program: one parameterized registration fold materializes every topology row family into Doppler and GitHub resources. Adoption of
 // live CLI/gh-born state rides the `import` option behind the adopt flag; a row dropped from topology.ts is destroyed by Pulumi on the next up. This
@@ -13,7 +13,7 @@ import type { CustomResourceOptions, Resource } from '@pulumi/pulumi';
 import * as doppler from '@pulumiverse/doppler';
 import { Topology } from './topology.ts';
 
-declare namespace estate {
+declare namespace program {
     type Flags = { readonly adopt: boolean };
     type Registration<Row> = {
         readonly key: (row: Row) => string;
@@ -38,14 +38,14 @@ const _mergeHygiene = {
     hasProjects: false,
 } as const;
 
-const estate =
-    (f: estate.Flags) =>
+const program =
+    (f: program.Flags) =>
     // BOUNDARY ADAPTER: promise-native Pulumi registration program — statements and the JS Map registries live only inside this kernel.
     async (): Promise<Record<string, unknown>> => {
         // One fold owns every row family: key, import identity, dependency anchor, and constructor arrive as registration columns.
         const _registered = <Row extends { readonly origin: Topology.Origin }>(
             rows: ReadonlyArray<Row>,
-            registration: estate.Registration<Row>,
+            registration: program.Registration<Row>,
         ): ReadonlyMap<string, Resource> =>
             new Map(
                 rows.map((row) => {
@@ -147,4 +147,4 @@ const estate =
 
 // --- [EXPORTS] -------------------------------------------------------------------------
 
-export { estate };
+export { program };

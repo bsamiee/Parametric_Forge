@@ -35,7 +35,7 @@ in {
 
     # --- [ACTIVATION_BEHAVIOR]
     # Activation refreshes the catalog, installs missing roster rows, and upgrades every outdated one; casks that declare `auto_updates` stay
-    # with their own updater (brew.env, shell-tools/redeploy.nix), and a :latest cask opts in per row (casks.nix). Native Homebrew commands own
+    # with their own updater (brew.env, shell-tools/redeploy.nix). Native Homebrew commands own
     # operator-installed rows. `brew bundle` runs under sudo without the session environment; XDG_CONFIG_HOME points Homebrew at the same user
     # configuration directory the shell uses, where its own brew.env (the one owner of every HOMEBREW_* setting) and the tap trust store
     # trust.json live (under ~/.homebrew when the variable is unset).

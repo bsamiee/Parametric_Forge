@@ -4,8 +4,8 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/snacks.lua
 -- ----------------------------------------------------------------------------
--- Snacks.nvim: the one rich editor surface. Terminal, lazygit, explorer, and input stay off; Zellij owns terminals/lazygit, Yazi owns file
--- navigation. The estate picker is the register-rail projection inside the editor: typed action rows arrive from estate/tools.lua;
+-- Snacks.nvim: the one rich editor surface. Terminal, explorer, and input stay off; Zellij owns terminals, Yazi owns file
+-- navigation. The Forge action picker is the register-rail projection inside the editor: typed action rows arrive from forge/tools.lua;
 -- scratch rows render into a float, pane rows hand off to a Zellij floating pane.
 
 require("snacks").setup({
@@ -83,10 +83,10 @@ require("snacks").setup({
 Snacks.toggle.option("signcolumn", { on = "yes", off = "no", name = "Sign Column" })
 
 -- ----------------------------------------------------------------------------
--- [ESTATE_PICKER]
--- Chords live in apps/chords.nix (fn = "pick_estate"); rows are generated facts. Buffer-lifecycle chords ride the same owner — no keymaps here.
+-- [FORGE_PICKER]
+-- Chords live in apps/chords.nix (fn = "pick_forge"); rows are generated facts. Buffer-lifecycle chords ride the same owner — no keymaps here.
 local M = {}
-local tools = require("estate.tools")
+local tools = require("forge.tools")
 
 local function scratch_show(row, out)
     local text = out.stdout or ""
@@ -110,17 +110,9 @@ local function scratch_show(row, out)
 end
 
 local function run(row)
-    -- ENOENT rail: vim.system throws on a missing executable; fault as a typed notification instead of a stack trace in the picker confirm.
-    -- `probes` names the real tools behind sh-wrapped rows (health vocabulary).
-    for _, bin in ipairs(row.probes or { row.argv[1] }) do
-        if vim.fn.executable(bin) == 0 then
-            vim.notify(("estate row %q: %s not resolvable on PATH"):format(row.id, bin), vim.log.levels.ERROR)
-            return
-        end
-    end
     if row.mode == "pane" then
         if not vim.env.ZELLIJ then
-            vim.notify(("estate row %q needs a zellij session"):format(row.id), vim.log.levels.WARN)
+            vim.notify(("forge action %q needs a zellij session"):format(row.id), vim.log.levels.WARN)
             return
         end
         -- No --close-on-exit: non-interactive rows must keep their output visible after exit; zellij's pending-close banner owns dismissal.
@@ -133,18 +125,22 @@ local function run(row)
         vim.system(argv)
         return
     end
-    vim.system(row.argv, { cwd = row.cwd, text = true }, function(out)
+    -- vim.system throws on a missing executable; the error lands as a notification instead of a stack trace in the picker confirm.
+    local ok, err = pcall(vim.system, row.argv, { cwd = row.cwd, text = true }, function(out)
         scratch_show(row, out)
     end)
+    if not ok then
+        vim.notify(("forge action %q: %s"):format(row.id, err), vim.log.levels.ERROR)
+    end
 end
 
-function M.pick_estate()
+function M.pick_forge()
     local items = {}
-    for idx, row in ipairs(tools.estate) do
+    for idx, row in ipairs(tools.actions) do
         items[#items + 1] = { idx = idx, text = row.label, row = row }
     end
     Snacks.picker({
-        title = "Nix Estate",
+        title = "Forge Actions",
         items = items,
         format = "text",
         layout = { preset = "select" },

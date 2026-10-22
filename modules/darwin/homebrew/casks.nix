@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/darwin/homebrew/casks.nix
 # ----------------------------------------------------------------------------
-# Homebrew GUI applications, and the faces with no nixpkgs source that font casks install into ~/Library/Fonts: the Apple-proprietary
-# families and the Google OFL Arabic-script families the design apps need permanently active (the design-tools store is Typeface-activated
-# on demand, so a store copy never reaches an app font menu on its own).
+# Homebrew GUI applications, and the faces with no nixpkgs source that font casks install: the Apple-proprietary families, whose pkg
+# installers land in /Library/Fonts, and the Google OFL Arabic-script families, which land in ~/Library/Fonts. The design apps need both
+# permanently active (the design-tools store is Typeface-activated on demand, so a store copy never reaches an app font menu on its own).
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]

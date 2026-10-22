@@ -4,15 +4,14 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/tlrc.nix
 # ----------------------------------------------------------------------------
-# Official tldr client written in Rust. Config is generator-owned and lands where tlrc resolves it per OS:
-# ~/Library/Application Support on macOS (the XDG path is never consulted there), $XDG_CONFIG_HOME on Linux.
+# Official tldr client written in Rust. Config is generator-owned and lands where tlrc resolves it on macOS: ~/Library/Application Support,
+# never the XDG path.
 {
   config,
-  lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) palette;
+  inherit (config.forge.theme) palette;
   toml = pkgs.formats.toml {};
   rgb = c: {rgb = [c.r c.g c.b];};
   # Rows differ from tlrc's defaults (`tldr --gen-config`). A style table that names a color starts from the plain style, so the weight and
@@ -51,10 +50,5 @@
 in {
   home.packages = [pkgs.tlrc];
 
-  home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-    "Library/Application Support/tlrc/config.toml".source = configToml;
-  };
-  xdg.configFile = lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isDarwin) {
-    "tlrc/config.toml".source = configToml;
-  };
+  home.file."Library/Application Support/tlrc/config.toml".source = configToml;
 }

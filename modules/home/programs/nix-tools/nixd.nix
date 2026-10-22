@@ -4,45 +4,27 @@
 # License       : MIT
 # Path          : modules/home/programs/nix-tools/nixd.nix
 # ----------------------------------------------------------------------------
-# nixd estate-portal owner (nix-community/nixd, the LSP — distinct from the determinate-nixd daemon). Option-completion expressions generate
-# once from the host context; the Neovim server rows consume them.
+# nixd option-completion owner (nix-community/nixd, the LSP — distinct from the determinate-nixd daemon). Option-completion expressions
+# generate once from the host context; the Neovim server rows consume them.
 {
   host,
   lib,
   ...
 }: let
-  flakeRoot = "${host.user.home}/Developer/Parametric_Forge";
   # git+file:// forces the git-tree fetcher (never walks .git), so nixd's upstream fetchers skip the core.fsmonitor
   # unix socket at .git/fsmonitor--daemon.ipc that a plain-path copy would choke on.
-  flake = ''(builtins.getFlake "git+file://${flakeRoot}")'';
-  configClass =
-    {
-      darwin = "darwinConfigurations";
-      nixos = "nixosConfigurations";
-    }.${
-      host.os
-    };
-  hostOptions = "${flake}.${configClass}.${host.name}.options";
-  optionSetName =
-    {
-      darwin = "nix-darwin";
-      nixos = "nixos";
-    }.${
-      host.os
-    };
+  flake = ''(builtins.getFlake "git+file://${host.flakeRoot}")'';
+  hostOptions = "${flake}.darwinConfigurations.${host.name}.options";
 in {
-  options.estate.lsp = lib.mkOption {
+  options.forge.lsp.nixd = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      inherit flakeRoot;
-      nixd = {
-        nixpkgs.expr = "import ${flake}.inputs.nixpkgs { }";
-        formatting.command = ["alejandra"];
-        options = {
-          ${optionSetName}.expr = hostOptions;
-          home-manager.expr = "${hostOptions}.home-manager.users.type.getSubOptions [ ]";
-        };
+      nixpkgs.expr = "import ${flake}.inputs.nixpkgs { }";
+      formatting.command = ["alejandra"];
+      options = {
+        nix-darwin.expr = hostOptions;
+        home-manager.expr = "${hostOptions}.home-manager.users.type.getSubOptions [ ]";
       };
     };
     description = "Generated nixd option-completion expressions from the host context; LSP clients consume rows, never hand-maintained strings.";

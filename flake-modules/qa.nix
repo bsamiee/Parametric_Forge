@@ -4,15 +4,10 @@
 # License       : MIT
 # Path          : flake-modules/qa.nix
 # ----------------------------------------------------------------------------
-# Flake checks: Nix static analysis, both hosts' evals, and public-output build smoke; treefmt-nix lands its own `treefmt` check.
+# Flake checks: Nix static analysis and every host's eval; treefmt-nix lands its own `treefmt` check. redeploy's per-host build builds the packages.
 {self, ...}: {
-  perSystem = {
-    config,
-    overlaidPkgs,
-    system,
-    ...
-  }: let
-    inherit (overlaidPkgs.lib) fileset mapAttrs' nameValuePair optionalAttrs;
+  perSystem = {overlaidPkgs, ...}: let
+    inherit (overlaidPkgs.lib) fileset mapAttrs' nameValuePair;
     # .nix-only projection: binaries and prose never invalidate the check.
     nixSources = fileset.toSource {
       root = ../.;
@@ -28,19 +23,15 @@
             ../overlays/_sources)
         ]);
     };
-    # Both-OS static gate as check rows: every context host's toplevel must evaluate, deriving from the context rows so any system a host runs
-    # proves every host's eval and a new host or OS joins with zero edits. drvPath context is discarded so the row proves eval, never builds a host.
-    # Scar: a dead VPS eval once shipped through Darwin-only switches.
-    hostContext = import ../hosts/context.nix;
-    hostEvals = optionalAttrs (builtins.elem system (map (host: host.system) (builtins.attrValues hostContext))) (mapAttrs' (
+    # Every host's toplevel must evaluate; drvPath context is discarded so the row proves eval, never builds a host.
+    hostEvals =
+      mapAttrs' (
         name: host:
           nameValuePair "host-eval-${name}" (overlaidPkgs.runCommand "host-eval-${name}" {
-            drvPath =
-              builtins.unsafeDiscardStringContext
-              self."${host.os}Configurations".${name}.config.system.build.toplevel.drvPath;
+            drvPath = builtins.unsafeDiscardStringContext host.config.system.build.toplevel.drvPath;
           } ''printf '%s\n' "$drvPath" >"$out"'')
       )
-      hostContext);
+      self.darwinConfigurations;
   in {
     checks =
       hostEvals
@@ -50,8 +41,6 @@
           statix check ${nixSources}
           touch "$out"
         '';
-      }
-      # Every named public output gets build smoke; new packages join with zero edits here.
-      // mapAttrs' (name: nameValuePair "pkg-${name}") config.packages;
+      };
   };
 }

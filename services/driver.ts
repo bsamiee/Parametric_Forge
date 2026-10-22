@@ -6,32 +6,25 @@
 // ----------------------------------------------------------------------------
 // Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering only the
 // Pulumi passphrase and Doppler IaC credential. The GitHub credential resolves from Doppler. Zero YAML on disk: the project
-// manifest synthesizes into the workspace temp dir. Also owns the machine scope and reviewer receipts. Exports nothing; runMain terminates.
+// manifest synthesizes into the workspace temp dir. Also applies the machine's Doppler directory scopes. Exports nothing; runMain terminates.
 
-import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import * as path from 'node:path';
-import { Command, FileSystem } from '@effect/platform';
-import { NodeContext, NodeRuntime } from '@effect/platform-node';
+import { NodeRuntime, NodeServices } from '@effect/platform-node';
 import { LocalWorkspace, type Stack } from '@pulumi/pulumi/automation/index.js';
-import { Array as Arr, Config, Console, Data, Effect, HashSet, Option, pipe, Record, Redacted, Schema, Stream, Struct } from 'effect';
-import { estate } from './estate.ts';
+import { Array as Arr, Config, Console, Data, Effect, FileSystem, HashSet, Option, Record, Redacted, Result, Schema, Stream, Struct } from 'effect';
+import { ChildProcess } from 'effect/process';
+import { program } from './program.ts';
 import { Topology } from './topology.ts';
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
 const PROJECT = 'services';
-const STACK = 'estate';
+const STACK = 'forge';
 
 // Host seam: the home-relative scope rows resolve onto the operator home once, here, so topology.ts carries no machine path.
 const _scopeRoot = path.join(homedir(), Topology.scopeRoot);
 const _scopes = Arr.map(Topology.scopes, (row) => ({ ...row, dir: path.join(_scopeRoot, row.dir) }));
-
-const _reviewerSlugs = {
-    coderabbit: 'coderabbitai',
-    greptile: 'greptile-apps',
-    macroscope: 'macroscopeapp',
-} as const satisfies Record<Extract<Topology.Reviewer, { readonly mechanism: 'app' }>['identity'], string>;
 
 // --- [TYPES] ---------------------------------------------------------------------------
 
@@ -71,72 +64,47 @@ class UsageFault extends Data.TaggedError('UsageFault')<{
     }
 }
 
-class ScopeFault extends Data.TaggedError('ScopeFault')<{
-    readonly divergent: number;
-    readonly strayScopes: number;
-    readonly strayYaml: number;
-}> {
-    override get message(): string {
-        return `scope rail divergent: rows=${this.divergent} strayScopes=${this.strayScopes} strayYaml=${this.strayYaml}`;
-    }
-}
-
 // --- [OPERATIONS] ----------------------------------------------------------------------
 
-const _run = (cmd: Command.Command, label: string) =>
+// A scoped env extends the inherited one, so the child keeps PATH beside the brokered credential.
+const _run = (command: string, args: ReadonlyArray<string>, label: string, env?: Record<string, string>) =>
     Effect.gen(function* () {
-        const spawned = yield* Command.start(cmd);
+        const spawned = yield* ChildProcess.make(command, args, env === undefined ? {} : { env, extendEnv: true });
         const [code, out, err] = yield* Effect.all(
             [spawned.exitCode, Stream.mkString(Stream.decodeText(spawned.stdout)), Stream.mkString(Stream.decodeText(spawned.stderr))],
             { concurrency: 3 },
         );
-        return yield* code === 0
-            ? Effect.succeed(out)
-            : Effect.fail(
-                  new ShellFault({
-                      command: label,
-                      detail: err.trim() || `exit ${code}`,
-                  }),
-              );
+        return code === 0 ? out : yield* new ShellFault({ command: label, detail: err.trim() || `exit ${code}` });
     }).pipe(
         Effect.scoped,
-        Effect.catchTag('BadArgument', 'SystemError', (fault) => new ShellFault({ command: label, detail: fault.message })),
+        Effect.catchTag('PlatformError', (fault) => Effect.fail(new ShellFault({ command: label, detail: fault.message }))),
     );
 
-const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(Command.make(command, ...args), `${command} ${args.join(' ')}`);
+const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(command, args, `${command} ${args.join(' ')}`);
 
-const _dopplerSecret = (token: Redacted.Redacted<string>, project: string, config: string, name: string) =>
+const _dopplerSecret = (token: Redacted.Redacted<string>, credential: Topology.Credential) =>
     Effect.map(
         _run(
-            Command.make('doppler', 'secrets', 'get', name, '--project', project, '--config', config, '--plain').pipe(
-                Command.env({ DOPPLER_TOKEN: Redacted.value(token) }),
-            ),
-            `doppler secrets get ${name} (${project}/${config})`,
+            'doppler',
+            ['secrets', 'get', credential.name, '--project', credential.project, '--config', credential.config, '--plain'],
+            `doppler secrets get ${credential.name} (${credential.project}/${credential.config})`,
+            { DOPPLER_TOKEN: Redacted.value(token) },
         ),
         (raw) => Redacted.make(raw.trim()),
     );
 
-// nonEmptyString: an empty exported override means unset, per XDG semantics.
+// NonEmptyString: an empty exported override means unset, per XDG semantics. Ambient credentials short-circuit their broker.
 const _settings = Config.all({
-    passphraseRef: Config.nonEmptyString('SERVICES_PASSPHRASE_REF').pipe(
-        Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password'),
-        Config.withDescription('1Password reference the Pulumi stack passphrase brokers from'),
-    ),
-    tokenRef: Config.nonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(
-        Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token'),
-        Config.withDescription('1Password reference the Doppler IaC token brokers from'),
-    ),
-    stateDir: Config.nonEmptyString('SERVICES_STATE_DIR').pipe(
-        Config.orElse(() => Config.map(Config.nonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'services'))),
+    passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password')),
+    tokenRef: Config.NonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token')),
+    stateDir: Config.NonEmptyString('SERVICES_STATE_DIR').pipe(
+        Config.orElse(() => Config.map(Config.NonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'services'))),
         Config.withDefault(path.join(homedir(), '.local', 'state', 'services')),
-        Config.withDescription('Pulumi file-backend state directory'),
     ),
-    passphrase: Config.option(Config.redacted('PULUMI_CONFIG_PASSPHRASE')).pipe(
-        Config.withDescription('Ambient stack passphrase; short-circuits 1Password'),
-    ),
-    token: Config.option(Config.redacted('DOPPLER_TOKEN')).pipe(Config.withDescription('Ambient Doppler token; short-circuits 1Password')),
-    githubToken: Config.option(Config.redacted('GITHUB_TOKEN')).pipe(Config.withDescription('Ambient GitHub provider token; short-circuits Doppler')),
-    ghToken: Config.option(Config.redacted('GH_TOKEN')).pipe(Config.withDescription('Ambient gh token; fallback alias before Doppler')),
+    passphrase: Config.option(Config.Redacted('PULUMI_CONFIG_PASSPHRASE')),
+    token: Config.option(Config.Redacted('DOPPLER_TOKEN')),
+    githubToken: Config.option(Config.Redacted('GITHUB_TOKEN')),
+    ghToken: Config.option(Config.Redacted('GH_TOKEN')),
 });
 
 // Ambient env short-circuits 1Password; otherwise the op reference resolves per run.
@@ -146,10 +114,10 @@ const _brokered = (ambient: Option.Option<Redacted.Redacted<string>>, ref: strin
         onNone: () => Effect.map(_shell('op', 'read', ref), (raw) => Redacted.make(raw.trim())),
     });
 
-const _githubToken = <R>(ambient: Option.Option<Redacted.Redacted<string>>, dopplerToken: Effect.Effect<Redacted.Redacted<string>, ShellFault, R>) =>
+const _githubToken = (ambient: Option.Option<Redacted.Redacted<string>>, dopplerToken: Redacted.Redacted<string>) =>
     Option.match(ambient, {
         onSome: (value) => Effect.succeed(value),
-        onNone: () => Effect.flatMap(dopplerToken, (token) => _dopplerSecret(token, 'agent-runtime', 'dev', 'GITHUB_TOKEN')),
+        onNone: () => _dopplerSecret(dopplerToken, Topology.githubCredential),
     });
 
 const _openStack = (flags: Flags) =>
@@ -164,7 +132,7 @@ const _openStack = (flags: Flags) =>
         const backendUrl = `file://${cfg.stateDir}`;
         const githubToken = yield* _githubToken(
             Option.orElse(cfg.githubToken, () => cfg.ghToken),
-            Effect.succeed(token),
+            token,
         );
         return yield* Effect.tryPromise({
             // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
@@ -173,7 +141,7 @@ const _openStack = (flags: Flags) =>
                     {
                         stackName: STACK,
                         projectName: PROJECT,
-                        program: estate(flags),
+                        program: program(flags),
                     },
                     {
                         projectSettings: {
@@ -209,83 +177,23 @@ const _echo = (chunk: string): void => {
 
 // --- [SCOPE_RAIL] ----------------------------------------------------------------------
 
-type ScopeReport = {
-    readonly dir: string;
-    readonly declared: { readonly project: string; readonly config: string };
-    readonly resolved: { readonly project: string; readonly config: string };
-    readonly present: boolean;
-    readonly ok: boolean;
-};
+const _ScopeTable = Schema.fromJsonString(Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Unknown)));
 
-const _ScopeTable = Schema.parseJson(
-    Schema.Record({
-        key: Schema.String,
-        value: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
-    }),
-);
-
-// The doppler CLI emits enclave-prefixed keys; fromKey folds the rename into the decode and an absent key decodes as unset.
-const _ScopePair = Schema.parseJson(
-    Schema.Struct({
-        project: Schema.optionalWith(Schema.String, { default: () => '' }).pipe(Schema.fromKey('enclave.project')),
-        config: Schema.optionalWith(Schema.String, { default: () => '' }).pipe(Schema.fromKey('enclave.config')),
-    }),
-);
-
-const _scopeTable = Effect.flatMap(_shell('doppler', 'configure', '--all', '--json'), Schema.decodeUnknown(_ScopeTable));
-
-const _resolved = (dir: string) =>
-    Effect.flatMap(_shell('doppler', 'configure', 'get', 'project', 'config', '--json', '--scope', dir), Schema.decodeUnknown(_ScopePair));
+const _scopeTable = Effect.flatMap(_shell('doppler', 'configure', '--all', '--json'), Schema.decodeUnknownEffect(_ScopeTable));
 
 const _declaredDirs: HashSet.HashSet<string> = HashSet.fromIterable(Arr.map(_scopes, (row) => row.dir));
 
 const _strayScopes = Effect.map(_scopeTable, (table) =>
-    pipe(
-        table,
+    Record.keys(
         Record.filter(
+            table,
             (entry, dir) =>
                 dir.startsWith(`${_scopeRoot}/`) &&
                 !HashSet.has(_declaredDirs, dir) &&
                 (Record.has(entry, 'enclave.project') || Record.has(entry, 'enclave.config')),
         ),
-        Record.keys,
     ),
 );
-
-const _strayYaml = Effect.gen(function* () {
-    const fs = yield* FileSystem.FileSystem;
-    const entries = yield* fs.readDirectory(_scopeRoot);
-    const candidates = [path.join(_scopeRoot, 'doppler.yaml'), ...Arr.map(entries, (entry) => path.join(_scopeRoot, entry, 'doppler.yaml'))];
-    // Plain files under scopeRoot yield ENOTDIR on the probe; absence either way.
-    return yield* Effect.filter(candidates, (candidate) => Effect.orElseSucceed(fs.exists(candidate), () => false), { concurrency: 8 });
-});
-
-const _doctor = Effect.gen(function* () {
-    const fs = yield* FileSystem.FileSystem;
-    const rows = yield* Effect.forEach(
-        _scopes,
-        (row) =>
-            Effect.gen(function* () {
-                const present = yield* fs.exists(row.dir);
-                const resolved = yield* present ? _resolved(row.dir) : Effect.succeed({ project: '', config: '' });
-                return {
-                    dir: row.dir,
-                    declared: { project: row.project, config: row.config },
-                    resolved,
-                    present,
-                    ok: present && resolved.project === row.project && resolved.config === row.config,
-                } satisfies ScopeReport;
-            }),
-        { concurrency: 4 },
-    );
-    const [strayScopes, strayYaml] = yield* Effect.all([_strayScopes, _strayYaml], { concurrency: 2 });
-    return {
-        rows,
-        strayScopes,
-        strayYaml,
-        ok: Arr.every(rows, (row) => row.ok) && strayScopes.length === 0 && strayYaml.length === 0,
-    };
-});
 
 // Applies declared rows for existing directories, then unsets stray scopeRoot rows; scope `/`, tokens, and the CLI config file stay untouched.
 const _applyScopes = Effect.gen(function* () {
@@ -302,177 +210,13 @@ const _applyScopes = Effect.gen(function* () {
     });
 });
 
-const _printed = Effect.flatMap(_doctor, (report) => Effect.as(Console.log(JSON.stringify(report, null, 2)), report));
-
-const _scopeVerbs = {
-    apply: Effect.zipRight(_applyScopes, Effect.asVoid(_printed)),
-    doctor: Effect.asVoid(_printed),
-    strict: Effect.flatMap(_printed, (report) =>
-        report.ok
-            ? Effect.void
-            : Effect.fail(
-                  new ScopeFault({
-                      divergent: Arr.filter(report.rows, (row) => !row.ok).length,
-                      strayScopes: report.strayScopes.length,
-                      strayYaml: report.strayYaml.length,
-                  }),
-              ),
-    ),
-} as const;
-
-// --- [REVIEWER_MATRIX] -----------------------------------------------------------------
-
-type ReviewerRepo = {
-    readonly repo: string;
-    readonly configurationApplicable: boolean;
-    readonly configured: boolean;
-    readonly configHash: string;
-    readonly installation: 'observed' | 'not-observed' | 'ruleset-native';
-    readonly active: false;
-    readonly required: false;
-};
-
-type ReviewerRow = Omit<Topology.Reviewer, 'artifacts'> & { readonly repos: ReadonlyArray<ReviewerRepo> };
-
-const _Repository = Schema.parseJson(Schema.Struct({ defaultBranch: Schema.String }));
-const _CheckSuites = Schema.parseJson(
-    Schema.Struct({
-        apps: Schema.Array(Schema.Struct({ id: Schema.Number, slug: Schema.String })),
-    }),
-);
-
-// BOUNDARY ADAPTER: node:crypto digest kernel — the mutable hash draft dies at the return; both matrix hash sites feed it.
-const _digest = (bodies: ReadonlyArray<Uint8Array | string>): string =>
-    bodies
-        .reduce((draft, body) => draft.update(body), createHash('sha256'))
-        .digest('hex')
-        .slice(0, 16);
-
-// Local artifacts and live installation evidence remain separate: an app without a repository artifact is unconfigured, never uninstalled.
-const _artifactHash = (root: string, artifacts: readonly string[]) =>
-    Effect.map(
-        Effect.flatMap(FileSystem.FileSystem, (fs) =>
-            Effect.forEach(
-                artifacts,
-                (artifact) => {
-                    const file = path.join(root, artifact);
-                    return Effect.flatMap(
-                        Effect.orElseSucceed(fs.exists(file), () => false),
-                        (exists) => (exists ? Effect.map(fs.readFile(file), Option.some) : Effect.succeed(Option.none<Uint8Array>())),
-                    );
-                },
-                { concurrency: 3 },
-            ),
-        ),
-        (bodies) => {
-            const found = Arr.getSomes(bodies);
-            return {
-                applicable: artifacts.length > 0,
-                configured: artifacts.length > 0 && found.length === artifacts.length,
-                hash: Arr.isNonEmptyArray(found) ? _digest(found) : '',
-            };
-        },
-    );
-
-const _ghApi = (token: Redacted.Redacted<string>, endpoint: string, projection: string) =>
-    _run(Command.make('gh', 'api', endpoint, '--jq', projection).pipe(Command.env({ GH_TOKEN: Redacted.value(token) })), `gh api ${endpoint}`);
-
-const _repositoryApps = (token: Redacted.Redacted<string>, repository: string) =>
-    Effect.gen(function* () {
-        const coordinate = `repos/${Topology.owner}/${repository}`;
-        const metadata = yield* Effect.flatMap(_ghApi(token, coordinate, '{defaultBranch:.default_branch}'), Schema.decodeUnknown(_Repository));
-        const suites = yield* Effect.flatMap(
-            _ghApi(
-                token,
-                `${coordinate}/commits/${encodeURIComponent(metadata.defaultBranch)}/check-suites?per_page=100`,
-                '{apps:[.check_suites[] | select(.app != null) | {id:.app.id,slug:.app.slug}]}',
-            ),
-            Schema.decodeUnknown(_CheckSuites),
-        );
-        return HashSet.fromIterable(Arr.map(suites.apps, (app) => `${app.id}:${app.slug}`));
-    });
-
-const _reviewerMatrix = (githubToken: Redacted.Redacted<string>) =>
-    Effect.gen(function* () {
-        const policyHash = _digest([JSON.stringify(Topology.rulesetPolicy)]);
-        const installed = Record.fromEntries(
-            yield* Effect.forEach(
-                Topology.repositories,
-                (repository) => Effect.map(_repositoryApps(githubToken, repository.name), (apps) => [repository.name, apps] as const),
-                { concurrency: 3 },
-            ),
-        );
-        const rows = yield* Effect.forEach(
-            Topology.reviewers,
-            (row) => {
-                // Read posture on the full union before the mechanism narrow: `as const` pins each roster row's literal, and the sole ruleset row is dormant today.
-                const active: boolean = row.posture === 'active';
-                return Effect.map(
-                    Effect.forEach(
-                        Topology.repositories,
-                        (repository) =>
-                            row.mechanism === 'ruleset'
-                                ? Effect.succeed<ReviewerRepo>({
-                                      repo: repository.name,
-                                      configurationApplicable: true,
-                                      configured: active,
-                                      configHash: active ? policyHash : '',
-                                      installation: 'ruleset-native',
-                                      active: false,
-                                      required: false,
-                                  } satisfies ReviewerRepo)
-                                : Effect.map(
-                                      _artifactHash(path.join(_scopeRoot, repository.name), row.artifacts),
-                                      (proof): ReviewerRepo => ({
-                                          repo: repository.name,
-                                          configurationApplicable: proof.applicable,
-                                          configured: proof.configured,
-                                          configHash: proof.hash,
-                                          installation: HashSet.has(
-                                              Option.getOrElse(Record.get(installed, repository.name), () => HashSet.empty<string>()),
-                                              `${row.liveEvidence.appId}:${_reviewerSlugs[row.identity]}`,
-                                          )
-                                              ? 'observed'
-                                              : 'not-observed',
-                                          active: false,
-                                          required: false,
-                                      }),
-                                  ),
-                        { concurrency: 3 },
-                    ),
-                    (repos): ReviewerRow => ({ ...Struct.omit(row, 'artifacts'), repos }),
-                );
-            },
-            { concurrency: 2 },
-        );
-        // Activity stays unproven until a pull request produces reviewer behavior; required stays false until a proven check context enters policy.
-        const ok = Arr.every(rows, (row) =>
-            Arr.every(
-                row.repos,
-                (repo) => (!repo.configurationApplicable || repo.configured) && repo.installation !== 'not-observed' && repo.active && repo.required,
-            ),
-        );
-        return { reviewers: rows, ok };
-    });
-
-const _appCensus = {
-    installations: Arr.map(Topology.appInstallations, (row) => ({
-        ...row,
-        custody: row.origin,
-        verification: 'declared-topology-only',
-    })),
-    liveVerified: false,
-} as const;
-
 // --- [ENTRY] ---------------------------------------------------------------------------
 
 const USAGE =
     'services driver\n' +
     '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
     '  outputs [name] [--reveal]\n' +
-    '  scopes apply|doctor|strict\n' +
-    '  reviewers\n' +
-    '  apps';
+    '  scopes';
 
 // One flag anchor: `=`-suffixed flags match by prefix, the rest match whole.
 const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
@@ -485,10 +229,10 @@ const _flags = (argv: ReadonlyArray<string>): Flags => ({
     reveal: Arr.contains(argv, _FLAGS.reveal),
     refresh: Arr.contains(argv, _FLAGS.refresh),
     expectNoChanges: Arr.contains(argv, _FLAGS.expectNoChanges),
-    targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Option.some(arg.slice(_FLAGS.target.length)) : Option.none())),
+    targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Result.succeed(arg.slice(_FLAGS.target.length)) : Result.failVoid)),
 });
 
-// Remint rail: a token coordinate maps onto its ServiceToken URN so drop/restore applies touch nothing else even under unrelated estate drift.
+// Remint rail: a token coordinate maps onto its ServiceToken URN so drop/restore applies touch nothing else even under unrelated drift.
 const _tokenUrn = (coordinate: string): string =>
     `urn:pulumi:${STACK}::${PROJECT}::doppler:index/serviceToken:ServiceToken::${coordinate.split('/').join('-')}`;
 
@@ -499,8 +243,6 @@ const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChang
     ...(flags.refresh ? { refresh: true as const } : {}),
     ...(flags.expectNoChanges ? { expectNoChanges: true as const } : {}),
 });
-
-const _scopeVerb = Schema.decodeUnknownOption(Schema.Literal(...Struct.keys(_scopeVerbs)));
 
 const _verbs = {
     preview: (flags: Flags, _positional: ReadonlyArray<string>) =>
@@ -521,7 +263,7 @@ const _verbs = {
         Effect.flatMap(
             _stackAct('outputs', flags, (stack) => stack.outputs()),
             (outputs) =>
-                Option.match(Option.fromNullable(positional[1]), {
+                Option.match(Option.fromNullishOr(positional[1]), {
                     onNone: () =>
                         Effect.forEach(
                             Record.toEntries(outputs),
@@ -530,7 +272,7 @@ const _verbs = {
                         ),
                     onSome: (selected) =>
                         Option.match(
-                            Option.orElse(Option.fromNullable(outputs[`token:${selected}`]), () => Option.fromNullable(outputs[selected])),
+                            Option.orElse(Option.fromNullishOr(outputs[`token:${selected}`]), () => Option.fromNullishOr(outputs[selected])),
                             {
                                 onNone: () => Effect.fail(new UsageFault({ wanted: `no output named ${selected}` })),
                                 onSome: (matched) =>
@@ -541,25 +283,10 @@ const _verbs = {
                         ),
                 }),
         ),
-    scopes: (_flags2: Flags, positional: ReadonlyArray<string>) =>
-        Option.match(Option.flatMap(Option.fromNullable(positional[1]), _scopeVerb), {
-            onNone: () => Effect.fail(new UsageFault({ wanted: USAGE })),
-            onSome: (sub) => _scopeVerbs[sub],
-        }),
-    reviewers: (_flags2: Flags, _positional: ReadonlyArray<string>) =>
-        Effect.gen(function* () {
-            const cfg = yield* _settings;
-            const token = yield* _githubToken(
-                Option.orElse(cfg.githubToken, () => cfg.ghToken),
-                _brokered(cfg.token, cfg.tokenRef),
-            );
-            const matrix = yield* _reviewerMatrix(token);
-            yield* Console.log(JSON.stringify(matrix, null, 2));
-        }),
-    apps: (_flags2: Flags, _positional: ReadonlyArray<string>) => Console.log(JSON.stringify(_appCensus, null, 2)),
+    scopes: (_flags2: Flags, _positional: ReadonlyArray<string>) => _applyScopes,
 } as const;
 
-const _verb = Schema.decodeUnknownOption(Schema.Literal(...Struct.keys(_verbs)));
+const _verb = Schema.decodeUnknownOption(Schema.Literals(Struct.keys(_verbs)));
 
 const _program = Effect.gen(function* () {
     const argv = process.argv.slice(2);
@@ -582,4 +309,4 @@ const _program = Effect.gen(function* () {
             });
 });
 
-NodeRuntime.runMain(Effect.provide(_program, NodeContext.layer));
+NodeRuntime.runMain(Effect.provide(_program, NodeServices.layer));

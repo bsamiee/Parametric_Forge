@@ -20,7 +20,7 @@ Verdict integers collide too — uv returns 1 on dependency-resolution failure, 
 # ///
 ```
 
-`msgspec` is the wire codec every hook carries; the rest of the roster draws from the estate's admitted uv-resolvable libraries, composed at full operator depth — `anyio` owns structured concurrency and subprocess for a resident daemon or parallel probe fan, `httpx` owns transport for a transmitter or HTTP-calling hook (wired `async: true`; a transmitter that posts inline is a blocking hook mislabeled), and `stamina` owns bounded retry.
+`msgspec` is the wire codec every hook carries; the rest of the roster draws from uv-resolvable libraries, composed at full operator depth — `anyio` owns structured concurrency and subprocess for a resident daemon or parallel probe fan, and `httpx` owns transport for a transmitter or HTTP-calling hook (wired `async: true`; a transmitter that posts inline is a blocking hook mislabeled).
 
 That roster splits by hot-path budget: a per-tool gate stays `msgspec`-lean because every dependency is cold-resolution cost on the loop, while an off-hot-path daemon, harness, or transmitter — whose admission amortizes at load — reaches for the richer owner, and a structured `anyio` task group cancels a wedged child at its deadline where a raw thread strands it. `uv add <pkg> --script <file>` edits the metadata block. Exec-form config (`args` present) spawns the file without a shell, so a shell-profile echo never corrupts the JSON channel.
 
@@ -84,7 +84,7 @@ A command check normalizes the command before matching — raw substring matchin
 
 Two egress surfaces are the same fail-closed seam. A value written to `$CLAUDE_ENV_FILE` passes `shlex.quote` — the file is sourced into bash, so an unquoted `$()` or backtick in a branch name, path, or fetched value executes on the next Bash call; the quote is the difference between persisting data and shipping a remote-code path.
 
-A binary the hook shells is resolved absolutely or probed for identity, never invoked by bare name — a bare `tree` or `find` collides with a system namesake (`/usr/bin/find` takes different flags), so the resolved path is confirmed against the estate tool before it runs. A checker that is missing, degraded, or wrongly resolved emits a visible stderr diagnostic and exits 0 for a gate that cannot revert its target — never a silent exit 0 that reads as a clean pass; the operator learns the gate did not run.
+A binary the hook shells is resolved absolutely or probed for identity, never invoked by bare name — a bare `tree` or `find` collides with a system namesake (`/usr/bin/find` takes different flags), so the resolved path is confirmed against the machine's tool before it runs. A checker that is missing, degraded, or wrongly resolved emits a visible stderr diagnostic and exits 0 for a gate that cannot revert its target — never a silent exit 0 that reads as a clean pass; the operator learns the gate did not run.
 
 ## [05]-[HOT_PATH]
 
@@ -92,4 +92,4 @@ A binary the hook shells is resolved absolutely or probed for identity, never in
 
 Slow work moves off the hot path: a full test suite, CI probe, or deployment rides `async: true` or `asyncRewake: true`. `UserPromptSubmit` and `MessageDisplay` lower the command-family timeout (numeric owner: the config reference), so neither runs a network call inline; expensive session bootstraps cache computed values through `$CLAUDE_ENV_FILE` so later turns read the export.
 
-Where per-invocation interpreter spawn dominates, thin per-event forwarders route the payload to one persistent daemon holding every handler, its typed structs, and contracts in-process — admission cost paid once at daemon load, a fifty-handler project costing the same per call as a five-handler one. Logging rides `structlog` to a file or transmitter carrying the failure fields (`tool_name`, `tool_use_id`, `error`, timestamp), never stdout — stdout is the decision channel, and a hook that logs there corrupts its own verdict.
+Where per-invocation interpreter spawn dominates, thin per-event forwarders route the payload to one persistent daemon holding every handler, its typed structs, and contracts in-process — admission cost paid once at daemon load, a fifty-handler project costing the same per call as a five-handler one. Logging goes to a file or transmitter carrying the failure fields (`tool_name`, `tool_use_id`, `error`, timestamp), never stdout — stdout is the decision channel, and a hook that logs there corrupts its own verdict.

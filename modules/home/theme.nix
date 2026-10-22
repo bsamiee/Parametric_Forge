@@ -4,16 +4,16 @@
 # License       : MIT
 # Path          : modules/home/theme.nix
 # ----------------------------------------------------------------------------
-# Estate palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
-# textMate, and semantic tokens project from one pivot), derived diff/search/git roles, the shared icon vocabulary, the target registry with its
-# coverage projection, and the rendered proof lane. Every color consumer interpolates these tokens; no consumer carries a private hex.
+# Forge palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
+# textMate, and semantic tokens project from one pivot), derived diff/search/git roles, and the shared icon vocabulary. Every color consumer
+# interpolates these tokens; no consumer carries a private hex.
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  fonts = config.estate.fonts;
+  fonts = config.forge.fonts;
   byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
   # Color record: uppercase hex plus every numeric rendering consumers need.
@@ -30,12 +30,8 @@
   };
 
   # --- [ROW_GRAMMAR]
-  # Positional tuples zip against a field schema: a short tuple drops trailing fields, null skips a slot, and an oversized tuple faults —
-  # zipListsWith would truncate silently otherwise. byName keys a row list on its `name`.
-  row = fields: t:
-    lib.throwIf (builtins.length t > builtins.length fields)
-    "theme row '${toString (builtins.head t)}' exceeds schema [${lib.concatStringsSep " " fields}]"
-    (lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t)));
+  # Positional tuples zip against a field schema: a short tuple drops trailing fields and null skips a slot. byName keys a row list on its `name`.
+  row = fields: t: lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t));
   byName = rows: lib.listToAttrs (map (r: lib.nameValuePair r.name (removeAttrs r ["name"])) rows);
 
   # Enriched palette: the canonical rows plus the design-language growth — crust/surface complete the elevation ladder, subtle is the third fg
@@ -68,7 +64,7 @@
   # Two-register git vocabulary from the fonts-catalog gitAlphabet rows; dotted role paths resolve on the folded families (contextBadges grammar),
   # so a hue rebind lands on every consumer and a new state is one catalog row. Register law: ascii = persisted/piped output and prose-like readouts
   # where marker+count reads as a text token (delta labels; the operator-ratified starship cluster); glyph = fixed one-cell icon columns where shape
-  # is the cue (gitsigns gutter, yazi linemode); unthemable-glyph tools (eza, lazygit NFv3) take .color only; the prompt alone bins color.
+  # is the cue (gitsigns gutter, yazi linemode); unthemable-glyph tools (eza NFv3) take .color only; the prompt alone bins color.
   roles =
     families
     // {
@@ -128,17 +124,8 @@
   ];
 
   # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs; tab titles, prompts, and dashboards
-  # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color]. glyphsProved fails eval on any empty glyph:
-  # the harness edit path can silently strip BMP private-use glyphs, and an empty glyph is a dead icon row every consumer renders as nothing.
-  glyphsProved = v: let
-    dead =
-      lib.attrNames (lib.filterAttrs (_: r: r.glyph == "") v.dirs)
-      ++ lib.attrNames (lib.filterAttrs (_: g: g == "") v.process);
-  in
-    if dead == []
-    then v
-    else throw "estate.theme.icons: empty glyph rows (harness strip?): ${lib.concatStringsSep ", " dead}";
-  icons = glyphsProved {
+  # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color].
+  icons = {
     dirs = byName (map (row ["name" "glyph" "color"]) [
       [".git" "󰊢" palette.pink]
       ["node_modules" "󰏗" palette.green]
@@ -162,9 +149,8 @@
       container = builtins.fromJSON ''"\uf4b7"''; # oct-container: in-container rootfs
     };
     # Status alphabet: the CLOSED glyph vocabulary for terminal-bound render surfaces — single-codepoint codicons (Symbols Nerd Font Mono,
-    # 1-cell advance proven at font install), each with the ASCII twin persisted surfaces use instead. Rows live on the symbols family
-    # (fonts catalog statusAlphabet) so the hb-shape zero-.notdef gate proves the exact column these glyphs mint from; codepoint minting is
-    # immune to harness glyph-stripping. Emoji and EAW-ambiguous glyphs never render on width-load-bearing surfaces; a new status class is
+    # 1-cell advance), each with the ASCII twin persisted surfaces use instead. Rows live on the symbols family (fonts catalog
+    # statusAlphabet) beside the font they mint from; codepoint minting is immune to harness glyph-stripping. Emoji and EAW-ambiguous glyphs never render on width-load-bearing surfaces; a new status class is
     # one catalog row, never an app-local glyph.
     alphabet = byName (map (t: {
         name = builtins.elemAt t 0;
@@ -173,64 +159,6 @@
       })
       fonts.catalog."Symbols Nerd Font Mono".statusAlphabet);
   };
-
-  # --- [TARGET_REGISTRY]
-  # One row per rendering consumer; verdicts: bound (interpolates owner tokens), gap (adoption pending), defer (no config surface to own).
-  # coverage.json projects from these rows so gaps surface before drift. Row tuple: [id owner carrier binds verdict]; binds admits as a
-  # space-joined token string and lands typed so JSON consumers never re-split.
-  targets = let
-    apps = "modules/home/programs/apps";
-    st = "modules/home/programs/shell-tools";
-    mkTarget = t: let
-      r = row ["id" "owner" "carrier" "binds" "verdict"] t;
-    in
-      r // {binds = lib.optionals (r.binds != "-") (lib.splitString " " r.binds);};
-  in
-    map mkTarget [
-      ["wezterm" "${apps}/wezterm/default.nix" "lua+toml" "roles ansi16 fonts badges" "bound"]
-      ["zellij" "${apps}/zellij/config.nix" "kdl" "roles icons" "bound"]
-      ["zellij-theme" "${apps}/zellij/themes/dracula.nix" "kdl" "palette" "bound"]
-      ["yazi" "${apps}/yazi/theme.nix" "toml+tmTheme" "palette icons git badges" "bound"]
-      ["nvim" "${apps}/nvim/default.nix" "lua" "roles palette scopes git" "bound"]
-      ["bat" "${st}/bat.nix" "tmTheme" "scopes" "bound"]
-      ["delta" "modules/home/programs/git-tools/git.nix" "gitconfig" "diff blameRamp git" "bound"]
-      ["lazygit" "modules/home/programs/git-tools/lazygit.nix" "yaml" "palette git" "bound"]
-      ["starship" "${st}/starship.nix" "toml" "roles palette icons git badges" "bound"]
-      ["fzf" "${st}/fzf.nix" "env" "roles" "bound"]
-      ["eza" "${st}/eza.nix" "yaml" "roles palette git" "bound"]
-      ["fastfetch" "${st}/fastfetch.nix" "json" "roles fonts" "bound"]
-      ["k9s" "modules/home/programs/container-tools/k9s.nix" "yaml" "roles palette" "bound"]
-      ["atuin" "${st}/atuin.nix" "toml" "roles" "bound"]
-      ["bottom" "${st}/bottom.nix" "toml" "roles palette" "bound"]
-      ["procs" "${st}/procs.nix" "toml" "ansi16-slots" "bound"]
-      ["jnv" "${st}/jnv.nix" "flags" "roles palette" "bound"]
-      ["pik" "${st}/pik.nix" "toml" "roles" "bound"]
-      ["trippy" "${st}/trippy.nix" "toml" "roles palette" "bound"]
-      ["tlrc" "${st}/tlrc.nix" "toml" "palette" "bound"]
-      ["posting" "${st}/posting.nix" "yaml" "roles palette" "bound"]
-      ["process-compose" "${st}/process-compose.nix" "yaml" "roles palette" "bound"]
-      ["zsh-syntax-highlighting" "modules/home/programs/zsh/options.nix" "env" "roles palette" "bound"]
-      ["zsh-autosuggestions" "modules/home/programs/zsh/options.nix" "env" "roles" "bound"]
-      ["you-should-use" "modules/home/programs/zsh/plugins.nix" "env" "roles" "bound"]
-      ["macos-accent" "modules/darwin/settings" "defaults" "-" "gap"]
-      ["mermaid-html-studio" ".claude/skills" "css" "-" "gap"]
-      ["dock-controlcenter" "system-owned" "-" "-" "defer"]
-    ];
-
-  # Registry rows are proven at eval: every owner path must exist on disk, ids stay unique, and verdicts stay on the closed ladder, so a moved
-  # consumer, a copy-pasted row, or a typo'd verdict breaks loudly. "system-owned" rows carry no file.
-  targetsProved = let
-    missing = builtins.filter (t: t.owner != "system-owned" && !builtins.pathExists (../.. + "/${t.owner}")) targets;
-    dupes = lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: t: acc // {${t.id} = (acc.${t.id} or 0) + 1;}) {} targets));
-    unruled = builtins.filter (t: !lib.elem t.verdict ["bound" "gap" "defer"]) targets;
-  in
-    if missing != []
-    then throw "estate.theme.targets: owner paths missing on disk: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.owner}") missing}"
-    else if dupes != []
-    then throw "estate.theme.targets: duplicate target ids: ${lib.concatStringsSep ", " dupes}"
-    else if unruled != []
-    then throw "estate.theme.targets: verdicts off the bound|gap|defer ladder: ${lib.concatMapStringsSep ", " (t: "${t.id}=${t.verdict}") unruled}"
-    else targets;
 
   scopeRule = row: let
     style = row.style or null;
@@ -253,7 +181,7 @@
     <plist version="1.0">
     <dict>
       <key>name</key>
-      <string>Estate Dracula</string>
+      <string>Forge Dracula</string>
       <key>settings</key>
       <array>
         <dict>
@@ -267,104 +195,7 @@
     </dict>
     </plist>
   '';
-  tmThemeFile = pkgs.writeText "estate-dracula.tmTheme" tmTheme;
-
-  # Deep hex projection: a color record (any attrset carrying `hex`) collapses to its hex, every other leaf (glyphs, labels) passes through —
-  # so a new role family lands in palette.json with zero edits here.
-  project = v:
-    if lib.isAttrs v && v ? hex
-    then v.hex
-    else if lib.isAttrs v
-    then lib.mapAttrs (_: project) v
-    else v;
-  paletteJson = builtins.toJSON {
-    palette = project palette;
-    derived = project derived;
-    roles = project roles;
-    ansi16 = project ansi16;
-    icons = project icons;
-    syntax = map (row:
-      {
-        inherit (row) name scope captures;
-        color = row.color.hex;
-        style = row.style or "";
-      }
-      // lib.optionalAttrs (row ? background) {background = row.background.hex;})
-    syntaxScopes;
-  };
-
-  # Base16/Base24 export adapter (Tinted scheme exchange); slot names derive from the ordered palette-row vector (base00..base17). The canonical
-  # palette stays runtime truth; this is the ecosystem egress.
-  base24Slots = lib.listToAttrs (lib.imap0 (
-      i: p: lib.nameValuePair "base${lib.fixedWidthString 2 "0" (lib.toHexString i)}" palette.${p}
-    ) (lib.splitString " "
-      "background surface selection comment subtle foreground foreground foreground red orange yellow green cyan blue purple magenta crust crust red yellow green cyan brightBlue pink"));
-  base24File = (pkgs.formats.yaml {}).generate "base24.yaml" {
-    system = "base24";
-    name = "Estate Dracula";
-    author = "Parametric Forge";
-    variant = "dark";
-    palette = lib.mapAttrs (_: c: lib.toLower (lib.removePrefix "#" c.hex)) base24Slots;
-  };
-
-  # --- [RENDERED_PROOF_BOARD]
-  # palette.html: swatches, elevation ladder, fg tiers, ANSI-16, syntax scopes over a live sample, diff/search fills, git glyphs, and a WCAG
-  # contrast matrix computed in the page against base/surface/overlay landings.
-  paletteHtml = pkgs.writeText "palette.html" ''
-    <!doctype html><html><head><meta charset="utf-8"><title>Estate Theme Proof Board</title>
-    <style>
-      body{background:${palette.background.hex};color:${palette.foreground.hex};font:${fonts.projections.proofFont};margin:2rem;max-width:1100px}
-      h1,h2{color:${palette.pink.hex};font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-      h2{color:${palette.cyan.hex};margin-top:2.5rem}
-      table{border-collapse:collapse;width:100%;margin:.75rem 0}
-      td,th{padding:.35rem .6rem;text-align:left;border-bottom:1px solid ${palette.current_line.hex}}
-      th{color:${palette.subtle.hex};text-transform:uppercase;font-size:.75rem;letter-spacing:.08em}
-      .sw{display:inline-block;width:2.4rem;height:1.2rem;border-radius:3px;vertical-align:middle;margin-right:.5rem}
-      .chip{padding:.1rem .45rem;border-radius:3px;font-size:.75rem}
-      .pass{background:${derived.diffAdd.hex};color:${palette.green.hex}}
-      .park{background:${derived.search.hex};color:${palette.yellow.hex}}
-      .fail{background:${derived.diffDel.hex};color:${palette.red.hex}}
-      .muted{color:${palette.comment.hex}}
-      pre{background:${palette.crust.hex};padding:1rem;border-radius:6px;overflow-x:auto}
-    </style></head><body>
-    <h1>Estate Theme Proof Board</h1>
-    <p class="muted">Generated from modules/home/theme.nix — the estate palette owner. Contrast is computed live in this page (WCAG2 relative luminance).</p>
-    <div id="root"></div>
-    <script id="data" type="application/json">${paletteJson}</script>
-    <script>
-    var D=JSON.parse(document.getElementById('data').textContent);
-    function lin(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4)}
-    function lum(h){return 0.2126*lin(parseInt(h.slice(1,3),16))+0.7152*lin(parseInt(h.slice(3,5),16))+0.0722*lin(parseInt(h.slice(5,7),16))}
-    function cr(f,b){var a=lum(f),c=lum(b),hi=Math.max(a,c),lo=Math.min(a,c);return (hi+0.05)/(lo+0.05)}
-    function chip(r,floor){var cls=r>=floor?'pass':(r>=3?'park':'fail');return '<span class="chip '+cls+'">'+r.toFixed(2)+'</span>'}
-    function sw(h){return '<span class="sw" style="background:'+h+'"></span>'+h}
-    var out=[];
-    out.push('<h2>Palette + Contrast Matrix</h2><table><tr><th>row</th><th>hex</th><th>vs base</th><th>vs surface</th><th>vs overlay</th></tr>');
-    Object.keys(D.palette).forEach(function(k){var h=D.palette[k];
-      out.push('<tr><td>'+k+'</td><td>'+sw(h)+'</td><td>'+chip(cr(h,D.palette.background),4.5)+'</td><td>'+chip(cr(h,D.palette.surface),4.5)+'</td><td>'+chip(cr(h,D.derived.overlay),4.5)+'</td></tr>')});
-    out.push('</table><p class="muted">green = clears body AA (4.5), amber = parked 3.0-4.5 (non-text / by-design muted), red = below the non-text floor.</p>');
-    out.push('<h2>Elevation Ladder</h2><div>');
-    ['crust','background','surface','current_line'].forEach(function(k){out.push('<div style="background:'+D.palette[k]+';padding:.6rem 1rem">'+k+' '+D.palette[k]+'</div>')});
-    out.push('<div style="background:'+D.derived.overlay+';padding:.6rem 1rem">overlay '+D.derived.overlay+'</div>');
-    out.push('<div style="background:'+D.palette.selection+';padding:.6rem 1rem">selection '+D.palette.selection+'</div></div>');
-    out.push('<h2>ANSI-16</h2><div>');
-    Object.keys(D.ansi16).forEach(function(k){out.push('<span class="sw" title="'+k+'" style="background:'+D.ansi16[k]+';width:3.5rem;height:1.6rem"></span>')});
-    out.push('</div>');
-    out.push('<h2>Syntax Scopes</h2><table><tr><th>scope</th><th>hue</th><th>sample</th></tr>');
-    D.syntax.forEach(function(s){out.push('<tr><td>'+s.name+'</td><td>'+sw(s.color)+'</td><td style="color:'+s.color+';font-style:'+(s.style.indexOf('italic')>=0?'italic':'normal')+';font-weight:'+(s.style.indexOf('bold')>=0?'700':'400')+'">'+('let '+s.name.toLowerCase()+' = shape(value)')+'</td></tr>')});
-    out.push('</table>');
-    out.push('<h2>Diff + Search Fills</h2>');
-    [['diffAdd','+ inserted line'],['diffDel','− deleted line'],['diffChange','~ changed line'],['search','search match'],['searchCurrent','current match']].forEach(function(p){
-      out.push('<div style="background:'+D.derived[p[0]]+';padding:.4rem 1rem">'+p[1]+' <span class="muted">fg holds neutral — '+cr(D.palette.foreground,D.derived[p[0]]).toFixed(1)+':1</span></div>')});
-    out.push('<h2>Git States</h2><table><tr><th>state</th><th>glyph</th><th>ascii twin</th><th>hue</th></tr>');
-    Object.keys(D.roles.git).forEach(function(k){var g=D.roles.git[k];out.push('<tr><td>'+k+'</td><td style="color:'+g.color+'">'+g.glyph+'</td><td class="muted">'+g.ascii+'</td><td>'+sw(g.color)+'</td></tr>')});
-    out.push('</table>');
-    out.push('<h2>Status Alphabet</h2><table><tr><th>role</th><th>glyph</th><th>ascii twin</th></tr>');
-    Object.keys(D.icons.alphabet).forEach(function(k){var a=D.icons.alphabet[k];out.push('<tr><td>'+k+'</td><td>'+a.glyph+'</td><td class="muted">'+a.ascii+'</td></tr>')});
-    out.push('</table>');
-    document.getElementById('root').innerHTML=out.join(''');
-    </script></body></html>
-  '';
+  tmThemeFile = pkgs.writeText "forge-dracula.tmTheme" tmTheme;
 
   fzfColorRows = [
     "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
@@ -377,7 +208,7 @@
   projections = {
     inherit tmThemeFile;
     # Flat hex mirror of the role families hex-projection consumers (VS Code, nvim, wezterm Lua rows) actually index; focus and mode stay Nix-side
-    # deliberately — no hex consumer reads them, and palette.json already carries the full tree. A new family lands here with its first consumer.
+    # deliberately — no hex consumer reads them. A new family lands here with its first consumer.
     rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
     # Git-state vocabulary rows (hex + both registers); terminal-bound consumers render .glyph, persisted/piped surfaces render .ascii, every
     # consumer takes .color from the same row.
@@ -387,14 +218,12 @@
         inherit (g) glyph ascii;
       })
       roles.git;
-    # Cross-surface machine-context badges (remote host, in-container rootfs): the roles.git single-owner pattern applied to context — each row
-    # carries the glyph, the dotted role path, and the resolved hex (.color, the gitHex field grammar), so prompt, wezterm strip, and yazi header
-    # render one identical badge per class. Row tuple: [processIcon rolePath].
+    # Machine-context badges (remote host, in-container rootfs): the roles.git single-owner pattern applied to context — each row carries the
+    # glyph and the dotted role path the prompt styles it with. Row tuple: [processIcon rolePath].
     contextBadges =
-      lib.mapAttrs (_: t: rec {
+      lib.mapAttrs (_: t: {
         glyph = icons.process.${builtins.elemAt t 0};
         role = builtins.elemAt t 1;
-        color = (lib.getAttrFromPath (lib.splitString "." role) roles).hex;
       }) {
         remote = ["ssh" "state.warning"];
         container = ["container" "accent.structural"];
@@ -443,7 +272,7 @@
       dated = "%d/%m %H:%M";
     };
     # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, fzf-tab).
-    # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip estate-wide.
+    # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip everywhere.
     inherit fzfColorRows;
     # Per-command fzf argument vocabulary: colors plus the chrome every generated script carries per invocation (scripts never assume the
     # interactive FZF_DEFAULT_OPTS reached them); the richer global interactive chrome stays fzf.nix-owned.
@@ -457,27 +286,10 @@
     ];
   };
 in {
-  options.estate.theme = lib.mkOption {
+  options.forge.theme = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
-    default = {
-      inherit palette derived roles ansi16 syntaxScopes icons projections;
-      targets = targetsProved;
-    };
-    description = "Estate palette owner: enriched Dracula tokens, roles, ANSI-16, registry, projections.";
-  };
-
-  config = {
-    # Machine-readable projections for consumers outside Home Manager, the ecosystem exchange adapter, the proof board, and the coverage ledger.
-    xdg.configFile = {
-      "estate/theme/palette.json".text = paletteJson;
-      "estate/theme/estate-dracula.tmTheme".source = tmThemeFile;
-      "estate/theme/base24.yaml".source = base24File;
-      "estate/theme/palette.html".source = paletteHtml;
-      "estate/theme/coverage.json".text = builtins.toJSON {
-        schema = "theme-coverage/v1";
-        targets = targetsProved;
-      };
-    };
+    default = {inherit palette derived roles ansi16 syntaxScopes icons projections;};
+    description = "Forge palette owner: enriched Dracula tokens, roles, ANSI-16, syntax scopes, icons, projections.";
   };
 }

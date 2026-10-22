@@ -10,8 +10,5 @@ _: {
     # --- [SYSTEM_UTILITIES]
     "tag" # macOS file tagging CLI
     "blueutil" # Bluetooth management
-
-    # --- [REVIEWERS]
-    "greptileai/tap/greptile" # Official Greptile CLI; the qualified name scopes the module's default trust to this formula, not the tap
   ];
 }

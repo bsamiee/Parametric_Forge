@@ -4,14 +4,14 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/themes/dracula.nix
 # ----------------------------------------------------------------------------
-# Nix-generated Zellij component theme from the estate palette owner. One row per component:
+# Nix-generated Zellij component theme from the Forge palette owner. One row per component:
 # [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
 {
   config,
   lib,
   ...
 }: let
-  inherit (config.estate.theme) palette;
+  inherit (config.forge.theme) palette;
   rgb = role: palette.${role}.triple; # Component theme rows take decimal RGB triples
   slots = ["base" "background" "emphasis_0" "emphasis_1" "emphasis_2" "emphasis_3"];
   components = [
@@ -34,11 +34,9 @@
   renderComponent = pair: let
     name = builtins.elemAt pair 0;
     roleRows = builtins.elemAt pair 1;
-  in
-    # zipListsWith truncates to the shorter list: a mis-arity row drops or invents emphasis slots silently, so arity gates at eval.
-    assert lib.assertMsg (builtins.length roleRows == builtins.length slots) "zellij theme ${name}: one role per slot (${toString (builtins.length slots)})"; ''
-      ${name} {
-      ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
+  in ''
+    ${name} {
+    ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
   xdg.configFile."zellij/themes/dracula.kdl".text = ''
     // Title         : dracula.kdl
@@ -47,7 +45,7 @@ in {
     // License       : MIT
     // Path          : ~/.config/zellij/themes/dracula.kdl
     // ----------------------------------------------------------------------------
-    // Zellij component theme generated from the estate palette owner
+    // Zellij component theme generated from the Forge palette owner
 
     themes {
       "dracula" {

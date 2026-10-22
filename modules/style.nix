@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/style.nix
 # ----------------------------------------------------------------------------
-# House code-style vocabulary: plain data imported by both module graphs, so XDG fallback configs (home), treefmt rows (flake), and never-shadow
-# wrapper kernels carry identical bytes. Width/indent are the single law; rendered fragments and the discovery kernel project from them.
+# House code-style vocabulary: plain data imported by both module graphs, so the home editorconfig and sqruff configs and the flake's treefmt
+# rows carry identical width and indent. Width/indent are the single law; rendered fragments project from them.
 let
   indent = 4;
   width = 150;
@@ -13,15 +13,6 @@ let
   w = toString width;
 in {
   inherit indent width;
-  # Transient trees: never format/lint/search targets. Every consumer projects this one list — machine tool fallbacks, editor settings
-  # — so agent-harness folders (.claude, .codex) stay first-class work surfaces while their scratch/archive/cache interiors stay untouched.
-  transientDirs = [".archive" "_archive" ".scratch" "scratch" "_tmp" "_TMP" ".tmp" ".cache" ".history" "node_modules" ".venv"];
-  # Prettier config for the prose lane; the machine wrapper and the Home Manager config file both project it.
-  prettierrc = {
-    tabWidth = indent;
-    printWidth = width;
-    singleQuote = true;
-  };
   # Machine-level editor law: the [*] block is the whole contract — per-repo .editorconfig files layer on top and win via nearest-first resolution.
   editorconfig = ''
     root = true
@@ -49,31 +40,13 @@ in {
         trim_trailing_whitespace: true
         eof_newline: true
   '';
-  # sqruff and sqlfluff share one config grammar modulo the section prefix.
-  sql = tool: dialect: ''
-    [${tool}]
+  # sqruff config per dialect.
+  sqruff = dialect: ''
+    [sqruff]
     dialect = ${dialect}
     max_line_length = ${w}
 
-    [${tool}:indentation]
+    [sqruff:indentation]
     tab_space_size = ${i}
-  '';
-  # Never-shadow discovery kernel: _walk_up <name>... prints the first governing project config from $PWD up to and including the filesystem root,
-  # exit 1 when none owns the tree. Wrappers embed it so every upward walk shares one correctness.
-  walkUp = ''
-    _walk_up() {
-        local dir="$PWD" name
-        while :; do
-            for name in "$@"; do
-                [[ -f "$dir/$name" ]] && {
-                    printf '%s\n' "$dir/$name"
-                    return 0
-                }
-            done
-            [[ "$dir" == /* && -n "''${dir%/}" ]] || return 1
-            dir="''${dir%/*}"
-            [[ -n "$dir" ]] || dir="/"
-        done
-    }
   '';
 }

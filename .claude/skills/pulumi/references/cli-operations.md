@@ -5,8 +5,8 @@
 ## [01]-[COMMAND_SHAPE]
 
 ```bash copy-safe
-npx pulumi do aws:s3:Bucket create --yes --bucket my-data
-npx pulumi do aws:s3:Bucket read my-data
+pulumi do aws:s3:Bucket create --yes --bucket my-data
+pulumi do aws:s3:Bucket read my-data
 ```
 
 - `<pkg>` is the provider package (`aws`, `azure-native`, `gcp`, `cloudflare`, `kubernetes`).
@@ -27,10 +27,10 @@ tags = {
   Environment = "dev"
 }
 EOF
-npx pulumi do aws:s3:Bucket create --yes --input-file bucket.pcl
+pulumi do aws:s3:Bucket create --yes --input-file bucket.pcl
 ```
 
-Before authoring properties for a resource new to the session, `npx pulumi package info <pkg> --module <mod> --resource <Type>` lists its inputs and outputs with descriptions. `npx pulumi package get-schema <pkg>` returns the full machine-readable schema with nested type definitions — tens of MB for a large provider, never read whole. Property names are camelCase; flags take the kebab-case form. `npx pulumi package info <pkg>` with no module lists the package's modules and resources.
+Before authoring properties for a resource new to the session, `pulumi package info <pkg> --module <mod> --resource <Type>` lists its inputs and outputs with descriptions. `pulumi package get-schema <pkg>` returns the full machine-readable schema with nested type definitions — tens of MB for a large provider, never read whole. Property names are camelCase; flags take the kebab-case form. `pulumi package info <pkg>` with no module lists the package's modules and resources.
 
 ## [03]-[OUTPUT_CONTRACT]
 
@@ -50,12 +50,12 @@ No state means no resource graph and no `${...}` reference syntax. A value flows
 
 ```bash copy-safe
 # create prints JSON containing "id": "vpc-0abc123"
-npx pulumi do aws:ec2:Vpc create --yes --cidr-block 10.0.0.0/16
-npx pulumi do aws:ec2:Subnet create --yes --vpc-id vpc-0abc123 --cidr-block 10.0.1.0/24
+pulumi do aws:ec2:Vpc create --yes --cidr-block 10.0.0.0/16
+pulumi do aws:ec2:Subnet create --yes --vpc-id vpc-0abc123 --cidr-block 10.0.1.0/24
 
 # RandomPet prints "id": "artistic-bull" — globally-unique naming feed
-npx pulumi do random:RandomPet create --yes
-npx pulumi do aws:s3:Bucket create --yes --bucket assets-artistic-bull
+pulumi do random:RandomPet create --yes
+pulumi do aws:s3:Bucket create --yes --bucket assets-artistic-bull
 ```
 
 A value the chain does not produce — an existing resource id, an API zone id — comes from a provider function, a `list` where supported, or the operator. Never invented.
@@ -66,7 +66,7 @@ Resources `pulumi do` created are ordinary cloud resources with no Pulumi state 
 
 ```bash copy-safe
 # import takes the full pkg:mod/type:Type token, not pulumi do's short aws:s3:Bucket
-npx pulumi import aws:s3/bucket:Bucket assets my-data
+pulumi import aws:s3/bucket:Bucket assets my-data
 ```
 
 Generated code moves into the program, which manages the resource from then on. Bulk adoption passes resources in a `--file`.

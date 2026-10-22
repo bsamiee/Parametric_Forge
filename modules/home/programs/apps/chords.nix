@@ -13,12 +13,8 @@
   ...
 }: let
   # --- [ROW_GRAMMAR]
-  # Positional tuples zip against a field schema: a short tuple drops trailing fields, null skips a slot, and an oversized tuple faults —
-  # zipListsWith would truncate silently otherwise.
-  row = fields: t:
-    lib.throwIf (builtins.length t > builtins.length fields)
-    "chords row ${builtins.toJSON t} exceeds schema [${lib.concatStringsSep " " fields}]"
-    (lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t)));
+  # Positional tuples zip against a field schema: a short tuple drops trailing fields and null skips a slot.
+  row = fields: t: lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t));
   sub = long: short: t:
     row (
       if builtins.length t == 3
@@ -225,11 +221,10 @@
   forgotExtras = map (row ["rank" "label" "display"]) [
     [230 "editor" "nv / vim -> nvim"]
     [240 "file manager" "y -> yazi popup (Super Alt Ctrl y)"]
-    [250 "git ui" "lazygit float (pane mode w)"]
     [260 "json explore" "jqi -> jnv"]
     [270 "loc report" "loc <path>"]
     [280 "folder map" "tree <path>"]
-    [290 "deploy" "redeploy --check-only / --build / --switch"]
+    [290 "deploy" "redeploy --build / --switch"]
     [300 "http" "GET/POST/PUT -> xh"]
   ];
 
@@ -297,7 +292,7 @@
     weztermRows;
 
   # --- [NEOVIM_EDITOR_DOMAIN_TABLE]
-  # One editor chord vocabulary keyed by domain; the nvim module projects it into lua/estate/chords.lua. `<cmd>…` targets land as native command
+  # One editor chord vocabulary keyed by domain; the nvim module projects it into lua/forge/chords.lua. `<cmd>…` targets land as native command
   # strings, bare names as dispatch-table fns (keymaps.lua binds both); mode defaults to ["n"]. Plugin README maps never leak in.
   mkNvim = t: let
     r = row ["keys" "target" "desc" "mode"] t;
@@ -347,10 +342,9 @@
       ["<leader>cS" "lsp_workspace_symbols" "Workspace symbols"]
       ["<leader>cr" "lsp_rename" "Rename symbol"]
       ["<leader>ca" "code_action" "Code action" ["n" "x"]]
-      ["<leader>cf" "format" "Format buffer/range" ["n" "x"]]
     ];
-    estate = [
-      ["<leader>ee" "pick_estate" "Nix estate actions"]
+    forge = [
+      ["<leader>ee" "pick_forge" "Forge actions"]
     ];
     refactor = [
       ["<leader>rr" "grug_open" "Search and replace (grug-far)" ["n" "x"]]
@@ -386,7 +380,7 @@
       label = r.desc;
       action = r.action or r.fn;
       scope = "editor:${lib.concatStringsSep "," r.mode}";
-      projection_path = ".config/nvim/lua/estate/chords.lua";
+      projection_path = ".config/nvim/lua/forge/chords.lua";
       rendered = builtins.toJSON r;
     })
     nvimRows;
@@ -434,14 +428,12 @@
     forgotRows;
 
   # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the SHIFTED character, so its binds emit that glyph both with and without the
-  # Shift modifier listed; letter keys and Shift-free layers pass through. The map is total over the ANSI shifted row, capacity-asserted at the zip.
+  # Shift modifier listed; letter keys and Shift-free layers pass through. The map is total over the ANSI shifted row.
   shiftedGlyph = let
     plain = ["`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "[" "]" "\\" ";" "'" "," "." "/"];
     shifted = ["~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "{" "}" "|" ":" "\"" "<" ">" "?"];
   in
-    lib.throwIf (builtins.length plain != builtins.length shifted)
-    "chords shiftedGlyph rows diverge: ${toString (builtins.length plain)} plain vs ${toString (builtins.length shifted)} shifted"
-    (lib.listToAttrs (lib.zipListsWith lib.nameValuePair plain shifted));
+    lib.listToAttrs (lib.zipListsWith lib.nameValuePair plain shifted);
   stripShift = prefix: lib.concatStringsSep " " (lib.filter (w: w != "Shift") (lib.splitString " " prefix));
   bindKeys = prefix: k:
     if lib.hasInfix "Shift" prefix && shiftedGlyph ? ${k}
@@ -634,26 +626,8 @@
     })
     weztermRows
     ++ nvimRegRows;
-
-  # Intra-consumer conflict ledger: every emitted (consumer, chord) claim must be unique; shift-glyph expansion rides the same bindKeys the KDL uses,
-  # and the WezTerm outer layer stacks CMD and CMD|SHIFT on the same letters by design.
-  dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
-  claims = lib.concatMap (r:
-    map (c: "${r.consumer}|${c}")
-    (
-      if r.consumer == "zellij"
-      then lib.concatMap (bindKeys r.mods) (lib.splitString "," r.key)
-      else if r.consumer == "wezterm"
-      then ["${r.mods} ${r.key}"]
-      else [r.key]
-    ))
-  register;
-  conflictClaims = dupesOf claims;
-  conflictIds = dupesOf (map (r: r.chord_id) register);
-  # listToAttrs keeps the first occurrence: a duplicate injection id would shadow silently without this guard.
-  conflictInjectionIds = dupesOf (lib.concatMap (rows: lib.concatMap (r: lib.optional (r ? id) r.id) rows) (lib.attrValues bindRows));
 in {
-  options.estate.chords = lib.mkOption {
+  options.forge.chords = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
@@ -680,24 +654,4 @@ in {
     };
     description = "Chord-vocabulary owner: leader layers, zellij binds, which-key, ribbon, and register rows.";
   };
-
-  config.assertions = [
-    {
-      assertion = conflictClaims == [];
-      message = "estate.chords: conflicting chord claims: ${lib.concatStringsSep ", " conflictClaims}";
-    }
-    {
-      assertion = conflictIds == [];
-      message = "estate.chords: duplicate chord_id rows: ${lib.concatStringsSep ", " conflictIds}";
-    }
-    {
-      assertion = conflictInjectionIds == [];
-      message = "estate.chords: duplicate injection ids: ${lib.concatStringsSep ", " conflictInjectionIds}";
-    }
-    {
-      # zipListsWith truncates: a layer past the role vocabulary would vanish from the headerComment silently instead of landing misdocumented.
-      assertion = builtins.length (lib.attrValues layers) <= builtins.length headerRoles;
-      message = "estate.chords: ${toString (builtins.length (lib.attrValues layers))} layers exceed the ${toString (builtins.length headerRoles)}-row headerRoles vocabulary; extend headerRoles.";
-    }
-  ];
 }

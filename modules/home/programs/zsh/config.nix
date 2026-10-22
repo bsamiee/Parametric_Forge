@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/config.nix
 # ----------------------------------------------------------------------------
-# Zsh .zshenv floor for every shell: the PATH assertion, the scientific library exports, the never-clobber session-variable floor, the
-# op-injected session secrets, and the non-interactive mise refresh, closing .zshenv or, for a login shell, .zprofile.
+# Zsh .zshenv floor for every shell: the PATH assertion, the never-clobber floor over the scientific and cross-surface rows, the op-injected
+# session secrets, and the non-interactive mise refresh, closing .zshenv or, for a login shell, .zprofile.
 {
   config,
   toolchainEnvFor,
@@ -24,7 +24,9 @@
   # exit (directory, watched files, MISE_* rows; never PATH) takes as current. Startup files ran again, so the first-run --force applies, as
   # `mise activate`'s own first hook does: hook-env reverts the inherited diff and puts the current directory's installs and [env] rows ahead
   # of the floor. It runs as the last PATH writer each shell reads: .zshenv for a non-login shell, .zprofile after hm-session-vars for a login one.
-  miseRefresh = ''eval "$(${lib.getExe config.programs.mise.package} hook-env --force -s zsh)"'';
+  # Inside a project whose tools ship completions the output runs compinit unless compdef exists, so a no-op compdef makes that guard skip it
+  # and the dump it would write.
+  miseRefresh = ''{ (( $+functions[compdef] )) || compdef() { :; }; eval "$(${lib.getExe config.programs.mise.package} hook-env --force -s zsh)"; }'';
 in {
   programs.zsh = {
     # Runs in .zshenv for ALL shells (login, interactive, scripts, zellij panes). PATH has ONE owner list, toolchain-env.nix pathEntries;
@@ -45,11 +47,11 @@ in {
       path=(''${_session_path:|path} $path)
       unset _session_path
 
-      ${toolchainEnv.shellExports toolchainEnv.scientificSessionEnv}
-      ${toolchainEnv.resilientFloorExports}
-      # The mode-600 cache activation publishes (shell-tools/1password.nix): every shell, login and script ones included, carries the tokens
-      # gh, the deploy rail, and the MCP rows read, so a process its multiplexer starts through a login shell holds them too.
-      [[ ! -f ${lib.escapeShellArg config.estate.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.estate.secrets.sessionCache}
+      ${toolchainEnv.floorExports (toolchainEnv.scientificSessionEnv // toolchainEnv.launchdEnv)}
+      # The mode-600 cache activation publishes (shell-tools/1password.nix), its rows in the same never-clobber form: every shell, login and
+      # script ones included, carries the tokens gh, gws, and the deploy rail read, so a process its multiplexer starts through a login shell
+      # holds them too, and a caller-scoped token survives.
+      [[ ! -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.forge.secrets.sessionCache}
 
       # A non-login script shell (an agent harness's `zsh -c` command) ends here; interactive zsh activates at the end of .zshrc (zsh/init.nix).
       [[ -o interactive || -o login ]] || ${miseRefresh}

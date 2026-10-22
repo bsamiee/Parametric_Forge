@@ -9,5 +9,6 @@
   imports = [
     ./default-applications.nix
     ./defaults
+    ./suggestions.nix
   ];
 }

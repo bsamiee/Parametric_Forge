@@ -11,8 +11,8 @@
   pkgs,
   ...
 }: let
-  # palette retained for the one hue with no semantic role: JSON string values ride the estate string-yellow (syntaxScopes String).
-  inherit (config.estate.theme) roles palette;
+  # palette retained for the one hue with no semantic role: JSON string values ride the palette string-yellow (syntaxScopes String).
+  inherit (config.forge.theme) roles palette;
   tomlFormat = pkgs.formats.toml {};
   # termcfg style strings: "fg=<hex>,bg=<hex>,attr=<token|token...>"
   fg = c: "fg=${c.hex}";
@@ -60,7 +60,7 @@
       listbox = {
         lines = 10;
         cursor = "❯ ";
-        # Selection rides the focus fill with inverse text, matching every estate picker.
+        # Selection rides the focus fill with inverse text, matching every themed picker.
         active_item_style = "fg=${roles.text.inverse.hex},bg=${roles.focus.active.hex}";
         inactive_item_style = fg roles.text.primary;
       };
@@ -107,11 +107,6 @@
   };
 in {
   home.packages = [pkgs.jnv];
-  # dirs-crate config resolution: ~/Library/Application Support on macOS (the XDG path is never consulted there), $XDG_CONFIG_HOME on Linux.
-  home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-    "Library/Application Support/jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
-  };
-  xdg.configFile = lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isDarwin) {
-    "jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
-  };
+  # dirs-crate config resolution on macOS: ~/Library/Application Support, never the XDG path.
+  home.file."Library/Application Support/jnv/config.toml".source = tomlFormat.generate "jnv-config" jnvConfig;
 }

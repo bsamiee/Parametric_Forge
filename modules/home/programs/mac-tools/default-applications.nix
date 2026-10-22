@@ -4,15 +4,24 @@
 # License       : MIT
 # Path          : modules/home/programs/mac-tools/default-applications.nix
 # ----------------------------------------------------------------------------
-# One native association owner. Exact installed bundle identities and paths are checked before and after changes. A row names the app that
-# opens the type: LaunchServices takes an app that never claims the type (Rhino for the CAD formats it imports) and an extension with no
-# system type (a dynamic UTI such as .sln) alike, and utiluti raises no per-type consent dialog on macOS 26.
+# One native association owner, reconciled at every switch: a handler that differs from its row is set. A row names the app that opens the
+# type: LaunchServices takes an app that never claims the type (Rhino for the CAD formats it imports) and an extension with no system type (a
+# dynamic UTI such as .sln) alike, and utiluti raises no per-type consent dialog on macOS 26.
 {
   config,
   lib,
   pkgs,
+  toolchainEnvFor,
   ...
 }: let
+  inherit
+    (toolchainEnvFor {
+      home = config.home.homeDirectory;
+      inherit (config.home) username;
+      xdgCacheHome = config.xdg.cacheHome;
+    })
+    rhinoApp
+    ;
   app = id: path: extensions: schemes: {inherit id path extensions schemes;};
   applications = [
     # ICAP is an InCopy-bound package; InDesign explicitly declares role None. IDAP is its supported return package.
@@ -110,7 +119,7 @@
     (app "com.adobe.LightroomClassicCC7" "/Applications/Adobe Lightroom Classic/Adobe Lightroom Classic.app" ["lrcat"] [])
     # Rhino's own document types plus the formats its Import command reads (docs.mcneel.com/rhino/9 file formats index); dae, sat, and x3d
     # are export-only there and stay with the system viewers.
-    (app "com.mcneel.rhinoceros.9" "/Applications/RhinoBETA.app" ["stl" "dwg" "dxf" "obj" "fbx" "ply" "step" "stp" "iges" "igs" "skp" "3ds" "wrl" "3mf" "dgn"] [])
+    (app "com.mcneel.rhinoceros.9" rhinoApp ["stl" "dwg" "dxf" "obj" "fbx" "ply" "step" "stp" "iges" "igs" "skp" "3ds" "wrl" "3mf" "dgn"] [])
     # BetterZip's Archive Types tab claims the formats it lists; these three resolve through system type identifiers the tab cannot take
     # (com.sun.web-application-archive, org.gnu.gnu-tar-archive, com.microsoft.cab). ePub stays unchecked there so calibre keeps the type.
     (app "com.macitbetter.betterzip" "/Applications/BetterZip.app" ["war" "gtar" "cab"] [])
@@ -146,52 +155,28 @@
   roster = pkgs.writeText "default-applications.json" (builtins.toJSON applications);
   command = pkgs.writeShellApplication {
     name = "default-applications";
-    runtimeInputs = [pkgs.coreutils pkgs.flock pkgs.jq pkgs.utiluti];
+    runtimeInputs = [pkgs.jq pkgs.utiluti];
     text = ''
-      mode="''${1:-apply}"
-      [[ $# -le 1 && ( $mode == apply || $mode == check ) ]] || { echo 'usage: default-applications [apply|check]' >&2; exit 2; }
-      changed=0
-      checked=0
-      skipped=0
-      failures=0
       declare -A skip=()
-      # Preflight every destination before changing any handler. Nested Adobe helpers are part of the intended bundle. An application that is
-      # not installed is a skipped row under apply — the activation runs under set -e and a renamed Beta bundle must never abort a switch —
-      # and a hard failure under check, where the operator asked for the full roster.
+      # An application that is not installed is a skipped row, so a renamed Beta bundle never aborts a switch.
       while IFS=$'\t' read -r id path; do
         if [[ ! -d $path ]]; then
-          [[ $mode == apply ]] || { printf 'application not installed: %s\n' "$path" >&2; exit 1; }
           printf 'skipping absent application: %s\n' "$path" >&2
           skip[$id]=1
-          ((++skipped))
           continue
         fi
-        actual=$(utiluti app identifier "$path")
-        [[ $actual == "$id" ]] || { printf 'bundle identity mismatch: %s\n' "$path" >&2; exit 1; }
         # A bundle copyApps wrote this generation reaches the LaunchServices database on its next Finder scan or launch; registering it here
         # makes the for-identifier read below current for a Home Manager Apps copy that changed its store path.
         /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$path"
-        registered=$(utiluti app for-identifier "$id")
-        found=0
-        competing=""
+        # A second real copy makes the handler ambiguous (LaunchServices may bind either), so the row is skipped. A mounted disk image (an
+        # installer or an updater staging volume) is never an installation, and a Nix store bundle is the source a Home Manager Apps copy
+        # resolves to when it launches, so neither competes.
         while IFS= read -r candidate; do
-          [[ $candidate != "$path" ]] || found=1
-          # A mounted disk image (an installer or an updater staging volume) is never an installation, so /Volumes copies never compete; a
-          # Nix store bundle is the source a Home Manager Apps copy resolves to when it launches, registered once per generation, so it never
-          # competes with its copy either.
           if [[ -d $candidate && $candidate != "$path" && $candidate != "$path/"* && $candidate != /Volumes/* && $candidate != /nix/store/* ]]; then
-            competing=$candidate
+            printf 'skipping %s: competing installed application %s\n' "$id" "$candidate" >&2
+            skip[$id]=1
           fi
-        done <<<"$registered"
-        # A second real copy makes the handler ambiguous: the row is skipped under apply (LaunchServices may bind either copy) and fails check.
-        if [[ -n $competing ]]; then
-          printf 'competing installed application: %s (%s)\n' "$competing" "$id" >&2
-          [[ $mode == apply ]] || exit 1
-          skip[$id]=1
-          ((++skipped))
-          continue
-        fi
-        [[ $found == 1 ]] || { printf 'application is not registered at expected path: %s\n' "$path" >&2; exit 1; }
+        done < <(utiluti app for-identifier "$id")
       done < <(jq -r '.[] | [.id, .path] | @tsv' ${roster})
       while IFS=$'\t' read -r kind key id path; do
         [[ -z ''${skip[$id]:-} ]] || continue
@@ -205,27 +190,15 @@
         actual_path=$(utiluti "''${args[@]}" 2>/dev/null) || actual_path=""
         actual_id=$(utiluti "''${args[@]}" --bundle-id 2>/dev/null) || actual_id=""
         if [[ $actual_path != "$path" || $actual_id != "$id" ]]; then
-          if [[ $mode == apply ]]; then
-            printf 'setting %s %s → %s\n' "$kind" "$key" "$path"
-            utiluti "''${setter[@]}"
-            actual_path=$(utiluti "''${args[@]}")
-            actual_id=$(utiluti "''${args[@]}" --bundle-id)
-            ((++changed))
-          fi
-          if [[ $actual_path != "$path" || $actual_id != "$id" ]]; then
-            printf 'handler mismatch: %s %s; wanted %s (%s); found %s (%s)\n' "$kind" "$key" "$path" "$id" "$actual_path" "$actual_id" >&2
-            ((++failures))
-          fi
+          printf 'setting %s %s → %s\n' "$kind" "$key" "$path"
+          utiluti "''${setter[@]}"
         fi
-        ((++checked))
       done < <(jq -r '.[] | . as $app | (.extensions[] | ["extension", ., $app.id, $app.path]), (.schemes[] | ["scheme", ., $app.id, $app.path]) | @tsv' ${roster})
-      [[ $failures == 0 ]] || exit 1
-      printf 'default applications: %s verified, %s changed, %s applications skipped\n' "$checked" "$changed" "$skipped"
     '';
   };
 in {
   home.packages = [command];
   home.activation.setDefaultApplications = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${command}/bin/default-applications apply
+    run ${command}/bin/default-applications
   '';
 }

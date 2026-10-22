@@ -6,10 +6,8 @@
 # ----------------------------------------------------------------------------
 # Media tool inventory; imports carry real configuration only.
 {pkgs, ...}: {
-  # Yazi's documented dependency set (ffmpeg video thumbnails, poppler PDF, resvg SVG, ImageMagick raster, Chafa as the adapter of last resort
-  # inside the Zellij popup) resolves by bare name on PATH; the rows below are those tools.
   home.packages = [
-    pkgs.chafa # Yazi image adapter where no graphics protocol passes through; also the one terminal image/ASCII renderer
+    pkgs.chafa # Terminal image/ASCII renderer
     pkgs.exiftool # Metadata read/write across image, video, PDF, and font containers
     pkgs.ffmpeg-full # Every codec, filter, and hwaccel nixpkgs offers on this platform, whisper transcription included
     pkgs.ffmpeg-normalize # Two-pass EBU R128 loudnorm; the measure-then-apply JSON handoff is the one ffmpeg lane worth a wrapper
@@ -26,7 +24,7 @@
     pkgs.oxipng # Lossless PNG recompression for exported raster; no config or env surface
     pkgs.pandoc-current
     pkgs.poppler-utils-current # Current PDF utilities; app dependencies keep nixpkgs' compatible Poppler library.
-    pkgs.resvg # SVG rendering for Yazi preview and the mermaid validator
+    pkgs.resvg # SVG to PNG renderer
     pkgs.typst
     pkgs.vl-convert # Vega and Vega-Lite specs to SVG/PNG/JPEG/PDF; V8 is linked in, so no Node and no browser
     pkgs.verapdf-current # Complete official CLI; the overlay owns its private current Java runtime.

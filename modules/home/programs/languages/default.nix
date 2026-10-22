@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/default.nix
 # ----------------------------------------------------------------------------
-# Language toolchain aggregator; publishes the package-admission ledger at a stable XDG path for register browsers and receipt rails.
-{pkgs, ...}: {
+# Language toolchain aggregator.
+_: {
   imports = [
     # Shared tooling
     ./dev-tools.nix
@@ -13,12 +13,8 @@
     ./scientific-tools.nix
 
     # Languages
-    ./apple-tools.nix
     ./lua-tools.nix
     ./node-tools.nix
     ./rust-tools.nix
   ];
-
-  # Machine-readable projection of overlays/manifest.nix with live-resolved admission versions; consumers read rows here, never derivation source.
-  xdg.dataFile."estate/packages/manifest.json".source = "${pkgs.package-manifest}/share/estate/manifest.json";
 }

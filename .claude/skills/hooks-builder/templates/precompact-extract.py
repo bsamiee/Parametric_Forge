@@ -93,7 +93,7 @@ def _summarize(payload: PreCompact, records: list[Line], /) -> Summary:
         session_id=payload.session_id,
         trigger=payload.trigger,
         instructions=payload.custom_instructions,  # a manual /compact steer the reloader honors on resume
-        at=datetime.now(UTC).isoformat(),  # true UTC; a local strftime labeled Z mislabels the estate's ISO-8601 UTC ledger
+        at=datetime.now(UTC).isoformat(),  # true UTC; a local strftime labeled Z mislabels the ISO-8601 UTC ledger
         todo=next((r.todos for r in reversed(records) if r.todos), ""),
         recent_tools=tools[-KEEP_TOOLS:],
         files_touched=sorted({r.file_path for r in records if r.file_path}),

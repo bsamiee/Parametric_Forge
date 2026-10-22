@@ -2,7 +2,7 @@
 
 <unit-charter-sentence> <boundary-consequence-sentence>
 
-<!-- source-only: router rows — each under 150 columns, its charter phrase alone giving the target file's purpose: an owner or capability seated as subject with the owned concept and its one boundary or discriminant; rosters, counts, versions, and sibling narration never ride a row; a branch `.planning/` instance carries `[01]-[ROUTER]` and `[02]-[SUBSTRATE_PACKAGES]`, with `[03]-[API_CATALOGUE_LAW]` the sanctioned branch extension where cataloguing-tier law has no other owner. -->
+<!-- source-only: router rows — each under 150 columns, its charter phrase alone giving the target file's purpose: an owner or capability seated as subject with the owned concept and its one boundary or discriminant; rosters, counts, versions, and sibling narration never ride a row. -->
 
 ## [01]-[ROUTER]
 
@@ -20,7 +20,7 @@
 
 ## [02]-[DOMAIN_PACKAGES]
 
-Domain-specific libraries admitted by this folder; versions centralize in <central-manifest> and corroborate against this folder's `.api/`.
+Domain-specific libraries admitted by this folder; versions centralize in <central-manifest>.
 
 [PRIMARY]:
 - `<package>` — <owned-capability-phrase>
@@ -28,7 +28,7 @@ Domain-specific libraries admitted by this folder; versions centralize in <centr
 
 ## [03]-[SUBSTRATE_PACKAGES]
 
-Shared substrate consumed from the <language> registry; the registry and its charters own the full contracts, and `libs/<lang>/.api/` holds the shared API evidence.
+Shared substrate consumed from the <language> registry; the registry and its charters own the full contracts.
 
 [KERNEL]:
 - `<package>` — <owned-capability-phrase>

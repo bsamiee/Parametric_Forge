@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/ssh.nix
 # ----------------------------------------------------------------------------
-# SSH client configuration with one generic VPS projection from the host register.
+# SSH client configuration: the 1Password agent socket, the public half of the signing key, and OpenSSH client defaults.
 {
   config,
   host,
@@ -13,43 +13,15 @@
   ...
 }: let
   homeDir = config.home.homeDirectory;
-  identityAgent = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-  hostContext = import ../../../../hosts/context.nix;
-  inherit (hostContext) vps;
-  sshHosts = {
-    ${vps.name} = {
-      inherit (vps) name;
-      user = vps.user.name;
-      inherit (vps.ssh) hostName;
-      aliases = [vps.name];
-    };
-  };
-  knownHostsFile = pkgs.writeText "known-hosts" (lib.concatLines [
-    "${vps.ssh.hostName} ${vps.ssh.hostKey}"
-    "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
-  ]);
-  interactiveHosts = lib.mapAttrs' (_: remote:
-    lib.nameValuePair "${lib.concatStringsSep " " (remote.aliases ++ [remote.hostName])}" {
-      User = remote.user;
-      HostName = remote.hostName;
-      IdentitiesOnly = true;
-      ConnectTimeout = 10;
-    })
-  sshHosts;
+  knownHostsFile = pkgs.writeText "known-hosts" ''
+    github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+  '';
 in {
-  options.estate.ssh = {
-    hosts = lib.mkOption {
-      type = lib.types.raw;
-      readOnly = true;
-      default = sshHosts;
-      description = "SSH estate host rows for interactive, WezTerm, and Yazi SFTP clients.";
-    };
-    identityAgent = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = identityAgent;
-      description = "1Password agent socket every remote client pins.";
-    };
+  options.forge.ssh.identityAgent = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    default = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
+    description = "1Password agent socket every SSH client pins.";
   };
 
   config = {
@@ -58,27 +30,24 @@ in {
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      settings =
-        {
-          "github.com" = {
-            User = "git";
-            HostName = "github.com";
-            IdentitiesOnly = true;
-          };
-          "*" =
-            lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {IdentityAgent = "\"${identityAgent}\"";}
-            // {
-              ControlMaster = "auto";
-              ControlPath = "${homeDir}/.ssh/sockets/%C";
-              ControlPersist = "10m";
-              ServerAliveInterval = 60;
-              AddKeysToAgent = "yes";
-              HashKnownHosts = true;
-              UserKnownHostsFile = "${homeDir}/.ssh/known_hosts ${knownHostsFile}";
-              Compression = true;
-            };
-        }
-        // interactiveHosts;
+      settings = {
+        "github.com" = {
+          User = "git";
+          HostName = "github.com";
+          IdentitiesOnly = true;
+        };
+        "*" = {
+          IdentityAgent = "\"${config.forge.ssh.identityAgent}\"";
+          ControlMaster = "auto";
+          ControlPath = "${homeDir}/.ssh/sockets/%C";
+          ControlPersist = "10m";
+          ServerAliveInterval = 60;
+          AddKeysToAgent = "yes";
+          HashKnownHosts = true;
+          UserKnownHostsFile = "${homeDir}/.ssh/known_hosts ${knownHostsFile}";
+          Compression = true;
+        };
+      };
     };
   };
 }

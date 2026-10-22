@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Flake entrypoint.
 {
-  description = "Unified NixOS + nix-darwin + Home Manager";
+  description = "nix-darwin + Home Manager for the Mac";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -21,11 +21,6 @@
 
     nix-darwin = {
       url = "github:nix-darwin/nix-darwin";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    disko = {
-      url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -60,7 +55,7 @@
         ./flake-modules/tooling.nix
       ];
 
-      systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
+      systems = ["aarch64-darwin"];
 
       flake =
         {

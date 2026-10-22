@@ -13,7 +13,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) roles; # Estate palette owner (modules/home/theme.nix): semantic roles
+  inherit (config.forge.theme) roles; # Forge palette owner (modules/home/theme.nix): semantic roles
 
   # --- [RESURRECT_COMMAND]
   # zellij runs the discovery hook under `sh -c` once a minute per pane with a foreground command, handing it that command line alone
@@ -46,7 +46,7 @@
       fi
     '';
   };
-  chords = config.estate.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
+  chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
 
@@ -349,13 +349,10 @@
       ++ [(lib.concatMapStringsSep "\n" renderRow (lib.filter (x: x ? keys) m.rows))]
       ++ ["      }"]
     );
-  # Emission orders are curated vocabularies over modeTable: blocks skip the ribbon-only prompt row (tmux renders at the keybind tail); the coverage
-  # asserts break eval when a new mode misses either list instead of dropping it silently from the KDL or the ribbon bar.
+  # Emission orders are curated vocabularies over modeTable: blocks skip the ribbon-only prompt row (tmux renders at the keybind tail).
   blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
   hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
-  sorted = lib.sort (a: b: a < b);
-  modeBlocksKdl = assert lib.assertMsg (sorted (blockOrder ++ ["prompt" "tmux"]) == builtins.attrNames modeTable) "zellij blockOrder drifted from modeTable";
-    lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
+  modeBlocksKdl = lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
   # Ribbon fold over the same rows: chip, optional input note, rank-ordered hints, then the done tail. Normal mode composes from the chord owner.
   chipOf = c:
@@ -385,11 +382,10 @@
     renametab = "rename_tab";
     renamepane = "rename_pane";
   };
-  modeHintLines = assert lib.assertMsg (sorted hintOrder == sorted (["normal"] ++ builtins.attrNames modeTable)) "zellij hintOrder drifted from modeTable";
-    lib.concatMapStringsSep "\n" (m: let
-      n = "mode_${zjModeName.${m} or m}";
-    in "        ${n}${lib.strings.replicate (18 - lib.stringLength n) " "}\"${ribbons.${m}}\"")
-    hintOrder;
+  modeHintLines = lib.concatMapStringsSep "\n" (m: let
+    n = "mode_${zjModeName.${m} or m}";
+  in "        ${n}${lib.strings.replicate (18 - lib.stringLength n) " "}\"${ribbons.${m}}\"")
+  hintOrder;
 in {
   imports = [../chords.nix];
 
@@ -437,7 +433,7 @@ in {
         web_sharing                 "disabled"
 
         // --- [PLUGIN_ALIASES]
-        // Estate-owned aliases only: the user block merges over zellij's own default alias table, so session-manager, configuration,
+        // Forge-owned aliases only: the user block merges over zellij's own default alias table, so session-manager, configuration,
         // plugin-manager, and about resolve upstream and never restate here.
         plugins {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"

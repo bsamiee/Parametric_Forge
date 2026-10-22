@@ -4,10 +4,9 @@
 # License       : MIT
 # Path          : overlays/manifest.nix
 # ----------------------------------------------------------------------------
-# Package-admission policy registry: rows own provenance, version policy, generated pin references, license, patch family, cache class, update
-# engine, and projection for every non-nixpkgs package and every host-runtime extension family. overlays/default.nix folds
-# `packages` rows into derivations; flake-modules/packages.nix folds `projection.package/app` into public outputs; HM rosters consume
-# `admissions` rows via `rosterRows`. Pure data plus builtins-only accessors — no pkgs, no lib; validation runs in the overlay fold.
+# Package registry: rows own the generated pin reference, version, derivation metadata, and projection of every non-nixpkgs package, beside
+# the host-runtime extension rows. overlays/default.nix folds `packages` rows into derivations; flake-modules/packages.nix folds
+# `projection.package/app` into public outputs. Pure data plus builtins-only accessors — no pkgs, no lib.
 let
   generatedPins = builtins.fromJSON (builtins.readFile ./_sources/generated.json);
   # A tarball pin hashes the unpacked tree (nvfetcher prefetches with --unpack), so the overlay fetches it as an unpacked fixed-output source.
@@ -22,195 +21,70 @@ let
       then {fetch = "zip";}
       else {}
     );
-  pinFamily = pins: let
-    versions = map (pin: generatedPins.${pin}.version) (builtins.attrValues pins);
-    version = builtins.head versions;
-  in
-    assert builtins.all (candidate: candidate == version) versions; {
-      inherit version;
-      assets = builtins.mapAttrs (_: pinAsset) pins;
-    };
-  biomePins = pinFamily {
-    aarch64-darwin = "biome-aarch64-darwin";
-    aarch64-linux = "biome-aarch64-linux";
-    x86_64-linux = "biome-x86_64-linux";
-  };
-  misePins = pinFamily {
-    aarch64-darwin = "mise-aarch64-darwin";
-    aarch64-linux = "mise-aarch64-linux";
-    x86_64-linux = "mise-x86_64-linux";
-  };
-  vlConvertPins = pinFamily {
-    aarch64-darwin = "vl-convert-aarch64-darwin";
-    aarch64-linux = "vl-convert-aarch64-linux";
-    x86_64-linux = "vl-convert-x86_64-linux";
-  };
-  sqleanPins = pinFamily {
-    aarch64-darwin = "sqlean-aarch64-darwin";
-    aarch64-linux = "sqlean-aarch64-linux";
-    x86_64-linux = "sqlean-x86_64-linux";
-  };
-  pandocPins = pinFamily {
-    aarch64-darwin = "design-pandoc-aarch64-darwin";
-    aarch64-linux = "design-pandoc-aarch64-linux";
-    x86_64-linux = "design-pandoc-x86_64-linux";
-  };
-  # The Adoptium URL carries no file extension; fetchzip picks its unpacker by extension, so the asset names the archive format.
-  temurinPins = let
-    pins = pinFamily {
-      aarch64-darwin = "design-temurin-aarch64-darwin";
-      aarch64-linux = "design-temurin-aarch64-linux";
-      x86_64-linux = "design-temurin-x86_64-linux";
-    };
-  in
-    pins // {assets = builtins.mapAttrs (_: asset: asset // {extension = "tar.gz";}) pins.assets;};
-  # The Linux zips carry `op` beside its signature at the archive root, so the unpacked pin keeps that root.
-  onePasswordCliPins = let
-    pins = pinFamily {
-      aarch64-darwin = "1password-cli-aarch64-darwin";
-      aarch64-linux = "1password-cli-aarch64-linux";
-      x86_64-linux = "1password-cli-x86_64-linux";
-    };
-  in
-    pins
-    // {
-      assets = builtins.mapAttrs (_: asset:
-        asset
-        // (
-          if asset ? fetch
-          then {stripRoot = false;}
-          else {}
-        ))
-      pins.assets;
-    };
-  veraPdfPins = pinFamily {
-    aarch64-darwin = "design-verapdf-cli";
-    aarch64-linux = "design-verapdf-cli";
-    x86_64-linux = "design-verapdf-cli";
-  };
   # `versionFrom`: a regex whose first group is the version when the publisher's release tag is path-shaped; null when the tag is already bare.
-  designSource = name: versionFrom: license: homepage: description: consumers: overlayReason: let
+  designSource = name: versionFrom: let
     pin = "design-${name}";
-    release = generatedPins.${pin}.version;
-  in
-    {
-      upstream = homepage;
-      inherit license homepage description consumers;
-      sourcePackage = name;
-      sourcePin = pin;
-      version = let
-        matched =
-          builtins.match (
-            if versionFrom == null
-            then "(.*)"
-            else versionFrom
-          )
-          release;
-      in
-        if matched == null
-        then null
-        else builtins.head matched;
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      patchFamily = "source-substitute";
-      cacheClass = "source-built-local";
-      updateEngine = "nvfetcher";
-      projection.overlay =
-        if overlayReason == null
-        then "new"
-        else "override";
-    }
-    // (
-      if overlayReason == null
-      then {}
-      else {inherit overlayReason;}
-    );
-  v = {
-    openstudio = "3.11.0";
-    energyplus = "26.1.0";
-    osBuild = "241b8abb4d";
-    epBuild = "6f2e40d102";
+  in {
+    sourcePackage = name;
+    sourcePin = pin;
+    version = builtins.head (builtins.match (
+        if versionFrom == null
+        then "(.*)"
+        else versionFrom
+      )
+      generatedPins.${pin}.version);
   };
-in rec {
-  vocabulary = {
-    sourceKinds = ["source-build" "binary-archive" "github-release" "nixpkgs" "repo"];
-    patchFamilies = ["none" "auto-patchelf" "source-substitute"];
-    cacheClasses = ["source-built-local" "binary-only-local"];
-    updateEngines = ["nvfetcher" "manual" "nixpkgs-follows"];
-    versionPolicies = ["fast" "slow-scientific" "nixpkgs" "repo-owned"];
-    overlayModes = ["new" "override"]; # projection.overlay values; package/app/default are boolean projection fields
-    installModes = ["hm-roster" "ca1" "landed"]; # roster-installed | CA-1 owns installation/projection | owned by a config module
-    rosters = ["data" "git" "monitors" "proof" "picker"];
-    completionKinds = ["native" "landed" "none"]; # tool/package provides | owner config module wires | no completion surface
-    themeCarriers = ["ansi" "env" "none" "tape" "toml"]; # how the admission consumes the estate palette
-    rowStates = ["current" "unsupported_platform"]; # ledger `resolved.state` values; a build-time drift is a failed build, never a ledger row
+  # EnergyPlus and OpenStudio asset names carry a build hash, so each pin's release tag is `v<version>/<asset>` and the bare version is the
+  # tag's; the wrapper names below carry it.
+  v = builtins.mapAttrs (_: pin: builtins.head (builtins.match "v([0-9.]+)/.*" generatedPins.${pin}.version)) {
+    openstudio = "openstudio-aarch64-darwin";
+    energyplus = "energyplus-aarch64-darwin";
   };
-
-  # Overlay/package rows. `projection.overlay = "override"` requires `overlayReason` — overlay mutation transitively overrides consumer
-  # dependencies and re-keys fixed-output hashes; "new" attrs are inert.
+in {
+  # A row named after a nixpkgs attr overrides it and re-keys every package above it off the binary cache; a `-current` row is a new attr
+  # beside nixpkgs', which only its own consumers read.
   packages = {
     # Vega's own headless renderer: V8 and the Vega/Vega-Lite JS are linked into one executable, so the chart-export role carries no Node
     # source build and no browser. nixpkgs ships python3Packages.vl-convert-python only, never the CLI, so the attr is new.
     vl-convert = {
-      upstream = "github:vega/vl-convert";
-      inherit (vlConvertPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
+      version = generatedPins.vl-convert-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "vl-convert-aarch64-darwin";
       license = "bsd3";
-      patchFamily = "auto-patchelf";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["media-tools"];
       description = "Vega and Vega-Lite spec export to SVG, PNG, JPEG, and PDF";
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
     # New attrs beside nixpkgs' imagemagick and qpdf: an override re-keys vips, yazi, fastfetch, pikepdf, and every package above them off the cache.
-    imagemagick-current = designSource "imagemagick" null "asl20" "https://imagemagick.org/" "ICC-aware raster processing with Q16-HDRI" ["media-tools" "media-environment"] null;
-    fontconfig = designSource "fontconfig" null "bsd2" "https://fontconfig.org/" "Shared font discovery for native renderers" ["scientific-tools" "media-environment"] "Fontconfig, ImageMagick, Pango and PDF renderers must consume the same current font-discovery engine and configuration";
-    geist-font = designSource "geist-font" null "ofl" "https://github.com/vercel/geist-font" "Current Geist and Geist Mono desktop font programs" ["fonts-catalog" "font-manifest"] "the native font projection and every typography consumer must use the current official release with corrected Mono ligature behavior";
-    scheherazade-new = designSource "scheherazade-new" null "ofl" "https://software.sil.org/scheherazade/" "Current Scheherazade New Arabic-script text font programs" ["fonts-catalog" "font-manifest"] "the script fallback chain and the design apps must render the current SIL release, which nixpkgs lags";
+    imagemagick-current = designSource "imagemagick" null;
+    # The font projection and every typography consumer render the current Geist release, whose Mono ligatures nixpkgs' copy lacks.
+    geist-font = designSource "geist-font" null;
+    # The script fallback chain and the design apps render the current SIL release, which nixpkgs lags.
+    scheherazade-new = designSource "scheherazade-new" null;
     # A new attr beside nixpkgs' harfbuzz: an override re-keys pango, libass, libraqm, and every package above them off the binary cache.
-    harfbuzz-current = designSource "harfbuzz" null "mit" "https://harfbuzz.github.io/" "OpenType shaping and font subsetting" ["media-tools" "font-manifest" "poppler-utils-current"] null;
+    harfbuzz-current = designSource "harfbuzz" null;
     poppler-utils-current =
-      (designSource "poppler" null "gpl2Plus" "https://poppler.freedesktop.org/" "Current PDF inspection, extraction and rasterization utilities" ["media-tools"] null)
+      designSource "poppler" null
       // {
         sourcePackage = "poppler-utils";
         testDataPin = "design-poppler-test-data";
       };
-    mupdf = designSource "mupdf" null "agpl3Plus" "https://mupdf.com/" "PDF document inspection and rendering engine" ["scientific-tools"] "the command-line and scientific PDF consumers share the current document engine";
-    qpdf-current = designSource "qpdf" null "asl20" "https://qpdf.sourceforge.io/" "Lossless structural PDF transformations" ["scientific-tools"] null;
-    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz" "agpl3Plus" "https://ghostscript.com/" "PostScript and PDF interpreter" ["scientific-tools"] "the selected PostScript and PDF conversion workflows require the current interpreter";
+    mupdf = designSource "mupdf" null;
+    qpdf-current = designSource "qpdf" null;
+    ghostscript = designSource "ghostscript" "gs[0-9]+/ghostscript-(.*)\\.tar\\.xz";
 
     utiluti = {
-      upstream = "github:scriptingosx/utiluti";
       version = generatedPins.design-utiluti.version;
       assets.aarch64-darwin = pinAsset "design-utiluti";
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
       license = "asl20";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["mac-tools"];
       description = "Native macOS file and URL application associations";
       homepage = "https://github.com/scriptingosx/utiluti";
       mainProgram = "utiluti";
     };
 
     pandoc-current = {
-      upstream = "github:jgm/pandoc";
-      inherit (pandocPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
+      version = generatedPins.design-pandoc-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "design-pandoc-aarch64-darwin";
       license = "gpl2Plus";
-      patchFamily = "auto-patchelf";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["media-tools"];
       description = "Universal document converter";
       homepage = "https://pandoc.org/";
       mainProgram = "pandoc";
@@ -218,169 +92,69 @@ in rec {
 
     # A new attr beside nixpkgs' _1password-cli, which trails the 1Password release line; its one consumer reads it, so nothing else re-keys.
     _1password-cli-current = {
-      upstream = "https://app-updates.agilebits.com/product_history/CLI2";
-      inherit (onePasswordCliPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
+      version = generatedPins."1password-cli-aarch64-darwin".version;
+      assets.aarch64-darwin = pinAsset "1password-cli-aarch64-darwin";
       license = "unfree";
-      patchFamily = "auto-patchelf";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["shell-tools:1password"];
       description = "1Password command-line tool";
       homepage = "https://developer.1password.com/docs/cli/";
       mainProgram = "op";
     };
 
     verapdf-current = {
-      upstream = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/";
-      inherit (veraPdfPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
+      version = generatedPins.design-verapdf-cli.version;
+      assets.aarch64-darwin = pinAsset "design-verapdf-cli";
       license = "mpl20"; # The unmodified upstream JAR retains the alternative GPLv3+ license and third-party notices.
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["media-tools"];
       description = "Current veraPDF conformance inspection with a private Java runtime";
       homepage = "https://verapdf.org/";
       mainProgram = "verapdf";
     };
 
-    temurin-jre-current = {
-      upstream = "github:adoptium/temurin26-binaries";
-      version = builtins.substring 4 (builtins.stringLength temurinPins.version) temurinPins.version;
-      inherit (temurinPins) assets;
-      versionPolicy = "fast";
-      sourceKind = "binary-archive";
+    temurin-jre-current = let
+      release = generatedPins.design-temurin-aarch64-darwin.version;
+    in {
+      version = builtins.substring 4 (builtins.stringLength release) release;
+      # The Adoptium URL carries no file extension; fetchzip picks its unpacker by extension, so the asset names the archive format.
+      assets.aarch64-darwin = pinAsset "design-temurin-aarch64-darwin" // {extension = "tar.gz";};
       license = "gpl2Only"; # OpenJDK also grants the Classpath exception; its original legal files ship with the runtime.
-      patchFamily = "auto-patchelf";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["media-tools:verapdf-current"];
       description = "Private current Temurin Java runtime for veraPDF";
       homepage = "https://adoptium.net/";
       mainProgram = "java";
     };
 
+    # nixpkgs source-builds biome behind the upstream release line; the override routes the treefmt row through the official release binary.
     biome = {
-      upstream = "github:biomejs/biome";
-      inherit (biomePins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
-      # Linux rows pin the musl static builds: they run on NixOS with no interpreter or patchelf dependency; glibc assets would need auto-patchelf.
+      version = generatedPins.biome-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "biome-aarch64-darwin";
       license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "override";
-      overlayReason = "nixpkgs source-builds biome behind the upstream release line; the attr override routes the treefmt row (flake-modules/tooling.nix) through the official release binary";
-      consumers = ["treefmt"];
       description = "Biome formatter, linter, and LSP for the web toolchain";
       homepage = "https://biomejs.dev/";
       mainProgram = "biome";
     };
 
+    # nixpkgs source-builds mise behind the upstream release line; the override routes programs.mise and the zsh activation line through the
+    # official release binary.
     mise = {
-      upstream = "github:jdx/mise";
-      inherit (misePins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
-      # Linux rows pin the musl static builds: no interpreter, no patchelf lane.
+      version = generatedPins.mise-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "mise-aarch64-darwin";
       license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "override";
-      overlayReason = "nixpkgs source-builds mise behind the upstream release line; the attr override routes programs.mise and the zsh activation line through the official release binary";
-      consumers = ["shell-tools:mise" "zsh:init" "toolchain-env"];
       description = "mise runtime manager: per-project toolchains, env, and tasks";
       homepage = "https://mise.jdx.dev/";
       mainProgram = "mise";
     };
 
-    # The nixpkgs recipe over the newest upstream milestone: a milestone archive carries a build timestamp only its latest.txt knows, so the pin's
-    # release tag is path-shaped (`<milestone>/<archive>`) and `version` extracts the bare milestone. The recipe unpacks a prebuilt Equinox bundle,
-    # so the source-build lane carries binary bytecode.
-    jdt-language-server = let
-      release = generatedPins.jdt-language-server.version;
-    in {
-      upstream = "https://download.eclipse.org/jdtls/milestones/";
-      sourcePackage = "jdt-language-server";
-      sourcePin = "jdt-language-server";
-      version = builtins.head (builtins.match "([0-9.]+)/.*" release);
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      license = "epl20";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "override";
-      overlayReason = "nixpkgs carries the previous jdtls milestone; the attr override routes the dev-tools row and the jdtls server rows in apps/nvim through the newest release";
-      consumers = ["dev-tools" "nvim:jdtls"];
-      description = "Eclipse JDT Language Server for Java";
-      homepage = "https://github.com/eclipse-jdtls/eclipse.jdt.ls";
-      mainProgram = "jdtls";
-    };
-
-    # The nixpkgs recipe over librdkafka's newest tag, release candidates included: a candidate tag carries its release's RD_KAFKA_VERSION, the
-    # value confluent-kafka's sdist compares against its minimum at compile time. The tag is the fetch rev, so `version` drops its `v`. A new attr
-    # beside nixpkgs' rdkafka, so ffmpeg and every package above it keep their cached builds.
-    rdkafka-current = {
-      upstream = "github:confluentinc/librdkafka";
-      sourcePackage = "rdkafka";
-      sourcePin = "rdkafka";
-      version = builtins.head (builtins.match "v(.*)" generatedPins.rdkafka.version);
-      versionPolicy = "fast";
-      sourceKind = "source-build";
-      license = "bsd2";
-      patchFamily = "source-substitute";
-      cacheClass = "source-built-local";
-      updateEngine = "nvfetcher";
-      projection.overlay = "new";
-      consumers = ["toolchain-env"];
-      description = "Apache Kafka C client library";
-      homepage = "https://github.com/confluentinc/librdkafka";
-    };
-
     sqlean = {
-      upstream = "github:nalgeon/sqlean";
-      inherit (sqleanPins) version assets;
-      versionPolicy = "fast";
-      sourceKind = "github-release";
+      version = generatedPins.sqlean-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "sqlean-aarch64-darwin";
       license = "mit";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "nvfetcher";
-      projection = {
-        overlay = "new";
-        package = true; # package-only: extension library set consumed by sqlite-extended
-      };
-      consumers = ["sqlite-extended" "db-tools"];
+      projection.package = true; # package-only: extension library set consumed by sqlite-extended
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
     };
 
     openstudio = {
-      upstream = "github:NatLabRockies/OpenStudio";
       version = v.openstudio;
-      build = v.osBuild;
-      versionPolicy = "slow-scientific";
-      sourceKind = "github-release";
-      # Unpacked fixed-output source: the hash covers the extracted tree, so a stdenv or nixpkgs move never re-extracts the archive.
-      assets.aarch64-darwin = {
-        url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v${v.openstudio}/OpenStudio-${v.openstudio}%2B${v.osBuild}-Darwin-arm64.tar.gz";
-        hash = "sha256-ahbG8fvp/4R4M03VCKGD6TWVyl2L21wre/KdaOK4sqo=";
-        fetch = "zip";
-      };
+      assets.aarch64-darwin = pinAsset "openstudio-aarch64-darwin";
       license = "bsd3";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      projection.overlay = "new";
       # Opt-runtime spec: the shared overlay recipe folds these layout, env, and wrapper facts into the derivation; a next platform
       # runtime is one row, never a new kernel file.
       runtime = {
@@ -397,28 +171,15 @@ in rec {
           openstudio-install-utility = "bin/install_utility";
         };
       };
-      consumers = ["scientific-tools"];
       description = "OpenStudio SDK and CLI for whole-building energy modeling";
       homepage = "https://openstudio.net";
       mainProgram = "openstudio";
     };
 
     energyplus = {
-      upstream = "github:NatLabRockies/EnergyPlus";
       version = v.energyplus;
-      build = v.epBuild;
-      versionPolicy = "slow-scientific";
-      sourceKind = "github-release";
-      assets.aarch64-darwin = {
-        url = "https://github.com/NatLabRockies/EnergyPlus/releases/download/v${v.energyplus}/EnergyPlus-${v.energyplus}-${v.epBuild}-Darwin-macOS13-arm64.tar.gz";
-        hash = "sha256-GFHty0SjelIfgpzgXS6Tg6l4bE+NO/dLCFPonFEaqjE=";
-        fetch = "zip";
-      };
+      assets.aarch64-darwin = pinAsset "energyplus-aarch64-darwin";
       license = "bsd3";
-      patchFamily = "none";
-      cacheClass = "binary-only-local";
-      updateEngine = "manual";
-      projection.overlay = "new";
       runtime = {
         root = "opt/energyplus";
         shebangDirs = ["."];
@@ -439,22 +200,13 @@ in rec {
           "ConvertInputFormat-${v.energyplus}" = "ConvertInputFormat";
         };
       };
-      consumers = ["scientific-tools"];
       description = "Whole building energy simulation runtime";
       homepage = "https://energyplus.net";
       mainProgram = "energyplus";
     };
 
     sqlite-extended = {
-      upstream = "repo:overlays";
-      versionPolicy = "repo-owned";
-      sourceKind = "repo";
-      license = "mit";
-      patchFamily = "none";
-      cacheClass = "source-built-local";
-      updateEngine = "manual";
       projection = {
-        overlay = "new";
         package = true;
         app = true;
       };
@@ -467,110 +219,13 @@ in rec {
           fileio = ["fileio"];
         };
       };
-      consumers = ["db-tools"];
-      description = "SQLite shell kernel preloading the SQLean module profiles";
-      homepage = "https://github.com/bardiasamiee/Parametric_Forge";
-      mainProgram = "sqlite-extended";
     };
   };
 
-  # CLI tool admissions (ADMISSION_IS_A_ROW): nixpkgs-sourced tools whose pin follows the flake input — rows carry no frozen version copy; the JSON
-  # projection resolves the live version from the package set at build time. `chords` are candidate DATA for the CA-1 register; projection is CA-1's.
-  # `install`: hm-roster (a roster group below consumes it) | ca1 (CA-1 owns installation and projection) | landed (already owned by a config module).
-  admissions = {
-    xan = {
-      attr = "xan";
-      roster = "data";
-      install = "hm-roster";
-      capability = "CSV lane: SIMD parser, expression language, frequency/plot tooling; routing: CSV -> xan, relational/Parquet -> DuckDB";
-      updateEngine = "nixpkgs-follows";
-      completion = "native";
-      completionArgs = ["completions" "zsh"]; # package ships no file; the shell-tools roster materializes `_xan` from this argv
-      themeCarrier = "ansi";
-      proof = "xan --version";
-      chords = ["inspect" "sample" "aggregate" "join"];
-    };
-    mergiraf = {
-      attr = "mergiraf";
-      roster = "git";
-      install = "hm-roster";
-      capability = "structural merge driver; registered in git config, inert until a repo opts in via gitattributes `merge=mergiraf`";
-      updateEngine = "nixpkgs-follows";
-      completion = "none";
-      themeCarrier = "none";
-      proof = "mergiraf --version";
-      chords = ["semantic-merge" "conflict-resolve"];
-    };
-    git-cliff = {
-      attr = "git-cliff";
-      roster = "git";
-      install = "hm-roster";
-      capability = "template-driven changelog from conventional commits; config under the repo owner";
-      updateEngine = "nixpkgs-follows";
-      completion = "native";
-      themeCarrier = "none";
-      proof = "git-cliff --version";
-      chords = ["changelog"];
-    };
-    viddy = {
-      attr = "viddy";
-      roster = "monitors";
-      install = "hm-roster";
-      capability = "watch-with-memory: history, diff highlight, pager, search; CA-5 floating-pane monitor rows consume it — never prompt/status hot paths";
-      updateEngine = "nixpkgs-follows";
-      completion = "none";
-      themeCarrier = "ansi";
-      proof = "viddy --version";
-      chords = ["monitor"];
-    };
-    presenterm = {
-      attr = "presenterm";
-      roster = "proof";
-      install = "hm-roster";
-      capability = "Markdown terminal slides; rides the CA-12 terminal-native proof lane; theme projection + media closure policy land there";
-      updateEngine = "nixpkgs-follows";
-      completion = "none";
-      themeCarrier = "toml";
-      proof = "presenterm --version";
-      chords = ["present"];
-    };
-    vhs = {
-      attr = "vhs";
-      roster = "proof";
-      install = "hm-roster";
-      capability = "terminal demos as .tape source -> GIF/video/frames; prompt/theme/font/pane geometry are frozen build inputs (CA-12 proof lane)";
-      updateEngine = "nixpkgs-follows";
-      completion = "native";
-      themeCarrier = "tape";
-      proof = "vhs --version";
-      chords = ["record" "render"];
-    };
-    fzf = {
-      attr = "fzf";
-      roster = "picker";
-      install = "landed"; # shell-tools/fzf.nix owns installation and theme
-      capability = "disposable one-shot browse/act; watch-class browsers stay on fzf via timer-driven reload binds";
-      capabilityFloor = "0.73"; # `every(N)` reload binds; --listen sockets stay unvalidated (CA-1 socket security row)
-      updateEngine = "nixpkgs-follows";
-      completion = "landed";
-      themeCarrier = "env";
-      proof = "fzf --version";
-      chords = [];
-    };
-  };
-
-  # One roster fold serves every HM consumer: rows for one roster group whose installation this manifest owns; consumers map their package set over it.
-  rosterRows = roster:
-    builtins.filter (row: row.install == "hm-roster" && row.roster == roster)
-    (builtins.attrValues admissions);
-
-  # Host-runtime extension registries: package-like assets consumed by a host. One family, per-lane sources; CA-4/5/6/7 admit plugin rows here, each
-  # carrying the security fields named in the vocabulary. `requiredFields` is the lane's admission contract: the ledger fold rejects any row missing
-  # one, so an under-specified admission fails the build, never lands silent.
+  # Host-runtime extension registries: package-like assets consumed by a host. One family, per-lane sources; each host module reads its lane's rows.
   extensions = {
     wezterm-plugins = {
-      source = "fetchFromGitHub"; # file:// store-path loads only (CA-4 consumes)
-      requiredFields = ["license" "permissions"];
+      source = "fetchFromGitHub"; # file:// store-path loads only
       rows = {
         sync-panes = {
           owner = "annie444";
@@ -595,12 +250,10 @@ in rec {
       };
     };
     zellij-plugins = {
-      source = "fetchurl"; # one release wasm per row, hash-pinned into ~/.config/zellij/plugins; `permissions` seeds the grant cache (CA-7 consumes)
-      requiredFields = ["url" "hash" "license" "permissions"];
+      source = "fetchurl"; # one release wasm per row, hash-pinned into ~/.config/zellij/plugins; `permissions` seeds the grant cache
       rows = {
         zjstatus = {
-          url = "https://github.com/dj95/zjstatus/releases/download/v0.23.0/zjstatus.wasm";
-          hash = "sha256-4AaQEiNSQjnbYYAh5MxdF/gtxL+uVDKJW6QfA/E4Yf8=";
+          inherit (pinAsset "zjstatus") url hash;
           license = "MIT";
           permissions = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
         };
@@ -613,10 +266,9 @@ in rec {
       };
     };
     yazi-plugins = {
-      # kebab-case <name>.yazi dirs with main.lua entrypoints (CA-5 consumes): a row with `attr` resolves in nixpkgs yaziPlugins, a row with
+      # kebab-case <name>.yazi dirs with main.lua entrypoints: a row with `attr` resolves in nixpkgs yaziPlugins, a row with
       # owner/repo/rev/hash pins an upstream tree nixpkgs omits.
       source = "nixpkgs:yaziPlugins | fetchFromGitHub";
-      requiredFields = ["license"];
       rows = {
         augment-command = {
           owner = "hankertrix";
@@ -668,8 +320,7 @@ in rec {
       };
     };
     nvim-plugins = {
-      source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable (CA-6 consumes)
-      requiredFields = ["attr" "license"];
+      source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable
       rows = {
         dracula-vim = {
           attr = "dracula-vim";
@@ -697,13 +348,9 @@ in rec {
         };
         # hmts-nvim stays unadmitted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
         # files; re-admits only on an upstream compatibility release.
-        conform-nvim = {
-          attr = "conform-nvim";
-          license = "MIT"; # formatter orchestration over Forge-owned binaries
-        };
         nvim-lint = {
           attr = "nvim-lint";
-          license = "GPL-3.0-only"; # non-LSP diagnostic lane (deadnix/statix/shellcheck/ruff/yamllint/actionlint/zizmor/hadolint/typos)
+          license = "GPL-3.0-only"; # non-LSP diagnostic lane (deadnix/statix/shellcheck/hadolint/typos)
         };
         grug-far-nvim = {
           attr = "grug-far-nvim";

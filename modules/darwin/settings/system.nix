@@ -4,16 +4,25 @@
 # License       : MIT
 # Path          : modules/darwin/settings/system.nix
 # ----------------------------------------------------------------------------
-# Root-scope system defaults (loginwindow, Software Update); user-scope defaults live in the home scope under estate.userDefaults, which
-# imports each domain only when it changes, and the GUI launchd environment replays from the home scope (environments/shell.nix).
+# Root-scope system defaults (loginwindow, Software Update) and the launchd user PATH; user-scope defaults live in the home scope under
+# forge.userDefaults, which imports each domain only when it changes, and the rest of the GUI launchd environment replays from the home
+# scope (environments/shell.nix).
 {
   config,
   lib,
+  toolchainEnvFor,
   ...
 }: let
   inherit (config.system) primaryUser;
-  # System scope has no config.xdg; this binding carries the literal the home scope derives (modules/home/xdg.nix, xdg.enable).
-  dataHome = "${config.users.users.${primaryUser}.home}/.local/share";
+  userHome = config.home-manager.users.${primaryUser};
+  launchdPath =
+    lib.concatStringsSep ":"
+    (toolchainEnvFor {
+      home = userHome.home.homeDirectory;
+      username = primaryUser;
+      xdgCacheHome = userHome.xdg.cacheHome;
+      xdgDataHome = userHome.xdg.dataHome;
+    }).launchdPathEntries;
 in {
   system.defaults = {
     # --- [LOGIN_WINDOW]
@@ -49,6 +58,13 @@ in {
   # use-xdg-base-directories (modules/common/nix.nix) moves under $XDG_STATE_HOME/nix and useUserPackages leaves empty — a dead PATH segment.
   environment.profiles = lib.mkForce ["/etc/profiles/per-user/$USER" "/run/current-system/sw" "/nix/var/nix/profiles/default"];
 
+  # --- [LAUNCHD_USER_PATH]
+  # launchd hands every user-domain process (Dock and Finder launches, launchd agents) the PATH `launchctl config user path` stores, read once
+  # at boot, so a changed vector takes effect after the next reboot; `launchctl setenv PATH` never reaches them. The write is idempotent.
+  system.activationScripts.postActivation.text = ''
+    /bin/launchctl config user path ${lib.escapeShellArg launchdPath} >/dev/null
+  '';
+
   # --- [SHELL_RESOURCES]
   # Concurrent Codex startup exceeds the inherited 256-file soft limit; new zsh children inherit this capacity without changing the hard limit
   programs.zsh.shellInit = ''
@@ -66,5 +82,5 @@ in {
 
   # Install root the .NET host and VS Code's .NET Install Tool read when a mise shim finds no version from their working directory: the
   # shared root every mise SDK installs into (home/programs/shell-tools/mise.nix), each repository's global.json still selecting the SDK
-  environment.etc."dotnet/install_location_arm64".text = "${dataHome}/mise/dotnet-root\n";
+  environment.etc."dotnet/install_location_arm64".text = "${userHome.programs.mise.globalConfig.settings.dotnet.dotnet_root}\n";
 }

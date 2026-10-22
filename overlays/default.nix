@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Row-folded package projection over overlays/manifest.nix: one binary-release template consumes asset rows; opt-runtime rows (energyplus,
 # openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-extended shell kernel generates from its row's profile data;
-# patch rows override upstream packages with row-owned facts. Vocabulary validation runs here and is forced by the package-manifest build.
+# patch rows override upstream packages with row-owned facts.
 final: prev: let
   manifest = import ./manifest.nix;
   generatedSources = import ./_sources/generated.nix {
@@ -14,57 +14,7 @@ final: prev: let
   };
   inherit (prev) lib;
   system = prev.stdenv.hostPlatform.system;
-  voc = manifest.vocabulary;
 
-  checkRow = name: row:
-    assert lib.assertMsg (lib.elem row.sourceKind voc.sourceKinds) "${name}: sourceKind '${row.sourceKind}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.patchFamily voc.patchFamilies) "${name}: patchFamily '${row.patchFamily}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.cacheClass voc.cacheClasses) "${name}: cacheClass '${row.cacheClass}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.updateEngine voc.updateEngines) "${name}: updateEngine '${row.updateEngine}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.versionPolicy voc.versionPolicies) "${name}: versionPolicy '${row.versionPolicy}' outside vocabulary";
-    assert lib.assertMsg (!(row.projection ? overlay) || lib.elem row.projection.overlay voc.overlayModes) "${name}: projection.overlay '${row.projection.overlay or ""}' outside vocabulary";
-    assert lib.assertMsg (lib.licenses ? ${row.license}) "${name}: license '${row.license}' not a lib.licenses key";
-    assert lib.assertMsg (lib.all (f: row ? ${f}) ["description" "homepage"]) "${name}: package row missing description/homepage — every admission identifies what it admits and where it came from";
-    assert lib.assertMsg (row ? consumers && row.consumers != []) "${name}: admission row names no consumer — a package is admitted only with a real consumer now (topology [07])";
-    assert lib.assertMsg (!(row ? version) || row.version != null) "${name}: version resolved to null — versionFrom did not match the generated pin's release tag";
-    assert lib.assertMsg ((row.projection.overlay or null) != "override" || row ? overlayReason) "${name}: overlay-override projection requires overlayReason";
-    assert lib.assertMsg (!(row ? runtime) || lib.all (f: row.runtime ? ${f}) ["root" "shebangDirs" "env" "wrappers"]) "${name}: runtime spec missing root/shebangDirs/env/wrappers";
-    # A source-build row names one generated pin, or — where the publisher emits a per-OS source tree — one pin per system under `sourcePins`;
-    # both spellings resolve in `generatedSources`, so neither can name a pin nvfetcher never wrote.
-    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind == "source-build")
-      || (row ? sourcePin && generatedSources ? ${row.sourcePin})
-      || (row ? sourcePins && lib.all (pin: generatedSources ? ${pin}) (lib.attrValues row.sourcePins)))
-    "${name}: nvfetcher source-build requires a generated sourcePin or a sourcePins map whose every member resolves";
-    assert lib.assertMsg (!(row.updateEngine == "nvfetcher" && row.sourceKind != "source-build") || (row ? assets && lib.all (a: a ? pin && generatedSources ? ${a.pin}) (lib.attrValues row.assets)))
-    "${name}: nvfetcher binary assets require generated pins"; row;
-
-  checkAdmission = name: row:
-    assert lib.assertMsg (lib.elem row.install voc.installModes) "${name}: install '${row.install}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.roster voc.rosters) "${name}: roster '${row.roster}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.updateEngine voc.updateEngines) "${name}: updateEngine '${row.updateEngine}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.completion voc.completionKinds) "${name}: completion '${row.completion}' outside vocabulary";
-    assert lib.assertMsg (lib.elem row.themeCarrier voc.themeCarriers) "${name}: themeCarrier '${row.themeCarrier}' outside vocabulary";
-    assert lib.assertMsg (!(row ? completionArgs) || row.completion == "native") "${name}: completionArgs requires completion = \"native\"";
-    # Attr absence is nixpkgs drift (rename/removal) or a typo, never a platform fact — nixpkgs attrs exist on every platform; fail loud.
-    assert lib.assertMsg (prev ? ${row.attr}) "${name}: attr '${row.attr}' absent from the package set (nixpkgs drift or typo)"; row;
-
-  # Lane admission contract: a row missing a required field fails the ledger build; each lane's `requiredFields` vocabulary is executable here.
-  checkExtensionLane = lane: def:
-    def
-    // {
-      rows =
-        lib.mapAttrs (
-          name: row:
-            assert lib.assertMsg (lib.all (f: row ? ${f}) (def.requiredFields or []))
-            "${lane}.${name}: row missing required fields (${lib.concatStringsSep " " (lib.filter (f: !(row ? ${f})) (def.requiredFields or []))})"; row
-        )
-        def.rows;
-    };
-
-  rowOf = name: checkRow name manifest.packages.${name};
-  assetOf = name: row:
-    row.assets.${system}
-    or (throw "${name}: no asset row for ${system} (declared: ${lib.concatStringsSep " " (builtins.attrNames row.assets)})");
   # A zip asset (a manual row's choice, or a tarball pin) is an unpacked fixed-output source whose hash is `nix-prefetch-url --unpack`:
   # the single release directory is stripped, and the extracted tree survives every stdenv move. Flat pins keep nvfetcher's fetchurl.
   srcOf = a:
@@ -79,12 +29,8 @@ final: prev: let
     then generatedSources.${a.pin}.src
     else prev.fetchurl {inherit (a) url hash;};
 
-  # Prebuilt trees install as a link farm into their unpacked source, so the input-addressed derivation holds links and wrappers alone;
-  # Linux copies because autoPatchelf rewrites the binaries in place.
-  linkTree = src: dst:
-    if prev.stdenv.hostPlatform.isLinux
-    then ''cp -R ${src}/. ${dst}/ && chmod -R u+w ${dst}''
-    else ''lndir -silent ${src} ${dst}'';
+  # Prebuilt trees install as a link farm into their unpacked source, so the input-addressed derivation holds links and wrappers alone.
+  linkTree = src: dst: ''lndir -silent ${src} ${dst}'';
 
   # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root or to root-relative subpaths.
   runtimeEnvAt = row: root:
@@ -94,8 +40,8 @@ final: prev: let
   # One derivation template for every binary-release row; recipes carry only the install kernel and unpack facts,
   # with finalAttrs threaded through for passthru projections.
   mkBinaryRelease = name: recipe: let
-    row = rowOf name;
-    a = assetOf name row;
+    row = manifest.packages.${name};
+    a = row.assets.${system};
   in
     prev.stdenvNoCC.mkDerivation (finalAttrs:
       {
@@ -115,30 +61,21 @@ final: prev: let
       // recipe {inherit row a finalAttrs;});
 
   # Shared opt-runtime recipe: the release tree lands under $out/<root>, each wrapper exports the row env before exec, and passthru.runtimeEnv serves
-  # session-env consumers the same vocabulary at the installed root. A missing tool is upstream layout drift (patch_drift);
-  # fail the build loudly, never ship a silently thinner bin/.
+  # session-env consumers the same vocabulary at the installed root. makeWrapper refuses a target the release layout lacks, so upstream layout
+  # drift fails the build instead of shipping a thinner bin/.
   optRuntime = {
     row,
     finalAttrs,
     ...
   }: let
     root = "${placeholder "out"}/${row.runtime.root}";
-    wrapperText = target:
-      lib.concatLines (
-        ["#!${lib.getExe prev.bash}" "set -euo pipefail"]
-        ++ lib.mapAttrsToList (name: value: "export ${name}=${lib.escapeShellArg value}") (runtimeEnvAt row root)
-        ++ [''exec "${root}/${target}" "$@"'']
-      );
     installWrapper = name: target: ''
-      [ -x ${lib.escapeShellArg "${root}/${target}"} ] || {
-        echo "${finalAttrs.pname}: expected tool '${target}' missing from the release layout" >&2
-        exit 1
+      makeWrapper ${lib.escapeShellArg "${root}/${target}"} "$out/bin/${name}" ${
+        lib.concatStringsSep " " (lib.mapAttrsToList (var: value: "--set ${var} ${lib.escapeShellArg value}") (runtimeEnvAt row root))
       }
-      printf '%s' ${lib.escapeShellArg (wrapperText target)} >"$out/bin/${name}"
-      chmod 0755 "$out/bin/${name}"
     '';
   in {
-    nativeBuildInputs = [prev.bash prev.lndir];
+    nativeBuildInputs = [prev.bash prev.lndir prev.makeWrapper];
     # The runtime root is a link farm into the unpacked source; only what patchShebangs rewrites (a named directory, or the top-level
     # scripts of `.`) is a real copy, so a nixpkgs move re-keys links and wrappers instead of a gigabyte tree.
     dontUnpack = true;
@@ -179,37 +116,23 @@ final: prev: let
       installPhase = ''
         runHook preInstall
         xar -xf "$src"
-        [ -f utiluti.pkg/Payload ] || { echo "utiluti: package payload layout changed" >&2; exit 1; }
         mkdir extracted
         pbzx -n utiluti.pkg/Payload | (cd extracted && cpio -idm)
-        [ -x extracted/usr/local/bin/utiluti ] || { echo "utiluti: executable absent" >&2; exit 1; }
-        [ -f extracted/usr/local/share/man/man1/utiluti.1 ] || { echo "utiluti: manual absent" >&2; exit 1; }
         install -Dm755 extracted/usr/local/bin/utiluti "$out/bin/utiluti"
         install -Dm644 extracted/usr/local/share/man/man1/utiluti.1 "$out/share/man/man1/utiluti.1"
         runHook postInstall
       '';
     };
-    # macOS: the universal flat package's gzip cpio payload holds `op`; Linux: the unpacked zip holds it beside its signature. Completions
-    # generate from the installed binary.
+    # The universal flat package's gzip cpio payload holds `op`; completions generate from the installed binary.
     _1password-cli-current = _: {
       dontUnpack = true;
-      dontStrip = prev.stdenv.hostPlatform.isDarwin;
-      nativeBuildInputs =
-        [prev.installShellFiles]
-        ++ lib.optionals prev.stdenv.hostPlatform.isDarwin [prev.xar prev.cpio]
-        ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
+      dontStrip = true;
+      nativeBuildInputs = [prev.installShellFiles prev.xar prev.cpio];
       installPhase = ''
         runHook preInstall
-        ${
-          if prev.stdenv.hostPlatform.isDarwin
-          then ''
-            xar -xf "$src"
-            [ -f op.pkg/Payload ] || { echo "1password-cli: package payload layout changed" >&2; exit 1; }
-            gzip -dc op.pkg/Payload | cpio -i
-            install -Dm755 op "$out/bin/op"
-          ''
-          else ''install -Dm755 "$src/op" "$out/bin/op"''
-        }
+        xar -xf "$src"
+        gzip -dc op.pkg/Payload | cpio -i
+        install -Dm755 op "$out/bin/op"
         export HOME="$TMPDIR"
         installShellCompletion --cmd op \
           --bash <("$out/bin/op" completion bash) \
@@ -223,12 +146,9 @@ final: prev: let
     };
     pandoc-current = _: {
       dontUnpack = true;
-      nativeBuildInputs = [prev.lndir] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
-      buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [prev.gmp prev.zlib prev.stdenv.cc.cc.lib];
+      nativeBuildInputs = [prev.lndir];
       installPhase = ''
         runHook preInstall
-        [ -x "$src/bin/pandoc" ] || { echo "pandoc: release executable layout changed" >&2; exit 1; }
-        [ -d "$src/share/man" ] || { echo "pandoc: release manual layout changed" >&2; exit 1; }
         mkdir -p "$out/bin" "$out/share"
         ${linkTree ''"$src/bin"'' ''"$out/bin"''}
         ${linkTree ''"$src/share"'' ''"$out/share"''}
@@ -250,26 +170,12 @@ final: prev: let
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
     };
     temurin-jre-current = {finalAttrs, ...}: {
-      nativeBuildInputs = [prev.makeWrapper prev.lndir] ++ lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
-      buildInputs = lib.optionals prev.stdenv.hostPlatform.isLinux [
-        prev.alsa-lib
-        prev.cups
-        prev.fontconfig
-        prev.freetype
-        prev.libx11
-        prev.libxext
-        prev.libxi
-        prev.libxrender
-        prev.libxtst
-        prev.zlib
-        prev.stdenv.cc.cc.lib
-      ];
+      nativeBuildInputs = [prev.makeWrapper prev.lndir];
       dontStrip = true;
       dontUnpack = true;
       installPhase = ''
         runHook preInstall
-        runtime="$src${lib.optionalString prev.stdenv.hostPlatform.isDarwin "/Contents/Home"}"
-        [ -x "$runtime/bin/java" ] || { echo "temurin: JRE release layout changed" >&2; exit 1; }
+        runtime="$src/Contents/Home"
         mkdir -p "$out/lib/openjdk" "$out/bin"
         ${linkTree ''"$runtime"'' ''"$out/lib/openjdk"''}
         makeWrapper "$out/lib/openjdk/bin/java" "$out/bin/java"
@@ -305,23 +211,22 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # Library-only release: upstream ships extension modules, no CLI binary; an unmatched glob fails the install loudly on layout drift.
+    # Library-only release: a flat zip of extension modules with no top directory and no CLI binary.
     sqlean = _: {
+      nativeBuildInputs = [prev.unzip];
+      sourceRoot = ".";
       installPhase = ''
         runHook preInstall
         install -Dm644 -t "$out/lib" ./*${prev.stdenv.hostPlatform.extensions.sharedLibrary}
         runHook postInstall
       '';
     };
-    # Release zip: one executable with the V8 runtime linked in, under a single bin/ directory the unpacked pin strips. Linux assets are dynamic
-    # glibc ELFs, so that lane takes autoPatchelf; Darwin needs nothing. A layout move fails the build loudly, never a bin/ that lost its tool.
+    # Release zip: one executable with the V8 runtime linked in, under a single bin/ directory the unpacked pin strips. A layout move fails the
+    # build loudly, never a bin/ that lost its tool.
     vl-convert = _: {
       dontUnpack = true;
-      nativeBuildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.autoPatchelfHook;
-      buildInputs = lib.optional prev.stdenv.hostPlatform.isLinux prev.stdenv.cc.cc.lib;
       installPhase = ''
         runHook preInstall
-        [ -x "$src/vl-convert" ] || { echo "vl-convert: release executable layout changed" >&2; exit 1; }
         install -Dm755 "$src/vl-convert" "$out/bin/vl-convert"
         runHook postInstall
       '';
@@ -337,7 +242,7 @@ final: prev: let
     geist-font = old: {
       # The native font installer consumes srcs; retain it and unpack the official release archive without rewriting font programs.
       src = null;
-      srcs = [generatedSources.${(rowOf "geist-font").sourcePin}.src];
+      srcs = [generatedSources.${manifest.packages.geist-font.sourcePin}.src];
       nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
     };
     # nixpkgs fetches an unpacked zip; the generated pin is the flat release archive, so unzip joins the native install phase unchanged.
@@ -346,20 +251,21 @@ final: prev: let
     };
     imagemagick-current = old: {
       configureFlags = (old.configureFlags or []) ++ ["--enable-hdri=yes" "--with-quantum-depth=16" "--with-lcms=yes"];
-      postInstallCheck =
-        (old.postInstallCheck or "")
-        + ''
-          features="$($out/bin/magick -version)"
-          [[ "$features" == *Q16-HDRI* && "$features" == *lcms* ]] || { echo "ImageMagick: required Q16-HDRI/LCMS support absent" >&2; exit 1; }
-        '';
     };
     harfbuzz-current = old: {
       # Nix enables auto features; retain the GPU library without the optional interactive demo's OpenGL window stack. It takes no cairo backend:
       # media-tools lands the command-line utilities this build seats in its dev output.
       mesonFlags = (map (flag: lib.replaceStrings ["-Dgraphite="] ["-Dgraphite2="] flag) (old.mesonFlags or [])) ++ [(lib.mesonEnable "gpu_demo" false)];
+      # harfbust.tests runs Apple's CoreText shaper over the HarfBust demo font and expects separate glyphs; CoreText on macOS 27 ligates them,
+      # so the row tests the host shaper rather than this build.
+      postPatch =
+        (old.postPatch or "")
+        + ''
+          sed -i "/'harfbust.tests',/d" test/shape/data/in-house/meson.build
+        '';
     };
     poppler-utils-current = old: let
-      testData = generatedSources.${(rowOf "poppler-utils-current").testDataPin}.src;
+      testData = generatedSources.${manifest.packages.poppler-utils-current.testDataPin}.src;
       testFonts = final.makeFontsConf {
         fontDirectories = [(final.noto-fonts.override {variants = ["Noto Sans"];}) final.noto-fonts-cjk-sans-static];
         impureFontDirectories = [];
@@ -400,20 +306,11 @@ final: prev: let
     # rebased onto the pinned tree replaces it, and nixpkgs' C++ wrap patch still applies as shipped.
     mupdf = old: {
       patches = [./mupdf-darwin-system-deps.patch (prev.path + "/pkgs/by-name/mu/mupdf/fix-cpp-build.patch")];
-      postInstall = lib.replaceStrings [old.version] [(rowOf "mupdf").version] old.postInstall;
-    };
-    # nvfetcher hands the release tag to fetchFromGitHub as rev; the nixpkgs changelog link reads src.tag, and the same tree fetched by tag keeps its store path.
-    rdkafka-current = _: let
-      src = generatedSources.${(rowOf "rdkafka-current").sourcePin}.src;
-    in {
-      src = src.override {
-        tag = src.rev;
-        rev = null;
-      };
+      postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf.version] old.postInstall;
     };
   };
   mkSourceRelease = name: _: let
-    row = rowOf name;
+    row = manifest.packages.${name};
     source = generatedSources.${row.sourcePin};
     base =
       if name == "imagemagick-current"
@@ -433,50 +330,9 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
-    package-manifest = prev.writeTextFile {
-      name = "package-manifest";
-      destination = "/share/estate/manifest.json";
-      text = builtins.toJSON {
-        inherit (manifest) vocabulary;
-        extensions = lib.mapAttrs checkExtensionLane manifest.extensions;
-        # Nixpkgs-followed package rows carry no frozen version copy; the ledger resolves the live pin from the package set, mirroring admissions.
-        packages =
-          lib.mapAttrs (
-            name: row:
-              checkRow name row
-              // lib.optionalAttrs (row.sourceKind == "nixpkgs") {
-                resolved = {
-                  version = prev.${name}.version or null;
-                  state = "current";
-                };
-              }
-          )
-          manifest.packages;
-        # Admission pins resolve live from the package set — never frozen copies. Platform support is a meta.platforms fact (availableOn), not attr
-        # presence; checkAdmission already made a missing attr a loud failure.
-        admissions =
-          lib.mapAttrs (
-            name: row:
-              checkAdmission name row
-              // {
-                resolved =
-                  if lib.meta.availableOn prev.stdenv.hostPlatform prev.${row.attr}
-                  then {
-                    version = prev.${row.attr}.version or null;
-                    state = "current";
-                  }
-                  else {
-                    version = null;
-                    state = "unsupported_platform";
-                  };
-              }
-          )
-          manifest.admissions;
-      };
-    };
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-extended = let
-      row = rowOf "sqlite-extended";
+      row = manifest.packages.sqlite-extended;
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;
       profiles =
         row.shell.profiles

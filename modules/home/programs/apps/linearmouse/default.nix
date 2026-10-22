@@ -4,9 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/linearmouse/default.nix
 # ----------------------------------------------------------------------------
-# LinearMouse owner: settings rows render to the XDG config the app hot-reloads, proven against the vendored upstream
-# JSON Schema at build time; an invalid row fails the switch and never lands on disk. Schemes scope to external mice only,
-# so the trackpad keeps native behavior, and a later row overrides an earlier one at match time. Generic mouse row lifts
+# LinearMouse owner: settings rows render to the XDG config the app hot-reloads. Schemes scope to external mice only, so the
+# trackpad keeps native behavior, and a later row overrides an earlier one at match time. Generic mouse row lifts
 # the side buttons to universal back/forward and sets pointer.acceleration 0, which collapses the macOS accel table to its
 # identity curve: pointer gain is a constant 96/HIDPointerResolution points per count, free of velocity dependence, where
 # pointer.speed drives HIDPointerResolution = 1/(1/1200 + speed*(1/40 - 1/1200)). Screen travel per inch is
@@ -32,13 +31,8 @@
 # verticalLineScroll (10pt, one row in a table), so vertical distance 3 sets list and menu travel to three lines per
 # detent and leaves zoom at one step. Blender applies a fixed 1.2 zoom factor per wheel event and has no zoom scale
 # setting, so the Blender row takes the same shape on the same device: one detent, one event, one 1.2 step. launchd
-# owns login start. schema.json is the upstream schema of the installed release (the `linearmouse@beta` cask row), the
-# same version the `$schema` row names.
-{
-  launchdAgent,
-  pkgs,
-  ...
-}: let
+# owns login start.
+{launchdAgent, ...}: let
   settings = {
     "$schema" = "https://schema.linearmouse.app/0.13.0-beta.3";
     schemes = [
@@ -113,21 +107,11 @@
       }
     ];
   };
-
-  rendered = pkgs.writeText "linearmouse-settings.json" (builtins.toJSON settings);
-  validated =
-    pkgs.runCommand "linearmouse.json" {
-      nativeBuildInputs = [pkgs.check-jsonschema];
-    } ''
-      check-jsonschema --schemafile ${./schema.json} ${rendered}
-      install -m444 ${rendered} $out
-    '';
 in {
-  xdg.configFile."linearmouse/linearmouse.json".source = validated;
+  xdg.configFile."linearmouse/linearmouse.json".text = builtins.toJSON settings;
 
-  # Login start through the estate agent grammar (label, dual log, identity bundle) with the GUI rows: Interactive class and the Aqua session,
+  # Login start through the shared launchd agent grammar (label, dual log) with the GUI rows: Interactive class and the Aqua session,
   # since `open` needs the login-window session; `open` exits once the app is launched, so the row is one-shot.
-  estate.bundleApps.linearmouse = "LinearMouse Launcher";
   launchd.agents.linearmouse = launchdAgent {
     name = "linearmouse";
     argv = ["/usr/bin/open" "-gj" "/Applications/LinearMouse.app"];

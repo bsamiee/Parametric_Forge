@@ -4,104 +4,30 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/yazi/default.nix
 # ----------------------------------------------------------------------------
-# Yazi file workbench owner: store-owned plugin rows, typed previewer/opener/fetcher/preloader rows generating yazi.toml, SFTP VFS projected
-# from the estate SSH rows, and the diagnostic previewer kernel. File-action routing is rows here, never inline TOML literals; upstream-default rows
-# are deleted, so every settings row below diverges from the upstream preset.
+# Yazi file workbench owner: store-owned plugin rows and typed previewer/opener/fetcher/preloader rows generating yazi.toml. File-action routing
+# is rows here, never inline TOML literals; upstream-default rows are deleted, so every settings row below diverges from the upstream preset.
 {
-  config,
   lib,
   pkgs,
   ...
 }: let
-  tomlFormat = pkgs.formats.toml {};
   manifest = import ../../../../../overlays/manifest.nix;
-  vfsRows = tomlFormat.generate "yazi-vfs" {
-    sftp =
-      lib.mapAttrs (_: row: {
-        host = row.hostName;
-        inherit (row) user;
-        port = 22;
-        identity_agent = config.estate.ssh.identityAgent;
-      })
-      config.estate.ssh.hosts;
-  };
-  # Remote-context Header badge (theme owner contextBadges.remote): an SFTP tree reads the same glyph and hue as the prompt hostname and the
-  # WezTerm domain chip; the badge names the host segment and precedes the cwd child (order 500 < 1000).
-  badge = config.estate.theme.projections.contextBadges.remote;
-  remoteBadgeLua = ''
 
-    -- --- [REMOTE_BADGE] (generated: theme owner contextBadges.remote) -----------------------
-    Header:children_add(function()
-        local cwd = tostring(cx.active.current.cwd)
-        local host = cwd:match("^sftp://([^/]+)")
-        return host and ui.Span(" ${badge.glyph} " .. host .. " "):fg("${badge.color}"):bold() or ""
-    end, 500, Header.LEFT)
-  '';
-
+  # The wrapper seats every previewer runtime on yazi's own PATH: the RAR-capable 7zip as the one archive runtime, the current ImageMagick,
+  # Poppler, and FFmpeg builds the media tools install, and DuckDB for the data lane, which stays off the machine PATH.
   yaziPkg = pkgs.yazi.override {
-    _7zz = pkgs._7zz-rar; # RAR-capable 7zip: one archive runtime for the whole owner
-  };
-
-  # Diagnostic previewer kernel: ONE dispatch surface over the config-language lanes; every arm is read-only evidence (checks + syntax render), never
-  # a build, never network. Hover latency stays bounded by head caps.
-  diagPreview = pkgs.writeShellApplication {
-    name = "yazi-diag-preview.sh";
-    runtimeInputs = [pkgs.alejandra pkgs.deadnix pkgs.statix pkgs.jq pkgs.yq-go pkgs.bat pkgs.coreutils];
-    text = ''
-      # Usage: yazi-diag-preview.sh <lane> <file>; lanes: nix json yaml kdl
-      lane="''${1:?lane required}"
-      file="''${2:?file required}"
-      size="$(wc -c <"$file")" # full-parse diagnostics stay off huge files
-      diag() { # bounded diagnostic block, one lane arm each
-        case "$lane" in
-          nix)
-            if alejandra --check --quiet "$file" >/dev/null 2>&1; then
-              printf '[FMT] alejandra clean\n'
-            else
-              printf '[FMT] alejandra would reformat\n'
-            fi
-            deadnix --no-underscore "$file" 2>/dev/null | head -10 || true
-            statix check --format errfmt "$file" 2>/dev/null | head -10 || true
-            ;;
-          json)
-            if err="$(jq empty "$file" 2>&1)"; then
-              printf '[PARSE] json ok\n'
-            else
-              printf '%s\n' "$err" | head -6
-            fi
-            ;;
-          yaml)
-            if err="$(yq --exit-status 'true' "$file" 2>&1 >/dev/null)"; then
-              printf '[PARSE] yaml ok\n'
-            else
-              printf '%s\n' "$err" | head -6
-            fi
-            ;;
-          kdl) ;; # no admitted KDL linter; syntax render only
-          *) printf 'yazi-diag-preview.sh: unknown lane %s\n' "$lane" >&2; exit 64 ;;
-        esac
-      }
-      if [ "$size" -le 2097152 ]; then
-        diag
-      else
-        printf '[SKIP] diagnostics: %s bytes exceeds 2MiB parse cap\n' "$size"
-      fi
-      printf '%s\n' '────────────────────────────────────────'
-      bat --color=always --style=plain --paging=never "$file" 2>/dev/null | head -200 || true
-    '';
+    _7zz = pkgs._7zz-rar;
+    imagemagick = pkgs.imagemagick-current;
+    poppler-utils = pkgs.poppler-utils-current;
+    ffmpeg-headless = pkgs.ffmpeg-full;
+    extraPackages = [pkgs.duckdb];
   };
 
   # --- [PREVIEWER_ROWS]
-  # Directory tree, config-language diagnostics (one lane per row), archives, markdown, the DuckDB data lane, then a hexyl lane for the true-binary
-  # residue (mime-ext classifies unknown extensions via file(1); what remains octet-stream is genuinely opaque). All globs are disjoint; JSON stays on
-  # the jq diagnostic lane and DuckDB owns tabular/columnar formats. Every external-command row is local:// scoped (regular + search results): a bare
-  # url glob also matches sftp:// and archive:// URLs, shadowing the native vfs/archive previewers with commands that cannot read those URLs.
-  diagLanes = {
-    nix = "*.nix";
-    kdl = "*.kdl";
-    json = "*.json";
-    yaml = "*.{yaml,yml}";
-  };
+  # Directory tree, archives, markdown, the DuckDB data lane, then a hexyl lane for the true-binary residue (mime-ext classifies unknown
+  # extensions via file(1); what remains octet-stream is genuinely opaque). All globs are disjoint; source and JSON files keep yazi's built-in
+  # code and json previewers, and DuckDB owns tabular/columnar formats. Every external-command row is local:// scoped (regular + search results):
+  # a bare url glob also matches archive:// URLs, shadowing the native archive previewer with commands that cannot read those URLs.
   duckdbGlobs = ["*.{csv,tsv}" "*.parquet" "*.xlsx" "*.duckdb"];
   previewerRows =
     [
@@ -109,13 +35,6 @@
         url = "local://*/";
         run = ''piper -- eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes "$1"'';
       }
-    ]
-    ++ lib.mapAttrsToList (lane: glob: {
-      url = "local://${glob}";
-      run = ''piper -- yazi-diag-preview.sh ${lane} "$1"'';
-    })
-    diagLanes
-    ++ [
       {
         url = "local://*.tar*";
         run = ''piper --format=url -- tar tf "$1"'';
@@ -138,21 +57,22 @@
       }
     ];
 
-  # Preload opt-outs: volumes, SFTP, caches, and generated trees never spend preview bandwidth eagerly; hover still previews on demand.
+  # Preload opt-outs: volumes, caches, and generated trees never spend preview bandwidth eagerly; hover still previews on demand.
   preloaderRows = map (url: {
     inherit url;
     run = "noop";
-  }) ["/Volumes/**" "sftp://**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
+  }) ["/Volumes/**" "**/Library/Caches/**" "**/node_modules/**" "**/.git/**"];
 
-  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge or remote trees) + first-party git status. The grammar these rows spell
-  # is proved against the binary by [CONFIG_PROOF] below, never asserted against a version number.
+  # Fetcher rows: mime-ext extension-database MIME (speed over file(1) on huge trees) + first-party git status.
   fetcherRows =
-    map (side: {
-      url = "${side}://*";
-      run = "mime-ext.${side}";
-      prio = "high";
-      group = "mime";
-    }) ["local" "remote"]
+    [
+      {
+        url = "local://*";
+        run = "mime-ext.local";
+        prio = "high";
+        group = "mime";
+      }
+    ]
     ++ map (url: {
       inherit url;
       run = "git";
@@ -201,7 +121,7 @@
     ];
   };
   # MIME spellings match the mime-ext emission (unprefixed IANA: application/tar, rar, 7z-compressed, xz, bzip2, gzip) — legacy x-* spellings
-  # never match and silently drop the rule. The vfs row keeps download routing for absent/stale remote files ahead of the catch-all.
+  # never match and silently drop the rule.
   openRules = [
     {
       url = "*/";
@@ -232,10 +152,6 @@
       use = ["edit" "reveal"];
     }
     {
-      mime = "vfs/{absent,stale}";
-      use = ["download"];
-    }
-    {
       mime = "*";
       use = ["open" "edit" "reveal"];
     }
@@ -243,13 +159,11 @@
 in {
   imports = [./theme.nix];
 
-  home.packages = [diagPreview];
-
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
     package = yaziPkg;
-    initLua = builtins.readFile ./init.lua + remoteBadgeLua;
+    initLua = builtins.readFile ./init.lua;
 
     # Store-owned plugins, no runtime fetching: the set derives from overlays/manifest.nix extensions.yazi-plugins — a row with `attr` resolves in
     # nixpkgs `yaziPlugins`, a row with owner/repo/rev/hash is a pinned upstream tree nixpkgs omits.
@@ -330,24 +244,4 @@ in {
   };
 
   xdg.configFile."yazi/keymap.toml".source = ./keymap.toml;
-
-  # SFTP VFS projected from the estate SSH rows: one `[sftp.<name>]` table per host, authenticated through the 1Password agent socket; enter with
-  # `cd sftp://<host>/`. Preloading over the link is opted out above.
-  #
-  # --- [CONFIG_PROOF]
-  # The rendered config set rides through the very yazi that will read it, so an upstream grammar change fails the build instead of landing and killing
-  # the binary at first launch. yazi parses every file in YAZI_CONFIG_HOME and exits nonzero on a rejected one once stdin is closed, so this proves
-  # yazi.toml, keymap.toml, and vfs.toml together. A `versionAtLeast` floor cannot express this: it admits every future release, which is exactly the
-  # direction a grammar breaks.
-  xdg.configFile."yazi/vfs.toml".source = pkgs.runCommand "yazi-vfs-proved" {nativeBuildInputs = [yaziPkg];} ''
-    mkdir -p cfg
-    cp ${config.xdg.configFile."yazi/yazi.toml".source} cfg/yazi.toml
-    cp ${./keymap.toml} cfg/keymap.toml
-    cp ${vfsRows} cfg/vfs.toml
-    if ! report="$(YAZI_CONFIG_HOME="$PWD/cfg" HOME="$PWD" yazi --version </dev/null 2>&1)"; then
-      printf 'yazi ${yaziPkg.version} rejected the generated config:\n%s\n' "$report" >&2
-      exit 1
-    fi
-    cp ${vfsRows} "$out"
-  '';
 }

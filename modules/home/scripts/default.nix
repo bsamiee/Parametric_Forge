@@ -4,13 +4,7 @@
 # License       : MIT
 # Path          : modules/home/scripts/default.nix
 # ----------------------------------------------------------------------------
-# Scripts module aggregator; the terminal rail rides the desktop app graph.
-{
-  host,
-  lib,
-  ...
-}: {
-  imports =
-    [./gha.nix ./loc.nix]
-    ++ lib.optionals (host.os == "darwin") [./terminal.nix];
+# Scripts module aggregator.
+_: {
+  imports = [./loc.nix ./terminal.nix];
 }

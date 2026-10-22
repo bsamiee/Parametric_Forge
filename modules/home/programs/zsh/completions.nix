@@ -4,29 +4,30 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/completions.nix
 # ----------------------------------------------------------------------------
-# Completion owner: the fpath surface (profile and package site-functions, Homebrew's on Darwin), one fingerprint-keyed compinit that never
+# Completion owner: the fpath surface (profile, package, and Homebrew site-functions), one fingerprint-keyed compinit that never
 # rescans per shell, data-driven zstyle rows, and the fzf-tab completion UI. Every completion file ships with its package: the Nix profile
 # holds _atuin, _op, _zellij, and the rest; Homebrew's site-functions holds _wezterm and _container.
 {
   config,
-  host,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) palette projections;
+  inherit (config.forge.theme) palette projections;
 
   # Package rows whose share/zsh/site-functions precede compinit on fpath.
   completionPackages = [pkgs.zsh-completions];
   siteFunctions =
     map (p: "${p}/share/zsh/site-functions") completionPackages
-    ++ ["/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions"]
-    ++ lib.optional (host.os == "darwin") "/opt/homebrew/share/zsh/site-functions";
+    ++ [
+      "/etc/profiles/per-user/${config.home.username}/share/zsh/site-functions"
+      "/opt/homebrew/share/zsh/site-functions"
+    ];
 
   # Dump key: the pre-compinit fpath surface — completion packages, sourced-plugin srcs, and the profile package set. The per-user profile
   # site-functions dir is pinned into the 400 row below: a dump baked by a degraded-env shell (NIX_PROFILES without /etc/profiles/per-user)
-  # otherwise permanently misses home.packages completions under compinit -C. Any change retires every old dump at activation; compinit -C
-  # rebuilds once per fingerprint, never per shell.
+  # otherwise permanently misses home.packages completions under compinit -C. Any change names a new dump file, so compinit -C rebuilds once
+  # per fingerprint, never per shell.
   fingerprint = builtins.substring 0 12 (builtins.hashString "sha256"
     (builtins.toJSON (map toString (completionPackages
       ++ map (p: p.src) config.programs.zsh.plugins
@@ -153,25 +154,10 @@
   ];
 
   zstyleLines = lib.concatMapStringsSep "\n" (r: "zstyle '${r.context}' ${r.key} ${r.value}") styles;
-
-  # Activation: retire dumps from earlier fingerprints and the pre-fingerprint generations that dumped into ZDOTDIR.
-  dumpRetirement = pkgs.writeShellApplication {
-    name = "zsh-compdump-retire";
-    runtimeInputs = [pkgs.coreutils pkgs.findutils];
-    text = ''
-      cache_dir=${lib.escapeShellArg cacheDir}
-      mkdir -p "$cache_dir"
-      find "$cache_dir" -maxdepth 1 -name 'zcompdump-*' ! -name '*-${fingerprint}*' -delete
-      rm -f ${lib.escapeShellArg config.programs.zsh.dotDir}/.zcompdump*
-    '';
-  };
 in {
-  home.activation.zshCompdumpRetire = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    run ${dumpRetirement}/bin/zsh-compdump-retire
-  '';
-
   programs.zsh = {
-    # -C trusts the fingerprint-keyed dump: activation owns invalidation, so no interactive shell ever pays the fpath rescan or compaudit walk.
+    # -C trusts the fingerprint-keyed dump: the fingerprint in its name owns invalidation, so no interactive shell ever pays the fpath rescan or
+    # compaudit walk.
     completionInit = ''
       autoload -U compinit
       compinit -C -d "$ZSH_COMPDUMP"

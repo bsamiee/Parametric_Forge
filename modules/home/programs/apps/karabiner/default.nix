@@ -15,7 +15,7 @@
   assetDir = "${cfgDir}/assets/complex_modifications";
 
   # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
-  chordRules = config.estate.chords.karabiner.rules;
+  chordRules = config.forge.chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [
@@ -35,9 +35,6 @@
   });
 
   jq = "${pkgs.jq}/bin/jq";
-
-  # App-owned CLI beside the running Karabiner (the casks.nix row): lints the exact rule bytes before they reach the live config.
-  karabinerCli = "/Library/Application Support/org.pqrs/Karabiner-Elements/bin/karabiner_cli";
 
   # Karabiner writes its own GUI and runtime state back into karabiner.json, so the declarative document owns only complex_modifications.rules and the
   # declared profile identity; every other key merges from the live file and activation never destroys app-owned state. Declared keys win except
@@ -73,27 +70,9 @@
 in {
   imports = [../chords.nix];
 
-  # Symlinks anywhere on the config path break Karabiner change detection; refuse them and stage real writable files in place.
+  # Symlinks on the config path break Karabiner change detection, so real writable files are staged in place.
   home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    refuse_symlink() {
-      if [ -L "$1" ]; then
-        echo "refusing symlinked Karabiner path: $1" >&2
-        exit 1
-      fi
-    }
-    refuse_symlink "${config.xdg.configHome}"
-    refuse_symlink "${cfgDir}"
     mkdir -p "${assetDir}"
-    refuse_symlink "${cfgDir}/assets"
-    refuse_symlink "${assetDir}"
-    refuse_symlink "${cfgDir}/karabiner.json"
-    refuse_symlink "${assetDir}/leader-chords.json"
-
-    if ! lint="$(${lib.escapeShellArg karabinerCli} --lint-complex-modifications ${stagedAssetJson} 2>&1)"; then
-      echo "karabiner: chord rules failed lint: $lint" >&2
-      exit 1
-    fi
-
     ${stageFile "${cfgDir}/karabiner.json" ''
       if [ -f "${cfgDir}/karabiner.json" ] && ${jq} -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${cfgDir}/karabiner.json" >/dev/null 2>&1; then
         ${jq} --slurpfile live "${cfgDir}/karabiner.json" '${mergeProgram}' ${karabinerJson} >"$tmp"

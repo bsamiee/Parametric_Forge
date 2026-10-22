@@ -2,19 +2,17 @@
     "name": "parametric-forge",
     "private": true,
     "type": "module",
-    "description": "Estate workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
+    "description": "Forge workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
     "engines": {
         "node": ">=26"
     },
     "scripts": {
         "preview": "node services/driver.ts preview",
         "up": "node services/driver.ts up",
-        "scopes": "node services/driver.ts scopes doctor",
-        "reviewers": "node services/driver.ts reviewers",
+        "scopes": "node services/driver.ts scopes",
         "typecheck": "tsc"
     },
     "devDependencies": {
-        "@effect/platform": "catalog:",
         "@effect/platform-node": "catalog:",
         "@pulumi/github": "catalog:",
         "@pulumi/pulumi": "catalog:",

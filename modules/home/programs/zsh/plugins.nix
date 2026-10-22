@@ -11,7 +11,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) roles;
+  inherit (config.forge.theme) roles;
   sgr = c: "\\e[38;2;${toString c.r};${toString c.g};${toString c.b}m";
 in {
   programs.zsh = {

@@ -12,8 +12,7 @@
   pkgs,
   ...
 }: let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  inherit (config.estate.theme) roles projections;
+  inherit (config.forge.theme) roles projections;
   # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
   git = projections.gitHex;
   # One universal identity; the one key (in the Personal vault, the first hosts/context.nix authorized key without its comment)
@@ -28,27 +27,18 @@
 in {
   programs.git = {
     enable = true;
-    # The filter rows name a bare `git-lfs`: a project's mise.toml owns the client, so the filter runs inside a project and nowhere else.
-    lfs = {
-      enable = true;
-      package = null;
-    };
 
-    # Darwin alone carries the op agent and signer binary; VPS commits keep signing off instead of faulting. allowedSigners lands the
-    # $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
-    signing =
-      {
-        key = "key::${identity.publicKey}";
-        format = "ssh";
-        signByDefault = isDarwin;
-        allowedSigners =
-          lib.concatMapStrings
-          (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
-          trustedPrincipals;
-      }
-      // lib.optionalAttrs isDarwin {
-        signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
-      };
+    # allowedSigners lands the $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
+    signing = {
+      key = "key::${identity.publicKey}";
+      format = "ssh";
+      signByDefault = true;
+      signer = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign";
+      allowedSigners =
+        lib.concatMapStrings
+        (principal: "${principal} namespaces=\"git\" ${identity.publicKey}\n")
+        trustedPrincipals;
+    };
 
     settings = {
       user = {inherit (identity) name email;};
@@ -86,12 +76,6 @@ in {
       merge = {
         conflictstyle = "zdiff3";
         ff = false;
-        # Structural merge driver (manifest admission row): registration is inert until a repo opts in via gitattributes `merge=mergiraf` —
-        # fixture-proven before any default enablement.
-        mergiraf = {
-          name = "mergiraf";
-          driver = "${lib.getExe pkgs.mergiraf} merge --git %O %A %B -s %S -x %X -y %Y -p %P -l %L";
-        };
       };
 
       fetch = {
@@ -104,11 +88,9 @@ in {
       branch = {
         sort = "-committerdate";
         autosetupmerge = "always";
-        autosetuprebase = "always";
       };
 
       rebase = {
-        autoStash = true;
         autoSquash = true;
         updateRefs = true;
       };
@@ -188,7 +170,7 @@ in {
       relative-paths = true;
 
       # UI elements
-      syntax-theme = "estate-dracula"; # Owner-generated bat theme; delta reads the bat cache
+      syntax-theme = "forge-dracula"; # bat theme from shell-tools/bat.nix; delta reads the bat cache
       true-color = "always";
       zero-style = "dim syntax";
 

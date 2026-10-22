@@ -193,7 +193,7 @@ COMMENT_GLYPH = re.compile(r"[!/@:#\[-]")
 # Tool pragmas count as structural only in pragma spelling — a bare tool name opening prose stays countable.
 COMMENT_DIRECTIVE = re.compile(
     r"shellcheck\s+[a-z-]+=|noqa\b|ruff:|type:\s*ignore|mypy:|pyright:|fmt:\s*(?:off|on|skip)|eslint-|@ts-"
-    r"|biome-ignore\b|prettier-ignore\b|luacheck:|stylua:|%%(?:\s|$)|#?(?:end)?region\b|-\*-"
+    r"|biome-ignore\b|stylua:|%%(?:\s|$)|#?(?:end)?region\b|-\*-"
 )
 # Label-plus-dash-fill divider rows and column-aligned topology rows (continuation indents, 3+-space columns) are structural carriers.
 COMMENT_LABEL_FILL = re.compile(r"^\[?[A-Za-z][A-Za-z0-9_ .]{0,40}\]?\s*-{4,}\s*$")
@@ -251,9 +251,6 @@ NUMBERED_LEAD = re.compile(r"^\d+[.)]\s")
 LINK = re.compile(r"(?<!!)\[([^\]\n]+)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+\"[^\"]*\")?\)")
 NUMBERED_SECTION = re.compile(r"^\[(?P<n>\d{2})\]-\[(?P<token>[A-Z][A-Z0-9_]*)\](?:-\[[A-Z][A-Z0-9_]*\])*$")
 PLACEHOLDER = re.compile(r"<[a-z][a-z0-9]*(?:[-_][a-z0-9]+)+>")
-# Agent bodies under `.claude/agents/` are dispatched system prompts: whole-line XML spine tags are structure, never
-# unfilled slots, and the second-person demand voice is the voice law, so bare `you` leaves the hedge scan there.
-AGENT_SPINE = re.compile(r"^</?[a-z][a-z0-9_]*>\s*$")
 SENTENCE_END = re.compile(r"[.!?](?:\s|$)")
 SETEXT = re.compile(r"^\s*(?:=+|-{3,})\s*$")
 TABLE_SEP = re.compile(r"^\s*\|(?:\s*:?-+:?\s*\|)+\s*$")
@@ -314,12 +311,12 @@ POINTER = re.compile(r"[\w./-]*\w\.md#[\w.-]+|\b[\w./-]+/[\w.-]+#(?![A-Z][A-Z0-9
 # Hyphen lookarounds spare compound terms — `least-recently-touched` names an eviction policy, not freshness.
 FRESHNESS_DEICTIC = re.compile(r"(?<!-)\b(?:currently|recently|nowadays|at\s+present|these\s+days|going\s+forward|modern)\b(?!-)", re.IGNORECASE)
 WEAK_VERB = re.compile(r"\b(?:supports|provides|offers|allows|enables)\b", re.IGNORECASE)
-# Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the estate, so review adjudicates each.
+# Soft-preference and discourse hedges warn: `prefer` names a legitimate default across the corpus, so review adjudicates each.
 # `etc` holds case: the discourse hedge is lowercase, while all-caps spells a domain acronym (the ETC texture-compression family).
 SOFT_HEDGE = re.compile(r"\b(?:however|prefer(?:s|red|ably)?|(?-i:etc|Etc))\b", re.IGNORECASE)
 # Grade and intensity words fail: each grades a fact the fact already carries, and deleting one costs no law. Roster admits
 # only the unambiguous — a domain term the corpus owns (`robust` predicates, `optimal` collapse, `ideal` in the algebraic
-# sense, `perfect` forwarding/hashing), estate vocabulary (`first-class`, `rich`, `advanced`), and a contrastive `merely`
+# sense, `perfect` forwarding/hashing), house vocabulary (`first-class`, `rich`, `advanced`), and a contrastive `merely`
 # all stay legal, as does `rather` whose corpus mass is the contrastive `rather than`.
 NO_OP_WORD = re.compile(
     r"\b(?:simply|very|really|quite|basically|essentially|seamless(?:ly)?|effortless(?:ly)?|cutting-edge"
@@ -333,7 +330,7 @@ NO_OP_WORD = re.compile(
 # join states real consequence law and is the corpus's canonical connector, so only the lead-in form answers here.
 SENTENCE_SO = re.compile(r"(?:^|[.!?]\s+)So\b")
 # AI-prose lexemes fail: puffery, significance theater, transition filler, summary tails, and abstract nouns carry zero
-# domain load; each hit is delete-or-reframe. Estate terms `leverage`, `overall`, `therefore`, `thus`, `likewise`, and
+# domain load; each hit is delete-or-reframe. Corpus terms `leverage`, `overall`, `therefore`, `thus`, `likewise`, and
 # `backbone` retain concrete stacking, grading, ordering, or spine semantics, so the roster excludes them.
 AI_LEXICON = re.compile(
     r"\b(?:delv(?:e|es|ed|ing)|tapestry|testament|pivotal|meticulous(?:ly)?|showcas(?:e|es|ed|ing)|multifaceted"
@@ -672,10 +669,6 @@ def teaching(path: Path) -> bool:
     return bool(TEACHING & parts) and bool({".claude", "skills", "docs"} & parts)
 
 
-def agent_body(path: Path) -> bool:
-    return any(a == ".claude" and b == "agents" for a, b in pairwise(path.parts))
-
-
 def fence_closes(matched: re.Match[str] | None, glyph: str, width: int, margin: int) -> bool:
     # One owner decides fence closure everywhere: same glyph, at least the opening run, bare info, bounded indent.
     return (
@@ -852,12 +845,7 @@ def lex(path: Path, text: str, cap: int) -> tuple[Document, tuple[Row, ...]]:
                     f"router card {len(line)} cols > cap {cap}; one owner, one charter phrase — demote the tail",
                 )
             )
-        if (
-            path.name == "ARCHITECTURE.md"
-            and last_rubric == "STRATA"
-            and not template
-            and not (path.parent.name == ".planning" and path.parent.parent.name == "libs")
-        ):
+        if path.name == "ARCHITECTURE.md" and last_rubric == "STRATA" and not template:
             if line.startswith(("    -", "\t-")):
                 rows.append(row(path, number, Check.STRATA_ROW, "fail", "nested seating row; seatings are flat `S<N>`-keyed bullets"))
             elif STRATA_ROW_KEY.match(line) and len(line) > cap:
@@ -1166,7 +1154,6 @@ def link_rows(doc: Document) -> tuple[Row, ...]:
 
 
 def prose_rows(doc: Document) -> tuple[Row, ...]:
-    agent = agent_body(Path(doc.path))
     rows: list[Row] = []
     for span in doc.prose:
         if EXAMPLE_LINE.match(span.text):
@@ -1176,7 +1163,7 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
                     for hit in SENTENCE_ARTICLE.finditer(QUOTED_SPAN.sub(" ", span.text))
                 )
             continue
-        if not doc.template and not (agent and AGENT_SPINE.match(span.text)):
+        if not doc.template:
             rows.extend(
                 row(doc.path, span.line, Check.TEMPLATE_SLOT, "fail", f"{hit.group(0)} is an unfilled template slot; fill it or delete the line")
                 for hit in PLACEHOLDER.finditer(span.text)
@@ -1195,7 +1182,6 @@ def prose_rows(doc: Document) -> tuple[Row, ...]:
             for check, pattern, status, repair in PATTERNS
             for hit in pattern.finditer(voiced)
             if not (check is Check.VERSION_ANCHOR and CITATION_LEAD.search(voiced[: hit.start()]))
-            and not (agent and check is Check.HEDGE and hit.group(0).lower() == "you")
         )
     return tuple(rows)
 

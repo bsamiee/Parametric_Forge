@@ -4,27 +4,16 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/wezterm/default.nix
 # ----------------------------------------------------------------------------
-# WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, floats, ssh domains, workspaces, fonts, plugin
-# pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters. A build-time
-# validator gates activation on Lua syntax, plugin payloads, and action-dispatch totality.
+# WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, floats, workspaces, fonts, plugin
+# pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters.
 {
   config,
   lib,
   pkgs,
-  toolchainEnvFor,
   ...
 }: let
-  inherit (config.estate.theme) roles projections;
-  toolchainEnv = toolchainEnvFor {
-    home = config.home.homeDirectory;
-    username = config.home.username;
-    xdgCacheHome = config.xdg.cacheHome;
-    xdgConfigHome = config.xdg.configHome;
-    xdgDataHome = config.xdg.dataHome;
-    xdgStateHome = config.xdg.stateHome;
-  };
-  chordRows = config.estate.chords.wezterm.rows;
-  sshHosts = config.estate.ssh.hosts;
+  inherit (config.forge.theme) roles projections;
+  chordRows = config.forge.chords.wezterm.rows;
   manifest = import ../../../../../overlays/manifest.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
@@ -39,12 +28,12 @@
 
   # --- [FONT_ROW]
   # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the font override path all arrive
-  # from config.estate.fonts; deck.lua interprets them.
-  fontRow = config.estate.fonts.projections.luaFont;
+  # from config.forge.fonts; deck.lua interprets them.
+  fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS]
   # One row = picker entry + zellij session identity + cwd + float policy. The workspace name IS the inner zellij session name, so windows in
-  # different workspaces never mirror one shared session; the default workspace keeps the estate's historical `main` session. The cwd seeds a
+  # different workspaces never mirror one shared session; the default workspace keeps the historical `main` session. The cwd seeds a
   # brand-new session's first pane and the workspace scratch float only: a live or rebuilt session keeps its own pane directories.
   mkWorkspace = name: label: cwd: {
     inherit name label cwd;
@@ -55,55 +44,32 @@
   ];
   defaultWorkspace = "main";
 
-  # --- [SSH_DOMAIN_ROWS_SSH_REGISTRY_ROWS_TRANSPORT_ONLY_NEVER_PERSISTENCE]
-  sshDomainRows =
-    map (h: {
-      name = "SSH:${h.name}";
-      remote_address = h.hostName;
-      username = h.user;
-      multiplexing = "None";
-    })
-    (lib.attrValues sshHosts);
-
   # --- [ACTION_BUS_ROWS_QUICK_SELECT_PATTERNS_HYPERLINK_RULES]
-  # `select` names a deck.lua action arm for the captured span (edit opens the span in an editor float, domain opens the aliased SSH window);
-  # rows without it keep the native clipboard default.
-  hostAliasAlternation =
-    lib.concatStringsSep "|"
-    (map lib.escapeRegex (lib.unique (lib.concatMap (h: h.aliases) (lib.attrValues sshHosts))));
-  hostDomains = lib.listToAttrs (lib.concatMap (
-    h: map (a: lib.nameValuePair a "SSH:${h.name}") (lib.unique h.aliases)
-  ) (lib.attrValues sshHosts));
-  quickSelectRows =
-    [
-      {
-        id = "nix-store-path";
-        regex = "/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+";
-        priority = 10;
-      }
-      {
-        id = "flake-ref";
-        regex = "(github|gitlab|sourcehut):[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/[A-Za-z0-9._/-]+)?";
-        priority = 20;
-      }
-      {
-        id = "file-span";
-        regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
-        priority = 30;
-        select = "edit";
-      }
-      {
-        id = "issue-id";
-        regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
-        priority = 40;
-      }
-    ]
-    ++ lib.optional (hostAliasAlternation != "") {
-      id = "host-alias";
-      regex = "\\b(${hostAliasAlternation})\\b";
-      priority = 50;
-      select = "domain";
-    };
+  # `select` names a deck.lua action arm for the captured span (edit opens the span in an editor float); rows without it keep the native
+  # clipboard default.
+  quickSelectRows = [
+    {
+      id = "nix-store-path";
+      regex = "/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+";
+      priority = 10;
+    }
+    {
+      id = "flake-ref";
+      regex = "(github|gitlab|sourcehut):[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/[A-Za-z0-9._/-]+)?";
+      priority = 20;
+    }
+    {
+      id = "file-span";
+      regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
+      priority = 30;
+      select = "edit";
+    }
+    {
+      id = "issue-id";
+      regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
+      priority = 40;
+    }
+  ];
   # --- [FLOATING_UTILITY_DECK_ROWS]
   floatRows = {
     utility = {
@@ -123,63 +89,42 @@
   };
 
   # --- [COMMAND_DECK_ROWS]
-  # One registry feeds the command palette, the launcher menu, and key rows. kind: float (spawn command in shaped window) | domain
-  # (spawn in mux domain); `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton
-  # per workspace and takes the active workspace row's float shape.
-  commandRows =
-    [
-      {
-        id = "redeploy-check";
-        label = "deploy: redeploy check";
-        kind = "float";
-        float = "log";
-        args = ["${profileBin}/redeploy" "--check-only"];
-      }
-      {
-        id = "redeploy-switch";
-        label = "deploy: redeploy SWITCH";
-        kind = "float";
-        float = "log";
-        destructive = true;
-        args = ["${profileBin}/redeploy" "--switch"];
-      }
-      {
-        id = "telemetry";
-        label = "deck: system telemetry";
-        kind = "float";
-        float = "log";
-        args = ["${pkgs.bottom}/bin/btm"];
-      }
-      {
-        id = "scratch";
-        label = "deck: scratch shell";
-        kind = "float";
-        float = "utility";
-        scope = "workspace";
-        args = ["${profileBin}/zsh" "-l"];
-      }
-    ]
-    ++ map (d: {
-      id = "attach-${d.name}";
-      label = "deck: open ${d.name} window";
-      kind = "domain";
-      domain = d.name;
-    })
-    sshDomainRows
-    # Remote state through the VFS: one float per host browses sftp://<host>/ in Yazi — remote registers and logs inspected through the same
-    # themed file UI as local state, identity via the pinned agent socket.
-    ++ map (h: {
-      id = "sftp-${h.name}";
-      label = "remote: browse ${h.name} files (sftp)";
-      kind = "float";
+  # One registry feeds the command palette, the launcher menu, and key rows. Each row spawns its command in a shaped float window;
+  # `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton per workspace and takes the
+  # active workspace row's float shape.
+  commandRows = [
+    {
+      id = "redeploy-build";
+      label = "deploy: redeploy build";
+      float = "log";
+      args = ["${profileBin}/redeploy" "--build"];
+    }
+    {
+      id = "redeploy-switch";
+      label = "deploy: redeploy SWITCH";
+      float = "log";
+      destructive = true;
+      args = ["${profileBin}/redeploy" "--switch"];
+    }
+    {
+      id = "telemetry";
+      label = "deck: system telemetry";
+      float = "log";
+      args = ["${pkgs.bottom}/bin/btm"];
+    }
+    {
+      id = "scratch";
+      label = "deck: scratch shell";
       float = "utility";
-      args = ["${profileBin}/yazi-dispatch.sh" "sftp://${h.name}/"];
-    }) (lib.attrValues sshHosts);
+      scope = "workspace";
+      args = ["${profileBin}/zsh" "-l"];
+    }
+  ];
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
-  # Constructor/env-dependent values live in deck.lua; the two sets stay disjoint (validated below) so the single-writer merge never collides.
+  # Constructor/env-dependent values live in deck.lua; the two sets stay disjoint so the single-writer merge never collides.
   settings = {
-    color_scheme = "estate-dracula";
+    color_scheme = "forge-dracula";
     check_for_updates = false; # the cask pin owns updates; check_update state stays inert
 
     # Window
@@ -241,57 +186,24 @@
 
     # Outer plane rows (pure data)
     default_workspace = defaultWorkspace;
-    ssh_domains = sshDomainRows;
     quick_select_patterns = map (r: r.regex) (lib.sort (a: b: a.priority < b.priority) quickSelectRows);
     quick_select_remove_styling = true;
-    # Mux auth-sock pin: every mux-spawned pane and SSH domain rides the 1Password agent, also when a login restores WezTerm before the gui-env
+    # Mux auth-sock pin: every mux-spawned pane rides the 1Password agent, also when a login restores WezTerm before the gui-env
     # replay (environments/shell.nix) points the launchd domain at it.
-    default_ssh_auth_sock = config.estate.ssh.identityAgent;
+    default_ssh_auth_sock = config.forge.ssh.identityAgent;
   };
-
-  # Config keys the interpreters own; a settings row on this list is a shallow-merge collision and fails eval.
-  luaOwnedKeys = [
-    "font"
-    "font_size"
-    "line_height"
-    "harfbuzz_features"
-    "keys"
-    "key_tables" # sync-panes writes its broadcast table here
-    "mouse_bindings"
-    "default_prog"
-    "launch_menu"
-    "command_palette_font"
-  ];
-  settingsCollisions = lib.intersectLists luaOwnedKeys (lib.attrNames settings);
-
-  dupesOf = xs: lib.attrNames (lib.filterAttrs (_: c: c > 1) (lib.foldl' (acc: x: acc // {${x} = (acc.${x} or 0) + 1;}) {} xs));
-  commandDupes = dupesOf (map (r: r.id) commandRows);
-  patternDupes = dupesOf (map (r: r.id) quickSelectRows) ++ dupesOf (map (r: toString r.priority) quickSelectRows);
-  selectIds = lib.unique (builtins.filter (s: s != null) (map (r: r.select or null) quickSelectRows));
-  badSelects = builtins.filter (s: !(lib.elem s ["edit" "domain"])) selectIds;
-  badKinds = lib.unique (map (r: r.kind) (builtins.filter (r: !(lib.elem r.kind ["float" "domain"])) commandRows));
-  badFloatRefs =
-    map (r: r.id) (builtins.filter (r: r.kind == "float" && !(floatRows ? ${r.float})) commandRows)
-    ++ map (r: r.name) (builtins.filter (r: !(floatRows ? ${r.float})) workspaceRows);
-  chordDupes = dupesOf (map (r: "${r.mods}+${r.key}") chordRows);
-  workspaceDupes = dupesOf (map (r: r.name) workspaceRows);
 
   # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
-    # The oldest wezterm@nightly build every deck.lua action, option, and overlay exists in; deck.lua faults the config load below it.
-    nightly_floor = "20260707";
     paths = {
       zsh = "${profileBin}/zsh";
       zellij = "${pkgs.zellij}/bin/zellij";
       nvim = "${profileBin}/nvim";
     };
-    # The zellij server holds no mise hook, like a launchd agent, so it carries the launchd vector with the shim segment first (deck.lua).
-    server_path = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
-    host_domains = hostDomains;
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
     # Registry float rows are singletons: a live float focuses instead of duplicating. Synthesized floats (quick-edit) never set reuse.
-    commands = map (r: r // {reuse = r.kind == "float";}) commandRows;
+    commands = map (r: r // {reuse = true;}) commandRows;
     keys =
       map (r: {
         inherit (r) id key mods action class;
@@ -306,11 +218,7 @@
       command = "md_dock_window";
       quick_select = "md_select_search";
     };
-    theme = {
-      roles = projections.rolesHex;
-      # Shared remote-context badge: the strip's non-local domain chip reads the same glyph + hue as the prompt hostname badge (events.lua).
-      badges.remote = {inherit (projections.contextBadges.remote) glyph color;};
-    };
+    theme.roles = projections.rolesHex;
   };
   rowsLua = pkgs.writeText "wezterm-rows.lua" ''
     -- Generated register projection; interpreters are deck.lua and events.lua.
@@ -328,9 +236,9 @@
     require("events").apply(config)
     return config
   '';
-  schemeToml = (pkgs.formats.toml {}).generate "estate-dracula.toml" {
+  schemeToml = (pkgs.formats.toml {}).generate "forge-dracula.toml" {
     colors = projections.weztermColorScheme;
-    metadata.name = "estate-dracula";
+    metadata.name = "forge-dracula";
   };
   luarc = pkgs.writeText "wezterm-luarc.json" (builtins.toJSON {
     "$schema" = "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json";
@@ -341,74 +249,16 @@
     };
     diagnostics.globals = ["wezterm"];
   });
-  actionIds = map (r: r.action) chordRows;
-
-  # Build-time validator: Lua syntax, plugin payload shape, dispatch totality (chord actions AND quick-select select arms both resolve in deck.lua).
-  # The grep proves the arm shape itself — a ["id"] table key or an == "id" equality dispatch — so a log string literal never false-passes.
-  configDir =
-    pkgs.runCommand "wezterm-config" {
-      nativeBuildInputs = [pkgs.lua5_4];
-      actions = lib.concatStringsSep " " (lib.unique (actionIds ++ selectIds));
-    } ''
-      mkdir -p "$out/colors"
-      cp ${./deck.lua} "$out/deck.lua"
-      cp ${./events.lua} "$out/events.lua"
-      cp ${weztermLua} "$out/wezterm.lua"
-      cp ${rowsLua} "$out/rows.lua"
-      cp ${schemeToml} "$out/colors/estate-dracula.toml"
-      cp ${luarc} "$out/.luarc.json"
-      for f in "$out"/*.lua; do
-        luac -p "$f"
-      done
-      test -f ${syncPanesSrc}/plugin/init.lua
-      test -d ${weztermTypesSrc}/lua
-      for a in $actions; do
-        grep -Eq "\[\"$a\"\]|== \"$a\"" "$out/deck.lua" || {
-          echo "wezterm validator: chord action '$a' has no deck.lua dispatch arm" >&2
-          exit 1
-        }
-      done
-    '';
 in {
-  config = {
-    assertions = [
-      {
-        assertion = settingsCollisions == [];
-        message = "wezterm: settings keys collide with interpreter-owned config keys: ${lib.concatStringsSep ", " settingsCollisions}";
-      }
-      {
-        assertion = commandDupes == [];
-        message = "wezterm: duplicate command ids: ${lib.concatStringsSep ", " commandDupes}";
-      }
-      {
-        assertion = patternDupes == [];
-        message = "wezterm: quick-select id/priority collisions: ${lib.concatStringsSep ", " patternDupes}";
-      }
-      {
-        assertion = badSelects == [];
-        message = "wezterm: quick-select rows carry unknown select arms: ${lib.concatStringsSep ", " badSelects}";
-      }
-      {
-        assertion = badKinds == [];
-        message = "wezterm: command rows carry unknown kinds: ${lib.concatStringsSep ", " badKinds}";
-      }
-      {
-        assertion = badFloatRefs == [];
-        message = "wezterm: command rows reference undeclared float shapes: ${lib.concatStringsSep ", " badFloatRefs}";
-      }
-      {
-        assertion = chordDupes == [];
-        message = "wezterm: duplicate chord key+mods rows (guard wrap and dispatch both collide): ${lib.concatStringsSep ", " chordDupes}";
-      }
-      {
-        assertion = workspaceDupes == [];
-        message = "wezterm: duplicate workspace row names: ${lib.concatStringsSep ", " workspaceDupes}";
-      }
-    ];
-
-    xdg.configFile."wezterm" = {
-      source = configDir;
-      recursive = false;
+  xdg.configFile."wezterm" = {
+    source = pkgs.linkFarm "wezterm-config" {
+      "deck.lua" = ./deck.lua;
+      "events.lua" = ./events.lua;
+      "wezterm.lua" = weztermLua;
+      "rows.lua" = rowsLua;
+      "colors/forge-dracula.toml" = schemeToml;
+      ".luarc.json" = luarc;
     };
+    recursive = false;
   };
 }

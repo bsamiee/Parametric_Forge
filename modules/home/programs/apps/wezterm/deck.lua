@@ -15,26 +15,18 @@ local rows = require("rows")
 local M = {}
 
 M.rows = rows
--- One nightly rail: the wezterm@nightly cask row is the only build the estate installs, so every action, option, and overlay this file names
--- exists at or past the floor; a build below it faults the config load loudly instead of degrading through a stable arm.
-assert(wezterm.version:sub(1, 8) >= rows.nightly_floor, ("wezterm %s is below the nightly floor %s"):format(wezterm.version, rows.nightly_floor))
 M.sync = nil -- populated in apply(); events.lua reads is_synced for status
 M.palette = {} -- populated in apply(); events.lua replays it per palette open
 
--- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name (estate slug policy),
--- so windows in different workspaces never mirror one shared session. The client starts through a login shell: the server it forks keeps
--- that session environment for every pane and every command a rebuilt session execs without a shell. The login shell's mise refresh ran in
--- the launch directory and dropped the shim segment, so the body resets PATH to the server vector and clears that refresh's state: a
--- command a rebuilt session execs then resolves its project's tools through the shims from its own directory, and a pane shell activates
--- from a clean slate. A rebuilt session (the server died with the machine) runs its recorded commands at once instead of parking each
--- behind a Press-ENTER banner; the zellij discovery hook decides what gets recorded. A gated client waits for one line: zellij sends its
--- startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup size.
-function M.session_args(name, gated)
-    local launch = 'unset __MISE_DIFF __MISE_SESSION; PATH=$1; shift; exec "$@"'
-    local body = gated and "read -r _; " .. launch or launch
-    return { rows.paths.zsh, "-lc", body, "zsh", rows.server_path, rows.paths.zellij, "attach", "--create", "--force-run-commands", name }
-end
-
+-- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name, so windows in different
+-- workspaces never mirror one shared session. The client starts through a login shell at the home directory, so the login shell's mise
+-- refresh reads no project's config; the body then enters the workspace cwd, which seeds a brand-new session's first pane. The server the
+-- client forks keeps that session environment for every pane and every command a rebuilt session execs without a shell. The body clears
+-- the login shell's mise refresh state and the Home Manager session guards, so a pane shell activates from a clean slate and re-reads the
+-- current generation's session variables. A rebuilt session (the server died with the machine) runs its recorded commands at once instead
+-- of parking each behind a Press-ENTER banner; the zellij discovery hook decides what gets recorded. A gated client waits for one line:
+-- zellij sends its startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup
+-- size. Spawns carrying these args start at wezterm.home_dir.
 function M.workspace_row(name)
     for _, w in ipairs(rows.workspaces) do
         if w.name == name then
@@ -43,9 +35,22 @@ function M.workspace_row(name)
     end
 end
 
-function M.workspace_cwd(name)
+function M.session_args(name, gated)
     local w = M.workspace_row(name)
-    return w and w.cwd
+    local launch = 'unset __MISE_DIFF __MISE_SESSION __HM_SESS_VARS_SOURCED __HM_ZSH_SESS_VARS_SOURCED; cd -- "$1" && shift && exec "$@"'
+    local body = gated and "read -r _; " .. launch or launch
+    return {
+        rows.paths.zsh,
+        "-lc",
+        body,
+        "zsh",
+        w and w.cwd or wezterm.home_dir,
+        rows.paths.zellij,
+        "attach",
+        "--create",
+        "--force-run-commands",
+        name,
+    }
 end
 
 -- Destructive-action gate: the native Confirmation overlay wraps the action at build time.
@@ -79,8 +84,8 @@ local function focus_float(cmd)
 end
 
 -- Floating utility deck: float rows shape the spawn natively — width/height ride wezterm.mux.spawn_window as cell counts and the
--- window level lands through SetWindowLevel. Workspace-scoped rows take the active workspace row's float policy, so a remote
--- workspace's floats read visibly distinct. The spawn rides a pcall rail: a failure lands a log line, never an unhandled callback
+-- window level lands through SetWindowLevel. Workspace-scoped rows take the active workspace row's float policy, so each
+-- workspace's floats take its own shape. The spawn rides a pcall rail: a failure lands a log line, never an unhandled callback
 -- fault (the second result is the error value).
 function M.spawn_float(cmd)
     if focus_float(cmd) then
@@ -121,61 +126,63 @@ function M.spawn_float(cmd)
     end
 end
 
--- Command rows project to actions once: one factory per kind; a destructive row wraps its action in the confirm gate
--- at build time; unknown kinds fault loudly and drop from the palette.
-local command_kinds = {
-    float = function(cmd)
-        return wezterm.action_callback(function()
-            M.spawn_float(cmd)
-        end)
-    end,
-    domain = function(cmd)
-        return wezterm.action_callback(function(window, pane)
-            window:perform_action(act.SpawnCommandInNewWindow({ domain = { DomainName = cmd.domain } }), pane)
-        end)
-    end,
-}
-
+-- Command rows project to float actions once; a destructive row wraps its action in the confirm gate at build time.
 local function command_action(cmd)
-    local kind = command_kinds[cmd.kind]
-    if not kind then
-        wezterm.log_error("deck: no handler for command kind " .. tostring(cmd.kind))
-        return nil
-    end
-    local action = kind(cmd)
+    local action = wezterm.action_callback(function()
+        M.spawn_float(cmd)
+    end)
     if cmd.destructive then
         return M.confirm("Run destructive deck command: " .. cmd.label .. "?", action)
     end
     return action
 end
 
--- Quick-select action bus: per-row `select` arms convert the selected span to an estate action; rows without an arm keep the native clipboard default.
-local select_kinds = {
-    ["edit"] = function(_, pane, sel)
-        local file, line = sel:match("^(.-):(%d+)")
-        if not file then
-            return
+-- Every WezTerm pane is a zellij client started at the home directory, so a span's directory is the cwd of the pane the client focuses:
+-- list-clients names each client's focused pane and list-panes carries every pane's cwd.
+local function zellij_action(session, args)
+    local argv = { rows.paths.zellij, "--session", session, "action" }
+    for _, arg in ipairs(args) do
+        argv[#argv + 1] = arg
+    end
+    local ok, stdout, stderr = wezterm.run_child_process(argv)
+    if not ok then
+        wezterm.log_error("deck: zellij action " .. args[1] .. " failed: " .. stderr)
+        return nil
+    end
+    return stdout
+end
+
+local function focused_cwd(session)
+    local clients = zellij_action(session, { "list-clients" })
+    local panes = clients and zellij_action(session, { "list-panes", "--all", "--json" })
+    if not panes then
+        return nil
+    end
+    local id = tonumber(clients:match("\n%s*%d+%s+terminal_(%d+)"))
+    for _, p in ipairs(wezterm.json_parse(panes)) do
+        if not p.is_plugin and p.id == id then
+            return p.pane_cwd
         end
-        local cwd = pane:get_current_working_dir()
-        local host = cwd and cwd.host and cwd.host:gsub("%..*", "") or nil
-        if host and host ~= wezterm.hostname():gsub("%..*", "") then
-            -- Remote pane: a local nvim float cannot reach the remote path.
-            wezterm.log_warn("deck: quick-edit blocked on remote pane " .. host)
+    end
+    wezterm.log_error("deck: session " .. session .. " has no focused terminal pane")
+    return nil
+end
+
+-- Quick-select action bus: per-row `select` arms convert the selected span to a deck action; rows without an arm keep the native clipboard default.
+-- The editor starts through zsh so .zshenv seats the session environment the launchd PATH lacks.
+local select_kinds = {
+    ["edit"] = function(window, _, sel)
+        local file, line = sel:match("^(.-):(%d+)")
+        local cwd = file and focused_cwd(window:active_workspace())
+        if not cwd then
             return
         end
         M.spawn_float({
             id = "quick-edit",
             float = "utility",
-            cwd = cwd and cwd.file_path or nil,
-            args = { rows.paths.nvim, "+" .. line, file },
+            cwd = cwd,
+            args = { rows.paths.zsh, "-c", 'exec "$@"', "zsh", rows.paths.nvim, "+" .. line, file },
         })
-    end,
-    ["domain"] = function(window, pane, sel)
-        local domain = rows.host_domains[sel]
-        if not domain then
-            return
-        end
-        window:perform_action(act.SpawnCommandInNewWindow({ domain = { DomainName = domain } }), pane)
     end,
 }
 
@@ -206,7 +213,7 @@ end
 
 local function switch_workspace(window, pane, name)
     -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
-    local spawn = { args = M.session_args(name), cwd = M.workspace_cwd(name) }
+    local spawn = { args = M.session_args(name), cwd = wezterm.home_dir }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
 end
 
@@ -235,8 +242,8 @@ local function nav_action(row)
     end)
 end
 
--- Guarded broadcast: SSH-domain safety then destructive confirmation, only then the plugin toggle. Disabling an active
--- sync never prompts. The enable and confirm actions build once; the per-press body only performs them.
+-- Guarded broadcast: destructive confirmation, only then the plugin toggle. Disabling an active sync never prompts. The enable and
+-- confirm actions build once; the per-press body only performs them.
 local function guarded_sync_action(sync)
     local enable = wezterm.action_callback(function(win, p)
         win:perform_action(sync.toggle, p)
@@ -247,19 +254,12 @@ local function guarded_sync_action(sync)
             window:perform_action(sync.toggle, pane)
             return
         end
-        for _, p in ipairs(window:active_tab():panes()) do
-            local domain = p:get_domain_name()
-            if domain ~= "local" then
-                window:toast_notification("Deck", "sync-panes blocked: remote pane in tab (" .. domain .. ")", nil, 4000)
-                return
-            end
-        end
         window:perform_action(confirm_enable, pane)
     end)
 end
 
 -- Chord-row action dispatch: semantic id -> action, built once. Total over the generated vocabulary minus the
--- plugin-owned sync row and class-routed nav rows; the build validator proves every row id has an arm in this file.
+-- plugin-owned sync row and class-routed nav rows.
 local function key_actions(launcher, quick_select)
     local prompt = {
         description = "New workspace name:",
@@ -275,7 +275,7 @@ local function key_actions(launcher, quick_select)
         ["paste"] = act.PasteFrom("Clipboard"),
         ["spawn-window"] = wezterm.action_callback(function(window, _)
             local ws = window:active_workspace()
-            wezterm.mux.spawn_window({ workspace = ws, cwd = M.workspace_cwd(ws), args = M.session_args(ws) })
+            wezterm.mux.spawn_window({ workspace = ws, cwd = wezterm.home_dir, args = M.session_args(ws) })
         end),
         ["quit"] = act.QuitApplication,
         ["hide-app"] = act.HideApplication,
@@ -317,10 +317,10 @@ function M.apply(config)
     -- control (`wezterm cli spawn` without a prog).
     config.default_prog = M.session_args(config.default_workspace)
 
-    -- Launcher menu: non-destructive float command rows become launch items.
+    -- Launcher menu: non-destructive command rows become launch items.
     config.launch_menu = {}
     for _, cmd in ipairs(rows.commands) do
-        if cmd.kind == "float" and not cmd.destructive then
+        if not cmd.destructive then
             table.insert(config.launch_menu, { label = cmd.label, args = cmd.args })
         end
     end
@@ -329,10 +329,7 @@ function M.apply(config)
     -- (a per-open rebuild registers a fresh callback set on every open).
     M.palette = {}
     for _, cmd in ipairs(rows.commands) do
-        local action = command_action(cmd)
-        if action then
-            M.palette[#M.palette + 1] = { brief = cmd.label, icon = rows.palette_icons.command, action = action }
-        end
+        M.palette[#M.palette + 1] = { brief = cmd.label, icon = rows.palette_icons.command, action = command_action(cmd) }
     end
     for _, pattern in ipairs(rows.quick_select) do
         M.palette[#M.palette + 1] = {
@@ -358,7 +355,7 @@ function M.apply(config)
     -- Quick select skips the paste action on a plain selection; the launcher carries its chrome rows.
     local quick_select = act.QuickSelectArgs({ skip_action_on_paste = true })
     local launcher = {
-        flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES|DOMAINS|LAUNCH_MENU_ITEMS",
+        flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES|LAUNCH_MENU_ITEMS",
         title = "deck launcher",
         help_text = "Enter=run  Esc=cancel  /=filter",
         fuzzy_help_text = "Launcher: ",
@@ -396,7 +393,7 @@ function M.apply(config)
             -- Active broadcast is the danger state everywhere: this border and the events.lua [SYNC] chip read one role.
             border_color = rows.theme.roles.state.danger,
         })
-        -- Wrap the plugin-inserted toggle with the SSH-domain + confirmation guard.
+        -- Wrap the plugin-inserted toggle with the confirmation guard.
         local guarded = guarded_sync_action(sync)
         for _, k in ipairs(config.keys) do
             if k.key == sync_row.key and k.mods == sync_row.mods then

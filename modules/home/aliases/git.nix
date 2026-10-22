@@ -70,7 +70,6 @@
     ["gwd" "forgit::worktree::delete" "Interactive worktree delete" "destructive"]
   ];
   git-tools = [
-    ["lg" "lazygit" "Lazygit TUI"]
     ["ghpr" "gh pr list" "List pull requests; pr stays the paginate binary"]
     ["prc" "gh pr create" "Create pull request"]
     ["prv" "gh pr view" "View pull request"]

@@ -5,14 +5,14 @@
 # Path          : modules/home/programs/shell-tools/process-compose.nix
 # ----------------------------------------------------------------------------
 # Non-container process orchestration for project-local service meshes; the package row lives in the owner table. Container-tools owns the
-# container/Kubernetes axis and launchd owns durable machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
+# container axis and launchd owns durable machine services; process-compose is a project-owned foreground runner, so shell-tools owns it.
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) palette roles;
+  inherit (config.forge.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
 
   # theme.yaml backs the TUI "Custom Style" selector entry.
@@ -64,10 +64,7 @@ in {
 
   # settings.yaml is TUI-mutated state (theme/sort auto-save); seed the custom style selection once, never overwrite later user edits.
   home.activation.seedProcessComposeSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    settings="${config.xdg.configHome}/process-compose/settings.yaml"
-    if [ ! -f "$settings" ]; then
-      run mkdir -p "${config.xdg.configHome}/process-compose"
-      run sh -c "printf 'theme: Custom Style\n' > \"$settings\""
-    fi
+    [ -f "${config.xdg.configHome}/process-compose/settings.yaml" ] \
+      || run install -Dm644 ${yamlFormat.generate "process-compose-settings" {theme = "Custom Style";}} "${config.xdg.configHome}/process-compose/settings.yaml"
   '';
 }

@@ -4,8 +4,8 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/rust-tools.nix
 # ----------------------------------------------------------------------------
-# Cargo's user configuration, read by every cargo run on the machine from any directory. The toolchain is each project's rust-toolchain.toml
-# under the manually installed rustup, never a machine package.
+# Cargo's user configuration, read by every cargo run on the machine from any directory. The toolchain is each project's rust-toolchain.toml,
+# installed through rustup by mise's rust backend, never a machine package.
 {config, ...}: {
   # One build directory serves every workspace that names none of its own, so a crate compiled once (same version, features, profile, flags, and
   # toolchain) is reused by every other workspace in place of a rebuild, and a workspace's target directory holds only its final artifacts.

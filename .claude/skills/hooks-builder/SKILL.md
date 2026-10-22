@@ -12,7 +12,7 @@ description: >-
 
 A hook binds a handler — shell command, HTTP endpoint, MCP tool call, single-turn prompt, or multi-turn agent — to a lifecycle event, filtered by a matcher and an optional `if` rule. Event selection decides what the automation intercepts, handler selection decides whether the verdict is deterministic or judged, and control-channel selection decides how it binds: exit 2 with a stderr reason is the one blocking primitive identical on both providers, and exit-0 stdout JSON is the scalpel that rewrites input, redacts output, or injects context.
 
-Build order: pick the event, pick the handler, write the config into the provider's settings surface, then prove it with a direct stdin replay. A Python body draws its dependencies from the estate's admitted uv-resolvable libraries — `msgspec` for wire admission, `anyio` for structured concurrency and subprocess, `httpx` for transport, `stamina` for retry — composing each primitive at full depth, `msgspec`-lean on the hot path and richer off it.
+Build order: pick the event, pick the handler, write the config into the provider's settings surface, then prove it with a direct stdin replay. Draw a Python body's dependencies from these uv-resolvable libraries — `msgspec` for wire admission, `anyio` for structured concurrency and subprocess, and `httpx` for transport — composing each primitive at full depth, `msgspec`-lean on the hot path and richer off it.
 
 ## [01]-[ROUTING]
 

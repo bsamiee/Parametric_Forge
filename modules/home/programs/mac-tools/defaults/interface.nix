@@ -14,7 +14,7 @@
     };
   };
 in {
-  estate.userDefaults = {
+  forge.userDefaults = {
     # --- [DOCK_CONFIGURATION]
     "com.apple.dock" = {
       orientation = "bottom";
@@ -123,8 +123,8 @@ in {
     };
     # --- [SPACES_CONFIGURATION]
     "com.apple.spaces".spans-displays = false;
-    # Control Center/menu-bar layout has no supported defaults surface on Tahoe (Edit Controls owns it); Ice manages menu-bar items and
-    # AlDente owns battery presentation, so no controlcenter rows exist here.
+    # Control Center/menu-bar layout has no supported defaults surface on Tahoe (Edit Controls owns it) and AlDente owns battery presentation,
+    # so no controlcenter rows exist here.
     # --- [GLOBAL_SYSTEM_DEFAULTS]
     NSGlobalDomain = {
       AppleInterfaceStyle = "Dark";
@@ -138,8 +138,7 @@ in {
       AppleMeasurementUnits = "Inches";
       AppleMetricUnits = 0;
       AppleFontSmoothing = 0;
-      # Menu-bar density: native is 16/16; 12/6 tightens one step without crowding. Ice's spacing slider writes the same keys into the
-      # ByHost store, which shadows these rows — its offset stays zeroed so this declaration owns the surface.
+      # Menu-bar density: native is 16/16; 12/6 tightens one step without crowding.
       NSStatusItemSpacing = 12;
       NSStatusItemSelectionPadding = 6;
       NSTableViewDefaultSizeMode = 1;

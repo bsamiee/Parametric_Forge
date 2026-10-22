@@ -4,15 +4,14 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/pik.nix
 # ----------------------------------------------------------------------------
-# pik (Process Interactive Kill): fuzzy process finder and killer; config is generator-owned and lands where pik resolves it per OS —
-# ~/Library/Application Support on macOS, $XDG_CONFIG_HOME/pik on Linux.
+# pik (Process Interactive Kill): fuzzy process finder and killer; config is generator-owned and lands where pik resolves it on macOS,
+# ~/Library/Application Support.
 {
   config,
-  lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) roles;
+  inherit (config.forge.theme) roles;
   toml = pkgs.formats.toml {};
   scrollbar = {
     thumb_symbol = "█";
@@ -47,7 +46,7 @@
             fg = roles.text.primary.hex;
             bg = roles.surface.raised.hex;
           };
-          # Selection rides the focus fill with inverse text, matching every estate picker.
+          # Selection rides the focus fill with inverse text, matching every themed picker.
           selected = {
             fg = roles.text.inverse.hex;
             bg = roles.focus.active.hex;
@@ -82,10 +81,5 @@
 in {
   home.packages = [pkgs.pik];
 
-  home.file = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-    "Library/Application Support/pik/config.toml".source = configToml;
-  };
-  xdg.configFile = lib.optionalAttrs (!pkgs.stdenv.hostPlatform.isDarwin) {
-    "pik/config.toml".source = configToml;
-  };
+  home.file."Library/Application Support/pik/config.toml".source = configToml;
 }

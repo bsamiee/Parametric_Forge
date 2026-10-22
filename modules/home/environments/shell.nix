@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/environments/shell.nix
 # ----------------------------------------------------------------------------
-# Shell configuration environment variables and their GUI launchd domain replay
+# Shell environment variables, their GUI launchd domain replay, and the launchd agent row every dev.bsamiee.<name> agent is built from
 {
   config,
   launchdAgent,
@@ -21,16 +21,16 @@
     xdgDataHome = config.xdg.dataHome;
     xdgStateHome = config.xdg.stateHome;
   };
-  # A fresh GUI domain carries no locale, XDG roots, or toolchain PATH, and `launchctl setenv` state dies with the login session, so the rows
-  # replay at every login. The HM xdg module derives the XDG rows.
+  # A fresh GUI domain carries no locale or XDG roots, and `launchctl setenv` state dies with the login session, so the rows replay at every
+  # login. The HM xdg module derives the XDG rows. PATH is no row: launchd takes the user domain's PATH from `launchctl config user path`
+  # alone, which nix-darwin activation writes (modules/darwin/settings/system.nix).
   guiEnvRows =
     toolchainEnv.scientificSessionEnv
     // toolchainEnv.launchdEnv
     // {
-      PATH = lib.concatStringsSep ":" toolchainEnv.launchdPathEntries;
       # The 1Password agent for every process the domain launches afterwards (1Password's SSH client compatibility form), in place of the
       # identity-less agent launchd hands out.
-      SSH_AUTH_SOCK = config.estate.ssh.identityAgent;
+      SSH_AUTH_SOCK = config.forge.ssh.identityAgent;
       inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };
   guiEnv = pkgs.writeShellApplication {
@@ -38,6 +38,26 @@
     text = lib.concatLines (lib.mapAttrsToList (name: value: "/bin/launchctl setenv ${name} ${lib.escapeShellArg value}") guiEnvRows);
   };
 in {
+  # --- [LAUNCHD_AGENT_ROW]
+  # One launchd-agent grammar: label, argv, background class, and one dual log per agent; every other key (schedule, KeepAlive, RunAtLoad,
+  # ThrottleInterval) rides as given.
+  _module.args.launchdAgent = {
+    name,
+    argv,
+    ...
+  } @ row: {
+    enable = true;
+    config =
+      {
+        Label = "dev.bsamiee.${name}";
+        ProgramArguments = argv;
+        ProcessType = "Background";
+        StandardOutPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+        StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/${name}.log";
+      }
+      // removeAttrs row ["name" "argv"];
+  };
+
   # --- [USER_SESSION_PATH]
   # One vector for the session and the launchd domain; Home Manager prepends it to the inherited PATH, so a non-login shell (VS Code) resolves
   # the same order as a login shell.
@@ -50,10 +70,10 @@ in {
     // {
       # --- [SHELL_INTERNALS]
       # procs reads no pager env var; its pager is config-owned, not env; less keeps lesshst under XDG_STATE_HOME on its own.
-      RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the estate palette variant
+      RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the theme palette variant
 
       # --- [TOOL_CONFIGURATIONS]
-      # watchexec, fd, rclone, bat, xh, and trippy read their XDG paths on their own; ripgrep's path row rides the toolchain-env `all` class.
+      # watchexec, fd, rclone, bat, xh, and trippy read their XDG paths on their own.
       # Timeout drops are by-design (command_timeout keeps the prompt under budget); error level stops the [WARN] pair a
       # cold toolchain spawn (first node exec after boot) would otherwise print into the terminal.
       STARSHIP_LOG = "error";
@@ -88,7 +108,6 @@ in {
   # --- [GUI_SESSION_ENVIRONMENT]
   # RunAtLoad replays the rows at each login, and a changed row set rewrites the argv, so the switch that lands it reloads and reruns the agent.
   # An app login restores before launchd runs its agents keeps its launch environment; WezTerm projects its own spawn rows (apps/wezterm/deck.lua).
-  estate.bundleApps.gui-env = "GUI Environment";
   launchd.agents.gui-env = launchdAgent {
     name = "gui-env";
     argv = ["${guiEnv}/bin/gui-env"];

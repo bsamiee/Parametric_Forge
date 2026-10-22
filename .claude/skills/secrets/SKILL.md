@@ -12,7 +12,7 @@ description: >-
 
 `op` owns permanent local and session custody. Doppler owns project configuration and explicit process delivery.
 
-Topology — projects, environments, configs, service tokens, directory scopes — lives as IaC rows in `Parametric_Forge/services/topology.ts`, materialized by `estate.ts` and applied by `driver.ts` over the Pulumi Automation API. `doppler` reads and writes secret values against declared configs; `doppler run` and owner-specific downloads inject values at the consuming process; `~/.doppler` holds CLI scope and authentication state.
+Topology — projects, environments, configs, service tokens, directory scopes — lives as IaC rows in `Parametric_Forge/services/topology.ts`, materialized by `program.ts` and applied by `driver.ts` over the Pulumi Automation API. `doppler` reads and writes secret values against declared configs; `doppler run` and owner-specific downloads inject values at the consuming process; `${XDG_CONFIG_HOME}/doppler` holds CLI scope and authentication state.
 
 ## [01]-[ROUTING]
 
@@ -20,8 +20,8 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 
 ## [02]-[RESOLUTION]
 
-- `~/.doppler` is the CLI config dir; scopes ride `~/.doppler/.doppler.yaml`, written by `doppler configure set` through the driver's `scopes apply`.
-- `doppler.yaml` inside a repo is vendor setup guidance, never the estate scope owner; the estate carries none.
+- `${XDG_CONFIG_HOME}/doppler` is the CLI config dir (`DOPPLER_CONFIG_DIR`); scopes ride `${XDG_CONFIG_HOME}/doppler/.doppler.yaml`, written by `doppler configure set` through the driver's `scopes` verb.
+- `doppler.yaml` inside a repo is vendor setup guidance, never the machine's scope owner; Forge carries none.
 - Precedence, highest first: a service token's embedded project/config, runtime flags, env vars, config-file scope.
 - Config-file scope resolves an exact directory match before the nearest ancestor.
 - Scope env vars: `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, `DOPPLER_CONFIG`, `DOPPLER_CONFIG_DIR`, `DOPPLER_PASSPHRASE`.
@@ -60,12 +60,12 @@ Topology — projects, environments, configs, service tokens, directory scopes �
 |  [06]   | Personal-vault SSH item         | `op item get "Bardia SSH Key" --vault Personal`                       |
 |  [07]   | Rename an item to its real name | `op item edit "<old-title>" --title "<official-name>" --vault Tokens` |
 
-- 1Password's desktop-app SSH agent serves the key to `ssh`, `git`, WezTerm, Yazi, and rclone through its socket; the item ref lives in `1Password/ssh/agent.toml`, never a private key on disk.
+- 1Password's desktop-app SSH agent serves the key to `ssh`, `git`, WezTerm, and rclone through its socket; the item ref lives in `1Password/ssh/agent.toml`, never a private key on disk.
 - Read a secret only to verify presence or wire a one-off; standing local consumption rides the activation-generated session cache.
 
 ## [05]-[SESSION_CUSTODY]
 
-`op inject` resolves `~/.config/op/env.template` into the mode-600 `~/.config/hm-op-session.sh` cache on a switch whose template store path changed; an unchanged template skips the inject and the unlock. Every zsh sources that cache from `.zshenv`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their material explicitly with the owning project and config.
+`op inject` resolves `~/.config/op/env.template` into the mode-600 `${XDG_STATE_HOME}/op/session.sh` cache on a switch whose template store path changed; an unchanged template skips the inject and the unlock. Every zsh sources that cache from `.zshenv`; `gui-op-secrets` projects the same names into the launchd GUI domain for newly spawned applications. Process-specific Doppler consumers fetch their material explicitly with the owning project and config.
 
 - `~/.config/op/env.template` owns the local session key set; activation keeps values outside the Nix store.
 - `.zshenv` is the shell source path; `gui-op-secrets` is the GUI projection path.

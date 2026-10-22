@@ -4,14 +4,14 @@
 -- License       : MIT
 -- Path          : modules/home/programs/apps/nvim/lua/plugins/lint.lua
 -- ----------------------------------------------------------------------------
--- Non-LSP diagnostic lane over generated linter rows (estate/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from LSP.
--- Filetype lanes index rows directly — a new Nix lint row lands with zero edits here. GitHub Actions lanes gate on workflow path, never plain yaml.
+-- Non-LSP diagnostic lane over generated linter rows (forge/tools.lua): spawn-parse-publish through vim.diagnostic with namespace separation from LSP.
+-- Filetype lanes index rows directly — a new Nix lint row lands with zero edits here.
 
 local lint = require("lint")
-local rows = require("estate.tools").lint
+local rows = require("forge.tools").lint
 
 -- Resolvability cache keyed on the linter definition's own cmd: an unresolvable or undefined linter degrades to silence (nvim-lint would ERROR-notify
--- per event); :checkhealth estate owns the availability proof.
+-- per event).
 local resolvable = setmetatable({}, {
     __index = function(cache, name)
         local ok, def = pcall(require, "lint.linters." .. name)
@@ -24,9 +24,6 @@ local resolvable = setmetatable({}, {
 local function names_for(buf)
     local names = vim.deepcopy(rows.ft[vim.bo[buf].filetype] or {})
     vim.list_extend(names, rows.global)
-    if vim.api.nvim_buf_get_name(buf):match("%.github/workflows/") then
-        vim.list_extend(names, rows.workflow)
-    end
     return vim.tbl_filter(function(name)
         return resolvable[name]
     end, names)

@@ -4,121 +4,24 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/posting.nix
 # ----------------------------------------------------------------------------
-# Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the estate
-# palette owner; user collections stay mutable state, while the services collection is a generated probe surface over service-row
-# credential NAMES — `services-console` brokers values into a mode-600 launch-time env file, never a durable file.
+# Terminal API workspace with versionable request collections; the package row lives in the owner table. Theme is projected from the palette
+# and roles of modules/home/theme.nix; request collections stay mutable user state.
 {
   config,
-  lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) palette roles;
+  inherit (config.forge.theme) palette roles;
   yamlFormat = pkgs.formats.yaml {};
-
-  # Credential custody coordinates; probe rows reference keys by name only.
-  probeSources = {
-    agent = {
-      project = "agent-runtime";
-      config = "dev";
-    };
-    machine = {
-      project = "parametric-forge";
-      config = "dev_machine";
-    };
-  };
-
-  probes = [
-    {
-      name = "github-identity";
-      description = "Authenticated GitHub identity behind the services PAT";
-      url = "https://api.github.com/user";
-      source = "agent";
-      headers = [
-        {
-          name = "Authorization";
-          value = "Bearer \${GITHUB_TOKEN}";
-        }
-        {
-          name = "Accept";
-          value = "application/vnd.github+json";
-        }
-      ];
-    }
-    {
-      name = "github-rulesets";
-      description = "Live main-guard ruleset state; compare against services/topology.ts";
-      url = "https://api.github.com/repos/bsamiee/Parametric_Forge/rulesets";
-      source = "agent";
-      headers = [
-        {
-          name = "Authorization";
-          value = "Bearer \${GITHUB_TOKEN}";
-        }
-        {
-          name = "Accept";
-          value = "application/vnd.github+json";
-        }
-      ];
-    }
-    {
-      name = "greptile-index";
-      description = "Greptile index currency for the Forge repo (status + sha)";
-      url = "https://api.greptile.com/v2/repositories/github%3Amain%3Absamiee%2FParametric_Forge";
-      source = "agent";
-      headers = [
-        {
-          name = "Authorization";
-          value = "Bearer \${GREPTILE_API_KEY}";
-        }
-        {
-          name = "X-GitHub-Token";
-          value = "\${GITHUB_TOKEN}";
-        }
-      ];
-    }
-    {
-      name = "cachix-cache";
-      description = "${config.estate.cachix.cache} cache metadata";
-      url = "https://app.cachix.org/api/v1/cache/${config.estate.cachix.cache}";
-      source = "machine";
-      headers = [
-        {
-          name = "Authorization";
-          value = "Bearer \${CACHIX_AUTH_TOKEN}";
-        }
-      ];
-    }
-  ];
-
-  collectionFiles = lib.listToAttrs (map (row: {
-      name = "posting/collections/services/${row.name}.posting.yaml";
-      value.source = yamlFormat.generate "posting-${row.name}" {inherit (row) name description url headers;};
-    })
-    probes);
-
-  # Launch-time credential materialization: one env render per distinct custody coordinate, mode-600 tmpfile, removed on exit — no secret at rest.
-  servicesConsole = pkgs.writeShellApplication {
-    name = "services-console";
-    runtimeInputs = [pkgs.coreutils pkgs.doppler pkgs.posting];
-    text = ''
-      env_file="$(mktemp)"
-      trap 'rm -f "$env_file"' EXIT
-      ${lib.concatMapStringsSep "\n" (
-        source: ''doppler secrets download --project ${source.project} --config ${source.config} --format env --no-file >>"$env_file"''
-      ) (lib.unique (map (row: probeSources.${row.source}) probes))}
-      posting --collection "${config.xdg.dataHome}/posting/collections/services" --env "$env_file" "$@"
-    '';
-  };
 
   # User themes load from $XDG_DATA_HOME/posting/themes and request variables come from explicit --env files alone, both posting's defaults.
   postingConfig = {
-    theme = "estate";
+    theme = "forge";
     watch_themes = false;
   };
 
   postingTheme = {
-    name = "estate";
+    name = "forge";
     primary = roles.accent.primary.hex;
     secondary = roles.accent.structural.hex;
     accent = roles.accent.secondary.hex;
@@ -160,9 +63,6 @@
     };
   };
 in {
-  home.packages = [servicesConsole];
   xdg.configFile."posting/config.yaml".source = yamlFormat.generate "posting-config" postingConfig;
-  xdg.dataFile =
-    {"posting/themes/estate.yaml".source = yamlFormat.generate "posting-theme" postingTheme;}
-    // collectionFiles;
+  xdg.dataFile."posting/themes/forge.yaml".source = yamlFormat.generate "posting-theme" postingTheme;
 }

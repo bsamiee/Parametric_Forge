@@ -9,13 +9,12 @@ allowBuilds:
 
 catalog:
     # substrate — the Effect core family; moves as one peer-locked wave
-    effect: 3.21.4
-    "@effect/platform": 0.97.2
-    "@effect/platform-node": 0.108.2
+    effect: 4.0.5
+    "@effect/platform-node": 4.0.5
     # services — the Pulumi engine and provider set; pins follow package schema
-    "@pulumi/pulumi": 3.262.0
+    "@pulumi/pulumi": 3.270.0
     "@pulumi/github": 6.15.0
     "@pulumiverse/doppler": 0.9.0
-    # toolchain — TypeScript 7 (the native compiler) is the one gate; the Nix roster carries the same major for the editor
+    # toolchain — TypeScript 7 (the native compiler) is the one gate
     typescript: 7.0.2
     "@types/node": 26.1.1

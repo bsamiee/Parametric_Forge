@@ -28,8 +28,7 @@ Fix prose by silent removal, never by mutation in place: delete the defect whole
 - [03]-[README](templates/readme.template.md): Exact structure, slots only
 - [04]-[ARCHITECTURE](templates/architecture.template.md): Exact structure, replace only the slots
 - [05]-[SPEC](templates/spec.template.md): Exact section spine, slots carry their budgets
-- [06]-[API_CATALOG](templates/api-catalog.template.md): Exact structure, replace only the slots
-- [07]-[RULINGS](templates/rulings.template.md): Permanent decision registry
+- [06]-[RULINGS](templates/rulings.template.md): Permanent decision registry
 
 [EXAMPLES]: Consult the matching symptom-indexed set before building or repairing the container:
 - [01]-[TABLES](examples/tables.md): Table crimes and their structural repairs
@@ -110,7 +109,6 @@ Routing is the one job that licenses linking and naming siblings; every other pa
 
 - Give each example one demonstration region no sibling example repeats.
 - Show the form at real composed scale — admission, dispatch, and policy in one body, growth axis visible — never an isolated minimum.
-- Ride diagram fences on the mermaid-diagramming skill for admission, type selection, construction, and render validation.
 - Admit a diagram only as a declared regenerable representation whose fence carries structural payload only; the reader's renderer owns appearance.
 
 ## [09]-[MARKER_SYSTEMS]

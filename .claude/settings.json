@@ -1,18 +1,11 @@
 {
     "$schema": "https://json.schemastore.org/claude-code-settings.json",
     "effortLevel": "high",
-    "cleanupPeriodDays": 30,
-    "skillOverrides": {
-        "rhino-mcp": "name-only"
-    },
     "claudeMdExcludes": [
         "**/.cache/**/CLAUDE.md",
         "**/node_modules/**/CLAUDE.md",
         "**/bin/**/CLAUDE.md",
         "**/obj/**/CLAUDE.md",
         "**/.artifacts/**/CLAUDE.md"
-    ],
-    "enabledPlugins": {
-        "argus@rasm": true
-    }
+    ]
 }

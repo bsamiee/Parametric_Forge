@@ -4,54 +4,21 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/eza.nix
 # ----------------------------------------------------------------------------
-# Modern ls replacement themed from the estate palette owner
+# Modern ls replacement themed from the palette and roles of modules/home/theme.nix
 {
   config,
   pkgs,
   ...
 }: let
   # palette retained for the one hue with no semantic role: string-yellow (size emphasis, octal, build kind, SELinux type).
-  inherit (config.estate.theme) roles palette;
-  yamlFormat = pkgs.formats.yaml {};
-  treeIgnoreGlobs = ".git|.direnv|.devenv|.cache|.pytest_cache|.mypy_cache|.ruff_cache|__pycache__|node_modules|obj|dist|build|target|coverage|.next|.nuxt|.turbo|.vite|.parcel-cache|vendor";
+  inherit (config.forge.theme) roles palette;
+  # --all shows the dotfile trees an agent navigates by (.claude, .github, a lone .gitkeep); --git-ignore lets each repo's .gitignore prune
+  # its own outputs.
   treeCommand = pkgs.writeShellApplication {
     name = "tree";
     runtimeInputs = [pkgs.eza];
-    # --all is baked in: the dotfile surfaces an agent navigates by — .claude, .github, a package .planning, a lone .gitkeep proving a stub
-    # directory is populated — are load-bearing, and the ls alias already lists hidden. --git-ignore is what makes that affordable, so the
-    # repo's own .gitignore retires the build, venv, and artifact trees instead of a glob list chasing them; TREE_GITIGNORE=0 admits
-    # them back. --ignore-glob still covers the non-git checkout. A caller-supplied -a is dropped rather than forwarded, because eza reads a
-    # second --all as "show . and .." and rejects it beside --tree.
     text = ''
-      args=()
-      for a in "$@"; do
-        case "$a" in
-          -a | --all) ;;
-          -a?*) args+=("-''${a#-a}") ;;
-          *) args+=("$a") ;;
-        esac
-      done
-      gitignore=(--git-ignore)
-      if [[ "''${TREE_GITIGNORE:-1}" == 0 ]]; then gitignore=(); fi
-      exec eza \
-        --tree \
-        --level "''${TREE_LEVEL:-4}" \
-        --all \
-        --long \
-        --header \
-        --bytes \
-        --total-size \
-        --git \
-        --group-directories-first \
-        --icons=auto \
-        --classify=auto \
-        --no-quotes \
-        --no-permissions \
-        --no-user \
-        --time-style=relative \
-        "''${gitignore[@]}" \
-        --ignore-glob "''${TREE_IGNORE:-${treeIgnoreGlobs}}" \
-        "''${args[@]}"
+      exec eza --tree --level "''${TREE_LEVEL:-4}" --all --git-ignore --group-directories-first "$@"
     '';
   };
 
@@ -194,7 +161,7 @@ in {
     extraOptions = [
       "--group-directories-first"
     ];
+    theme = ezaTheme;
   };
-  xdg.configFile."eza/theme.yml".source = yamlFormat.generate "eza-theme" ezaTheme;
   home.file.".local/bin/tree".source = "${treeCommand}/bin/tree";
 }

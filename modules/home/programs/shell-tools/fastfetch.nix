@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/fastfetch.nix
 # ----------------------------------------------------------------------------
-# System information display themed from the estate palette owner
+# System information display themed from the palette and roles of modules/home/theme.nix
 {config, ...}: let
-  inherit (config.estate.theme) roles;
+  inherit (config.forge.theme) roles;
 in {
   programs.fastfetch = {
     enable = true;
@@ -143,7 +143,7 @@ in {
         {
           type = "terminalfont";
           key = " └   ";
-          format = config.estate.fonts.projections.fastfetchLabel;
+          format = config.forge.fonts.projections.fastfetchLabel;
         }
         {type = "break";}
 

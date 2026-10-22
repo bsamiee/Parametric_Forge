@@ -5,9 +5,7 @@
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
 # Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
-{config, ...}: let
-  lazygitPopup = config.programs.zellij.popupGeometry.lazygit;
-in {
+_: {
   xdg.configFile."zellij/layouts/default.kdl".text = ''
     // Title         : default.kdl
     // Author        : Bardia Samiee
@@ -15,18 +13,9 @@ in {
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
     // ----------------------------------------------------------------------------
-    // Shell-first layout with floating lazygit; nvim spawns via nvim-edit rail
+    // Shell-first layout; nvim spawns via nvim-edit rail
 
     layout {
-        // --- [PANE_TEMPLATES]
-        pane_template name="lazygit" start_suspended=true {
-            command         "lazygit"
-            x               "${lazygitPopup.x}"
-            y               "${lazygitPopup.y}"
-            width           "${lazygitPopup.width}"
-            height          "${lazygitPopup.height}"
-        }
-
         // --- [TAB_TEMPLATES]
         // Top zjstatus: tabs/layout/session. Bottom zjstatus-hints: mode + key ribbon.
         tab_template name="ui" {
@@ -39,10 +28,7 @@ in {
             }
         }
 
-        default_tab_template hide_floating_panes=true {
-            floating_panes {
-                lazygit
-            }
+        default_tab_template {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
             }

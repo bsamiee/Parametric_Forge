@@ -2,9 +2,9 @@
 # Author        : Bardia Samiee
 # Project       : Parametric Forge
 # License       : MIT
-# Path          : modules/common/fonts-catalog.nix
+# Path          : modules/home/fonts-catalog.nix
 # ----------------------------------------------------------------------------
-# Font-package catalog for Home Manager installation and renderer roles. The attr name is the CoreText family; `class`: static | variable | patched.
+# Font-package catalog for Home Manager installation and renderer roles. The attr name is the CoreText family.
 {pkgs}: let
   inherit (pkgs) lib;
   selectPaths = package: paths:
@@ -20,8 +20,8 @@
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
-  # Closed two-register alphabets for terminal-bound render surfaces, owned here so the symbols family's shaping sample derives from the same
-  # columns the theme owner mints glyphs from — one row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
+  # Closed two-register alphabets for terminal-bound render surfaces, owned beside the symbols family the theme owner mints glyphs from — one
+  # row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
   statusAlphabet = [
     ["running" "ea71" "[>]"]
     ["idle" "eabc" "[ ]"]
@@ -53,48 +53,14 @@
 in {
   "Geist Mono" = {
     package = geist;
-    file = "share/fonts/truetype/GeistMono[wght].ttf";
-    class = "variable";
-    roles = ["mono"];
     lineHeight = 0.95;
   };
-  Geist = {
-    package = geist;
-    file = "share/fonts/truetype/Geist[wght].ttf";
-    class = "variable";
-    roles = ["sans"];
-  };
+  Geist.package = geist;
   "Symbols Nerd Font Mono" = {
     package = pkgs.nerd-fonts.symbols-only;
-    file = "share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf";
-    class = "patched";
-    roles = ["symbols"];
     inherit statusAlphabet gitAlphabet;
-    # Proof corpus: powerline/dev glyphs, the container badge (oct-container), and both alphabets' codepoints — the hb-shape zero-.notdef gate
-    # proves every width-load-bearing glyph the estate renders, not a token sample.
-    sample = builtins.concatStringsSep " " (["\\uf07b" "\\ue0b0" "\\ue712" "\\uf121" "\\uf4b7"]
-      ++ map (t: "\\u" + builtins.elemAt t 1) statusAlphabet
-      ++ map (t: "\\u" + builtins.elemAt t 2) gitAlphabet);
   };
-  "Scheherazade New" = {
-    package = pkgs.scheherazade-new;
-    file = "share/fonts/truetype/ScheherazadeNew-Regular.ttf";
-    class = "static";
-    roles = ["script"];
-    sample = "سلام دنیا چطوری";
-  };
-  "Noto Naskh Arabic" = {
-    package = notoArabic;
-    file = "share/fonts/noto/NotoNaskhArabic.ttf";
-    class = "variable";
-    roles = ["script"];
-    sample = "سلام دنیا چطوری";
-  };
-  "Noto Sans Arabic" = {
-    package = notoArabic;
-    file = "share/fonts/noto/NotoSansArabic.ttf";
-    class = "variable";
-    roles = ["script"];
-    sample = "سلام دنیا چطوری";
-  };
+  "Scheherazade New".package = pkgs.scheherazade-new;
+  "Noto Naskh Arabic".package = notoArabic;
+  "Noto Sans Arabic".package = notoArabic;
 }

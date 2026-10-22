@@ -13,31 +13,11 @@
 }: let
   # Plugin admission rows (wasm url, hash, permissions) are the zellij-plugins lane of overlays/manifest.nix.
   pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
-  # zellij PermissionType vocabulary: typed grant rows seed the permission cache; a 1-row bar pane cannot render the interactive prompt.
-  grantVocabulary = [
-    "ReadApplicationState"
-    "ChangeApplicationState"
-    "OpenFiles"
-    "RunCommands"
-    "OpenTerminalsOrPlugins"
-    "WriteToStdin"
-    "WebAccess"
-    "ReadCliPipes"
-    "MessageAndLaunchOtherPlugins"
-    "Reconfigure"
-    "FullHdAccess"
-    "StartWebServer"
-    "InterceptInput"
-    "ReadPaneContents"
-    "RunActionsAsUser"
-    "WriteToClipboard"
-    "ReadSessionEnvironmentVariables"
-  ];
 in {
   imports = [
     ./config.nix # Nix-generated main config
     ./themes/dracula.nix # Nix-generated Dracula theme
-    ./layouts/default.nix # Shell-first layout with floating lazygit
+    ./layouts/default.nix # Shell-first layout
   ];
 
   options.programs.zellij = {
@@ -50,12 +30,6 @@ in {
             lib.mkOption {type = lib.types.strMatching "^[0-9]+%$";});
       });
       default = {
-        lazygit = {
-          x = "10%";
-          y = "5%";
-          width = "80%";
-          height = "80%";
-        };
         yazi = {
           x = "8%";
           y = "6%";
@@ -71,28 +45,23 @@ in {
         };
       };
     };
-
-    # Permission rows per wasm, exact upstream grant names, projected from the manifest lane. Clearing the plugin cache revokes grants —
-    # activation reseeds rows, so a plugin upgrade (cache rebuild) and session resurrection stay distinct.
-    pluginGrants = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.listOf (lib.types.enum grantVocabulary));
-      default = lib.mapAttrs' (name: row: lib.nameValuePair "${name}.wasm" row.permissions) pluginRows;
-    };
   };
 
   config = {
     home.packages = [pkgs.zellij];
 
-    # Grant reconcile, not append: plugDir-scoped rows PROJECT from the declared set every activation — stale plugin rows are pruned,
-    # grant edits propagate, rows outside plugDir (interactive grants for foreign paths) stay untouched.
+    # Grant reconcile, not append: a 1-row bar pane cannot render the interactive permission prompt, so the manifest rows' exact upstream
+    # grant names seed zellij's permission cache. plugDir-scoped rows PROJECT from those rows every activation — stale plugin rows are pruned,
+    # grant edits propagate, rows outside plugDir (interactive grants for foreign paths) stay untouched. Clearing the plugin cache revokes
+    # grants, and the next activation reseeds them.
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
       plugDir = "${config.xdg.configHome}/zellij/plugins";
       permsFile = "${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl";
-      grantBlocks = pkgs.writeText "zellij-plugin-grants.kdl" (lib.concatStrings (lib.mapAttrsToList (wasm: perms: ''
-          "${plugDir}/${wasm}" {
-          ${lib.concatMapStrings (p: "    ${p}\n") perms}}
+      grantBlocks = pkgs.writeText "zellij-plugin-grants.kdl" (lib.concatStrings (lib.mapAttrsToList (name: row: ''
+          "${plugDir}/${name}.wasm" {
+          ${lib.concatMapStrings (p: "    ${p}\n") row.permissions}}
         '')
-        config.programs.zellij.pluginGrants));
+        pluginRows));
       pruneAwk = pkgs.writeText "zellij-grant-prune.awk" ''
         /^"/ { drop = (index($0, q dir) == 1) }
         !drop { print }

@@ -5,16 +5,13 @@
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
 # Machine-wide native command-line tools and runtimes. The per-user profile links bin and man alone (nix-darwin environment.pathsToLink), so a
-# row here lands commands only: a source build reaches each library through the scientificSessionEnv rows of modules/common/toolchain-env.nix,
-# each a store reference, and a ctypes consumer through the runtime-dylibs tree the same file exports. A package landing no command has no
+# row here lands commands only; a project's Pixi environment owns the native libraries its builds link. A package landing no command has no
 # consumer here.
 {
   lib,
   pkgs,
   ...
 }: let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-
   # KTX-Software builds portably under plain CMake; nixpkgs still caps meta.platforms at linux, so the lift is
   # the entire darwin admission. Carries the ktx/ktx2check/toktx CLIs.
   ktxTools = pkgs.ktx-tools.overrideAttrs (prev: {
@@ -22,7 +19,7 @@
   });
 
   geoTools = with pkgs; [
-    gdal # gdalinfo, gdal_translate, ogr2ogr, and the gdal-config the GDAL_CONFIG row names
+    gdal # gdalinfo, gdal_translate, ogr2ogr
     geos # geosop
     proj # proj, cs2cs, projinfo
     netcdf # ncdump, nccopy, ncgen
@@ -35,39 +32,32 @@
     ${lib.getExe pkgs.qpdf-current} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
   '';
 
-  columnarTools = [pkgs.arrow-cpp]; # parquet-reader, parquet-scan, parquet-dump-*; pyarrow reaches the library through the CMAKE_PREFIX_PATH row
+  columnarTools = [pkgs.arrow-cpp]; # parquet-reader, parquet-scan, parquet-dump-*
 
   artifactTools = with pkgs; [
-    file # file; python-magic dlopens libmagic off the runtime dylib tree
-    fontconfig # fc-list, fc-match, fc-cache; weasyprint dlopens libfontconfig off the runtime dylib tree
+    file # file
+    fontconfig # fc-list, fc-match, fc-cache
     ghostscript
     ktxTools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs a consumer spawns to encode textures
     lcms2
-    libheif # heif-enc, heif-dec, heif-info; pi-heif reaches the library through the PKG_CONFIG_PATH row
+    libheif # heif-enc, heif-dec, heif-info
     libjpeg_turbo
     libtiff
     libwebp
     mupdf
     openjpeg
-    pango # pango-view; weasyprint dlopens libpango off the runtime dylib tree
+    pango # pango-view
     qpdf-current
     qpdfCompletion
     tesseract
-    vips # vips, vipsthumbnail; pyvips (ABI mode) dlopens libvips off the runtime dylib tree
+    vips # vips, vipsthumbnail
   ];
 
-  # EnergyPlus/OpenStudio bind macOS only; gmsh is a project row (the PyPI wheel carries the CLI), never a machine package.
-  aecTools = lib.optionals isDarwin [
+  # gmsh is a project row (the PyPI wheel carries the CLI), never a machine package.
+  aecTools = [
     pkgs.energyplus
     pkgs.openstudio
   ];
 in {
-  home.packages =
-    [
-      pkgs.pkg-config # pyicu (icu-config, then pkg-config), h5py, and pi-heif resolve their libraries through it at build time
-    ]
-    ++ geoTools
-    ++ columnarTools
-    ++ artifactTools
-    ++ aecTools;
+  home.packages = geoTools ++ columnarTools ++ artifactTools ++ aecTools;
 }

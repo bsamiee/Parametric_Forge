@@ -5,17 +5,18 @@
 # Path          : modules/home/programs/apps/nvim/default.nix
 # ----------------------------------------------------------------------------
 # Store-owned Neovim rail and Lua fact generator. Home Manager deploys the pinned plugin set (zero network at first start) and one
-# server/tool/chord/syntax inventory projects into generated estate/*.lua modules and .luarc.json. Lua owns runtime behavior; Nix owns
+# server/tool/chord/syntax inventory projects into generated forge/*.lua modules and .luarc.json. Lua owns runtime behavior; Nix owns
 # packages, paths, and facts.
 {
   config,
+  host,
   lib,
   pkgs,
   ...
 }: let
   toLua = lib.generators.toLua {};
   manifest = import ../../../../../overlays/manifest.nix;
-  flakeRoot = config.estate.lsp.flakeRoot;
+  inherit (host) flakeRoot;
   stateHome = config.xdg.stateHome;
 
   # --- [TREESITTER_COMPAT_UNIT_NEOVIM_PIN_NVIM_TREESITTER_MAIN_PARSERS]
@@ -75,7 +76,7 @@
       cmd = ["nixd"];
       filetypes = ["nix"];
       root_markers = ["flake.nix" ".git"];
-      settings.nixd = config.estate.lsp.nixd;
+      settings.nixd = config.forge.lsp.nixd;
     };
     lua_ls = {
       cmd = ["lua-language-server"];
@@ -113,15 +114,6 @@
       root_markers = [".git"];
       settings = {};
     };
-    # jdtls imports a folder without a build file as an invisible project; its source roots, referenced jars, and project JDK arrive as
-    # `java.project.sourcePaths`, `java.project.referencedLibraries`, and `java.configuration.runtimes` settings, so the machine row carries no
-    # project facts: a project's Eclipse .classpath owns them.
-    jdtls = {
-      cmd = ["jdtls"];
-      filetypes = ["java"];
-      root_markers = ["pom.xml" "build.gradle" "build.gradle.kts" ".git"];
-      settings = {};
-    };
     # Roslyn loads no project until a client sends `solution/open`; `--autoLoadProjects` makes the server discover and load them from the
     # workspace folders itself, so vim.lsp without roslyn.nvim gets project-scoped diagnostics, not misc-files mode.
     # `--logLevel` and `--extensionLogDirectory` are mandatory server arguments; the server creates the directory.
@@ -141,11 +133,10 @@
     };
   };
 
-  # --- [TOOL_ROWS_FORMATTERS_LINTERS_SEARCH_PROVIDER_ESTATE_ACTIONS]
-  # Bare names resolve through the per-user profile; the health surface proves resolution (`probes` names the real tools behind sh-wrapped rows).
-  # Estate rows are the register-rail projection inside the editor: `mode` selects the dispatch arm (scratch = capture into a float,
+  # --- [TOOL_ROWS_LINTERS_FORGE_ACTIONS]
+  # Bare names resolve through the per-user profile. Action rows are the register-rail projection inside the editor: `mode` selects the dispatch arm (scratch = capture into a float,
   # pane = zellij floating pane for TUI/long-running commands).
-  estateRows = [
+  actionRows = [
     {
       id = "flake-inputs";
       label = "Flake inputs (nix flake metadata)";
@@ -180,7 +171,6 @@
       id = "generation-diff";
       label = "Generation diff (nvd)";
       argv = ["sh" "-c" "nvd diff $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2)"];
-      probes = ["nvd"];
       mode = "scratch";
     }
     {
@@ -189,7 +179,6 @@
       id = "nix-diff";
       label = "Generation diff, derivation level (nix-diff)";
       argv = ["sh" "-c" ''set -- $(ls -d /nix/var/nix/profiles/system-*-link | sort -V | tail -n 2); left=$(nix-store --query --deriver "$1"); right=$(nix-store --query --deriver "$2"); for d in "$left" "$right"; do [ -e "$d" ] || { echo "deriver not in store: $d (substituted build; use the nvd row)"; exit 1; }; done; nix-diff "$left" "$right" 2>&1 || printf '\nnix-diff aborted: derivation closure incomplete locally (substituted builds); use the nvd row\n' ''];
-      probes = ["nix-diff" "nix-store"];
       mode = "scratch";
     }
     {
@@ -200,9 +189,9 @@
       mode = "pane";
     }
     {
-      id = "redeploy-check";
-      label = "redeploy --check-only";
-      argv = ["redeploy" "--check-only"];
+      id = "redeploy-build";
+      label = "redeploy --build";
+      argv = ["redeploy" "--build"];
       cwd = flakeRoot;
       mode = "pane";
     }
@@ -215,26 +204,7 @@
   ];
 
   toolFacts = {
-    flake_root = flakeRoot;
-    plugins =
-      lib.mapAttrsToList (name: p: {
-        inherit name;
-        path = "${p}";
-      })
-      plugins;
-    inherit grammars;
-    format =
-      {
-        nix = ["alejandra"];
-        sh = ["shfmt"];
-        bash = ["shfmt"];
-        lua = ["stylua"];
-        sql = ["sqruff"];
-      }
-      // lib.genAttrs
-      ["css" "html" "javascript" "javascriptreact" "json" "jsonc" "markdown" "typescript" "typescriptreact"]
-      (_: ["prettier"]);
-    # Lane shape is the contract: `ft` rows index by filetype, `workflow` attaches path-gated, `global` rides every buffer (plugins/lint.lua).
+    # Lane shape is the contract: `ft` rows index by filetype, `global` rides every buffer (plugins/lint.lua).
     lint = {
       ft = {
         nix = ["deadnix" "statix"];
@@ -242,10 +212,9 @@
         bash = ["shellcheck"];
         dockerfile = ["hadolint"];
       };
-      workflow = ["zizmor"];
       global = ["typos"];
     };
-    estate = estateRows;
+    actions = actionRows;
   };
 
   # --- [SYNTAX_PROJECTION]
@@ -258,12 +227,12 @@
         color = row.color.hex;
         style = row.style or "";
       })
-      config.estate.theme.syntaxScopes;
+      config.forge.theme.syntaxScopes;
     roles =
-      config.estate.theme.projections.rolesHex
+      config.forge.theme.projections.rolesHex
       # Git-state vocabulary rows: colorscheme highlights read .color, gitsigns sign text reads .glyph (the editor gutter is a terminal render
       # surface); the ascii twin stays with persisted consumers.
-      // {git = lib.mapAttrs (_: g: {inherit (g) color glyph;}) config.estate.theme.projections.gitHex;};
+      // {git = lib.mapAttrs (_: g: {inherit (g) color glyph;}) config.forge.theme.projections.gitHex;};
   };
 
   luarc =
@@ -292,16 +261,16 @@ in {
       recursive = true;
     };
     "nvim/.luarc.json".text = builtins.toJSON luarc;
-    "nvim/lua/estate/palette.lua".text = config.estate.theme.projections.luaPalette;
-    "nvim/lua/estate/syntax.lua".text = genLuaModule syntaxFacts;
-    "nvim/lua/estate/lsp.lua".text = genLuaModule {
+    "nvim/lua/forge/palette.lua".text = config.forge.theme.projections.luaPalette;
+    "nvim/lua/forge/syntax.lua".text = genLuaModule syntaxFacts;
+    "nvim/lua/forge/lsp.lua".text = genLuaModule {
       servers =
         lib.mapAttrs (_: row: {
           inherit (row) cmd filetypes root_markers settings;
         })
         servers;
     };
-    "nvim/lua/estate/tools.lua".text = genLuaModule toolFacts;
-    "nvim/lua/estate/chords.lua".text = genLuaModule config.estate.chords.nvim.rows;
+    "nvim/lua/forge/tools.lua".text = genLuaModule toolFacts;
+    "nvim/lua/forge/chords.lua".text = genLuaModule config.forge.chords.nvim.rows;
   };
 }

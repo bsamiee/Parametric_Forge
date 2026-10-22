@@ -1,4 +1,4 @@
-# Pin-source declarations for every nvfetcher-engine manifest row; nvfetcher lives in the flake devShell alone, so
+# Pin-source declarations for every pinned overlays/manifest.nix row; nvfetcher lives in the flake devShell alone, so
 # `nix develop -c nvfetcher -o overlays/_sources` advances the complete family.
 
 # Design renderers and native application routing; update with --filter '^design-'.
@@ -33,10 +33,6 @@ fetch.url = "https://github.com/qpdf/qpdf/releases/download/v$ver/qpdf-$ver.tar.
 src.cmd = "curl -fsSL https://api.github.com/repos/ArtifexSoftware/ghostpdl-downloads/releases/latest | jq -r '. as $r | .assets[].name | select(startswith(\"ghostscript-\") and endswith(\".tar.xz\")) | $r.tag_name + \"/\" + .'"
 fetch.url = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/$ver"
 
-[design-fontconfig]
-src.cmd = "curl -fsSL 'https://gitlab.freedesktop.org/api/v4/projects/890/repository/tags?per_page=100' | jq -r '[.[].name | select(test(\"^[0-9]+[.][0-9]+[.][0-9]+$\"))] | sort_by(split(\".\") | map(tonumber)) | last'"
-fetch.url = "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/$ver/fontconfig-$ver.tar.xz"
-
 [design-geist-font]
 src.github = "vercel/geist-font"
 src.prefix = "v"
@@ -62,112 +58,52 @@ fetch.url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/v
 src.github = "jgm/pandoc"
 fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-arm64-macOS.zip"
 
-[design-pandoc-x86_64-linux]
-src.github = "jgm/pandoc"
-fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-amd64.tar.gz"
-
-[design-pandoc-aarch64-linux]
-src.github = "jgm/pandoc"
-fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-linux-arm64.tar.gz"
-
 [design-temurin-aarch64-darwin]
 src.github = "adoptium/temurin26-binaries"
 fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/mac/aarch64/jre/hotspot/normal/eclipse"
-
-[design-temurin-x86_64-linux]
-src.github = "adoptium/temurin26-binaries"
-fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/linux/x64/jre/hotspot/normal/eclipse"
-
-[design-temurin-aarch64-linux]
-src.github = "adoptium/temurin26-binaries"
-fetch.tarball = "https://api.adoptium.net/v3/binary/version/$ver/linux/aarch64/jre/hotspot/normal/eclipse"
 
 [biome-aarch64-darwin]
 src.github = "biomejs/biome"
 src.prefix = "@biomejs/biome@"
 fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-darwin-arm64"
 
-[biome-aarch64-linux]
-src.github = "biomejs/biome"
-src.prefix = "@biomejs/biome@"
-fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-linux-arm64-musl"
-
-[biome-x86_64-linux]
-src.github = "biomejs/biome"
-src.prefix = "@biomejs/biome@"
-fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-linux-x64-musl"
-
-# mise release tarballs carry the binary and its man page; Linux rows pin the musl static builds like biome, so no patchelf lane is needed.
+# mise release tarballs carry the binary and its man page.
 [mise-aarch64-darwin]
 src.github = "jdx/mise"
 src.prefix = "v"
 fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-macos-arm64.tar.gz"
 
-[mise-aarch64-linux]
-src.github = "jdx/mise"
-src.prefix = "v"
-fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linux-arm64-musl.tar.gz"
-
-[mise-x86_64-linux]
-src.github = "jdx/mise"
-src.prefix = "v"
-fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-linux-x64-musl.tar.gz"
-
-# jdtls milestone archives carry a build timestamp only each milestone's latest.txt names, so the pin resolves the newest milestone directory
-# and carries the archive path as its release tag (manifest.nix extracts the bare milestone).
-[jdt-language-server]
-src.cmd = "ver=$(curl -fsSL https://download.eclipse.org/jdtls/milestones/ | grep -oE \"milestones/[0-9]+\\.[0-9]+\\.[0-9]+'\" | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+' | sort -V | tail -n 1); printf '%s/%s\\n' \"$ver\" \"$(curl -fsSL \"https://download.eclipse.org/jdtls/milestones/$ver/latest.txt\")\""
-fetch.url = "https://download.eclipse.org/jdtls/milestones/$ver"
-
-# librdkafka tags each release candidate ahead of its release, so the max tag over both lines is the newest library confluent-kafka builds against.
-# The tag is the fetch rev, so the pin keeps its `v` and manifest.nix extracts the bare version.
-[rdkafka]
-src.github_tag = "confluentinc/librdkafka"
-src.include_regex = "^v[0-9]+\\.[0-9]+\\.[0-9]+(-RC[0-9]+)?$"
-fetch.github = "confluentinc/librdkafka"
-
 # 1Password publishes the CLI on its release-history page; the version group matches only stable `x.y.z` asset names, so betas stay out.
-# macOS ships one universal flat package, Linux one zip per architecture pinned unpacked.
+# macOS ships one universal flat package.
 [1password-cli-aarch64-darwin]
 src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
 src.regex = "op_apple_universal_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.pkg"
 fetch.url = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_apple_universal_v$ver.pkg"
 
-[1password-cli-aarch64-linux]
-src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
-src.regex = "op_linux_arm64_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.zip"
-fetch.tarball = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_linux_arm64_v$ver.zip"
-
-[1password-cli-x86_64-linux]
-src.webpage = "https://app-updates.agilebits.com/product_history/CLI2"
-src.regex = "op_linux_amd64_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.zip"
-fetch.tarball = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_linux_amd64_v$ver.zip"
-
 # vl-convert: Vega and Vega-Lite to SVG/PNG/JPEG/PDF with V8 linked into one executable; nixpkgs carries only the python binding, never the CLI.
-# `src.github` tracks the latest non-prerelease, so the 2.0.0-rc line stays out until it ships stable. The assets are zips, pinned unpacked.
+# `src.github` tracks the latest non-prerelease, so the 2.0.0-rc line stays out until it ships stable. The asset is a zip, pinned unpacked.
 [vl-convert-aarch64-darwin]
 src.github = "vega/vl-convert"
 src.prefix = "v"
 fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_osx-arm64.zip"
 
-[vl-convert-aarch64-linux]
-src.github = "vega/vl-convert"
-src.prefix = "v"
-fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_linux-aarch64.zip"
-
-[vl-convert-x86_64-linux]
-src.github = "vega/vl-convert"
-src.prefix = "v"
-fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_linux-64.zip"
-
+# The release zip is a flat list of extension libraries with no top directory, so it stays a file the recipe unpacks itself.
 [sqlean-aarch64-darwin]
 src.github = "nalgeon/sqlean"
-fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-macos-arm64.zip"
+fetch.url = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-macos-arm64.zip"
 
-[sqlean-aarch64-linux]
-src.github = "nalgeon/sqlean"
-fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-linux-arm64.zip"
+# EnergyPlus and OpenStudio asset names carry a build hash and, for EnergyPlus, the macOS floor, so each pin resolves the latest release's
+# arm64 tarball through the releases API and carries `<tag>/<asset>` as its release tag (manifest.nix extracts the bare version).
+[energyplus-aarch64-darwin]
+src.cmd = "curl -fsSL https://api.github.com/repos/NatLabRockies/EnergyPlus/releases/latest | jq -r '. as $r | .assets[].name | select(contains(\"-Darwin-\") and endswith(\"-arm64.tar.gz\")) | $r.tag_name + \"/\" + .'"
+fetch.tarball = "https://github.com/NatLabRockies/EnergyPlus/releases/download/$ver"
 
-[sqlean-x86_64-linux]
-src.github = "nalgeon/sqlean"
-fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-linux-x64.zip"
+[openstudio-aarch64-darwin]
+src.cmd = "curl -fsSL https://api.github.com/repos/NatLabRockies/OpenStudio/releases/latest | jq -r '. as $r | .assets[].name | select(endswith(\"-Darwin-arm64.tar.gz\")) | $r.tag_name + \"/\" + @uri'"
+fetch.tarball = "https://github.com/NatLabRockies/OpenStudio/releases/download/$ver"
+
+# Zellij status bar wasm; one release asset, fetched flat.
+[zjstatus]
+src.github = "dj95/zjstatus"
+src.prefix = "v"
+fetch.url = "https://github.com/dj95/zjstatus/releases/download/v$ver/zjstatus.wasm"

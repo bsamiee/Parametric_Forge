@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/zsh/options.nix
 # ----------------------------------------------------------------------------
-# Zsh shell options, zle variables, history, and the two highlighting plugins bound to the estate palette through their own style variables.
+# Zsh shell options, zle variables, history, and the two highlighting plugins bound to the theme palette through their own style variables.
 {config, ...}: let
-  inherit (config.estate.theme) roles palette;
+  inherit (config.forge.theme) roles palette;
   fg = c: "fg=${c.hex}";
 in {
   programs.zsh = {

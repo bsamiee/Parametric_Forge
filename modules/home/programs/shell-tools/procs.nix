@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/procs.nix
 # ----------------------------------------------------------------------------
-# ps replacement; renders process state, resource usage, and ports with estate-themed columns.
+# ps replacement; renders process state, resource usage, and ports with themed columns.
 {pkgs, ...}: let
-  # Styles are ANSI-16 slots; the terminal palette (estate.theme.ansi16 projected through WezTerm) resolves them to estate colors.
+  # Styles are ANSI-16 slots; the terminal palette (the theme module's ansi16 projected through WezTerm) resolves them to theme colors.
   tomlFormat = pkgs.formats.toml {};
   separator = {
     kind = "Separator";

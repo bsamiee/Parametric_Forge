@@ -4,14 +4,14 @@
 # License       : MIT
 # Path          : modules/home/programs/shell-tools/fzf.nix
 # ----------------------------------------------------------------------------
-# FZF configuration themed from the estate palette owner
+# FZF configuration themed from the palette and roles of modules/home/theme.nix
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  inherit (config.estate.theme) projections;
+  inherit (config.forge.theme) projections;
   # fd rides its store path: a Nix-side dependency of the fzf widgets, on no PATH outside a project.
   fd = lib.getExe pkgs.fd;
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";

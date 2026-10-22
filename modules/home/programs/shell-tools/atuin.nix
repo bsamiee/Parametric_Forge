@@ -6,7 +6,7 @@
 # ----------------------------------------------------------------------------
 # Modern shell history with SQLite backend and full-text search UI
 {config, ...}: let
-  inherit (config.estate.theme) roles;
+  inherit (config.forge.theme) roles;
 in {
   programs.atuin = {
     enable = true;
@@ -61,7 +61,7 @@ in {
       keys.scroll_exits = false;
       stats = {
         common_prefix = ["sudo" "time" "nohup"];
-        common_subcommands = ["git" "cargo" "pnpm" "docker" "kubectl"];
+        common_subcommands = ["git" "cargo" "pnpm" "docker"];
         ignored_commands = ["ls" "cd" "pwd" "exit" "clear" "history"];
       };
       theme.name = "dracula";

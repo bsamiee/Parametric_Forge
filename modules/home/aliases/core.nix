@@ -18,7 +18,6 @@
   data = [
     ["sqlite3" "sqlite3 -column -header -nullvalue NULL" "SQLite shell with terminal display defaults"]
     ["jqi" "jnv" "Interactive JSON explorer"]
-    ["hq" "harlequin" "Terminal SQL IDE"]
     ["fqd" "fq d" "Decode binary file structure"]
     ["c2j" "mlr --c2j cat" "CSV to JSON"]
     ["j2c" "mlr --j2c cat" "JSON to CSV"]
@@ -76,7 +75,7 @@
     ["-" "cd -" "Previous directory"]
   ];
   network = [
-    ["xh" "xh --style=fruity --print=hbH --pretty=all" "HTTP client with terminal display cosmetics"]
+    ["xh" "xh --style=fruity" "HTTP client with the fruity color style"]
     ["http" "xh" "HTTPie-compatible client"]
     ["https" "xh --https" "HTTPS by default"]
     ["POST" "xh POST" "RESTful POST"]
@@ -110,12 +109,6 @@
     ["now" "date +'%Y-%m-%d %H:%M:%S'" "ISO 8601 timestamp"]
     ["today" "date +'%Y-%m-%d'" "ISO date"]
     ["week" "date +%V" "Week number"]
-  ];
-  trash = [
-    ["trestore" "trash-restore" "Restore from trash"]
-    ["tls" "trash-list" "List trashed files"]
-    ["trm" "trash-rm" "Remove specific trashed files" "destructive"]
-    ["tempty" "trash-empty" "Empty entire trash" "destructive"]
   ];
   zellij = [
     ["zjl" "zellij list-sessions" "List sessions"]
