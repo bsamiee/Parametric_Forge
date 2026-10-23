@@ -3,6 +3,10 @@
 prereleases = true
 python.uv_venv_auto = "create|source"
 
+# --- [ENV] ------------------------------------------------------------------------------
+[env]
+FASTMCP_SHOW_SERVER_BANNER = "false"
+
 # --- [TOOLS] ----------------------------------------------------------------------------
 [tools]
 python = "3.15.0"
@@ -13,3 +17,4 @@ doppler = "latest"
 pulumi = "latest"
 ripgrep = "latest"
 fd = "latest"
+"pypi:mcp-nixos" = "latest"

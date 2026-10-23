@@ -7,6 +7,7 @@
 # 1Password custody: the CLI, SSH agent seam, op-inject token cache on rebuild, and GUI secret replay
 {
   config,
+  guiSetenv,
   launchdAgent,
   lib,
   pkgs,
@@ -23,25 +24,20 @@
     GITHUB_TOKEN = null;
   };
   tokenNames = lib.attrNames tokenRows;
-  # GUI-session replay writes the op cache into the launchd domain; a missing name clears its stale GUI value. launchd hands this agent the
-  # domain values of its last replay, and the cache rows keep a set value, so each name is unset before the source and a rotated token lands.
+  # GUI-session replay hands the op cache rows to the shared GUI-domain writer (shell.nix); a name the cache leaves empty clears its stale GUI
+  # value, and a changed token restarts the resident agents that spawned before it. launchd hands this agent the domain values of its last
+  # replay, and the cache rows keep a set value, so each name is unset before the source and a rotated token lands.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
-    runtimeInputs = [pkgs.coreutils];
     text = ''
       unset ${lib.escapeShellArgs tokenNames}
       # shellcheck source=/dev/null
       [ ! -f "${opCache}" ] || . "${opCache}"
-      while IFS= read -r k; do
-        val="''${!k:-}"
-        if [ -n "$val" ]; then
-          /bin/launchctl setenv "$k" "$val"
-        else
-          # Narrowing is real in the launchd domain: a name no backend serves is cleared, so the cutover flip retires
-          # stale GUI values at replay instead of leaving them pinned until logout.
-          /bin/launchctl unsetenv "$k"
-        fi
-      done < <(printf '%s\n' ${lib.escapeShellArgs tokenNames} | sort -u)
+      rows=()
+      for k in ${lib.escapeShellArgs tokenNames}; do
+        rows+=("$k" "''${!k:-}")
+      done
+      exec ${guiSetenv}/bin/gui-setenv "''${rows[@]}"
     '';
   };
 in {
@@ -92,7 +88,7 @@ in {
             fi
           fi
 
-          # GUI replay: restart the RunAtLoad agent so GUI apps pick up the current cache on this switch instead of at next login.
+          # GUI replay: restart the RunAtLoad agent so GUI apps and resident agents pick up a changed cache on this switch instead of at next login.
           /bin/launchctl kickstart -k "gui/$UID/dev.bsamiee.gui-op-secrets"
         '';
       };

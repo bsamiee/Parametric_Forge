@@ -1,0 +1,25 @@
+# --- [CODEX] ----------------------------------------------------------------------------
+
+approval_policy = "never"
+sandbox_mode    = "danger-full-access"
+
+[apps._default]
+default_tools_approval_mode = "approve"
+
+[notice]
+hide_full_access_warning = true
+
+# --- [AGENTS] ---------------------------------------------------------------------------
+
+[agents]
+max_concurrent_threads_per_session = 80
+
+# --- [MCP_SERVERS] ----------------------------------------------------------------------
+
+[mcp_servers.nixos]
+default_tools_approval_mode = "approve"
+command                     = "mise"
+args                        = ["exec", "--", "mcp-nixos"]
+
+[mcp_servers.node_repl.env]
+NODE_REPL_WORKER_WRAPPER = '["/bin/sh", "-c", "shift; exec mise exec -- \"$@\"", "node_repl"]'

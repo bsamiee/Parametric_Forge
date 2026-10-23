@@ -97,6 +97,8 @@ Probe a machine that misbehaves after a switch before theorizing about it: `whic
 
 Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep dev.bsamiee` is the live census of Forge agents (project tools such as Rasm's pitchfork register their own `dev.mise.*` labels outside it), `launchctl print gui/$UID/dev.bsamiee.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
 
+`gui-setenv` (`environments/shell.nix`) owns every write into the GUI launchd domain: a replay that changes a value restarts each running `KeepAlive` agent in `~/Library/LaunchAgents`, so a resident process that spawned before the replay, a project tool's included, inherits the replayed rows.
+
 ## [09]-[TOOLCHAINS]
 
 - [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster; a project's Pixi environment owns the native libraries its source builds and ctypes consumers read.

@@ -1,11 +1,19 @@
 {
     "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "env": {
+        "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "80",
+        "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS": "50000",
+        "BASH_DEFAULT_TIMEOUT_MS": "300000",
+        "CLAUDE_CODE_SHELL": "bash",
+        "NO_COLOR": "1",
+        "FORCE_COLOR": "0"
+    },
+    "enableAllProjectMcpServers": true,
+    "permissions": {
+        "deny": [ "EnterWorktree", "Bash(git worktree *)" ]
+    },
+    "worktree": { "bgIsolation": "none" },
     "effortLevel": "high",
-    "claudeMdExcludes": [
-        "**/.cache/**/CLAUDE.md",
-        "**/node_modules/**/CLAUDE.md",
-        "**/bin/**/CLAUDE.md",
-        "**/obj/**/CLAUDE.md",
-        "**/.artifacts/**/CLAUDE.md"
-    ]
+    "showClearContextOnPlanAccept": true,
+    "claudeMdExcludes": [ "**/.cache/**/CLAUDE.md", "**/node_modules/**/CLAUDE.md", "**/.venv/**/CLAUDE.md", "**/.artifacts/**/CLAUDE.md" ]
 }
