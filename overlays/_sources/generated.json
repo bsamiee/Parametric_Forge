@@ -154,11 +154,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-18UMFoNSSnZCYJhszJxBwN5eH81JFxS1ZAtle3Z4GvY=",
+            "sha256": "sha256-qKWB4RX069vikxwjeUnbrHYkvYtAJL8+udp5gb3kkMk=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.10.17/mise-v2026.10.17-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.10.19/mise-v2026.10.19-macos-arm64.tar.gz"
         },
-        "version": "2026.10.17"
+        "version": "2026.10.19"
     },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,

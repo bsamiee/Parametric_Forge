@@ -88,10 +88,10 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.10.17";
+    version = "2026.10.19";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.17/mise-v2026.10.17-macos-arm64.tar.gz";
-      sha256 = "sha256-18UMFoNSSnZCYJhszJxBwN5eH81JFxS1ZAtle3Z4GvY=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.19/mise-v2026.10.19-macos-arm64.tar.gz";
+      sha256 = "sha256-qKWB4RX069vikxwjeUnbrHYkvYtAJL8+udp5gb3kkMk=";
     };
   };
   openstudio-aarch64-darwin = {
