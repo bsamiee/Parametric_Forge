@@ -48,6 +48,8 @@ in {
     # --- [MAC_APP_STORE]
     masApps = {
       Drafts = 1435957248;
+      # The GA line, free on the store; a beta is a developer.apple.com xip the operator installs beside it, never a second Xcode.app.
+      Xcode = 497799835;
       "Microsoft Word" = 462054704;
       "Microsoft Excel" = 462058435;
       "MEGA VPN" = 6456784858;
