@@ -215,13 +215,12 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/watchexec";
     };
-    # Library-only release: a flat zip of extension modules with no top directory and no CLI binary.
+    # Library-only release, pinned unpacked: a flat tree of extension modules and no CLI binary.
     sqlean = _: {
-      nativeBuildInputs = [prev.unzip];
-      sourceRoot = ".";
+      dontUnpack = true;
       installPhase = ''
         runHook preInstall
-        install -Dm644 -t "$out/lib" ./*${prev.stdenv.hostPlatform.extensions.sharedLibrary}
+        install -Dm644 -t "$out/lib" "$src"/*${prev.stdenv.hostPlatform.extensions.sharedLibrary}
         runHook postInstall
       '';
     };

@@ -2,7 +2,7 @@
     "mcpServers": {
         "nixos": {
             "command": "mise",
-            "args": [ "exec", "--", "mcp-nixos" ]
+            "args": ["exec", "--", "mcp-nixos"]
         }
     }
 }

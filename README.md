@@ -118,8 +118,7 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 |  [03]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
 |  [04]   | TypeScript      | Effect rails, tagged faults, redacted config, schema decodes at boundaries, pnpm-only.                          |
 |  [05]   | Python          | 3.15, `uv`-managed, `ruff` + `ty`.                                                                              |
-|  [06]   | Markdown        | `prose_gate.py` (docgen skill) is the check + fix rail.                                                         |
-|  [07]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
+|  [06]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
 
 ## [12]-[GITHUB_AND_SERVICES]
 

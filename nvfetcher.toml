@@ -1,6 +1,7 @@
 # Pin-source declarations for every pinned overlays/manifest.nix row. One pass from the locked nixpkgs advances the complete family, the
-# keyfile carrying the gh token nvchecker reads for every GitHub source:
-# `nix shell .#nvfetcher -c nvfetcher -o overlays/_sources -k <(printf '[keys]\ngithub = "%s"\n' "$(gh auth token)")`.
+# keyfile carrying the gh token nvchecker reads for every GitHub source (zsh `=()` hands it a temp file, since nvchecker reopens the keyfile
+# per source and a `<()` pipe reads once):
+# `nix shell .#nvfetcher -c nvfetcher -o overlays/_sources -k =(printf '[keys]\ngithub = "%s"\n' "$(gh auth token)")`.
 
 # Design renderers and native application routing; update with --filter '^design-'.
 [design-harfbuzz]
@@ -69,10 +70,10 @@ src.github = "vega/vl-convert"
 src.prefix = "v"
 fetch.tarball = "https://github.com/vega/vl-convert/releases/download/v$ver/vl-convert_osx-arm64.zip"
 
-# The release zip is a flat list of extension libraries with no top directory, so it stays a file the recipe unpacks itself.
+# The release zip is a flat list of extension libraries with no top directory, pinned unpacked; the manifest row keeps the root unstripped.
 [sqlean-aarch64-darwin]
 src.github = "nalgeon/sqlean"
-fetch.url = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-macos-arm64.zip"
+fetch.tarball = "https://github.com/nalgeon/sqlean/releases/download/$ver/sqlean-macos-arm64.zip"
 
 # EnergyPlus and OpenStudio asset names carry a build hash and, for EnergyPlus, the macOS floor, so each pin resolves the latest release's
 # arm64 tarball through the authenticated releases API and carries `<tag>/<asset>` as its release tag (manifest.nix extracts the bare version).

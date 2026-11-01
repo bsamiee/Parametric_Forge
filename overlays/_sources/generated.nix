@@ -16,18 +16,18 @@
   };
   biome-aarch64-darwin = {
     pname = "biome-aarch64-darwin";
-    version = "2.6.2";
+    version = "2.6.4";
     src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.2/biome-darwin-arm64";
-      sha256 = "sha256-vma3bcuTCx42W9NsT12FV8LdpwsxVn+L0VUJ5Id1Omk=";
+      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.4/biome-darwin-arm64";
+      sha256 = "sha256-HR7b2l7jNHUUTFa6RS29oo4bBhCI+4dRAqLfbNqEybQ=";
     };
   };
   design-geist-font = {
     pname = "design-geist-font";
-    version = "1.8.2";
+    version = "1.9.0";
     src = fetchTarball {
-      url = "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip";
-      sha256 = "sha256-s2A+S77Ik7BnMnT+zxNBJZD9LhgUPF24OWIK9Qu3Zmc=";
+      url = "https://github.com/vercel/geist-font/releases/download/v1.9.0/geist-font-v1.9.0.zip";
+      sha256 = "sha256-Crvvil/kltVHdTrUoWBgIfy7jO7BPFKs+8421iG09Jw=";
     };
   };
   design-harfbuzz = {
@@ -40,18 +40,18 @@
   };
   design-mupdf = {
     pname = "design-mupdf";
-    version = "1.28.5";
+    version = "1.28.6";
     src = fetchurl {
-      url = "https://mupdf.com/downloads/archive/mupdf-1.28.5-source.tar.gz";
-      sha256 = "sha256-mKXBDNogw5ks33b/ayoRScMr15zHltP3AyMLEYW36TQ=";
+      url = "https://mupdf.com/downloads/archive/mupdf-1.28.6-source.tar.gz";
+      sha256 = "sha256-3IUABkCkXZDKm3ewYfbKZ8zgxNT77PiBlke69XPu8QE=";
     };
   };
   design-pandoc-aarch64-darwin = {
     pname = "design-pandoc-aarch64-darwin";
-    version = "3.12.1";
+    version = "3.13";
     src = fetchTarball {
-      url = "https://github.com/jgm/pandoc/releases/download/3.12.1/pandoc-3.12.1-arm64-macOS.zip";
-      sha256 = "sha256-NOhVJJZcMhYCI+/EY8KeXO5NHq4yaUNOMHf/7hYsCFw=";
+      url = "https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-arm64-macOS.zip";
+      sha256 = "sha256-DlkbIY8PBd2HPLMWvLibca/voMujF1J2ZSlre+if32c=";
     };
   };
   design-scheherazade-new = {
@@ -72,10 +72,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.206";
+    version = "1.31.212";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.206/cli-1.31.206.jar";
-      sha256 = "sha256-Ag7AUh5miZcZvsYBqTGoQtOXUWydejLA3+b2amWvmIs=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.212/cli-1.31.212.jar";
+      sha256 = "sha256-Oqm/gkJMntnTbkjFPjTwTWwjGcePjiKtwLfGowz5D0A=";
     };
   };
   energyplus-aarch64-darwin = {
@@ -88,10 +88,10 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.10.19";
+    version = "2026.10.25";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.10.19/mise-v2026.10.19-macos-arm64.tar.gz";
-      sha256 = "sha256-qKWB4RX069vikxwjeUnbrHYkvYtAJL8+udp5gb3kkMk=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.10.25/mise-v2026.10.25-macos-arm64.tar.gz";
+      sha256 = "sha256-d0I24yR+SNeAeMC8555TJ9TkR58alMhIeCfxeBl+45s=";
     };
   };
   openstudio-aarch64-darwin = {
@@ -104,10 +104,10 @@
   };
   sqlean-aarch64-darwin = {
     pname = "sqlean-aarch64-darwin";
-    version = "0.28.5";
-    src = fetchurl {
-      url = "https://github.com/nalgeon/sqlean/releases/download/0.28.5/sqlean-macos-arm64.zip";
-      sha256 = "sha256-WM2fNerOiz6Zy00xBH/kkH/2ocU/20cgURgFf7QPGCw=";
+    version = "0.29.0";
+    src = fetchTarball {
+      url = "https://github.com/nalgeon/sqlean/releases/download/0.29.0/sqlean-macos-arm64.zip";
+      sha256 = "sha256-gcT71ee8A5+M7gvlomxismKoqz6kqf9cQeFui9eC04U=";
     };
   };
   vl-convert-aarch64-darwin = {

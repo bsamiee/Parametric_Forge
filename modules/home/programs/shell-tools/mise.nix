@@ -29,6 +29,9 @@ in {
         # environment resolution for that reason.
         auto_install = false;
         disable_hints = ["*"]; # the wildcard every hint id matches (src/hint.rs)
+        # The binary is the overlay's pinned release and self-update is off for it, so the newer-version notice in `mise --version` and
+        # `mise doctor` names an update no command here can apply.
+        disable_update_warning = true;
         # Named, since mise otherwise installs into whatever DOTNET_ROOT the installing shell sets
         dotnet.dotnet_root = dotnetRoot;
       };

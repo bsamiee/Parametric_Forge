@@ -4,19 +4,14 @@
 # License       : MIT
 # Path          : pyproject.toml
 # ----------------------------------------------------------------------------
-# Python law for Forge-owned scripts: the language-law tool sections over what the skill scripts import. `package = false` keeps the repo a
-# virtual uv project: locked, synced, and nothing here ever builds.
+# Python law for Forge-owned scripts: the language-law tool sections, with no runtime dependency until a script in this tree imports one.
+# `package = false` keeps the repo a virtual uv project: locked, synced, and nothing here ever builds.
 
 [project]
 name = "parametric-forge"
 version = "0.1.0"
 requires-python = ">=3.15"
-dependencies = [
-    "anyio",    # structured concurrency and subprocess (hook examples)
-    "cyclopts", # CLI dispatch (docgen prose gate)
-    "httpx",    # HTTP transport (hook telemetry transmitter)
-    "msgspec",  # wire codecs (every skill script)
-]
+dependencies = []
 
 [dependency-groups]
 dev = [

@@ -136,7 +136,8 @@ in {
 
     sqlean = {
       version = generatedPins.sqlean-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "sqlean-aarch64-darwin";
+      # The flat release zip has no top directory to strip.
+      assets.aarch64-darwin = pinAsset "sqlean-aarch64-darwin" // {stripRoot = false;};
       license = "mit";
       projection.package = true; # package-only: extension library set consumed by sqlite-extended
       description = "Bundled SQLite extension libraries from SQLean";
@@ -222,8 +223,8 @@ in {
         sync-panes = {
           owner = "annie444";
           repo = "sync-panes.wez";
-          rev = "1fe41d994df9dcb86fd6c469d39754d7917befe3";
-          hash = "sha256-AP20DyGQlOHMi8mw3pgZWg3KLEbyjj5PQWL61p41Pfk=";
+          rev = "2cfa9fea761e507b62a09daa1d8bef440a40265c";
+          hash = "sha256-RgrMNW5GJ+WaJnioj2DfAWdBw6fxQezNJEYV4tqroSo=";
           license = "mit";
           permissions = ["broadcast-input-active-tab" "clipboard-paste" "window-frame-overrides"];
           surface = "runtime"; # direct store-path dofile (fetched trees are not git repos; plugin.require cannot clone them); toggle chord guarded by the deck
@@ -232,8 +233,8 @@ in {
         wezterm-types = {
           owner = "DrKJeff16";
           repo = "wezterm-types";
-          rev = "cc55e88946cb326ea930631b4b03754410eb0436"; # v4.3.0-1
-          hash = "sha256-H3EL4/UWFipnVJPSS/NsX+AOm3KKn8kQhQ0PfP6wj2k=";
+          rev = "39511289aa040a7746a9e2d551b35ef330f15c77"; # v5.1.1-1
+          hash = "sha256-PCD6Jdrp9YigbO6Of+HxsypSXr3sAY9j6E3cXgz0+JQ=";
           license = "mit";
           permissions = ["none"]; # LuaCATS annotations only; never loaded at runtime
           surface = "luals"; # .luarc.json workspace library for the wezterm config tree
@@ -267,8 +268,8 @@ in {
         augment-command = {
           owner = "hankertrix";
           repo = "augment-command.yazi";
-          rev = "dd2d6cf07f81cef543e37883352e30b91634ec86";
-          hash = "sha256-sB2t3Gg+WdPG6OE8pD6VovD+x9nN21Jn8XydZZdTqCg=";
+          rev = "561f6ec120b916c75da4085fed7769c65184f46c";
+          hash = "sha256-0APWmt9oCsW5TEAmki5LAfUD0l8EBGlRJN/m3BdEIzc=";
           license = "AGPL-3.0"; # semantic command layer: open/quit/tab/paste/archive/scroll behaviors
         };
         full-border = {

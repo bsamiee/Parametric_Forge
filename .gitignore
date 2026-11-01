@@ -12,6 +12,7 @@ result-*
 .cache/
 # .artifacts/ holds per-run agent scratch.
 **/.artifacts/
+.venv/
 
 # --- [ENVIRONMENT_VARIABLES] --------------------------------------------------
 
@@ -29,7 +30,6 @@ gha-creds-*.json
 
 # --- [IDE_AND_EDITOR] ---------------------------------------------------------
 
-.vscode/
 mise.local.toml
 .idea/
 .history/
