@@ -38,11 +38,17 @@
   # where user-scope tools (`pitchfork boot enable`, `brew services`, Home Manager) register: launchd respawns those on exit by their own
   # declaration, and one-shot replays carry no KeepAlive, so no replay restarts another. A pass that changed nothing restarts nothing, so a
   # switch that reruns a replay leaves resident agents alone.
+  # The first argument names the writer's ledger of the names it replayed, and a name a later pass of that writer drops is unset, so a row a
+  # generation retires leaves the domain at its next replay in place of at logout.
   guiSetenv = pkgs.writeShellApplication {
     name = "gui-setenv";
     text = ''
+      ledger="${config.xdg.stateHome}/gui-setenv/$1"
+      shift
       changed=0
+      declare -A replayed=()
       while (($# >= 2)); do
+        replayed["$1"]=1
         if [[ "$(/bin/launchctl getenv "$1")" != "$2" ]]; then
           if [[ -n "$2" ]]; then
             /bin/launchctl setenv "$1" "$2"
@@ -53,6 +59,15 @@
         fi
         shift 2
       done
+      if [[ -f "$ledger" ]]; then
+        while IFS= read -r name; do
+          [[ -z "''${replayed[$name]:-}" && -n "$(/bin/launchctl getenv "$name")" ]] || continue
+          /bin/launchctl unsetenv "$name"
+          changed=1
+        done < "$ledger"
+      fi
+      mkdir -p "''${ledger%/*}"
+      printf '%s\n' "''${!replayed[@]}" > "$ledger"
       ((changed == 1)) || exit 0
       for plist in "${config.home.homeDirectory}"/Library/LaunchAgents/*.plist; do
         # raw prints true or false for a bool and the key list for a KeepAlive condition dictionary; an absent key fails the extract.
@@ -67,7 +82,7 @@
   };
   guiEnv = pkgs.writeShellApplication {
     name = "gui-env";
-    text = "exec ${guiSetenv}/bin/gui-setenv ${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) guiEnvRows))}";
+    text = "exec ${guiSetenv}/bin/gui-setenv gui-env ${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) guiEnvRows))}";
   };
 in {
   # --- [LAUNCHD_AGENT_ROW]

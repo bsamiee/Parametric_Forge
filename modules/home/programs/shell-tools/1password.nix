@@ -52,7 +52,7 @@
       for k in ${lib.escapeShellArgs tokenNames}; do
         rows+=("$k" "''${!k:-}")
       done
-      exec ${guiSetenv}/bin/gui-setenv "''${rows[@]}"
+      exec ${guiSetenv}/bin/gui-setenv gui-op-secrets "''${rows[@]}"
     '';
   };
 in {

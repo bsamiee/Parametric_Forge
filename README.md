@@ -97,7 +97,7 @@ Probe a machine that misbehaves after a switch before theorizing about it: `whic
 
 Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep dev.bsamiee` is the live census of Forge agents (project tools such as Rasm's pitchfork register their own `dev.mise.*` labels outside it), `launchctl print gui/$UID/dev.bsamiee.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
 
-`gui-setenv` (`environments/shell.nix`) owns every write into the GUI launchd domain: a replay that changes a value restarts each running `KeepAlive` agent in `~/Library/LaunchAgents`, so a resident process that spawned before the replay, a project tool's included, inherits the replayed rows.
+`gui-setenv` (`environments/shell.nix`) owns every write into the GUI launchd domain: a replay unsets each name its writer's previous replay set and this one drops, and a replay that changes a value restarts each running `KeepAlive` agent in `~/Library/LaunchAgents`, so a resident process that spawned before the replay, a project tool's included, inherits the replayed rows.
 
 ## [09]-[TOOLCHAINS]
 

@@ -45,21 +45,14 @@
     # command through CLAUDE_ENV_FILE) drops this segment and puts a project's install paths first.
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
-    # macOS default is ~/.matplotlib; the directory holds font and tex caches, no rc file
-    pythonEnv.MPLCONFIGDIR = "${xdgCacheHome}/matplotlib";
-    # Runtime data for the geo CLI roster: PROJ 9.1 renamed PROJ_LIB to PROJ_DATA, which libproj consults first, so the old name carries no row.
-    # The Nix PROJ_DATA ships no datum grids; PROJ_NETWORK streams them from cdn.proj.org into the XDG data cache (300 MB cap).
-    geoEnv = {
-      PROJ_DATA = "${pkgs.proj}/share/proj";
-      PROJ_NETWORK = "ON";
-    };
     # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
     energyEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
     # One class-partitioned env owner: `all` rows feed nix-darwin's set-environment (every zsh and bash), the .zshenv never-clobber floor, and the
     # GUI launchd replay, byte-identical everywhere so a shell of any kind and a Dock-launched agent never resolve divergent editor/pager/config env;
     # `session` rows are interactive-only (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
     # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
-    # its own config key. A new cross-surface var is one `all` row.
+    # its own config key. A new cross-surface var is one `all` row. No row configures a language toolchain, package manager, or build tool: a
+    # repository's own files and mise [env] own how its builds, checks, and tests behave.
     # One font root list feeds fontconfig's fonts.conf (media.nix) and Typst, which reads no fontconfig; the design store is operator-owned.
     fontDirectories = [
       "/System/Library/Fonts"
@@ -78,14 +71,8 @@
         FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
         TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
-        # npm's cache, the Pulumi CLI home (plugins, workspaces, credentials, logs), and Doppler's login and scope store default to ~/.npm,
-        # ~/.pulumi, and ~/.doppler. An editor's type acquisition runs npm from the GUI domain and a Pulumi or Doppler run starts outside a
-        # login shell, a project's [env] row wins through the floor.
-        npm_config_cache = "${xdgCacheHome}/npm";
-        PULUMI_HOME = "${xdgDataHome}/pulumi";
+        # Doppler's login and scope store defaults to ~/.doppler, and a Doppler run starts outside a login shell
         DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
-        # CPython mirrors bytecode under the prefix in place of __pycache__ beside each source, a project's [env] row wins through the floor
-        PYTHONPYCACHEPREFIX = "${xdgCacheHome}/python";
         # Claude Code restores the PATH its session-start shell snapshot captured in every Bash command, then runs this file: hook-env reverts the
         # launch shell's mise diff and applies the current directory's tools and [env] rows, so each command sees mise state as it is now. The
         # body names mise through that PATH and holds no store path, so every generation carries the same file and an inherited value stays
@@ -128,7 +115,7 @@
     inherit pathEntries shimPath;
     # Rows every surface carries: set-environment for every shell kind, the GUI launchd domain, and the .zshenv floor; the session class is
     # interactive-only and stays in Home Manager.
-    sharedEnv = pythonEnv // geoEnv // energyEnv // envByClass.all;
+    sharedEnv = energyEnv // envByClass.all;
     sessionEnv = envByClass.session;
   };
 }

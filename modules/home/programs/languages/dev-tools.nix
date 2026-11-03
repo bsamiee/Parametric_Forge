@@ -9,15 +9,7 @@
   config,
   pkgs,
   ...
-}: let
-  style = import ../../../style.nix;
-in {
-  # Machine editor law from the style vocabulary: nearest-first resolution means any repo-local .editorconfig fully outranks this fallback.
-  editorconfig = {
-    enable = true;
-    settings = style.editorconfig;
-  };
-
+}: {
   home = {
     # Codex CLI ships inside ChatGPT.app and updates with it; the bundle's launcher follows this link back to its CodexCLI.app.
     file.".local/bin/codex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex";

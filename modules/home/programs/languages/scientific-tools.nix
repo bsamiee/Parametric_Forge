@@ -12,10 +12,23 @@
   pkgs,
   ...
 }: let
+  # The Nix PROJ data ships no datum grids; each gdal and proj command streams them from cdn.proj.org into the user PROJ directory. The
+  # wrapper scopes the switch to these commands, so a project's PROJ consumers keep their own data and network policy.
+  projNetwork = package:
+    pkgs.symlinkJoin {
+      name = "${package.pname}-proj-network-${package.version}";
+      paths = [package];
+      nativeBuildInputs = [pkgs.makeWrapper];
+      postBuild = ''
+        for command in "$out"/bin/*; do
+          wrapProgram "$command" --set-default PROJ_NETWORK ON
+        done
+      '';
+    };
   geoTools = with pkgs; [
-    gdal # gdalinfo, gdal_translate, ogr2ogr
+    (projNetwork gdal) # gdalinfo, gdal_translate, ogr2ogr
     geos # geosop
-    proj # proj, cs2cs, projinfo
+    (projNetwork proj) # proj, cs2cs, projinfo
     netcdf # ncdump, nccopy, ncgen
   ];
 

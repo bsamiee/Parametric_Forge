@@ -11,8 +11,7 @@
   lib,
   ...
 }: let
-  # git+file:// forces the git-tree fetcher (never walks .git), so nixd's upstream fetchers skip the core.fsmonitor
-  # unix socket at .git/fsmonitor--daemon.ipc that a plain-path copy would choke on.
+  # git+file:// forces the git-tree fetcher: nixd evaluates tracked files alone and never copies .git.
   flake = ''(builtins.getFlake "git+file://${host.flakeRoot}")'';
   hostOptions = "${flake}.darwinConfigurations.${host.name}.options";
 in {

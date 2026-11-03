@@ -55,13 +55,8 @@ in {
         followTags = true;
       };
 
-      core.fsmonitor = true; # git's built-in fsmonitor daemon feeds the untracked cache manyFiles turns on
-
-      feature.manyFiles = true; # index.version 4, index.skipHash, and the untracked cache
-
       diff = {
         algorithm = "histogram";
-        renames = "copies";
         colorMoved = "default";
         submodule = "log"; # Show submodule changes in diffs
       };
@@ -89,14 +84,10 @@ in {
 
       status = {
         branch = true;
-        showUntrackedFiles = "all";
         submoduleSummary = true; # Show submodule summary in status
       };
 
-      log = {
-        date = "iso";
-        follow = true;
-      };
+      log.date = "iso";
 
       column.ui = "auto"; # Multi-column output for branch/tag lists
       tag.sort = "version:refname"; # Sort tags as semantic versions

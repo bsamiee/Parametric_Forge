@@ -15,6 +15,5 @@ _: {
     # Languages
     ./lua-tools.nix
     ./node-tools.nix
-    ./rust-tools.nix
   ];
 }
