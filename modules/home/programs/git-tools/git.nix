@@ -51,7 +51,6 @@ in {
       push = {
         default = "current";
         autoSetupRemote = true;
-        useForceIfIncludes = true;
         followTags = true;
       };
 
