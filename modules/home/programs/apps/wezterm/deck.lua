@@ -23,8 +23,10 @@ M.palette = {} -- populated in apply(); events.lua replays it per palette open
 -- refresh reads no project's config; the body then enters the workspace cwd, which seeds a brand-new session's first pane. The server the
 -- client forks keeps that session environment for every pane and every command a rebuilt session execs without a shell. The body clears
 -- the login shell's mise refresh state and the Home Manager session guards, so a pane shell activates from a clean slate and re-reads the
--- current generation's session variables. A rebuilt session (the server died with the machine) runs its recorded commands at once instead
--- of parking each behind a Press-ENTER banner; the zellij discovery hook decides what gets recorded. A gated client waits for one line:
+-- current generation's session variables. The attach (zellij-session-attach, zellij/default.nix) first retires any server left by an ended
+-- login session, whose panes can no longer reach a system service. A rebuilt session (its server died with the machine or the login session)
+-- runs its recorded commands at once instead of parking each behind a Press-ENTER banner; the zellij discovery hook decides what gets
+-- recorded. A gated client waits for one line:
 -- zellij sends its startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup
 -- size. Spawns carrying these args start at wezterm.home_dir.
 function M.workspace_row(name)
@@ -45,10 +47,7 @@ function M.session_args(name, gated)
         body,
         "zsh",
         w and w.cwd or wezterm.home_dir,
-        rows.paths.zellij,
-        "attach",
-        "--create",
-        "--force-run-commands",
+        rows.paths.zellij_attach,
         name,
     }
 end

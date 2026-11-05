@@ -46,7 +46,7 @@
     };
     "com.apple.iCal"."first day of week" = 0; # 0 = system setting
     # --- [SEARCH_SUGGESTIONS]
-    # Spotlight pane rows as macOS 27 writes them: the Custom.relatedContents rule turns Show Related Content (Apple partner content in
+    # Spotlight pane rows as macOS writes them: the Custom.relatedContents rule turns Show Related Content (Apple partner content in
     # Spotlight and Look Up) off, and sharing status 2 turns Help Apple Improve Search off. Safari's Search settings: no search engine
     # suggestions, no Safari Suggestions. Per-app Siri Suggestions learning is the suggestion-blocklist agent's (mac-tools/suggestions.nix).
     "com.apple.Spotlight".EnabledPreferenceRules = ["Custom.relatedContents"];
@@ -56,8 +56,8 @@
       UniversalSearchEnabled = false;
     };
     # --- [APPLICATION_SPECIFIC_SETTINGS]
-    # Screen-lock delay is sysadminctl/profile-owned since Big Sur (com.apple.screensaver askForPassword keys are decorative). The Apple
-    # Intelligence knowledge pipelines (spotlightknowledged embeddings) run independent of Siri and of the suggestion blocklist, and macOS 27
+    # Screen-lock delay is sysadminctl/profile-owned (com.apple.screensaver askForPassword keys are decorative). The Apple
+    # Intelligence knowledge pipelines (spotlightknowledged embeddings) run independent of Siri and of the suggestion blocklist, and macOS
     # carries no unsupervised switch for them (the intelligence settings declaration needs a supervised Mac); Spotlight exclusions are the
     # scope lever.
     "com.apple.Terminal".SecureKeyboardEntry = false;
@@ -99,7 +99,7 @@
       SUAutomaticallyUpdate = true;
       SUSendProfileInfo = false;
     };
-    # Suspicious Package reaches a selected .pkg through its Finder service (macOS 13.3 dropped it from Open With); pbs holds the
+    # Suspicious Package reaches a selected .pkg through its Finder service (macOS dropped it from Open With); pbs holds the
     # Services Settings election the vendor FAQ names under the Development group. NSServicesStatus is owned whole: every Services election
     # is a row here, and the import replaces the key each switch.
     pbs.NSServicesStatus."com.mothersruin.SuspiciousPackageApp - Open With Suspicious Package - openSelectedPackage" = {

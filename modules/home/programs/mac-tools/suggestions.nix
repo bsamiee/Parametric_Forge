@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/mac-tools/suggestions.nix
 # ----------------------------------------------------------------------------
-# Siri Suggestions per-application owner. macOS 27 carries no global switch for suggestion harvesting: suggestd admits an app's CoreSpotlight
+# Siri Suggestions per-application owner. macOS carries no global switch for suggestion harvesting: suggestd admits an app's CoreSpotlight
 # and user-activity donations into ProactiveHarvesting and PersonalizationPortrait unless com.apple.suggestions SiriCanLearnFromAppBlacklist
 # names its bundle identifier ("Learn from this application"), and AppCanShowSiriSuggestionsBlacklist is the sibling "Show Siri Suggestions in
 # application" row; both are the rows the Siri pane's App Access sheet writes. The lists gate suggestd alone: spotlightknowledged embeds the

@@ -198,6 +198,7 @@
     paths = {
       zsh = config.forge.shell;
       zellij = "${pkgs.zellij}/bin/zellij";
+      zellij_attach = lib.getExe config.forge.zellij.attach;
       nvim = "${profileBin}/nvim";
     };
     plugins.sync_panes = "${syncPanesSrc}";

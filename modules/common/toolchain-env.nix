@@ -19,8 +19,10 @@
     xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it.
     xdgStateHome ? "${home}/.local/state", # Same convention: the interactive history rows read it.
   }: let
-    # The operator-installed Rhino bundle no cask owns: its bin directory joins the PATH vector, and its default handler rows read the bundle path.
-    rhinoApp = "/Applications/RhinoBETA.app";
+    # Rhino's command directory, the link default-applications.nix keeps on the installed bundle: nix-darwin writes this vector unquoted into
+    # set-environment, so a bundle name with a space cannot be an entry, and the bundle's scripts locate it from their own directory, so the
+    # link is the directory rather than each script.
+    rhinoBin = "${xdgDataHome}/rhino/bin";
     # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return once provisioned.
     userPathEntries = [
       "${home}/.local/bin"
@@ -28,7 +30,7 @@
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"
       "/opt/homebrew/bin"
-      "${rhinoApp}/Contents/Resources/bin"
+      rhinoBin
       # carapace's zsh snippet prepends this directory unless PATH already holds it; listing it here keeps the vector the one PATH owner.
       "${xdgConfigHome}/carapace/bin"
     ];
@@ -41,8 +43,8 @@
     ];
     # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, a GUI app, and a
     # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
-    # whose tool has no version there execs the next copy on PATH. A shell that applies `mise hook-env` (zsh at startup, every Claude Code
-    # command through CLAUDE_ENV_FILE) drops this segment and puts a project's install paths first.
+    # whose tool has no version there execs the next copy on PATH. A shell that applies mise (zsh at startup, every Claude Code command
+    # through its user settings) drops this segment and puts a project's install paths first.
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
     # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
@@ -73,18 +75,6 @@
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
         # Doppler's login and scope store defaults to ~/.doppler, and a Doppler run starts outside a login shell
         DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
-        # Claude Code restores the PATH its session-start shell snapshot captured in every Bash command, then runs this file: hook-env reverts the
-        # launch shell's mise diff and applies the current directory's tools and [env] rows, so each command sees mise state as it is now. The
-        # body names mise through that PATH and holds no store path, so every generation carries the same file and an inherited value stays
-        # current; under zsh, a no-op compdef makes the guard in mise's completion block skip compinit.
-        CLAUDE_ENV_FILE = builtins.toFile "mise-hook-env.sh" ''
-          if [ -n "''${ZSH_VERSION:-}" ]; then
-            (( $+functions[compdef] )) || compdef() { :; }
-            eval "$(mise hook-env -s zsh)"
-          else
-            eval "$(mise hook-env -s bash)"
-          fi
-        '';
       };
       session = {
         BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
@@ -109,7 +99,7 @@
     inherit
       floorExports
       fontDirectories
-      rhinoApp
+      rhinoBin
       ;
 
     inherit pathEntries shimPath;

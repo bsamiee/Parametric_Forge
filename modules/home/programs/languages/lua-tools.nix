@@ -8,7 +8,7 @@
 {pkgs, ...}: {
   home.packages = [
     # --- [LUA_RUNTIME]
-    pkgs.lua5_5 # Lua 5.5 runtime
+    pkgs.lua5_5 # Lua runtime
 
     # --- [CODE_QUALITY_TOOLS]
     pkgs.stylua # Opinionated Lua formatter

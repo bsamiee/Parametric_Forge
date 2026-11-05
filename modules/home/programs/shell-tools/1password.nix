@@ -85,6 +85,8 @@ in {
           marker="# op-template: $(readlink -f "$template_file")"
           if [[ -s "$cache_file" && "$(head -n1 "$cache_file")" == "$marker" ]]; then
             verboseEcho "Secret template unchanged; skipping op inject"
+          elif [[ -v DRY_RUN ]]; then
+            echo "op inject -f -i $template_file > $cache_file"
           else
             # Resolve tokens from 1Password into a mode-600 cache; temp lives in the target directory so the publish rename stays same-filesystem.
             # The marker leads the file, then the exports (a brace group's status is op inject's, so a failed unlock still short-circuits).
@@ -104,7 +106,7 @@ in {
           fi
 
           # GUI replay: restart the RunAtLoad agent so GUI apps and resident agents pick up a changed cache on this switch instead of at next login.
-          /bin/launchctl kickstart -k "gui/$UID/dev.bsamiee.gui-op-secrets"
+          run /bin/launchctl kickstart -k "gui/$UID/dev.bsamiee.gui-op-secrets"
         '';
       };
     };

@@ -42,6 +42,7 @@
     pkgs.choose # Human-friendly column extraction
     pkgs.dua # Interactive disk usage analyzer
     pkgs.duf # Disk free overview
+    pkgs.flock # Native command execution under an interprocess file lock
     pkgs.fq # jq for binary formats; structured decode of media, executables, captures
     pkgs.gawk # GNU awk on the interactive PATH; macOS ships BSD awk only, scripts carry gawk via runtimeInputs
     pkgs.grex # Regex generator from test cases

@@ -27,8 +27,6 @@
     ];
   });
 
-  jq = "${pkgs.jq}/bin/jq";
-
   # Karabiner writes its own GUI and runtime state back into karabiner.json, so the declarative document owns only complex_modifications.rules and the
   # declared profile identity; every other key merges from the live file and activation never destroys app-owned state. Declared keys win except
   # `selected`, which stays GUI-owned. The stage gate merges only when the live file is structurally a Karabiner document (object; profiles an array
@@ -48,25 +46,31 @@
       + [$l.profiles[]? | select(.name as $n | $names | index($n) | not)]
   '';
   target = "${cfgDir}/karabiner.json";
+
+  # Karabiner misses changes through a symlinked karabiner.json (only the directory may be linked) and the GUI must write the file, so a store link
+  # cannot serve: a real writable file is staged in place by atomic write-if-changed (mktemp in the target directory, compare, rename).
+  stageConfig = pkgs.writeShellApplication {
+    name = "stage-karabiner-config";
+    runtimeInputs = [pkgs.coreutils pkgs.diffutils pkgs.jq];
+    text = ''
+      mkdir -p "${cfgDir}"
+      tmp="$(mktemp "${target}.XXXXXX")"
+      trap 'rm -f "$tmp"' EXIT
+      if [ -f "${target}" ] && jq -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${target}" >/dev/null 2>&1; then
+        jq --slurpfile live "${target}" '${mergeProgram}' ${karabinerJson} >"$tmp"
+      else
+        cat ${karabinerJson} >"$tmp"
+      fi
+      if ! cmp -s "$tmp" "${target}"; then
+        mv "$tmp" "${target}"
+      fi
+      chmod 600 "${target}"
+    '';
+  };
 in {
   imports = [../chords.nix];
 
-  # Symlinks on the config path break Karabiner change detection, so a real writable file is staged in place: atomic write-if-changed
-  # (mktemp in the target directory, compare, rename).
-  home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["linkGeneration"] ''
-    mkdir -p "${cfgDir}"
-    tmp="$(mktemp "${target}.XXXXXX")"
-    if [ -f "${target}" ] && ${jq} -e 'type == "object" and ((.profiles // []) | type == "array") and all(.profiles[]?; type == "object")' "${target}" >/dev/null 2>&1; then
-      ${jq} --slurpfile live "${target}" '${mergeProgram}' ${karabinerJson} >"$tmp"
-    else
-      cat ${karabinerJson} >"$tmp"
-    fi
-    chmod 600 "$tmp"
-    if ! cmp -s "$tmp" "${target}" 2>/dev/null; then
-      mv "$tmp" "${target}"
-    else
-      rm -f "$tmp"
-    fi
-    chmod 600 "${target}"
+  home.activation.ensureKarabinerConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    run ${stageConfig}/bin/stage-karabiner-config
   '';
 }

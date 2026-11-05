@@ -13,6 +13,48 @@
 }: let
   # Plugin admission rows (nixpkgs attr or wasm url and hash, plus permissions) are the zellij-plugins lane of overlays/manifest.nix.
   pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
+
+  # --- [SESSION_ATTACH]
+  # The one attach every WezTerm spawn runs (deck.lua). A zellij server is a daemon that outlives the login session which forked it, and a
+  # logout (a WindowServer watchdog restart is one) leaves it, and every pane it later spawns, bound to that session's dead launchd bootstrap
+  # namespace: no Mach lookup resolves, so user lookups (sudo), DNS, logd, and pgrep all fail inside it. A server whose start precedes this
+  # login's loginwindow therefore belongs to an ended session: it takes SIGTERM, which ends it as a shutdown does and keeps its serialized
+  # layout (zellij's kill-session deletes that layout, so it is never used here), and the attach rebuilds the session with its recorded
+  # commands running at once, each Claude Code pane resuming its conversation through the discovery hook (config.nix). Only /bin/ps is read,
+  # filtered on the numeric uid: pgrep resolves through sysmond and `ps -U` through the user directory, lookups a stale namespace cannot make,
+  # so the attach decides the same from any namespace. A server signalled here is awaited up to five seconds so the
+  # attach never reaches a socket that is still closing.
+  sessionAttach = pkgs.writeShellApplication {
+    name = "zellij-session-attach";
+    runtimeInputs = [pkgs.zellij pkgs.coreutils];
+    text = ''
+      started() {
+        local stamp
+        stamp=$(/bin/ps -o lstart= -p "$1") || return 1
+        read -r stamp <<<"$stamp"
+        LC_ALL=C /bin/date -j -f '%a %b %e %T %Y' "$stamp" +%s
+      }
+      login="" servers=()
+      while read -r uid pid args; do
+        ((uid == UID)) || continue
+        case $args in
+          /System/Library/CoreServices/loginwindow.app/*) login=$pid ;;
+          */bin/zellij\ --server\ *) servers+=("$pid") ;;
+        esac
+      done < <(/bin/ps -axo uid=,pid=,args=)
+      if [[ -n $login ]] && boundary=$(started "$login"); then
+        for pid in "''${servers[@]}"; do
+          if since=$(started "$pid") && ((since < boundary)) && kill -TERM "$pid" 2>/dev/null; then
+            for _ in {1..50}; do
+              kill -0 "$pid" 2>/dev/null || break
+              sleep 0.1
+            done
+          fi
+        done
+      fi
+      exec zellij attach --create --force-run-commands "$@"
+    '';
+  };
 in {
   imports = [
     ./config.nix # Nix-generated main config
@@ -21,6 +63,12 @@ in {
   ];
 
   options.forge.zellij = {
+    attach = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      default = sessionAttach;
+      description = "Session attach for WezTerm spawns: retires servers from an ended login session, then attaches or rebuilds the named session.";
+    };
     # One geometry owner per floating popup; the layout KDL and the integration scripts both render from these rows, never from inline literals.
     # Percent strings only: both KDL and the zellij CLI accept them verbatim, and a malformed value fails at eval instead of misrendering a popup.
     popupGeometry = lib.mkOption {

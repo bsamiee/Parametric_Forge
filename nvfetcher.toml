@@ -64,7 +64,7 @@ src.regex = "op_apple_universal_v([0-9]+\\.[0-9]+\\.[0-9]+)\\.pkg"
 fetch.url = "https://cache.agilebits.com/dist/1P/op2/pkg/v$ver/op_apple_universal_v$ver.pkg"
 
 # vl-convert: Vega and Vega-Lite to SVG/PNG/JPEG/PDF with V8 linked into one executable; nixpkgs carries only the python binding, never the CLI.
-# `src.github` tracks the latest non-prerelease, so the 2.0.0-rc line stays out until it ships stable. The asset is a zip, pinned unpacked.
+# `src.github` tracks the latest non-prerelease, so a release-candidate line stays out until it ships stable. The asset is a zip, pinned unpacked.
 [vl-convert-aarch64-darwin]
 src.github = "vega/vl-convert"
 src.prefix = "v"

@@ -19,7 +19,7 @@
     name = "redeploy";
     runtimeInputs = [pkgs.cachix config.programs.nh.package];
     text = ''
-      exec cachix watch-exec ${osConfig.cachix.cache} -- nh darwin "$1" ${host.flakeRoot} -H ${host.name} --show-activation-logs "''${@:2}"
+      exec cachix watch-exec ${osConfig.cachix.cache} -- nh darwin "''${1:?usage: redeploy build|switch [nh args]}" ${host.flakeRoot} -H ${host.name} --show-activation-logs "''${@:2}"
     '';
   };
 in {

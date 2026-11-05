@@ -25,7 +25,7 @@ in {
       showhidden = false;
       expose-group-apps = false;
       mru-spaces = false;
-      # Static, animation-minimal dock: instant autohide timing, stock gestures pinned. Launchpad died with Tahoe's Spotlight apps view, so
+      # Static, animation-minimal dock: instant autohide timing, stock gestures pinned. Launchpad died with Spotlight's apps view, so
       # its gesture row never lands.
       appswitcher-all-displays = false;
       autohide-delay = 0.0;
@@ -50,7 +50,7 @@ in {
     };
     # --- [FINDER_CONFIGURATION]
     # Preferences only: serialized UI state (sidebar width/disclosure, info panes, NSToolbar dicts) is Finder-owned runtime state, never
-    # declared — Tahoe guarantees no stable schema for it.
+    # declared — macOS guarantees no stable schema for it.
     "com.apple.finder" = {
       CreateDesktop = true;
       ShowExternalHardDrivesOnDesktop = true;
@@ -96,7 +96,7 @@ in {
     };
     # --- [SPACES_CONFIGURATION]
     "com.apple.spaces".spans-displays = false;
-    # Control Center/menu-bar layout has no supported defaults surface on Tahoe (Edit Controls owns it) and AlDente owns battery presentation,
+    # Control Center/menu-bar layout has no supported defaults surface (Edit Controls owns it) and AlDente owns battery presentation,
     # so no controlcenter rows exist here.
     # --- [GLOBAL_SYSTEM_DEFAULTS]
     NSGlobalDomain = {

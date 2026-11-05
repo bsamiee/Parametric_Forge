@@ -16,7 +16,7 @@
 
     packages = with pkgs; [
       # --- [SHELL_TOOLING]
-      bash # Bash 5.3+ runtime for generated scripts and explicit bash sessions
+      bash # Bash runtime for generated scripts and explicit bash sessions
       shellcheck # POSIX shell static analysis
       shfmt # Shell formatter
       bash-language-server # Bash LSP (navigation + diagnostics via shellcheck/shfmt)

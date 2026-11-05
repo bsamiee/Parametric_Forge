@@ -12,8 +12,8 @@
 }: let
   style = import ../../../style.nix;
 
-  # PostgreSQL 18 client commands alone; the package's server binaries stay off PATH.
-  postgres18ClientTools = pkgs.linkFarm "postgres18-client-tools" (map (bin: {
+  # PostgreSQL client commands alone; the package's server binaries stay off PATH.
+  postgresClientTools = pkgs.linkFarm "postgres-client-tools" (map (bin: {
       name = "bin/${bin}";
       path = "${pkgs.postgresql_18}/bin/${bin}";
     }) [
@@ -34,7 +34,7 @@
     ]);
 in {
   home.packages = [
-    postgres18ClientTools # PostgreSQL 18 client commands
+    postgresClientTools # PostgreSQL client commands
     pkgs.sqruff # SQL linter/formatter
     pkgs.postgres-language-server # Postgres LSP; bundles postgrestools
     pkgs.sqlite-extended # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded

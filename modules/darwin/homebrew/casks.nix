@@ -42,7 +42,7 @@ _: {
 
     # --- [DEVELOPMENT]
     "visual-studio-code"
-    # Typeface Beta is installed and updated through its native vendor channel.
+    # Typeface is installed and updated through its native vendor channel.
     "sf-symbols" # Apple's symbol library
 
     # --- [MEDIA_ENTERTAINMENT]
@@ -54,7 +54,7 @@ _: {
     "scrivener" # Writing tool
 
     # --- [QUICKLOOK_PLUGINS]
-    # Plugins below use the App Extension API; legacy .qlgenerator plugins are dead since Sequoia. Each app registers its extension on
+    # Plugins below use the App Extension API; legacy .qlgenerator plugins are dead. Each app registers its extension on
     # its first launch, and .ts files are system-reserved (MPEG-2 UTI), so no QL plugin can override them.
     "syntax-highlight" # Source code: 150+ languages (py,js,cs,go,rust,nix,yaml,json,dockerfile,lua,etc.)
     "qlmarkdown" # Rendered markdown preview with GitHub-style formatting

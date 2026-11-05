@@ -413,7 +413,8 @@ in {
         theme                       "dracula"
         default_shell               "${config.forge.shell}"
         // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
-        // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted) rebuilds the session from its
+        // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted, or the attach retired a server
+        // left by an ended login session) rebuilds the session from its
         // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: a
         // Claude Code pane resumes its own conversation, every other pane rebuilds as a plain shell in its directory. The stale WEZTERM_*
         // variables a surviving server hands its panes are cleared in zsh init, not here.

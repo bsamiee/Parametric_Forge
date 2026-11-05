@@ -38,7 +38,7 @@ in {
   # The rows precede linkGeneration and setupLaunchAgents, which otherwise create the directories they populate at the default mode.
   home.activation.dirRows = lib.hm.dag.entryBetween ["linkGeneration" "setupLaunchAgents"] ["writeBoundary"] (
     lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (mode: dirs: "mkdir -p ${lib.escapeShellArgs dirs} && chmod ${mode} ${lib.escapeShellArgs dirs}") dirRows
+      lib.mapAttrsToList (mode: dirs: "run mkdir -p ${lib.escapeShellArgs dirs}\nrun chmod ${mode} ${lib.escapeShellArgs dirs}") dirRows
     )
   );
 }

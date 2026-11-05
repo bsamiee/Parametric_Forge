@@ -15,7 +15,7 @@ _: {
     # biome.json is the single source: the biome row carries its bytes and its treefmt excludes are the same file's negation rows, so a value
     # changed there busts the treefmt cache and lands in the row with zero edits here.
     biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
-    # Biome 2.2+ spells a folder ignore as `!dir` while treefmt's exclude globs need `dir/**`: a row whose basename carries a glob or a file
+    # Biome spells a folder ignore as `!dir` while treefmt's exclude globs need `dir/**`: a row whose basename carries a glob or a file
     # extension (a non-dot leading name with a dot) passes verbatim, every other row is a folder and gains the recursive suffix here.
     biomeExcludes = map (
       row: let
