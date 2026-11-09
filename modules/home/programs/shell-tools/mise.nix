@@ -10,7 +10,7 @@
 # (zsh/config.nix) applies `mise hook-env` once at start, every Claude Code command activates per call through `~/.claude/settings.json`. Every
 # process without either (a launchd agent, a GUI app) resolves a project's tools through the shim segment `toolchain-env.nix` puts first on
 # every PATH vector, each shim reading its caller's directory and passing through to the next copy on PATH where no version is set. The
-# global auto-install gate stays off so a missing tool is a typed failure, never a mid-command download. Trust covers every config under
+# global auto-install gate stays off so no command starts a download. Trust covers every config under
 # ~/Developer without a prompt, so that root holds the operator's own checkouts alone: a clone placed there runs its mise config's hooks and
 # [env] directives unasked.
 {config, ...}: let
