@@ -90,6 +90,24 @@ const program =
                 ),
         });
 
+        // Syncs mint on every row and anchor on their config: a branch config row, else the same-slug environment that creates the root config.
+        Topology.syncs.forEach((row) => {
+            const anchor = config.get(`${row.project}.${row.config}`) ?? environment.get(`${row.project}.${row.config}`);
+            void new doppler.secretssync.GithubActions(
+                `${row.project}-${row.config}-github`,
+                {
+                    integration: Topology.githubIntegration,
+                    project: row.project,
+                    config: row.config,
+                    syncTarget: 'repo',
+                    repoName: row.repository,
+                    ...('environment' in row ? { environmentName: row.environment } : {}),
+                    deleteBehavior: 'delete_from_target',
+                },
+                { ...(anchor ? { dependsOn: anchor } : {}) },
+            );
+        });
+
         // GitHub settings surface: the token rides the engine env (driver-brokered GITHUB_TOKEN); repositories carry protect so a row edit
         // can never cascade into repo destruction; rulesets adopt by `<repository>:<id>`.
         const gh = new github.Provider('github', { owner: Topology.owner });

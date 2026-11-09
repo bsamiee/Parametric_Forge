@@ -75,6 +75,9 @@
         QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
         # Doppler's login and scope store defaults to ~/.doppler, and a Doppler run starts outside a login shell
         DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
+        # Python writes __pycache__ beside every imported source file by default and reads no config file for it, so a Dock-launched Blender
+        # or a script outside a project tree reaches the cache through this row alone
+        PYTHONPYCACHEPREFIX = "${xdgCacheHome}/pycache";
       };
       session = {
         BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing

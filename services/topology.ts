@@ -11,53 +11,75 @@
 
 type _Origin = 'adopt' | 'mint';
 
+// Environment axes a project row picks: the standard deployment triple, or one environment per GitHub Actions target of a repository's jobs
+// (Doppler's GitHub Actions guide: one environment and one sync per target, access control per environment).
+const _STANDARD_AXIS = [
+    { slug: 'dev', name: 'Development' },
+    { slug: 'stg', name: 'Staging' },
+    { slug: 'prd', name: 'Production' },
+] as const;
+
+const _JOB_AXIS = [
+    { slug: 'ci', name: 'CI' },
+    { slug: 'release', name: 'Release' },
+    { slug: 'deploy', name: 'Deploy' },
+] as const;
+
 // Import IDs: projects by slug, environments by `project.slug`, branch configs by `project.environment.name`.
 const _projects = [
     {
         slug: 'agent-runtime',
         description: 'AI agent runtime secrets',
         origin: 'adopt',
+        environments: _STANDARD_AXIS,
     },
     {
         slug: 'parametric-forge',
         description: 'macOS machine and Home Manager toolchain secrets',
         origin: 'adopt',
+        environments: _STANDARD_AXIS,
+    },
+    {
+        slug: 'rasm',
+        description: 'Rasm repository CI, release, and deploy job values',
+        origin: 'mint',
+        environments: _JOB_AXIS,
     },
 ] as const satisfies ReadonlyArray<{
     readonly slug: string;
     readonly description: string;
     readonly origin: _Origin;
+    readonly environments: ReadonlyArray<{ readonly slug: string; readonly name: string }>;
 }>;
 
 type _ProjectSlug = (typeof _projects)[number]['slug'];
 
-// Every project carries the standard environment triple, and an environment's origin rides its project: API-minted projects mint their
-// environments (each environment creates its same-slug root config), adopted projects adopt them.
-const _ENV_AXIS = [
-    { slug: 'dev', name: 'Development' },
-    { slug: 'stg', name: 'Staging' },
-    { slug: 'prd', name: 'Production' },
-] as const;
+type _EnvironmentSlug<P extends _ProjectSlug = _ProjectSlug> = Extract<
+    (typeof _projects)[number],
+    { readonly slug: P }
+>['environments'][number]['slug'];
 
-type _EnvironmentSlug = (typeof _ENV_AXIS)[number]['slug'];
-
+// An environment's origin rides its project: API-minted projects mint their environments (each environment creates its same-slug root config),
+// adopted projects adopt them.
 const _environments: ReadonlyArray<{
     readonly project: _ProjectSlug;
     readonly slug: _EnvironmentSlug;
-    readonly name: (typeof _ENV_AXIS)[number]['name'];
+    readonly name: string;
     readonly origin: _Origin;
-}> = _projects.flatMap((project) => _ENV_AXIS.map((env) => ({ project: project.slug, slug: env.slug, name: env.name, origin: project.origin })));
+}> = _projects.flatMap((project) =>
+    project.environments.map((env) => ({ project: project.slug, slug: env.slug, name: env.name, origin: project.origin })),
+);
 
 // Branch configs pair with a declared environment of their own project; Doppler naming law makes a branch name `<env>_<suffix>`.
 type _BranchRow = {
     [P in _ProjectSlug]: {
-        [E in _EnvironmentSlug]: {
+        [E in _EnvironmentSlug<P>]: {
             readonly project: P;
             readonly environment: E;
             readonly name: `${E}_${string}`;
             readonly origin: _Origin;
         };
-    }[_EnvironmentSlug];
+    }[_EnvironmentSlug<P>];
 }[_ProjectSlug];
 
 // Branch configs only; root configs ride their environment. agent-runtime keeps its secrets in the `dev` root config, so no branch row exists.
@@ -71,7 +93,7 @@ const _configs = [
 ] as const satisfies ReadonlyArray<_BranchRow>;
 
 // A config coordinate resolves to a root config (same-slug as its environment) or a declared branch config of the same project.
-type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
+type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug<P> | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
 
 type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
 
@@ -104,6 +126,31 @@ const _githubCredential = {
     config: 'dev',
     name: 'GITHUB_TOKEN',
 } as const satisfies _Credential;
+
+// Doppler GitHub App connection for account `bsamiee`: created once in the dashboard (no provider resource exists for it), named here by slug.
+const _githubIntegration = '51df65fc-7097-4d4d-a4ca-308ce2a5918a';
+
+// GitHub Actions syncs, every row minted: a config pushes each of its values into one repository's Actions secrets, or into one of its GitHub
+// environments when `environment` names it; the repository owns that environment. A value dropped from the config leaves the target too.
+const _syncs = [
+    {
+        project: 'rasm',
+        config: 'ci',
+        repository: 'Rasm',
+    },
+    {
+        project: 'rasm',
+        config: 'release',
+        repository: 'Rasm',
+        environment: 'release',
+    },
+    {
+        project: 'rasm',
+        config: 'deploy',
+        repository: 'Rasm',
+        environment: 'deploy',
+    },
+] as const satisfies ReadonlyArray<_Coordinate & { readonly repository: string; readonly environment?: string }>;
 
 // Machine directory-scope rows: the replacement for every per-repo doppler.yaml, applied idempotently via `doppler configure set`.
 // The root and each dir are home-relative; driver.ts joins them onto the operator home once, so no user name rides a row.
@@ -166,6 +213,8 @@ const Topology = {
     configs: _configs,
     tokens: _tokens,
     githubCredential: _githubCredential,
+    githubIntegration: _githubIntegration,
+    syncs: _syncs,
     scopeRoot: _scopeRoot,
     scopes: _scopes,
     owner: _owner,
@@ -181,6 +230,7 @@ declare namespace Topology {
     type Config = (typeof _configs)[number];
     type Token = (typeof _tokens)[number];
     type Credential = _Credential;
+    type Sync = (typeof _syncs)[number];
     type Scope = (typeof _scopes)[number];
     type Repository = (typeof _repositories)[number];
     type Ruleset = _RulesetRow;

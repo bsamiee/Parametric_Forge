@@ -16,7 +16,9 @@
   opCache = "${config.xdg.stateHome}/op/session.sh";
   # op-injected token rows: NAME -> null (the default item+field, Tokens/NAME/token) | "ITEM/field" override. ANTHROPIC_API_KEY stays excluded —
   # Claude Code OAuth owns that auth. gh prefers GH_TOKEN; GITHUB_TOKEN is the fallback other tools read; gws reads its OAuth client pair.
-  # GH_PROJECTS_TOKEN is a classic PAT (fine-grained PATs do not reach the Projects API).
+  # GH_PROJECTS_TOKEN is a classic PAT (fine-grained PATs do not reach the Projects API). The Blender MCP asset keys are read inside Blender by
+  # the mcp-for-blender add-on (os.getenv), so they ride the GUI replay. RHINO_TOKEN has no row: Rhino reads it only as a server (Windows
+  # Server, AWS Marketplace), so it lives in Doppler `rasm/ci` for CI jobs.
   tokenRows = {
     GREPTILE_API_KEY = null;
     CODERABBIT_API_KEY = null;
@@ -24,12 +26,13 @@
     GOOGLE_OAUTH_CLIENT_SECRET = "GOOGLE_OAUTH_CLIENT_SECRET/credential";
     GOOGLE_WORKSPACE_CLI_CLIENT_ID = "GOOGLE_OAUTH_CLIENT_ID/credential";
     GOOGLE_WORKSPACE_CLI_CLIENT_SECRET = "GOOGLE_OAUTH_CLIENT_SECRET/credential";
-    RHINO_TOKEN = null;
     EXA_API_KEY = null;
     PERPLEXITY_API_KEY = null;
     TAVILY_API_KEY = null;
     CACHIX_AUTH_TOKEN = null;
     CONTEXT7_API_KEY = null;
+    BLENDERMCP_SKETCHFAB_API_KEY = null;
+    BLENDERMCP_POLYPIZZA_API_KEY = null;
     GH_TOKEN = "GITHUB_TOKEN/token";
     GITHUB_TOKEN = null;
     GH_PROJECTS_TOKEN = null;

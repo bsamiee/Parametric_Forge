@@ -122,7 +122,7 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 
 ## [12]-[GITHUB_AND_SERVICES]
 
-`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene, rulesets, feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own the shared Doppler projects, environments, branch configs, and service tokens.
+`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene, rulesets, feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own the Doppler projects, environments, branch configs, service tokens, and GitHub Actions syncs: a repository's job values live in its own Doppler project, one environment per GitHub target.
 
 ## [13]-[FRESH_MACHINE_BOOTSTRAP]
 
