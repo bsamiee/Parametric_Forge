@@ -11,13 +11,10 @@
 
 type _Origin = 'adopt' | 'mint';
 
-// Environment axes a project row picks: the standard deployment triple, or one environment per GitHub Actions target of a repository's jobs
-// (Doppler's GitHub Actions guide: one environment and one sync per target, access control per environment).
-const _STANDARD_AXIS = [
-    { slug: 'dev', name: 'Development' },
-    { slug: 'stg', name: 'Staging' },
-    { slug: 'prd', name: 'Production' },
-] as const;
+// Environment axes a project row picks: one development environment for values the operator's own processes read, or one environment per
+// GitHub Actions target of a repository's jobs (Doppler's GitHub Actions guide: one environment and one sync per target, access control per
+// environment).
+const _DEV_AXIS = [{ slug: 'dev', name: 'Development' }] as const;
 
 const _JOB_AXIS = [
     { slug: 'ci', name: 'CI' },
@@ -31,13 +28,13 @@ const _projects = [
         slug: 'agent-runtime',
         description: 'AI agent runtime secrets',
         origin: 'adopt',
-        environments: _STANDARD_AXIS,
+        environments: _DEV_AXIS,
     },
     {
         slug: 'parametric-forge',
         description: 'macOS machine and Home Manager toolchain secrets',
         origin: 'adopt',
-        environments: _STANDARD_AXIS,
+        environments: _DEV_AXIS,
     },
     {
         slug: 'rasm',

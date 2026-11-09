@@ -20,7 +20,8 @@ import { Topology } from './topology.ts';
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
 const PROJECT = 'services';
-const STACK = 'forge';
+// One stack per account the topology manages, named for its owner.
+const STACK = Topology.owner;
 
 // Host seam: the home-relative scope rows resolve onto the operator home once, here, so topology.ts carries no machine path.
 const _scopeRoot = path.join(homedir(), Topology.scopeRoot);
