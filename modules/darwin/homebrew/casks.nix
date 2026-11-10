@@ -46,6 +46,9 @@ _: {
     "sf-symbols" # Apple's symbol library
 
     # --- [MEDIA_ENTERTAINMENT]
+    # Release bundle from this tap (Casks/voicebox.rb); no upstream cask exists. Its bundled backend serves dictation and the HTTP MCP server
+    # on 127.0.0.1:17493 while the app or its kept server runs; profiles and recordings live in ~/Library/Application Support/sh.voicebox.app.
+    "bsamiee/forge/voicebox"
     "spotify"
 
     # --- [NOTES_READING]
