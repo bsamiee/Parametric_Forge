@@ -9,7 +9,6 @@
     "scripts": {
         "preview": "node services/driver.ts preview",
         "up": "node services/driver.ts up",
-        "scopes": "node services/driver.ts scopes",
         "typecheck": "tsc"
     },
     "devDependencies": {

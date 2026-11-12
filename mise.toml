@@ -4,6 +4,8 @@ python.uv_venv_auto = "create|source"
 
 # --- [ENV] ------------------------------------------------------------------------------
 [env]
+DOPPLER_CONFIG             = "dev_machine"
+DOPPLER_PROJECT            = "parametric-forge"
 FASTMCP_SHOW_SERVER_BANNER = "false"
 
 # --- [TOOLS] ----------------------------------------------------------------------------

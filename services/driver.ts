@@ -4,15 +4,15 @@
 // License       : MIT
 // Path          : services/driver.ts
 // ----------------------------------------------------------------------------
-// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering only the
-// Pulumi passphrase and Doppler IaC credential. The GitHub credential resolves from Doppler. Zero YAML on disk: the project
-// manifest synthesizes into the workspace temp dir. Also applies the machine's Doppler directory scopes. Exports nothing; runMain terminates.
+// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering the
+// Pulumi passphrase, the Doppler IaC credential, and the GitHub credential. Zero YAML on disk: the project
+// manifest synthesizes into the workspace temp dir. Exports nothing; runMain terminates.
 
 import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { NodeRuntime, NodeServices } from '@effect/platform-node';
 import { LocalWorkspace, type Stack } from '@pulumi/pulumi/automation/index.js';
-import { Array as Arr, Config, Console, Data, Effect, FileSystem, HashSet, Option, Record, Redacted, Result, Schema, Stream, Struct } from 'effect';
+import { Array as Arr, Config, Console, Data, Effect, FileSystem, Option, Record, Redacted, Result, Schema, Stream, Struct } from 'effect';
 import { ChildProcess } from 'effect/process';
 import { program } from './program.ts';
 import { Topology } from './topology.ts';
@@ -22,10 +22,6 @@ import { Topology } from './topology.ts';
 const PROJECT = 'services';
 // One stack per account the topology manages, named for its owner.
 const STACK = Topology.owner;
-
-// Host seam: the home-relative scope rows resolve onto the operator home once, here, so topology.ts carries no machine path.
-const _scopeRoot = path.join(homedir(), Topology.scopeRoot);
-const _scopes = Arr.map(Topology.scopes, (row) => ({ ...row, dir: path.join(_scopeRoot, row.dir) }));
 
 // --- [TYPES] ---------------------------------------------------------------------------
 
@@ -83,21 +79,11 @@ const _run = (command: string, args: ReadonlyArray<string>, label: string, env?:
 
 const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(command, args, `${command} ${args.join(' ')}`);
 
-const _dopplerSecret = (token: Redacted.Redacted<string>, credential: Topology.Credential) =>
-    Effect.map(
-        _run(
-            'doppler',
-            ['secrets', 'get', credential.name, '--project', credential.project, '--config', credential.config, '--plain'],
-            `doppler secrets get ${credential.name} (${credential.project}/${credential.config})`,
-            { DOPPLER_TOKEN: Redacted.value(token) },
-        ),
-        (raw) => Redacted.make(raw.trim()),
-    );
-
 // NonEmptyString: an empty exported override means unset, per XDG semantics. Ambient credentials short-circuit their broker.
 const _settings = Config.all({
     passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password')),
     tokenRef: Config.NonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token')),
+    githubRef: Config.NonEmptyString('SERVICES_GITHUB_TOKEN_REF').pipe(Config.withDefault('op://Tokens/GITHUB_TOKEN/token')),
     stateDir: Config.NonEmptyString('SERVICES_STATE_DIR').pipe(
         Config.orElse(() => Config.map(Config.NonEmptyString('XDG_STATE_HOME'), (root) => path.join(root, 'services'))),
         Config.withDefault(path.join(homedir(), '.local', 'state', 'services')),
@@ -115,26 +101,24 @@ const _brokered = (ambient: Option.Option<Redacted.Redacted<string>>, ref: strin
         onNone: () => Effect.map(_shell('op', 'read', ref), (raw) => Redacted.make(raw.trim())),
     });
 
-const _githubToken = (ambient: Option.Option<Redacted.Redacted<string>>, dopplerToken: Redacted.Redacted<string>) =>
-    Option.match(ambient, {
-        onSome: (value) => Effect.succeed(value),
-        onNone: () => _dopplerSecret(dopplerToken, Topology.githubCredential),
-    });
-
 const _openStack = (flags: Flags) =>
     Effect.gen(function* () {
         const cfg = yield* _settings;
         const fs = yield* FileSystem.FileSystem;
         yield* fs.makeDirectory(cfg.stateDir, { recursive: true });
         yield* fs.chmod(cfg.stateDir, 0o700);
-        const [passphrase, token] = yield* Effect.all([_brokered(cfg.passphrase, cfg.passphraseRef), _brokered(cfg.token, cfg.tokenRef)], {
-            concurrency: 2,
-        });
-        const backendUrl = `file://${cfg.stateDir}`;
-        const githubToken = yield* _githubToken(
-            Option.orElse(cfg.githubToken, () => cfg.ghToken),
-            token,
+        const [passphrase, token, githubToken] = yield* Effect.all(
+            [
+                _brokered(cfg.passphrase, cfg.passphraseRef),
+                _brokered(cfg.token, cfg.tokenRef),
+                _brokered(
+                    Option.orElse(cfg.githubToken, () => cfg.ghToken),
+                    cfg.githubRef,
+                ),
+            ],
+            { concurrency: 3 },
         );
+        const backendUrl = `file://${cfg.stateDir}`;
         return yield* Effect.tryPromise({
             // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
             try: () =>
@@ -176,48 +160,12 @@ const _echo = (chunk: string): void => {
     process.stdout.write(chunk);
 };
 
-// --- [SCOPE_RAIL] ----------------------------------------------------------------------
-
-const _ScopeTable = Schema.fromJsonString(Schema.Record(Schema.String, Schema.Record(Schema.String, Schema.Unknown)));
-
-const _scopeTable = Effect.flatMap(_shell('doppler', 'configure', '--all', '--json'), Schema.decodeUnknownEffect(_ScopeTable));
-
-const _declaredDirs: HashSet.HashSet<string> = HashSet.fromIterable(Arr.map(_scopes, (row) => row.dir));
-
-const _strayScopes = Effect.map(_scopeTable, (table) =>
-    Record.keys(
-        Record.filter(
-            table,
-            (entry, dir) =>
-                dir.startsWith(`${_scopeRoot}/`) &&
-                !HashSet.has(_declaredDirs, dir) &&
-                (Record.has(entry, 'enclave.project') || Record.has(entry, 'enclave.config')),
-        ),
-    ),
-);
-
-// Applies declared rows for existing directories, then unsets stray scopeRoot rows; scope `/`, tokens, and the CLI config file stay untouched.
-const _applyScopes = Effect.gen(function* () {
-    const fs = yield* FileSystem.FileSystem;
-    const rows = yield* Effect.filter(_scopes, (row) => fs.exists(row.dir), { concurrency: 4 });
-    yield* Effect.forEach(
-        rows,
-        (row) => _shell('doppler', 'configure', 'set', `project=${row.project}`, `config=${row.config}`, '--scope', row.dir),
-        { concurrency: 1 },
-    );
-    const strays = yield* _strayScopes;
-    yield* Effect.forEach(strays, (dir) => _shell('doppler', 'configure', 'unset', 'project', 'config', '--scope', dir), {
-        concurrency: 1,
-    });
-});
-
 // --- [ENTRY] ---------------------------------------------------------------------------
 
 const USAGE =
     'services driver\n' +
     '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
-    '  outputs [name] [--reveal]\n' +
-    '  scopes';
+    '  outputs [name] [--reveal]';
 
 // One flag anchor: `=`-suffixed flags match by prefix, the rest match whole.
 const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
@@ -284,7 +232,6 @@ const _verbs = {
                         ),
                 }),
         ),
-    scopes: (_flags2: Flags, _positional: ReadonlyArray<string>) => _applyScopes,
 } as const;
 
 const _verb = Schema.decodeUnknownOption(Schema.Literals(Struct.keys(_verbs)));

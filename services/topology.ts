@@ -4,43 +4,24 @@
 // License       : MIT
 // Path          : services/topology.ts
 // ----------------------------------------------------------------------------
-// Forge's external services as typed rows under one assembled owner: the Doppler topology and the GitHub settings surface, each row family a `const`
-// projected onto the `Topology` object. program.ts materializes rows into resources; driver.ts applies scope rows machine-side. Every row is declared end-state,
+// Forge's own external services as typed rows under one assembled owner: its Doppler projects and its GitHub repository, each row family a `const`
+// projected onto the `Topology` object. program.ts materializes rows into resources. Every other repository owns its Doppler project and GitHub
+// settings in its own IaC and names its Doppler project through a `DOPPLER_PROJECT` row of its own mise `[env]`. Every row is declared end-state,
 // managed forever: an 'adopt' row imports live CLI/gh-born resources, a 'mint' row is created fresh and never carries an import ID. Cross-family
 // coordinates derive from their anchors, so a row naming an undeclared project, environment, config, or repository is a compile error.
 
 type _Origin = 'adopt' | 'mint';
 
-// Environment axes a project row picks: one development environment for values the operator's own processes read, or one environment per
-// GitHub Actions target of a repository's jobs (Doppler's GitHub Actions guide: one environment and one sync per target, access control per
-// environment).
+// One development environment per project: every value here is read by the operator's own processes.
 const _DEV_AXIS = [{ slug: 'dev', name: 'Development' }] as const;
-
-const _JOB_AXIS = [
-    { slug: 'ci', name: 'CI' },
-    { slug: 'release', name: 'Release' },
-    { slug: 'deploy', name: 'Deploy' },
-] as const;
 
 // Import IDs: projects by slug, environments by `project.slug`, branch configs by `project.environment.name`.
 const _projects = [
-    {
-        slug: 'agent-runtime',
-        description: 'AI agent runtime secrets',
-        origin: 'adopt',
-        environments: _DEV_AXIS,
-    },
     {
         slug: 'parametric-forge',
         description: 'macOS machine and Home Manager toolchain secrets',
         origin: 'adopt',
         environments: _DEV_AXIS,
-    },
-    {
-        slug: 'rasm',
-        description: 'Rasm repository CI, release, and deploy job values',
-        origin: 'mint',
-        environments: _JOB_AXIS,
     },
 ] as const satisfies ReadonlyArray<{
     readonly slug: string;
@@ -79,7 +60,7 @@ type _BranchRow = {
     }[_EnvironmentSlug<P>];
 }[_ProjectSlug];
 
-// Branch configs only; root configs ride their environment. agent-runtime keeps its secrets in the `dev` root config, so no branch row exists.
+// Branch configs only; root configs ride their environment.
 const _configs = [
     {
         project: 'parametric-forge',
@@ -98,68 +79,9 @@ type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config
 // Replacement is revoke-and-remint: drop the row and `up --target=<project>/<config>/<name>` (revokes), restore the row and target again
 // (mints), then hand the fresh key off through 1Password.
 // A read grant carries the `-readonly` name suffix as the naming law.
-const _tokens = [
-    {
-        project: 'agent-runtime',
-        config: 'dev',
-        name: 'agent-readonly',
-        access: 'read',
-    },
-    {
-        project: 'parametric-forge',
-        config: 'dev_machine',
-        name: 'machine-readonly',
-        access: 'read',
-    },
-] as const satisfies ReadonlyArray<
+const _tokens: ReadonlyArray<
     _Coordinate & ({ readonly name: `${string}-readonly`; readonly access: 'read' } | { readonly name: string; readonly access: 'read/write' })
->;
-
-type _Credential = _Coordinate & { readonly name: string };
-
-// The GitHub provider token the driver reads through the brokered Doppler credential when no ambient token is set.
-const _githubCredential = {
-    project: 'agent-runtime',
-    config: 'dev',
-    name: 'GITHUB_TOKEN',
-} as const satisfies _Credential;
-
-// Doppler GitHub App connection for account `bsamiee`: created once in the dashboard (no provider resource exists for it), named here by slug.
-const _githubIntegration = '51df65fc-7097-4d4d-a4ca-308ce2a5918a';
-
-// GitHub Actions syncs, every row minted: a config pushes each of its values into one repository's Actions secrets, or into one of its GitHub
-// environments when `environment` names it; the repository owns that environment. A value dropped from the config leaves the target too.
-const _syncs = [
-    {
-        project: 'rasm',
-        config: 'ci',
-        repository: 'Rasm',
-    },
-    {
-        project: 'rasm',
-        config: 'release',
-        repository: 'Rasm',
-        environment: 'release',
-    },
-    {
-        project: 'rasm',
-        config: 'deploy',
-        repository: 'Rasm',
-        environment: 'deploy',
-    },
-] as const satisfies ReadonlyArray<_Coordinate & { readonly repository: string; readonly environment?: string }>;
-
-// Machine directory-scope rows: the replacement for every per-repo doppler.yaml, applied idempotently via `doppler configure set`.
-// The root and each dir are home-relative; driver.ts joins them onto the operator home once, so no user name rides a row.
-const _scopeRoot = 'Developer';
-
-const _scopes = [
-    {
-        dir: 'Parametric_Forge',
-        project: 'parametric-forge',
-        config: 'dev_machine',
-    },
-] as const satisfies ReadonlyArray<_Coordinate & { readonly dir: string }>;
+> = [];
 
 // GitHub settings-as-code: every owned repo carries the shared merge-hygiene policy from program.ts; branch rulesets are removed, so main takes direct pushes.
 const _owner = 'bsamiee';
@@ -209,11 +131,6 @@ const Topology = {
     environments: _environments,
     configs: _configs,
     tokens: _tokens,
-    githubCredential: _githubCredential,
-    githubIntegration: _githubIntegration,
-    syncs: _syncs,
-    scopeRoot: _scopeRoot,
-    scopes: _scopes,
     owner: _owner,
     repositories: _repositories,
     rulesets: _rulesets,
@@ -226,9 +143,6 @@ declare namespace Topology {
     type Environment = (typeof _environments)[number];
     type Config = (typeof _configs)[number];
     type Token = (typeof _tokens)[number];
-    type Credential = _Credential;
-    type Sync = (typeof _syncs)[number];
-    type Scope = (typeof _scopes)[number];
     type Repository = (typeof _repositories)[number];
     type Ruleset = _RulesetRow;
     type RulesetPolicy = typeof _rulesetPolicy;

@@ -7,10 +7,10 @@
 # mise runtime manager: installed binary, interactive-zsh activation, and a tool-free global config that never shadows a project's own
 # `mise.toml`. Activation (`mise activate zsh`, a precmd/chpwd hook) makes a project's `[env]` and `[tools]` rows apply to the shell inside
 # its tree, so a per-project variable is owned by that project's `mise.toml`, never by a machine-wide export. Non-interactive zsh
-# (zsh/config.nix) applies `mise hook-env` once at start, every Claude Code command activates per call through `~/.claude/settings.json`. Every
-# process without either (a launchd agent, a GUI app) resolves a project's tools through the shim segment `toolchain-env.nix` puts first on
-# every PATH vector, each shim reading its caller's directory and passing through to the next copy on PATH where no version is set. The
-# global auto-install gate stays off so no command starts a download. Trust covers every config under
+# (zsh/config.nix) applies `mise hook-env` once at start, and a Claude Code Bash command applies `mise env` through the `SessionStart` row of its
+# project's `.claude/settings.json`. Every process without either (a launchd agent, a GUI app) resolves a project's tools through the shim
+# segment `toolchain-env.nix` puts first on every PATH vector, each shim reading its caller's directory and passing through to the next copy
+# on PATH where no version is set. The global auto-install gate stays off so no command starts a download. Trust covers every config under
 # ~/Developer without a prompt, so that root holds the operator's own checkouts alone: a clone placed there runs its mise config's hooks and
 # [env] directives unasked.
 {config, ...}: let
