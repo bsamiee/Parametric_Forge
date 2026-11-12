@@ -9,10 +9,8 @@
   imports = [
     ./karabiner
     ./linearmouse
-    ./nvim
     ./unreal
     ./wezterm
-    ./yazi
     ./zellij
   ];
 }

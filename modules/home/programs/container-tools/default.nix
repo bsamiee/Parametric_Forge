@@ -4,10 +4,9 @@
 # License       : MIT
 # Path          : modules/home/programs/container-tools/default.nix
 # ----------------------------------------------------------------------------
-# Runtime-less OCI registry and Dockerfile tool inventory.
+# Runtime-less OCI registry tool inventory.
 {pkgs, ...}: {
   home.packages = [
     pkgs.crane # Fast registry operations
-    pkgs.hadolint # Dockerfile linter; the nvim dockerfile lint lane
   ];
 }

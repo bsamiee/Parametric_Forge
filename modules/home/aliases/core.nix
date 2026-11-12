@@ -19,8 +19,6 @@
     ["sqlite3" "sqlite3 -column -header -nullvalue NULL"]
     ["jqi" "jnv"]
     ["fqd" "fq d"]
-    ["c2j" "mlr --c2j cat"]
-    ["j2c" "mlr --j2c cat"]
   ];
   dev = [
     ["watch" "watchexec -c"]
@@ -38,8 +36,6 @@
     ["ls" "eza -la --header --no-user --time-style=relative"]
     ["mkdir" "mkdir -pv"]
     ["rcmv" "rclone move --delete-empty-src-dirs"]
-    ["yz" "yazi-dispatch.sh reveal"]
-    ["yzd" "yazi-dispatch.sh cd"]
     ["cpsp" "rsync -ahPSX --"]
     ["backup" "rsync -ahPX --delete"]
     ["rsyncd" "rsync -ahPn"]
@@ -51,8 +47,6 @@
   ];
   general = [
     ["cl" "clear"]
-    ["vim" "nvim"]
-    ["nv" "nvim"]
     ["ff" "fastfetch"]
   ];
   monitoring = [
@@ -64,7 +58,6 @@
     ["load" "/usr/bin/top -l 2 -n 12 -o cpu -stats pid,command,cpu,mem,state | tail -n 24"]
     ["memhog" ''ps -axo rss=,comm= | awk '{n=$0; sub(/^ *[0-9]+ +/,"",n); sub(/.*\//,"",n); m[n]+=$1} END {for (c in m) printf "%7d MB  %s\n", m[c]/1024, c}' | sort -rn | head -n 20'' "Resident memory summed per program, top 20"]
     ["dfi" "dua i"]
-    ["killi" "pik"]
   ];
   navigation = [
     ["cdr" "cd $(git rev-parse --show-toplevel)"]
@@ -83,8 +76,6 @@
     ["tripu" "trip --udp --target-port 33434"]
     ["ohaj" "oha --no-tui --output-format json"]
     ["serve" "rclone serve http --addr :8000 ."]
-    ["bw" "sudo bandwhich"]
-    ["speedtestl" "speedtest --accept-license"]
     ["lssh" "sshs"]
     ["ports" "sudo lsof -iTCP -sTCP:LISTEN -n -P"]
   ];
@@ -95,13 +86,10 @@
     ["reload" "exec $SHELL"]
   ];
   text-search = [
-    ["chs" "choose"]
-    ["batg" "batgrep"]
     ["tldru" "tldr --update"]
     ["rgx" "grex -xc"]
     ["rgxf" "grex -xc -f"]
     ["sr" "serpl"]
-    ["mdv" "rich --markdown"]
   ];
   time = [
     ["timestamp" "date +'%Y%m%d_%H%M%S'"]

@@ -62,37 +62,11 @@ in {
     ./layouts/default.nix # Shell-first layout
   ];
 
-  options.forge.zellij = {
-    attach = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      default = sessionAttach;
-      description = "Session attach for WezTerm spawns: retires servers from an ended login session, then attaches or rebuilds the named session.";
-    };
-    # One geometry owner per floating popup; the layout KDL and the integration scripts both render from these rows, never from inline literals.
-    # Percent strings only: both KDL and the zellij CLI accept them verbatim, and a malformed value fails at eval instead of misrendering a popup.
-    popupGeometry = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule {
-        options =
-          lib.genAttrs ["x" "y" "width" "height"] (_:
-            lib.mkOption {type = lib.types.strMatching "^[0-9]+%$";});
-      });
-      default = {
-        yazi = {
-          x = "8%";
-          y = "6%";
-          width = "84%";
-          height = "86%";
-        };
-        # Toggle-dispatcher stub: a deliberately tiny short-lived pane that runs the popup dispatch logic and reaps itself.
-        dispatcher = {
-          x = "45%";
-          y = "45%";
-          width = "10%";
-          height = "10%";
-        };
-      };
-    };
+  options.forge.zellij.attach = lib.mkOption {
+    type = lib.types.package;
+    readOnly = true;
+    default = sessionAttach;
+    description = "Session attach for WezTerm spawns: retires servers from an ended login session, then attaches or rebuilds the named session.";
   };
 
   config = {

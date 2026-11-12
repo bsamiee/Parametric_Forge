@@ -41,10 +41,10 @@
       "/usr/sbin"
       "/sbin"
     ];
-    # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, a GUI app, and a
-    # process its multiplexer starts without a shell resolve a project's pinned tool from the caller's directory, and outside a project a shim
-    # whose tool has no version there execs the next copy on PATH. A shell that applies mise (zsh at startup, every Claude Code command
-    # through its user settings) drops this segment and puts a project's install paths first.
+    # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, and a GUI app
+    # resolve a project's pinned tool from the caller's directory, and outside a project a shim
+    # whose tool has no version there execs the next copy on PATH. A shell that applies mise (zsh at startup, a Claude Code Bash command
+    # through its project's `SessionStart` row) puts a project's install paths first, and zsh drops this segment.
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
     # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
@@ -62,10 +62,13 @@
       "${home}/Library/Fonts"
       "${home}/Library/Application Support/design-tools/fonts"
     ];
+    # The editor as one program: crontab execs the value as a single word and zsh never splits an unquoted `$EDITOR`, so Visual Studio
+    # Code's blocking form (`code --wait` returns when the file's tab closes) sits behind a script both rows name by store path.
+    editor = lib.getExe (pkgs.writeShellScriptBin "code-wait" ''exec code --wait "$@"'');
     envByClass = {
       all = {
-        EDITOR = "nvim";
-        VISUAL = "nvim";
+        EDITOR = editor;
+        VISUAL = editor;
         PAGER = "less";
         LESS = "-RFX";
         GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
@@ -81,7 +84,7 @@
       };
       session = {
         BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
-        MANPAGER = "env BATMAN_IS_BEING_MANPAGER=yes bash ${pkgs.bat-extras.batman}/bin/batman"; # static batman export-env, no per-shell fork
+        MANPAGER = "sh -c 'col -bx | bat -plman'"; # col strips man's overstrike bytes, bat pages the text plain under the man syntax
         SQLITE_HISTORY = "${xdgStateHome}/sqlite/history"; # sqlite3's default is ~/.sqlite_history
         NODE_REPL_HISTORY = "${xdgStateHome}/node_repl_history"; # the node REPL's default is ~/.node_repl_history
         # The one `brew shellenv` row PATH resolution does not cover: macOS manpath derives /opt/homebrew/share/man from /opt/homebrew/bin,

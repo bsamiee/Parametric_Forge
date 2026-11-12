@@ -26,11 +26,6 @@
 
     # tmTheme from modules/home/theme.nix; the activation cache build exposes it to bat and, through the bat cache, to delta's syntax-theme.
     themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;
-
-    extraPackages = with pkgs.bat-extras; [
-      batman # Colored man pages
-      batgrep # Ripgrep wrapper with bat preview
-    ];
   };
 
   # Home Manager's batCache step echoes every cache write and a "no syntaxes" notice into each switch; the same rebuild (empty working

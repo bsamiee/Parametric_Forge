@@ -4,9 +4,9 @@
 # License       : MIT
 # Path          : modules/home/theme.nix
 # ----------------------------------------------------------------------------
-# Forge palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table (tmTheme, treesitter,
-# textMate, and semantic tokens project from one pivot), derived diff/search/git roles, and the shared icon vocabulary. Every color consumer
-# interpolates these tokens; no consumer carries a private hex.
+# Forge palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table the tmTheme
+# projects from, derived diff/search/git roles, and the shared icon vocabulary. Every color consumer interpolates these tokens; no consumer
+# carries a private hex.
 {
   config,
   lib,
@@ -61,20 +61,33 @@
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };
 
-  # Two-register git vocabulary from the fonts-catalog gitAlphabet rows; dotted role paths resolve on the folded families (contextBadges grammar),
-  # so a hue rebind lands on every consumer and a new state is one catalog row. Register law: ascii = persisted/piped output and prose-like readouts
-  # where marker+count reads as a text token (delta labels; the operator-ratified starship cluster); glyph = fixed one-cell icon columns where shape
-  # is the cue (gitsigns gutter, yazi linemode); unthemable-glyph tools (eza NFv3) take .color only; the prompt alone bins color.
+  # Git-state vocabulary rows: [state rolePath ascii]. The dotted role path resolves on the folded families (contextBadges grammar), so a hue
+  # rebind lands on every consumer and a new state is one row. The ascii marker serves persisted/piped output and prose-like readouts where
+  # marker+count reads as a text token (delta labels; the operator-ratified starship cluster); tools with fixed glyphs (eza NFv3) take .color
+  # only; the prompt alone bins color. typechange carries the modified marker (a mode flip is a modify) and stays a row so consumers dispatch
+  # by state.
   roles =
     families
     // {
       git = byName (map (t: {
           name = builtins.elemAt t 0;
           color = lib.getAttrFromPath (lib.splitString "." (builtins.elemAt t 1)) families;
-          glyph = builtins.fromJSON ''"\u${builtins.elemAt t 2}"'';
-          ascii = builtins.elemAt t 3;
-        })
-        fonts.catalog."Symbols Nerd Font Mono".gitAlphabet);
+          ascii = builtins.elemAt t 2;
+        }) [
+          ["added" "state.success" "[+]"]
+          ["staged" "state.success" "[*]"]
+          ["modified" "state.info" "[~]"]
+          ["deleted" "state.danger" "[-]"]
+          ["untracked" "state.success" "[?]"]
+          ["renamed" "accent.structural" "[>]"]
+          ["typechange" "state.info" "[~]"]
+          ["conflict" "accent.secondary" "[!]"]
+          ["ahead" "state.success" "[^]"]
+          ["behind" "state.warning" "[v]"]
+          ["diverged" "state.attention" "[%]"]
+          ["stashed" "text.muted" "[$]"]
+          ["clean" "state.success" "[=]"]
+        ]);
     };
 
   # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot consumers agree with truecolor consumers. Slot 4 carries a real blue,
@@ -95,50 +108,37 @@
         blue = palette.brightBlue;
       });
 
-  # Master scope table: the one scope-to-role-to-hue pivot. tmTheme (bat, delta, yazi syntect), VS Code textMate + semantic tokens, and the nvim
-  # treesitter projection all derive from these rows; `captures` names the treesitter side so a hue rebind lands everywhere with zero edits.
+  # Master scope table: the one scope-to-role-to-hue pivot. The tmTheme (bat, delta) derives from these rows, so a hue rebind lands in both
+  # with zero edits.
   # Rebinds vs stock Dracula: keyword->pink (AA), operator/punctuation->subtle, escape->orange, variable/parameter->blue (ends type==variable),
-  # tag keeps magenta, warning splits to amber so a diagnostic is never a string. Row tuple: [name scope color style captures background].
-  syntaxScopes = map (row ["name" "scope" "color" "style" "captures" "background"]) [
-    ["Comment" "comment, punctuation.definition.comment" palette.comment "italic" ["comment"]]
-    ["String" "string" palette.yellow null ["string" "character"]]
-    ["Escape" "constant.character.escape" palette.orange null ["string.escape" "character.special"]]
-    ["Number" "constant.numeric" palette.purple null ["number" "number.float"]]
-    ["Constant" "constant.language, constant.character, constant.other" palette.purple null ["constant" "constant.builtin" "boolean"]]
-    ["Keyword" "keyword, storage, storage.type, storage.modifier" palette.pink null ["keyword"]]
-    ["Operator" "keyword.operator, punctuation.accessor" palette.subtle null ["operator" "keyword.operator"]]
-    ["Punctuation" "punctuation" palette.subtle null ["punctuation.bracket" "punctuation.delimiter" "punctuation.special"]]
-    ["Function" "entity.name.function, support.function" palette.green null ["function" "function.method" "function.macro" "function.builtin"]]
-    ["Type" "entity.name.class, entity.name.type, entity.other.inherited-class, support.type, support.class" palette.cyan null ["type" "type.builtin" "constructor"]]
-    ["Variable" "variable, support.variable" palette.blue null ["variable" "variable.member" "property"]]
-    ["Parameter" "variable.parameter" palette.blue "italic" ["variable.parameter"]]
-    ["Attribute" "entity.other.attribute-name" palette.magenta "italic" ["attribute"]]
-    ["Tag" "entity.name.tag" palette.magenta null ["tag"]]
-    ["Heading" "markup.heading" palette.purple "bold" ["markup.heading"]]
-    ["Bold" "markup.bold" palette.orange "bold" ["markup.strong"]]
-    ["Italic" "markup.italic" palette.yellow "italic" ["markup.italic"]]
-    ["Link" "markup.underline.link" palette.blue null ["markup.link" "markup.link.url" "string.special.url"]]
-    ["Inserted" "markup.inserted" palette.green null ["diff.plus"]]
-    ["Deleted" "markup.deleted" palette.red null ["diff.minus"]]
-    ["Invalid" "invalid" palette.foreground null [] palette.red]
+  # tag keeps magenta, warning splits to amber so a diagnostic is never a string. Row tuple: [name scope color style background].
+  syntaxScopes = map (row ["name" "scope" "color" "style" "background"]) [
+    ["Comment" "comment, punctuation.definition.comment" palette.comment "italic"]
+    ["String" "string" palette.yellow]
+    ["Escape" "constant.character.escape" palette.orange]
+    ["Number" "constant.numeric" palette.purple]
+    ["Constant" "constant.language, constant.character, constant.other" palette.purple]
+    ["Keyword" "keyword, storage, storage.type, storage.modifier" palette.pink]
+    ["Operator" "keyword.operator, punctuation.accessor" palette.subtle]
+    ["Punctuation" "punctuation" palette.subtle]
+    ["Function" "entity.name.function, support.function" palette.green]
+    ["Type" "entity.name.class, entity.name.type, entity.other.inherited-class, support.type, support.class" palette.cyan]
+    ["Variable" "variable, support.variable" palette.blue]
+    ["Parameter" "variable.parameter" palette.blue "italic"]
+    ["Attribute" "entity.other.attribute-name" palette.magenta "italic"]
+    ["Tag" "entity.name.tag" palette.magenta]
+    ["Heading" "markup.heading" palette.purple "bold"]
+    ["Bold" "markup.bold" palette.orange "bold"]
+    ["Italic" "markup.italic" palette.yellow "italic"]
+    ["Link" "markup.underline.link" palette.blue]
+    ["Inserted" "markup.inserted" palette.green]
+    ["Deleted" "markup.deleted" palette.red]
+    ["Invalid" "invalid" palette.foreground null palette.red]
   ];
 
-  # Shared icon vocabulary: one directory/process glyph table projected into consumers (Yazi dirs; tab titles, prompts, and dashboards
-  # adopt through their register rows) — never app-local maps. Dir row tuple: [name glyph color].
+  # Shared icon vocabulary: one process glyph table projected into consumers (the prompt and its context badges) — never app-local maps.
   icons = {
-    dirs = byName (map (row ["name" "glyph" "color"]) [
-      [".git" "󰊢" palette.pink]
-      ["node_modules" "󰏗" palette.green]
-      ["target" "󰀘" palette.magenta]
-      [".venv" "󰅩" palette.yellow]
-      ["__pycache__" "󰌠" palette.yellow]
-      [".config" "󰒓" palette.purple]
-      [".ssh" "󰣀" palette.pink]
-      ["src" "󰈙" palette.cyan]
-      ["bin" "󰞰" palette.green]
-    ]);
     process = {
-      nvim = "";
       zsh = "󰆍";
       python = "󰌠";
       node = "󰎙";
@@ -207,15 +207,14 @@
 
   projections = {
     inherit tmThemeFile;
-    # Flat hex mirror of the role families hex-projection consumers (VS Code, nvim, wezterm Lua rows) actually index; focus and mode stay Nix-side
-    # deliberately — no hex consumer reads them. A new family lands here with its first consumer.
+    # Flat hex mirror of the role families the wezterm Lua rows index; focus and mode stay Nix-side deliberately — no hex consumer reads
+    # them. A new family lands here with its first consumer.
     rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
-    # Git-state vocabulary rows (hex + both registers); terminal-bound consumers render .glyph, persisted/piped surfaces render .ascii, every
-    # consumer takes .color from the same row.
+    # Git-state vocabulary rows as hex and ascii marker; every consumer takes both from the same row.
     gitHex =
       lib.mapAttrs (_: g: {
         color = g.color.hex;
-        inherit (g) glyph ascii;
+        inherit (g) ascii;
       })
       roles.git;
     # Machine-context badges (remote host, in-container rootfs): the roles.git single-owner pattern applied to context — each row carries the
@@ -228,12 +227,6 @@
         remote = ["ssh" "state.warning"];
         container = ["container" "accent.structural"];
       };
-    # Lua return-table behind the generated Neovim palette; derived fills ride along snake_cased for highlight consumers.
-    luaPalette = ''
-      -- Generated from the Forge theme owner (modules/home/theme.nix).
-      return {
-      ${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") palette)}${lib.concatStrings (lib.mapAttrsToList (name: c: "  [\"${name}\"] = \"${c.hex}\",\n") derived)}}
-    '';
     # WezTerm color-scheme rows in the colors-TOML shape; the tab bar sits on the surface step and inactive chrome reads through the subtle tier.
     # Label quads and tab rows fold from [bg fg] pairs; ANSI vectors derive from the slot-name order.
     weztermColorScheme = let

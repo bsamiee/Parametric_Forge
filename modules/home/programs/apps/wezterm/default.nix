@@ -19,12 +19,9 @@
   homeDir = config.home.homeDirectory;
 
   # --- [PLUGIN_PINS_MANIFEST_ROWS_FILE_STORE_PATH_LOADS_ONLY]
-  pluginSrc = row:
-    pkgs.fetchFromGitHub {
-      inherit (row) owner repo rev hash;
-    };
-  syncPanesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.sync-panes;
-  weztermTypesSrc = pluginSrc manifest.extensions.wezterm-plugins.rows.wezterm-types;
+  syncPanesSrc = pkgs.fetchFromGitHub {
+    inherit (manifest.extensions.wezterm-plugins.rows.sync-panes) owner repo rev hash;
+  };
 
   # --- [FONT_ROW]
   # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the font override path all arrive
@@ -45,8 +42,8 @@
   defaultWorkspace = "main";
 
   # --- [ACTION_BUS_ROWS_QUICK_SELECT_PATTERNS_HYPERLINK_RULES]
-  # `select` names a deck.lua action arm for the captured span (edit opens the span in an editor float); rows without it keep the native
-  # clipboard default.
+  # `select` names a deck.lua action arm for the captured span (edit hands the span to Visual Studio Code's `code --goto`); rows without it
+  # keep the native clipboard default.
   quickSelectRows = [
     {
       id = "nix-store-path";
@@ -89,9 +86,9 @@
   };
 
   # --- [COMMAND_DECK_ROWS]
-  # One registry feeds the command palette, the launcher menu, and key rows. Each row spawns its command in a shaped float window;
-  # `destructive` rows pass the deck confirm gate before acting; `scope = "workspace"` keys the float singleton per workspace and takes the
-  # active workspace row's float shape.
+  # One registry feeds the command palette, the launcher menu, and key rows. Each row spawns its command in a shaped float window, a
+  # singleton: a live float focuses instead of duplicating. `destructive` rows pass the deck confirm gate before acting;
+  # `scope = "workspace"` keys the float singleton per workspace and takes the active workspace row's float shape.
   commandRows = [
     {
       id = "redeploy-build";
@@ -199,12 +196,12 @@
       zsh = config.forge.shell;
       zellij = "${pkgs.zellij}/bin/zellij";
       zellij_attach = lib.getExe config.forge.zellij.attach;
-      nvim = "${profileBin}/nvim";
+      # The command the application row's bundle ships (mac-tools/default-applications.nix); WezTerm runs it outside any shell.
+      code = "${config.forge.apps.vscode.path}/Contents/Resources/app/bin/code";
     };
     plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
-    # Registry float rows are singletons: a live float focuses instead of duplicating. Synthesized floats (quick-edit) never set reuse.
-    commands = map (r: r // {reuse = true;}) commandRows;
+    commands = commandRows;
     keys =
       map (r: {
         inherit (r) id key mods action class;
@@ -241,15 +238,6 @@
     colors = projections.weztermColorScheme;
     metadata.name = "forge-dracula";
   };
-  luarc = pkgs.writeText "wezterm-luarc.json" (builtins.toJSON {
-    "$schema" = "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json";
-    runtime.version = "Lua 5.4";
-    workspace = {
-      library = ["${weztermTypesSrc}/lua"];
-      checkThirdParty = false;
-    };
-    diagnostics.globals = ["wezterm"];
-  });
 in {
   xdg.configFile."wezterm" = {
     source = pkgs.linkFarm "wezterm-config" {
@@ -258,7 +246,6 @@ in {
       "wezterm.lua" = weztermLua;
       "rows.lua" = rowsLua;
       "colors/forge-dracula.toml" = schemeToml;
-      ".luarc.json" = luarc;
     };
     recursive = false;
   };

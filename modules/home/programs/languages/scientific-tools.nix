@@ -39,8 +39,6 @@
     ${lib.getExe pkgs.qpdf} --completion-zsh > "$out/share/zsh/site-functions/_qpdf"
   '';
 
-  columnarTools = [pkgs.arrow-cpp]; # parquet-reader, parquet-scan, parquet-dump-*
-
   artifactTools = with pkgs; [
     file # file
     fontconfig # fc-list, fc-match, fc-cache
@@ -49,6 +47,7 @@
     lcms2
     libheif # heif-enc, heif-dec, heif-info
     libjpeg_turbo
+    librsvg-current # rsvg-convert
     libtiff
     libwebp
     mupdf
@@ -66,5 +65,5 @@
     pkgs.openstudio
   ];
 in {
-  home.packages = geoTools ++ columnarTools ++ artifactTools ++ aecTools;
+  home.packages = geoTools ++ artifactTools ++ aecTools;
 }

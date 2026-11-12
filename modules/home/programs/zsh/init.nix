@@ -24,8 +24,8 @@
       fi
 
       # --- [FZF_COMPGEN_PATH_DIR]
-      # fzf's documented hooks for ** completion: fd honors each repository's ignore files where fzf's built-in walker would not. The store path is a
-      # Nix-side dependency of these hooks; fd is on no PATH outside a project.
+      # fzf's documented hooks for ** completion: fd honors each repository's ignore files where fzf's built-in walker would not. The store path keeps
+      # these hooks on the machine copy whatever a project pins.
       _fzf_compgen_path() {
         ${lib.getExe pkgs.fd} --hidden --follow --exclude .git . "$1"
       }

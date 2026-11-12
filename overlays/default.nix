@@ -215,6 +215,18 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/watchexec";
     };
+    # Release tarball of one file and no top directory: the unpack root is the build directory.
+    duckdb-current = _: {
+      sourceRoot = ".";
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 duckdb "$out/bin/duckdb"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/duckdb";
+    };
     # Library-only release, pinned unpacked: a flat tree of extension modules and no CLI binary.
     sqlean = _: {
       dontUnpack = true;
@@ -249,6 +261,17 @@ final: prev: let
     mupdf = old: {
       patches = [./mupdf-darwin-system-deps.patch (prev.path + "/pkgs/by-name/mu/mupdf/fix-cpp-build.patch")];
       postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf.version] old.postInstall;
+    };
+    # The application carries the woff and unicode extras: pyftsubset writes WOFF2 through brotli, and unicodedata2 holds the current
+    # Unicode tables.
+    fonttools = old: let
+      extras = prev.python3Packages.fonttools.optional-dependencies;
+    in {
+      propagatedBuildInputs = old.propagatedBuildInputs ++ extras.woff ++ extras.unicode;
+    };
+    # The pin carries its Cargo.lock, so the crates vendor from the lock in place of the recipe's hash over the nixpkgs release.
+    librsvg-current = _: {
+      cargoDeps = prev.rustPlatform.importCargoLock generatedSources.design-librsvg.cargoLock."Cargo.lock";
     };
   };
   mkSourceRelease = name: row: let

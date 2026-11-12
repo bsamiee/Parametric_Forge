@@ -6,5 +6,5 @@
 # ----------------------------------------------------------------------------
 # Scripts module aggregator.
 _: {
-  imports = [./loc.nix ./terminal.nix];
+  imports = [./loc.nix];
 }

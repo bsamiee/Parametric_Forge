@@ -21,7 +21,8 @@ M.palette = {} -- populated in apply(); events.lua replays it per palette open
 -- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name, so windows in different
 -- workspaces never mirror one shared session. The client starts through a login shell at the home directory, so the login shell's mise
 -- refresh reads no project's config; the body then enters the workspace cwd, which seeds a brand-new session's first pane. The server the
--- client forks keeps that session environment for every pane and every command a rebuilt session execs without a shell. The body clears
+-- client forks keeps that session environment for every pane, and a command a rebuilt session runs takes its own directory's environment
+-- from the pane shell it starts under (zellij-resurrect-pane, zellij/config.nix). The body clears
 -- the login shell's mise refresh state and the Home Manager session guards, so a pane shell activates from a clean slate and re-reads the
 -- current generation's session variables. The attach (zellij-session-attach, zellij/default.nix) first retires any server left by an ended
 -- login session, whose panes can no longer reach a system service. A rebuilt session (its server died with the machine or the login session)
@@ -57,10 +58,10 @@ function M.confirm(message, on_confirm)
     return act.Confirmation({ message = message, action = on_confirm })
 end
 
--- Registry float rows are singletons: a live float for the row focuses instead of duplicating (a second redeploy press must never
--- fork a second run); synthesized floats (varying args) never set reuse and spawn fresh. Workspace-scoped rows key the singleton per
--- workspace, so each workspace owns its own instance (one scratch float per workspace, not one global). The registry rides
--- wezterm.GLOBAL, surviving config reloads; a dead or workspace-hidden window fails resolution and falls through to a spawn.
+-- Float rows are singletons: a live float for the row focuses instead of duplicating (a second redeploy press must never fork a second
+-- run). Workspace-scoped rows key the singleton per workspace, so each workspace owns its own instance (one scratch float per workspace,
+-- not one global). The registry rides wezterm.GLOBAL, surviving config reloads; a dead or workspace-hidden window fails resolution and
+-- falls through to a spawn.
 local function float_key(cmd)
     if cmd.scope == "workspace" then
         return cmd.id .. "@" .. wezterm.mux.get_active_workspace()
@@ -69,7 +70,7 @@ local function float_key(cmd)
 end
 
 local function focus_float(cmd)
-    local window_id = cmd.reuse and (wezterm.GLOBAL.deck_floats or {})[float_key(cmd)] or nil
+    local window_id = (wezterm.GLOBAL.deck_floats or {})[float_key(cmd)]
     if not window_id then
         return false
     end
@@ -91,12 +92,12 @@ function M.spawn_float(cmd)
         return
     end
     local shape = cmd.float
-    local cwd = cmd.cwd
+    local cwd = nil
     if cmd.scope == "workspace" then
         -- Workspace-scoped floats take the active workspace row's shape AND land at its cwd: the per-workspace scratch opens in the workspace.
         local wrow = M.workspace_row(wezterm.mux.get_active_workspace())
         shape = (wrow and wrow.float) or shape
-        cwd = cwd or (wrow and wrow.cwd)
+        cwd = wrow and wrow.cwd
     end
     local float = rows.floats[shape]
     local ok, spawned, pane, window = pcall(wezterm.mux.spawn_window, {
@@ -118,11 +119,9 @@ function M.spawn_float(cmd)
         })
         gui:perform_action(act.SetWindowLevel(float.level), pane)
     end
-    if cmd.reuse then
-        local registry = wezterm.GLOBAL.deck_floats or {}
-        registry[float_key(cmd)] = window:window_id()
-        wezterm.GLOBAL.deck_floats = registry
-    end
+    local registry = wezterm.GLOBAL.deck_floats or {}
+    registry[float_key(cmd)] = window:window_id()
+    wezterm.GLOBAL.deck_floats = registry
 end
 
 -- Command rows project to float actions once; a destructive row wraps its action in the confirm gate at build time.
@@ -167,29 +166,25 @@ local function focused_cwd(session)
     return nil
 end
 
--- The one "file:line -> editor" route: nvim at the line in a utility float, at the cwd of the pane the workspace's zellij client focuses. The
--- quick-select edit kind and the open-uri handler (delta's file:// links, events.lua) both land here. The editor starts through zsh so
--- .zshenv seats the session environment the launchd PATH lacks.
-function M.edit(window, file, line)
-    local cwd = focused_cwd(window:active_workspace())
-    if not cwd then
-        return
-    end
-    M.spawn_float({
-        id = "quick-edit",
-        float = "utility",
-        cwd = cwd,
-        args = { rows.paths.zsh, "-c", 'exec "$@"', "zsh", rows.paths.nvim, "+" .. line, file },
-    })
-end
-
 -- Quick-select action bus: per-row `select` arms convert the selected span to a deck action; rows without an arm keep the native clipboard default.
+-- The edit arm hands a `file:line[:column]` span to Visual Studio Code's own `code --goto`, which takes the position suffix as selected. The
+-- command runs outside any pane, so a relative file is joined to the focused pane's cwd and a `~/` file to the home directory first.
 local select_kinds = {
     ["edit"] = function(window, _, sel)
-        local file, line = sel:match("^(.-):(%d+)")
-        if file then
-            M.edit(window, file, line)
+        local file, position = sel:match("^([^:]+)(:%d.*)$")
+        if not file then
+            return
         end
+        if file:sub(1, 2) == "~/" then
+            file = wezterm.home_dir .. file:sub(2)
+        elseif file:sub(1, 1) ~= "/" then
+            local cwd = focused_cwd(window:active_workspace())
+            if not cwd then
+                return
+            end
+            file = cwd .. "/" .. file
+        end
+        wezterm.background_child_process({ rows.paths.code, "--goto", file .. position })
     end,
 }
 
@@ -231,7 +226,7 @@ local pick_workspace = wezterm.action_callback(function(win, p, id)
     end
 end)
 
--- Pane-nav handoff: one generated row set crosses the WezTerm boundary — nvim/zellij panes receive the raw chord, plain splits get pane motion.
+-- Pane-nav handoff: one generated row set crosses the WezTerm boundary — zellij panes receive the raw chord, plain splits get pane motion.
 local nav_direction = {
     ["nav-left"] = "Left",
     ["nav-down"] = "Down",
@@ -241,7 +236,7 @@ local nav_direction = {
 local function nav_action(row)
     return wezterm.action_callback(function(window, pane)
         local proc = (pane:get_foreground_process_name() or ""):gsub(".*/", "")
-        if proc == "nvim" or proc == "zellij" then
+        if proc == "zellij" then
             window:perform_action(act.SendKey({ key = row.key, mods = row.mods }), pane)
         else
             window:perform_action(act.ActivatePaneDirection(nav_direction[row.action]), pane)

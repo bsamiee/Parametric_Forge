@@ -28,20 +28,18 @@ Parametric_Forge/
 │       │   ├── apps/
 │       │   │   ├── karabiner/     # Leader-chord keyboard layer
 │       │   │   ├── linearmouse/   # External-mouse schemes
-│       │   │   ├── nvim/          # Editor
 │       │   │   ├── wezterm/       # Terminal host
-│       │   │   ├── yazi/          # File manager
 │       │   │   └── zellij/        # Multiplexer layouts and themes
 │       │   ├── container-tools/
 │       │   ├── git-tools/
 │       │   ├── languages/         # Language toolchains
 │       │   ├── mac-tools/         # Application rows and default handlers
 │       │   │   └── defaults/      # User-scope macOS defaults
-│       │   ├── media-tools/
+│       │   ├── media-tools/       # Media and document tools, speech model files
 │       │   ├── nix-tools/
 │       │   ├── shell-tools/       # CLI kernels, SSH, secrets
 │       │   └── zsh/
-│       └── scripts/               # Integration and analysis kernels
+│       └── scripts/               # Analysis kernels
 ├── overlays/                      # Manifest-folded package admissions
 ├── services/                      # Doppler and GitHub IaC rows
 └── .claude/                       # Harness commands and skills
@@ -61,7 +59,7 @@ Rulings derive from principles, not precedent lists. These axes resolve each new
 |  [02]   | One owner per axis     | One declaring file per concern; a second copy of any fact is a fork — extend the owner, never add files.       |
 |  [03]   | Rows over hardcodes    | Capability lands as a parameterized row on the owning table; a new host, package, or service is one row.       |
 |  [04]   | Polymorphic collapse   | Density rises inside the owning file — merged types, dispatch tables, folds — never by extraction.             |
-|  [05]   | IaC over YAML          | Pulumi rows in `services/` own Forge's repo and shared Doppler projects; each repo owns its GitHub settings.   |
+|  [05]   | IaC over YAML          | Pulumi rows in `services/` own Forge's repo and Doppler project; each repo owns its GitHub settings and project. |
 |  [06]   | Currency as review     | Newest stable everything; a pin exists only with a named incompatibility and dies when compatibility lands.    |
 |  [07]   | No LFS                 | Repo media ships as plain git blobs kept preview-small; a project using LFS pins `git-lfs` in its `mise.toml`. |
 |  [08]   | Aesthetics first-class | Visual surfaces (theme, prompt, TUI, fonts) are designed systems with single palette ownership.                |
@@ -79,7 +77,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners, scripts. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: `manifest.nix` owns admission and recipes consume nvfetcher-generated versions and hashes. Admission requires a real consumer now — never anticipatory packaging.
 - `services/` owns live service state as code under the TypeScript quality bar. `package.json` and `pnpm-workspace.yaml` bind the repo-root workspace without per-folder manifests. Existing service domains extend their rows; new domains get one organized owner.
-- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the topology; `outputs [--reveal]` prints stack outputs; `scopes` applies the directory-scope rows. `services/driver.ts` brokers Pulumi and Doppler credentials from 1Password and resolves `GITHUB_TOKEN` from the agent environment or Doppler.
+- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--target=<p>/<c>/<token>]` converges the topology; `outputs [--reveal]` prints stack outputs. `services/driver.ts` brokers the Pulumi, Doppler, and GitHub credentials from 1Password, an ambient value of each taking its place. `mise.toml` `[env]` names Forge's Doppler project and config, so no directory scope exists.
 
 ## [06]-[SECRETS]
 
@@ -101,13 +99,13 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 
 ## [09]-[TOOLCHAINS]
 
-- [PYTHON]: no machine interpreter or tool; a project's `mise.toml` and `uv.lock` own `python`, `uv`, `ruff`, `ty`, and `mypy` inside its tree, and none resolves outside one. `languages/scientific-tools.nix` installs the native command-line roster; a project's Pixi environment owns the native libraries its source builds and ctypes consumers read.
-- [NODE_LUA_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; Lua with LSP tooling; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, while the `sqlite3` and `duckdb` clients are project rows; PostgreSQL client tools are Home Manager-owned.
-- [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. Every SDK installs into one shared root (mise `dotnet.dotnet_root`, the root `/etc/dotnet/install_location_arm64` names), so a process that captured `DOTNET_ROOT` or the root's PATH segment reaches each SDK a later `global.json` names. That `dotnet` reaches PATH through the mise shim segment `toolchain-env.nix` puts first on the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook; `roslyn-ls`, the editor's C# server, is the one machine-wide .NET consumer. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
+- [PYTHON]: no machine interpreter; `uv` is machine-wide, so `uvx <tool>` runs a Python tool from any directory on an interpreter uv fetches, and a project's `mise.toml` and `uv.lock` own `python`, `ruff`, `ty`, `mypy`, and its own `uv` pin inside its tree. `languages/scientific-tools.nix` installs the native command-line roster; a project's Pixi environment owns the native libraries its source builds and ctypes consumers read.
+- [NODE_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, the `duckdb` client is machine-wide beside it, and the `sqlite3` client is a project row; PostgreSQL client tools are Home Manager-owned.
+- [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. Every SDK installs into one shared root (mise `dotnet.dotnet_root`, the root `/etc/dotnet/install_location_arm64` names), so a process that captured `DOTNET_ROOT` or the root's PATH segment reaches each SDK a later `global.json` names. That `dotnet` reaches PATH through the mise shim segment `toolchain-env.nix` puts first on the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 
 ## [10]-[TERMINAL_MESH_AND_THEME]
 
-`modules/home/theme.nix` owns the palette and serializes it into every visual consumer. `modules/home/programs/apps/chords.nix` owns the chord vocabulary and projects each row into Karabiner, Zellij, and hint content. `modules/home/scripts/terminal.nix` binds the mesh: WezTerm attaches Zellij, Yazi opens as a floating popup, and edits route into the tab's Neovim RPC socket, one editor per tab named by the tab id, through blocking Zellij and Neovim primitives rather than retries. A delta `file://<path>:<line>` link and a quick-select `file:line` span both open Neovim at the line in a WezTerm utility float.
+`modules/home/theme.nix` owns the palette and serializes it into every visual consumer. `modules/home/programs/apps/chords.nix` owns the chord vocabulary and projects each row into Karabiner, Zellij, WezTerm, and hint content. The mesh is two layers: every WezTerm window attaches the Zellij session named by its workspace, and each pane is a shell. The editor is Visual Studio Code, outside the mesh: `EDITOR` and `VISUAL` name one script on every surface, `code-wait`, which runs `code --wait`, a delta file link is a `vscode://file/<path>:<line>` URL that VS Code's own handler opens from any terminal, and a WezTerm quick-select `file:line` span runs `code --goto` on it.
 
 ## [11]-[QUALITY_BAR]
 
@@ -122,7 +120,7 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 
 ## [12]-[GITHUB_AND_SERVICES]
 
-`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene, rulesets, feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own the Doppler projects, environments, branch configs, service tokens, and GitHub Actions syncs: a repository's job values live in its own Doppler project, one environment per GitHub target.
+`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene, rulesets, feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node driver.ts preview` is the verification surface — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own Forge's Doppler project, environment, and branch config. Every other repository declares its Doppler project, environments, and GitHub Actions syncs in its own IaC and names the project in its mise `[env]` `DOPPLER_PROJECT` row.
 
 ## [13]-[FRESH_MACHINE_BOOTSTRAP]
 

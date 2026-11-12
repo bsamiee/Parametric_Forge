@@ -111,10 +111,6 @@ in {
   home.sessionVariables =
     toolchainEnv.sessionEnv
     // {
-      # --- [SHELL_INTERNALS]
-      # procs reads no pager env var; its pager is config-owned, not env; less keeps lesshst under XDG_STATE_HOME on its own.
-      RICH_THEME = "dracula"; # rich accepts named Pygments styles only; dracula matches the theme palette variant
-
       # --- [TOOL_CONFIGURATIONS]
       # watchexec, fd, rclone, bat, xh, and trippy read their XDG paths on their own.
       # Timeout drops are by-design (command_timeout keeps the prompt under budget); error level stops the [WARN] pair a

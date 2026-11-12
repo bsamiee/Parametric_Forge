@@ -13,7 +13,6 @@ _: {
     ./scientific-tools.nix
 
     # Languages
-    ./lua-tools.nix
     ./node-tools.nix
   ];
 }

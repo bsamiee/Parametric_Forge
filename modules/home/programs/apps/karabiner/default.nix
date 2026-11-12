@@ -13,7 +13,7 @@
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
+  # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Caps Lock dual-role.
   chordRules = config.forge.chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {

@@ -54,6 +54,7 @@ _: {
     # --- [NOTES_READING]
     "calibre" # E-book management
     "heptabase" # Knowledge management
+    "libreoffice" # Office suite; the cask links `soffice`, whose headless `--convert-to` renders docx, pptx, xlsx, and odt to PDF
     "scrivener" # Writing tool
 
     # --- [QUICKLOOK_PLUGINS]

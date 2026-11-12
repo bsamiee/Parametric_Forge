@@ -137,7 +137,7 @@
       value = "'eza -1 --color=always --icons=always $realpath'";
     }
     {
-      context = ":fzf-tab:complete:(ls|eza|bat|cat|nvim|vim|code):*";
+      context = ":fzf-tab:complete:(ls|eza|bat|cat|vim|code):*";
       key = "fzf-preview";
       value = "'[[ -d $realpath ]] && eza -la --color=always --icons=always $realpath || bat --color=always --style=numbers --line-range=:200 $realpath 2>/dev/null'";
     }

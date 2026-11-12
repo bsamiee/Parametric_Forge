@@ -12,7 +12,7 @@
   ...
 }: let
   inherit (config.forge.theme) roles projections;
-  # Delta output routinely pipes to files and CI logs, so its git-state rows take the ASCII twin register, never the terminal glyph.
+  # Delta output routinely pipes to files and CI logs, so its git-state labels are the ASCII markers.
   git = projections.gitHex;
   # One universal identity; the one key (in the Personal vault, the hosts/context.nix ssh.publicKey without its comment)
   # authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
@@ -158,7 +158,7 @@ in {
 
       # Interactive features
       hyperlinks = true;
-      hyperlinks-file-link-format = "file://{path}:{line}"; # WezTerm's open-uri handler routes file:line links to the quick-edit float
+      hyperlinks-file-link-format = "vscode://file/{path}:{line}"; # Visual Studio Code's own URL handler opens the file at the line from any terminal
     };
   };
 }

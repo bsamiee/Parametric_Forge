@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/db-tools.nix
 # ----------------------------------------------------------------------------
-# Database and SQL tooling: PostgreSQL clients, the SQL linter and language server, and the extended SQLite shell.
+# Database and SQL tooling: PostgreSQL clients, the SQL linter, and the extended SQLite shell.
 {
   lib,
   pkgs,
@@ -36,7 +36,6 @@ in {
   home.packages = [
     postgresClientTools # PostgreSQL client commands
     pkgs.sqruff # SQL linter/formatter
-    pkgs.postgres-language-server # Postgres LSP; bundles postgrestools
     pkgs.sqlite-extended # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
   ];
 

@@ -4,7 +4,7 @@
 # License       : MIT
 # Path          : modules/home/programs/apps/zellij/layouts/default.nix
 # ----------------------------------------------------------------------------
-# Shell-first Zellij layout; editor and Yazi arrive on demand via the rail
+# Shell-first Zellij layout
 _: {
   programs.zellij.layouts.default = ''
     // Title         : default.kdl
@@ -13,7 +13,7 @@ _: {
     // License       : MIT
     // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
     // ----------------------------------------------------------------------------
-    // Shell-first layout; nvim spawns via nvim-edit rail
+    // Shell-first layout: one pane between the two bars
 
     layout {
         // --- [TAB_TEMPLATES]

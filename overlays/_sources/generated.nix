@@ -22,6 +22,14 @@
       sha256 = "sha256-HR7b2l7jNHUUTFa6RS29oo4bBhCI+4dRAqLfbNqEybQ=";
     };
   };
+  design-fonttools = {
+    pname = "design-fonttools";
+    version = "4.68.0";
+    src = fetchurl {
+      url = "https://pypi.org/packages/source/f/fonttools/fonttools-4.68.0.tar.gz";
+      sha256 = "sha256-cylOIzBw9x4rNlO2vYVkr2dtV/JtB1dh+wbRqy5Kel0=";
+    };
+  };
   design-geist-font = {
     pname = "design-geist-font";
     version = "1.9.0";
@@ -36,6 +44,20 @@
     src = fetchurl {
       url = "https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz";
       sha256 = "sha256-loU26avXgvB/eVQETAxAIBmfzdObQdIh7ELSo75KRN8=";
+    };
+  };
+  design-librsvg = {
+    pname = "design-librsvg";
+    version = "2.63.4";
+    src = fetchTarball {
+      url = "https://gitlab.gnome.org/GNOME/librsvg/-/archive/2.63.4/librsvg-2.63.4.tar.gz";
+      sha256 = "sha256-JBySEGwNHwSqkgruEGn0Wv/VqpXf1awrBEUb8GVhlG8=";
+    };
+    cargoLock."Cargo.lock" = {
+      lockFile = ./. + "/sha256-JBySEGwNHwSqkgruEGn0Wv_VqpXf1awrBEUb8GVhlG8=/Cargo.lock";
+      outputHashes = {
+        
+      };
     };
   };
   design-mupdf = {
@@ -78,6 +100,14 @@
       sha256 = "sha256-Oqm/gkJMntnTbkjFPjTwTWwjGcePjiKtwLfGowz5D0A=";
     };
   };
+  duckdb-aarch64-darwin = {
+    pname = "duckdb-aarch64-darwin";
+    version = "2.0.0";
+    src = fetchurl {
+      url = "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-cli-osx-arm64.tar.gz";
+      sha256 = "sha256-GIo2/oiD71LmkWWgy7YDHvZ5yObESKHOIpUZZBSbf5Y=";
+    };
+  };
   energyplus-aarch64-darwin = {
     pname = "energyplus-aarch64-darwin";
     version = "v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz";
@@ -88,10 +118,10 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.11.2";
+    version = "2026.11.5";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.11.2/mise-v2026.11.2-macos-arm64.tar.gz";
-      sha256 = "sha256-ZYIpNwNWs0vhYaKe2drxNCI5t0GpPhqS1xzgQLe7Pgw=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.11.5/mise-v2026.11.5-macos-arm64.tar.gz";
+      sha256 = "sha256-9pyKT3wmXV8//dBtRBBKoVp//ZtlRah7d2j4k7cPD9g=";
     };
   };
   openstudio-aarch64-darwin = {

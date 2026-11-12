@@ -20,7 +20,7 @@
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
-  # Closed two-register alphabets for terminal-bound render surfaces, owned beside the symbols family the theme owner mints glyphs from — one
+  # Closed two-register alphabet for terminal-bound render surfaces, owned beside the symbols family the theme owner mints glyphs from — one
   # row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
   statusAlphabet = [
     ["running" "ea71" "[>]"]
@@ -32,24 +32,6 @@
     ["warning" "ea6c" "[!]"]
     ["sync" "ea77" "[~]"]
   ];
-  # Git-state vocabulary rows: [state rolePath codepoint asciiTwin] — the codicon diff_* family; the dotted role path resolves on the theme
-  # owner's folded families (the contextBadges grammar), so each row names its hue unambiguously and a new state is one row, never a map edit.
-  # typechange shares the modified glyph (a mode flip is a modify) and clean shares the staged check; both stay rows so consumers dispatch by state.
-  gitAlphabet = [
-    ["added" "state.success" "eadc" "[+]"]
-    ["staged" "state.success" "eab2" "[*]"]
-    ["modified" "state.info" "eade" "[~]"]
-    ["deleted" "state.danger" "eadf" "[-]"]
-    ["untracked" "state.success" "eb32" "[?]"]
-    ["renamed" "accent.structural" "eae0" "[>]"]
-    ["typechange" "state.info" "eade" "[~]"]
-    ["conflict" "accent.secondary" "ea6c" "[!]"]
-    ["ahead" "state.success" "eaa1" "[^]"]
-    ["behind" "state.warning" "ea9a" "[v]"]
-    ["diverged" "state.attention" "ea99" "[%]"]
-    ["stashed" "text.muted" "ea98" "[$]"]
-    ["clean" "state.success" "eab2" "[=]"]
-  ];
 in {
   "Geist Mono" = {
     package = geist;
@@ -58,7 +40,7 @@ in {
   Geist.package = geist;
   "Symbols Nerd Font Mono" = {
     package = selectPaths pkgs.nerd-fonts.symbols-only ["share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf"];
-    inherit statusAlphabet gitAlphabet;
+    inherit statusAlphabet;
   };
   "Scheherazade New".package = pkgs.scheherazade-new;
   "Noto Naskh Arabic".package = notoArabic;

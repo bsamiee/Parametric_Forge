@@ -23,6 +23,18 @@ src.webpage = "https://artifactory.openpreservation.org/artifactory/vera-dev/org
 src.regex = "<latest>([0-9]+\\.[0-9]+\\.[0-9]+)</latest>"
 fetch.url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/$ver/cli-$ver.jar"
 
+# fonttools pins its PyPI sdist, which carries the version its build backend reads without a git checkout.
+[design-fonttools]
+src.pypi = "fonttools"
+fetch.pypi = "fonttools"
+
+# librsvg: GNOME's download index names every release, and a patch number of 90 or more is a pre-release, so the newest version below that
+# is the stable one. The pin is the tag's archive; its Cargo.lock rides the pin, so the overlay vendors the crates with no hand-kept hash.
+[design-librsvg]
+src.cmd = '''curl -fsSL https://download.gnome.org/sources/librsvg/cache.json | jq -r '.[1].librsvg | keys | map(select(test("^[0-9]+\\.[0-9]+\\.[0-8]?[0-9]$"))) | max_by(split(".") | map(tonumber))' | head -n 1'''
+fetch.tarball = "https://gitlab.gnome.org/GNOME/librsvg/-/archive/$ver/librsvg-$ver.tar.gz"
+cargo_lock = ["Cargo.lock"]
+
 # Prebuilt trees pin as tarballs: the hash covers the unpacked tree, so the overlay links it in place and a nixpkgs move never re-copies it.
 # The font archives land unpacked the way nixpkgs' own recipes fetch them.
 [design-geist-font]
@@ -55,6 +67,12 @@ fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-maco
 src.github = "watchexec/watchexec"
 src.prefix = "v"
 fetch.tarball = "https://github.com/watchexec/watchexec/releases/download/v$ver/watchexec-$ver-aarch64-apple-darwin.tar.xz"
+
+# duckdb: nixpkgs trails the upstream major. The release tarball holds the one CLI executable and no top directory, so the pin stays the archive.
+[duckdb-aarch64-darwin]
+src.github = "duckdb/duckdb"
+src.prefix = "v"
+fetch.url = "https://github.com/duckdb/duckdb/releases/download/v$ver/duckdb-cli-osx-arm64.tar.gz"
 
 # 1Password publishes the CLI on its release-history page; the version group matches only stable `x.y.z` asset names, so betas stay out.
 # macOS ships one universal flat package.

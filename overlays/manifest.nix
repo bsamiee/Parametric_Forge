@@ -64,6 +64,19 @@ in {
         };
       };
     mupdf = designSource "mupdf";
+    # nixpkgs trails the fonttools release line by several minors. The row rebuilds the top-level application attr, which no package in the
+    # system closure reads; python3Packages.fonttools and everything built on it stay on the binary cache.
+    fonttools = designSource "fonttools";
+    # A new attr beside nixpkgs' librsvg, which GTK, ImageMagick, and ffmpeg link and which trails the stable series: the artifact-tools row
+    # reads rsvg-convert from it. The build drops introspection and the pixbuf loader, which serve the linking packages alone.
+    librsvg-current =
+      designSource "librsvg"
+      // {
+        sourceOverride = {
+          withIntrospection = false;
+          withPixbufLoader = false;
+        };
+      };
 
     utiluti = {
       version = generatedPins.design-utiluti.version;
@@ -132,6 +145,17 @@ in {
       description = "Executes commands in response to file modifications";
       homepage = "https://watchexec.github.io/";
       mainProgram = "watchexec";
+    };
+
+    # A new attr beside nixpkgs' duckdb, which is a library its dependents link and trails the upstream major: the shell-tools row reads the
+    # official CLI release, whose tarball holds the one executable.
+    duckdb-current = {
+      version = generatedPins.duckdb-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "duckdb-aarch64-darwin";
+      license = "mit";
+      description = "In-process analytical SQL database CLI";
+      homepage = "https://duckdb.org/";
+      mainProgram = "duckdb";
     };
 
     sqlean = {
@@ -230,16 +254,6 @@ in {
           surface = "runtime"; # direct store-path dofile (fetched trees are not git repos; plugin.require cannot clone them); toggle chord guarded by the deck
           apply = "apply_to_config";
         };
-        wezterm-types = {
-          owner = "DrKJeff16";
-          repo = "wezterm-types";
-          rev = "39511289aa040a7746a9e2d551b35ef330f15c77"; # v5.1.1-1
-          hash = "sha256-PCD6Jdrp9YigbO6Of+HxsypSXr3sAY9j6E3cXgz0+JQ=";
-          license = "mit";
-          permissions = ["none"]; # LuaCATS annotations only; never loaded at runtime
-          surface = "luals"; # .luarc.json workspace library for the wezterm config tree
-          apply = "none";
-        };
       };
     };
     zellij-plugins = {
@@ -260,108 +274,37 @@ in {
         };
       };
     };
-    yazi-plugins = {
-      # kebab-case <name>.yazi dirs with main.lua entrypoints: a row with `attr` resolves in nixpkgs yaziPlugins, a row with
-      # owner/repo/rev/hash pins an upstream tree nixpkgs omits.
-      source = "nixpkgs:yaziPlugins | fetchFromGitHub";
+    models = let
+      whisperCpp = "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1";
+    in {
+      # One weight file per row into $XDG_DATA_HOME/models (media-tools/models.nix), named as upstream names it and fetched from `base` at
+      # the revision that holds it. whisper.cpp and ffmpeg load a model by path and ship none.
+      source = "fetchurl";
       rows = {
-        augment-command = {
-          owner = "hankertrix";
-          repo = "augment-command.yazi";
-          rev = "561f6ec120b916c75da4085fed7769c65184f46c";
-          hash = "sha256-0APWmt9oCsW5TEAmki5LAfUD0l8EBGlRJN/m3BdEIzc=";
-          license = "AGPL-3.0"; # semantic command layer: open/quit/tab/paste/archive/scroll behaviors
+        "ggml-base.en-q5_1.bin" = {
+          base = whisperCpp;
+          hash = "sha256-S69w3Q18Qke6K4H6/ZwBAFrHfC+e8GTgDc8ZXQ4v3S8=";
+          license = "MIT"; # English speech, 60 MB: the fastest model for clean narration
         };
-        full-border = {
-          attr = "full-border";
-          license = "MIT";
+        "ggml-small.en-q5_1.bin" = {
+          base = whisperCpp;
+          hash = "sha256-v9/0iU3Ldrv2R9ViY+oqlmRUI/FmkXb0hEob+OR4rTA=";
+          license = "MIT"; # English speech, 190 MB
         };
-        toggle-pane = {
-          attr = "toggle-pane";
-          license = "MIT";
+        "ggml-large-v3-turbo-q5_0.bin" = {
+          base = whisperCpp;
+          hash = "sha256-OUIhcJzVrR9AxG5gMcphvOiJMebgiMGIKUxtWlX/p+I=";
+          license = "MIT"; # Every language whisper knows, 574 MB
         };
-        jump-to-char = {
-          attr = "jump-to-char";
-          license = "MIT";
+        "ggml-silero-v6.2.0.bin" = {
+          base = "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b";
+          hash = "sha256-KqJpt4XutTqCmDogUB3ffB2cSOM6tjpBORrGyff7aYc=";
+          license = "MIT"; # Silero voice-activity detection for `whisper-cli --vad -vm` and whisper-vad-speech-segments
         };
-        mount = {
-          attr = "mount";
-          license = "MIT";
-        };
-        piper = {
-          attr = "piper";
-          license = "MIT";
-        };
-        git = {
-          attr = "git";
-          license = "MIT";
-        };
-        smart-filter = {
-          attr = "smart-filter";
-          license = "MIT";
-        };
-        mime-ext = {
-          attr = "mime-ext";
-          license = "MIT";
-        };
-        duckdb = {
-          attr = "duckdb";
-          license = "MIT";
-        };
-        zoom = {
-          attr = "zoom";
-          license = "MIT";
-        };
-      };
-    };
-    nvim-plugins = {
-      source = "nixpkgs:vimPlugins"; # HM programs.neovim pack deployment; store-owned, runtime fetch unspellable
-      rows = {
-        dracula-nvim = {
-          attr = "dracula-nvim";
-          license = "MIT";
-        };
-        snacks-nvim = {
-          attr = "snacks-nvim";
-          license = "Apache-2.0";
-        };
-        nvim-treesitter = {
-          attr = "nvim-treesitter";
-          license = "Apache-2.0"; # main branch; one compat unit with the neovim pin, tree-sitter-cli floor, parsers, queries
-        };
-        nvim-treesitter-textobjects = {
-          attr = "nvim-treesitter-textobjects";
-          license = "Apache-2.0"; # select/move/swap over the treesitter captures
-        };
-        gitsigns-nvim = {
-          attr = "gitsigns-nvim";
-          license = "MIT"; # gutter git state reading the theme's git glyph rows
-        };
-        lualine-nvim = {
-          attr = "lualine-nvim";
-          license = "MIT"; # statusline
-        };
-        # hmts-nvim stays unadmitted: 1.3.0 crashes on Neovim 0.12 + nvim-treesitter main (LanguageTree parent API drift) against real Forge
-        # files; re-admits only on an upstream compatibility release.
-        nvim-lint = {
-          attr = "nvim-lint";
-          license = "GPL-3.0-only"; # non-LSP diagnostic lane (deadnix/statix/shellcheck/hadolint/typos)
-        };
-        grug-far-nvim = {
-          attr = "grug-far-nvim";
-          license = "MIT"; # rg + ast-grep search/replace workbench
-        };
-        render-markdown-nvim = {
-          attr = "render-markdown-nvim";
-          license = "MIT"; # in-buffer agent-doc rendering
-        };
-        overseer-nvim = {
-          attr = "overseer-nvim";
-          license = "MIT"; # task graph over mise/just/npm
-        };
-        trouble-nvim = {
-          attr = "trouble-nvim";
-          license = "Apache-2.0"; # the one diagnostics/references surface
+        "cb.rnnn" = {
+          base = "https://raw.githubusercontent.com/GregorR/rnnoise-models/3eee541a283fd3b8f81b85b1748e3b9ccbefa04d/conjoined-burgers-2018-08-28";
+          hash = "sha256-8TV8Tlvp3uhGe+rUht/O0tdbZAwmrQtZT6fxAjIjcdk=";
+          license = "public-domain"; # RNNoise speech denoiser for ffmpeg's arnndn filter (`arnndn=m=<path>`); upstream states the weights carry no copyright
         };
       };
     };

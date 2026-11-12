@@ -29,6 +29,21 @@
         },
         "version": "2.6.4"
     },
+    "design-fonttools": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "design-fonttools",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-cylOIzBw9x4rNlO2vYVkr2dtV/JtB1dh+wbRqy5Kel0=",
+            "type": "url",
+            "url": "https://pypi.org/packages/source/f/fonttools/fonttools-4.68.0.tar.gz"
+        },
+        "version": "4.68.0"
+    },
     "design-geist-font": {
         "cargoLock": null,
         "date": null,
@@ -57,6 +72,25 @@
             "url": "https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz"
         },
         "version": "15.0.0"
+    },
+    "design-librsvg": {
+        "cargoLock": {
+            "Cargo.lock": [
+                "sha256-JBySEGwNHwSqkgruEGn0Wv_VqpXf1awrBEUb8GVhlG8=/Cargo.lock",
+                {}
+            ]
+        },
+        "date": null,
+        "extract": null,
+        "name": "design-librsvg",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-JBySEGwNHwSqkgruEGn0Wv/VqpXf1awrBEUb8GVhlG8=",
+            "type": "tarball",
+            "url": "https://gitlab.gnome.org/GNOME/librsvg/-/archive/2.63.4/librsvg-2.63.4.tar.gz"
+        },
+        "version": "2.63.4"
     },
     "design-mupdf": {
         "cargoLock": null,
@@ -131,6 +165,21 @@
         },
         "version": "1.31.212"
     },
+    "duckdb-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-GIo2/oiD71LmkWWgy7YDHvZ5yObESKHOIpUZZBSbf5Y=",
+            "type": "url",
+            "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-cli-osx-arm64.tar.gz"
+        },
+        "version": "2.0.0"
+    },
     "energyplus-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -154,11 +203,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-ZYIpNwNWs0vhYaKe2drxNCI5t0GpPhqS1xzgQLe7Pgw=",
+            "sha256": "sha256-9pyKT3wmXV8//dBtRBBKoVp//ZtlRah7d2j4k7cPD9g=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.11.2/mise-v2026.11.2-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.11.5/mise-v2026.11.5-macos-arm64.tar.gz"
         },
-        "version": "2026.11.2"
+        "version": "2026.11.5"
     },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,
