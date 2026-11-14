@@ -6,6 +6,7 @@
     settings = {
       git_protocol = "ssh";
       pager = "delta";
+      telemetry = "disabled";
       prompt = "disabled";
       spinner = "disabled";
     };

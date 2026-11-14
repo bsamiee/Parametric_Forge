@@ -1,0 +1,23 @@
+[package]
+name = "statusbar"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "statusbar"
+path = "main.rs"
+
+[dependencies]
+anstyle = "1.0.14"
+thiserror = "2.0.21"
+unicode-width = "0.2.3"
+zellij-tile = "0.46.0"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

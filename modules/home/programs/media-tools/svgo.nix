@@ -14,6 +14,7 @@
               collapseGroups: false,
               removeEditorsNSData: false,
               convertShapeToPath: false,
+              cleanupNumericValues: { convertToPx: false },
               convertPathData: { floatPrecision: 3, transformPrecision: 4, makeArcs: false, forceAbsolutePath: false },
             },
           },

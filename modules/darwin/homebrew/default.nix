@@ -17,6 +17,7 @@ in {
         HOMEBREW_BUNDLE_FILE=/etc/${brewfile}
         HOMEBREW_XDG_CONFIG_HOME=${config.home-manager.users.${config.system.primaryUser}.xdg.configHome}
         HOMEBREW_UPDATE_TO_TAG=1
+        HOMEBREW_NO_ANALYTICS=1
         HOMEBREW_NO_ENV_HINTS=1
         HOMEBREW_NO_EMOJI=1
         HOMEBREW_NO_ASK=1
