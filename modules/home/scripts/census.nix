@@ -60,12 +60,13 @@
           [split("\n")[] | select(length > 0) | split("\t")] | group_by(.[0:2])[]
           | "shadow \(map(.[2]) | unique | join(", ")): \(.[0][0]) runs in \(map(.[3]) | unique | join(", ")); \(.[0][1]) elsewhere"
         '
-        jq -r --argjson declared ${lib.escapeShellArg (builtins.toJSON (map (brew: brew.name or brew) osConfig.homebrew.brews))} '
+        receipts=(${osConfig.homebrew.prefix}/Cellar/*/*/INSTALL_RECEIPT.json)
+        ((''${#receipts[@]} == 0)) || jq -r --argjson declared ${lib.escapeShellArg (builtins.toJSON (map (brew: brew.name or brew) osConfig.homebrew.brews))} '
           select(.installed_on_request == true)
           | (input_filename | split("/")) as $path
           | select($declared | index($path[-3]) | not)
           | "undeclared \($path[-3]): ${osConfig.homebrew.prefix}/bin \($path[-2]), no Forge Homebrew row"
-        ' ${osConfig.homebrew.prefix}/Cellar/*/*/INSTALL_RECEIPT.json
+        ' "''${receipts[@]}"
       } | sort
     '';
   };

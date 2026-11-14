@@ -1,7 +1,6 @@
 {
   config,
   guiSetenv,
-  host,
   launchdAgent,
   lib,
   pkgs,
@@ -58,8 +57,7 @@
   opCensus = "${config.xdg.stateHome}/op/secret-census";
   keptNames = ["BACKUP_ACCESS_KEY_ID" "BACKUP_ENDPOINT" "BACKUP_KIND" "BACKUP_REGION" "BACKUP_SECRET_ACCESS_KEY" "RUSTFS_ACCESS_KEY" "RUSTFS_SECRET_KEY"];
   censusReaders =
-    map (path: "${config.home.homeDirectory}/${path}") ["Developer/Rasm" ".claude/settings.json" ".claude.json" ".codex/config.toml" ".gemini/config/mcp_config.json" ".gemini/settings.json"]
-    ++ [host.flakeRoot];
+    map (path: "${config.home.homeDirectory}/${path}") ["Developer" ".claude/settings.json" ".claude.json" ".codex/config.toml" ".gemini/config/mcp_config.json" ".gemini/settings.json"];
   secretCensus = pkgs.writeShellApplication {
     name = "secret-census";
     runtimeInputs = [pkgs._1password-cli-current pkgs.coreutils pkgs.doppler pkgs.gawk pkgs.gnused pkgs.jq pkgs.ripgrep];

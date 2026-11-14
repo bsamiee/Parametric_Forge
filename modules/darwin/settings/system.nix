@@ -72,23 +72,19 @@ in {
 
   # --- [PROTECTED_FILE_AGENTS]
   launchd.user.agents =
-    lib.mapAttrs (name: row: {
+    lib.mapAttrs (_: row: {
       serviceConfig =
-        {
-          Label = "dev.bsamiee.${name}";
+        row.agent.config
+        // {
           ProgramArguments =
             [
               userHome.forge.shell
               "-c"
-              ''/bin/wait4path ${builtins.storeDir} && /bin/ls ${lib.escapeShellArg "${userHome.home.homeDirectory}/Library/Biome"} >/dev/null 2>&1 || { print -r -- "$(/bin/date +%FT%T) $0: ${userHome.forge.shell} holds no Full Disk Access, skipped"; exit 0 }; "$@"; exit''
-              name
+              ''/bin/wait4path ${builtins.storeDir} && /bin/ls "$0" >/dev/null 2>&1 || { print -r -- "$(/bin/date +%FT%T) ${userHome.forge.shell} cannot read $0 (no Full Disk Access), skipped"; exit 0 }; "$@"; exit''
+              row.reads
             ]
-            ++ row.argv;
-          ProcessType = "Background";
-          StandardOutPath = "${userHome.home.homeDirectory}/Library/Logs/${name}.log";
-          StandardErrorPath = "${userHome.home.homeDirectory}/Library/Logs/${name}.log";
-        }
-        // removeAttrs row ["argv"];
+            ++ row.agent.config.ProgramArguments;
+        };
     })
     userHome.forge.protectedAgents;
 

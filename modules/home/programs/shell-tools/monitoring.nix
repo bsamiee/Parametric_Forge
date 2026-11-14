@@ -7,15 +7,10 @@
   ...
 }: let
   server = "https://ntfy.parametric-arsenal.cloud";
+  gatus = "http://lucky:8080";
   clientConfig = "${config.home.homeDirectory}/Library/Application Support/ntfy/client.yml";
   inbox = "${config.xdg.stateHome}/taildrop";
   zellij = lib.getExe config.programs.zellij.package;
-  sessionToken = name: ''
-    if [[ -z "''${${name}:-}" && -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]]; then
-      # shellcheck source=/dev/null
-      . ${lib.escapeShellArg config.forge.secrets.sessionCache}
-    fi
-  '';
   agentNotify = pkgs.writeShellApplication {
     name = "agent-notify";
     runtimeInputs = [pkgs.jq pkgs.ntfy-sh];
@@ -23,8 +18,8 @@
       harness="''${1:?usage: agent-notify <harness> [message] [ntfy publish options]; without a message the body is stdin}"
       buttons=()
       if [[ -n "''${ZELLIJ_SESSION_NAME:-}" && -n "''${ZELLIJ_PANE_ID:-}" ]]; then
-        target="$(jq -rn --arg target "$ZELLIJ_SESSION_NAME/$ZELLIJ_PANE_ID" '$target | @uri')"
-        buttons=(--actions "view, Reply, shortcuts://run-shortcut?name=Agent%20Reply&input=text&text=$target; view, Terminal, https://${config.forge.tailnet.node}:${lib.head (lib.attrNames config.forge.tailnet.serve)}/$ZELLIJ_SESSION_NAME")
+        session="$(jq -rn --arg session "$ZELLIJ_SESSION_NAME" '$session | @uri')"
+        buttons=(--actions "view, Reply, shortcuts://run-shortcut?name=Agent%20Reply&input=text&text=$session%2F$ZELLIJ_PANE_ID; view, Terminal, https://${host.tailnet.node}:${config.forge.zellij.web.tailnetPort}/$session")
       fi
       exec ntfy publish --quiet "''${buttons[@]}" "''${@:3}" "agent-$harness" ''${2:+"$2"}
     '';
@@ -36,10 +31,10 @@
       target="''${NTFY_TITLE:?agent-reply runs under ntfy subscribe: NTFY_TITLE is <session>/<pane>, NTFY_MESSAGE the text}"
       session="''${target%%/*}"
       pane="''${target##*/}"
-      if [[ ! $target =~ ^[A-Za-z0-9._-]+/[0-9]+$ ]] \
+      if [[ ! $target =~ ^[A-Za-z0-9._][A-Za-z0-9._-]*/[0-9]+$ || ! $NTFY_MESSAGE =~ ^[^[:cntrl:]!][^[:cntrl:]]*$ ]] || ((''${#NTFY_MESSAGE} > 2000)) \
         || ! ${zellij} --session "$session" action list-panes --json --all 2>/dev/null \
           | jq -e --argjson pane "$pane" 'any(.[]; (.is_plugin | not) and .id == $pane and .attention.detail.app != null)' >/dev/null; then
-        printf '%s dropped: no agent pane is named by this title\n' "$(date +%FT%T)"
+        printf '%s dropped: the title names no agent pane, or the text is not one printable line of at most 2000 characters\n' "$(date +%FT%T)"
         exit 0
       fi
       ${zellij} --session "$session" action write-chars --pane-id "terminal_$pane" "$NTFY_MESSAGE"
@@ -53,7 +48,7 @@
       state=${lib.escapeShellArg "${config.xdg.stateHome}/agent-sessions"}
       panes="$(${zellij} list-sessions --short --no-formatting 2>/dev/null | while read -r session; do
         ${zellij} --session "$session" action list-panes --json --all 2>/dev/null \
-          | jq -r --arg session "$session" '.[] | select(.is_plugin | not) | select(.attention.detail.app != null) | "\($session)/\(.id) \(.title)"'
+          | jq -r --arg session "$session" '.[] | select(.is_plugin | not) | select(.attention.detail.app != null) | "\($session)/\(.id) \(.title)"' 2>/dev/null || true
       done)"
       if [[ "$panes" != "$(cat "$state" 2>/dev/null)" || -n "$(find "$state" -mmin +720 2>/dev/null)" ]]; then
         ntfy publish --quiet sessions "''${panes:-none}"
@@ -75,10 +70,13 @@
       shift
       status=0
       "$@" || status=$?
-      ${sessionToken "GATUS_HEARTBEAT_TOKEN"}
+      if [[ -z "''${GATUS_HEARTBEAT_TOKEN:-}" && -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]]; then
+        # shellcheck source=/dev/null
+        . ${lib.escapeShellArg config.forge.secrets.sessionCache}
+      fi
       report=("success==true")
       ((status == 0)) || report=("success==false" "error==exit $status")
-      xh --ignore-stdin --quiet --timeout 10 POST "${config.forge.monitoring.gatus}/api/v1/endpoints/$key/external" \
+      xh --ignore-stdin --quiet --timeout 10 POST "${gatus}/api/v1/endpoints/$key/external" \
         "''${report[@]}" "duration==''${SECONDS}s" "Authorization:Bearer ''${GATUS_HEARTBEAT_TOKEN:-}" \
         || echo "gatus-heartbeat: $key not reported" >&2
       exit "$status"
@@ -93,19 +91,11 @@
     '';
   };
 in {
-  options.forge.monitoring = {
-    gatus = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = "http://lucky:8080";
-      description = "Gatus on the tailnet: status API and heartbeat endpoint, no login.";
-    };
-    heartbeat = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      default = heartbeat;
-      description = "Runs a job and reports its result to the Gatus heartbeat key named first.";
-    };
+  options.forge.monitoring.heartbeat = lib.mkOption {
+    type = lib.types.package;
+    readOnly = true;
+    default = heartbeat;
+    description = "Runs a job and reports its result to the Gatus heartbeat key named first.";
   };
 
   config = {
@@ -121,7 +111,12 @@ in {
     '';
 
     home.activation.restartPhoneReplies = lib.hm.dag.entryAfter ["renderSecretTemplates"] ''
-      run /bin/launchctl kickstart -k "gui/$UID/${config.launchd.agents.ntfy-reply.config.Label}" || true
+      applied=${lib.escapeShellArg "${config.xdg.stateHome}/ntfy-reply.applied"}
+      rendered="$(/usr/bin/shasum -a 256 <${lib.escapeShellArg clientConfig} 2>/dev/null || true)"
+      if [[ -n "$rendered" && "$rendered" != "$(cat "$applied" 2>/dev/null || true)" ]]; then
+        run /bin/launchctl kickstart -k "gui/$UID/${config.launchd.agents.ntfy-reply.config.Label}" || true
+        printf '%s\n' "$rendered" >"$applied"
+      fi
     '';
 
     launchd.agents = {
@@ -130,7 +125,7 @@ in {
         name = "ntfy-reply";
         argv = [(lib.getExe pkgs.ntfy-sh) "subscribe" "--from-config"];
         RunAtLoad = true;
-        KeepAlive = true;
+        KeepAlive.PathState.${clientConfig} = true;
       };
 
       # --- [PANE_LIST]

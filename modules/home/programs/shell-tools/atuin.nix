@@ -17,7 +17,7 @@ in {
 
   # --- [STORE_SIZE]
   home.activation.atuinStoreSize = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    store_bytes="$(/usr/bin/stat -f %z ${lib.escapeShellArgs (map (db: "${config.xdg.dataHome}/atuin/${db}.db") ["records" "threads"])} 2>/dev/null | /usr/bin/awk '{ sum += $1 } END { print sum + 0 }')"
+    store_bytes="$({ /usr/bin/stat -f %z ${lib.escapeShellArgs (map (db: "${config.xdg.dataHome}/atuin/${db}.db") ["records" "threads"])} 2>/dev/null || true; } | /usr/bin/awk '{ sum += $1 } END { print sum + 0 }')"
     echo "atuin-store: records.db and threads.db hold $((store_bytes / 1048576)) MiB"
     if ((store_bytes > 10000000000)); then
       echo "NOTICE: the Atuin store passed 10 GB and [threads] has no retention key: removing ai-session records is the owner's call" >&2

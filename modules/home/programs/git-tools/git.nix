@@ -24,9 +24,18 @@
     '';
   };
   textconv = {
-    pdf = "sh -c '${lib.getExe' pkgs.poppler-utils "pdftotext"} -layout \"$1\" -' textconv";
-    exif = lib.getExe pkgs.exiftool;
-    idml = lib.getExe idmlText;
+    pdf = {
+      glob = "*.pdf";
+      command = "sh -c '${lib.getExe' pkgs.poppler-utils "pdftotext"} -layout \"$1\" -' textconv";
+    };
+    exif = {
+      glob = "*.psd";
+      command = lib.getExe pkgs.exiftool;
+    };
+    idml = {
+      glob = "*.idml";
+      command = lib.getExe idmlText;
+    };
   };
 in {
   programs.git = {
@@ -34,7 +43,7 @@ in {
     package = pkgs.git-current;
 
     ignores = [".DS_Store"];
-    attributes = ["*.pdf diff=pdf" "*.psd diff=exif" "*.idml diff=idml"];
+    attributes = lib.mapAttrsToList (driver: row: "${row.glob} diff=${driver}") textconv;
 
     signing = {
       key = "key::${identity.publicKey}";
@@ -65,8 +74,8 @@ in {
           colorMoved = "default";
           submodule = "log";
         }
-        // lib.mapAttrs (_: command: {
-          textconv = command;
+        // lib.mapAttrs (_: row: {
+          textconv = row.command;
           cachetextconv = true;
         })
         textconv;

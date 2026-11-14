@@ -12,7 +12,7 @@
     zellij = "zellij list-sessions --short --no-formatting | head -1 | xargs -I{} zellij --session {} action list-panes --json --all";
   };
   shape = pkgs.writeText "json-shape.jq" ''
-    [paths(scalars) as $path | "\($path | map(if type == "number" then "[]" else . end) | join(".")): \(getpath($path) | type)"] | unique[]
+    [paths(scalars) as $path | "\($path | map(if type == "number" then "[]" elif test("^[0-9]+$|:") then "{}" else . end) | join(".")): \(getpath($path) | type)"] | unique[]
   '';
   cliContracts = pkgs.writeShellApplication {
     name = "cli-contracts";

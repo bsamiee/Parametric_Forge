@@ -7,10 +7,14 @@
   ...
 }: let
   homeDir = config.home.homeDirectory;
-  tailnetHostKeys = pkgs.writeShellScript "tailnet-host-keys" ''
-    ${config.forge.tailnet.cli} status --json \
-      | ${lib.getExe pkgs.jq} -r --arg host "$1" --arg name "$2" '.Peer[] | select(.HostName == $host) | .sshHostKeys[] | "\($name) \(.)"'
-  '';
+  tailnetHostKeys = lib.getExe (pkgs.writeShellApplication {
+    name = "tailnet-host-keys";
+    runtimeInputs = [pkgs.jq];
+    text = ''
+      ${config.forge.tailnet.cli} status --json \
+        | jq -r --arg host "$1" --arg name "$2" '.Peer[] | select(.HostName == $host) | .sshHostKeys[] | "\($name) \(.)"'
+    '';
+  });
 in {
   options.forge.ssh.identityAgent = lib.mkOption {
     type = lib.types.str;
@@ -26,7 +30,7 @@ in {
     home.activation.dockerContexts = lib.hm.dag.entryAfter ["writeBoundary"] ''
       if docker="$(PATH="$PATH:${osConfig.homebrew.prefix}/bin" command -v docker)"; then
         for server in ${lib.escapeShellArgs host.tailnet.servers}; do
-          "$docker" context inspect "$server" >/dev/null 2>&1 || run "$docker" context create "$server" --docker "host=ssh://$server" >/dev/null
+          "$docker" context inspect "$server" >/dev/null 2>&1 || run "$docker" context create "$server" --docker "host=ssh://$server" >/dev/null || echo "docker context $server not created" >&2
         done
       fi
     '';
@@ -50,15 +54,12 @@ in {
           ControlPath = "${homeDir}/.ssh/sockets/%C-shell";
         };
         "Match host ${lib.concatStringsSep "," host.tailnet.serverPublicNames}".RefuseConnection = "\"dial the tailnet name: ${toString host.tailnet.servers}\"";
-        "Match sessiontype exec".RequestTTY = "no";
         ${host.name} = {
-          HostName = config.forge.tailnet.node;
+          HostName = host.tailnet.node;
           User = host.user.name;
-          ForwardAgent = false;
         };
         "github.com" = {
           User = "git";
-          HostName = "github.com";
           IdentitiesOnly = true;
           BatchMode = true;
         };

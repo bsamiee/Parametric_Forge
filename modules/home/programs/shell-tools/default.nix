@@ -26,7 +26,6 @@ in {
     ./mise.nix
     ./monitoring.nix
     ./procs.nix
-    ./rclone.nix
     ./redeploy.nix
     ./serpl.nix
     ./ssh.nix
@@ -66,6 +65,7 @@ in {
       pkgs.ouch
       pkgs.parallel
       pkgs.powershell
+      pkgs.rclone
       pkgs.ripgrep
       pkgs.rsync-current
       pkgs.sd

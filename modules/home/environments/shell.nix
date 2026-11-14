@@ -57,7 +57,7 @@ in {
   options.forge.protectedAgents = lib.mkOption {
     type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
     default = {};
-    description = "launchd rows (`argv` plus launchd keys) of jobs that read folders macOS protects. nix-darwin declares them with `/bin/zsh` as the job program, the binary holding Full Disk Access: Home Manager starts its own agents through `/bin/sh`, and macOS attributes a job to its first program.";
+    description = "Jobs that read a folder macOS protects: `agent` is a `launchdAgent` row, `reads` the folder. nix-darwin declares them with `/bin/zsh` as the job program, the binary holding Full Disk Access: Home Manager starts its own agents through `/bin/sh`, and macOS attributes a job to its first program.";
   };
 
   config = {

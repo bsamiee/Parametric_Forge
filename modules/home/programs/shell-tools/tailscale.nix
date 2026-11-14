@@ -16,12 +16,6 @@ in {
       default = "${app.path}/Contents/MacOS/Tailscale";
       description = "CLI of the Standalone Tailscale app, the one tailnet client on this Mac.";
     };
-    node = lib.mkOption {
-      type = lib.types.str;
-      readOnly = true;
-      default = "${host.name}.${host.tailnet.domain}";
-      description = "MagicDNS name of this Mac, the name its tailnet certificate carries.";
-    };
     serve = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = {};
@@ -30,21 +24,23 @@ in {
   };
 
   config = {
+    home.packages = [(pkgs.writeShellScriptBin "tailscale" ''exec ${cfg.cli} "$@"'')];
+
     # --- [START_AT_LOGIN]
     targets.darwin.defaults.${app.id}.TailscaleStartOnLogin = true;
 
     # --- [SERVE]
     home.activation.tailnetServe = lib.hm.dag.entryAfter ["writeBoundary"] ''
       if certificates="$(${cfg.cli} status --json 2>/dev/null | ${jq} -r '.CertDomains | length')" && ((certificates > 0)); then
-        served="$(${cfg.cli} serve status --json)"
+        served="$(${cfg.cli} serve status --json 2>/dev/null || echo "{}")"
         ${lib.concatStrings (lib.mapAttrsToList (port: target: ''
-          if [[ "$(${jq} -r --arg web ${cfg.node}:${port} '.Web[$web].Handlers["/"].Proxy // empty' <<<"$served")" != ${lib.escapeShellArg target} ]]; then
+          if [[ "$(${jq} -r --arg web ${host.tailnet.node}:${port} '.Web[$web].Handlers["/"].Proxy // empty' <<<"$served")" != ${lib.escapeShellArg target} ]]; then
             run ${lib.getExe' pkgs.coreutils "timeout"} 30 ${cfg.cli} serve --bg --https=${port} ${lib.escapeShellArg target} >/dev/null || echo "tailnet-serve: https ${port} to ${target} not set" >&2
           fi
         '')
         cfg.serve)}
       else
-        echo "tailnet-serve: no certificate for ${cfg.node} yet (tailnet HTTPS off or the app not running), rows wait: ${toString (lib.attrNames cfg.serve)}" >&2
+        echo "tailnet-serve: no certificate for ${host.tailnet.node} yet (tailnet HTTPS off or the app not running), rows wait: ${toString (lib.attrNames cfg.serve)}" >&2
       fi
     '';
   };

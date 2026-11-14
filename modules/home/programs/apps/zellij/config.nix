@@ -19,8 +19,6 @@
     pathEntries
     ;
 
-  webPort = 8082;
-
   # --- [RESURRECT_COMMAND]
   claudeHome = "${config.home.homeDirectory}/.claude";
 
@@ -419,10 +417,10 @@ in {
   home.packages = [resurrectPane];
 
   # --- [WEB_CLIENT]
-  forge.tailnet.serve."8443" = "http://127.0.0.1:${toString webPort}";
+  forge.tailnet.serve.${config.forge.zellij.web.tailnetPort} = "http://127.0.0.1:${config.forge.zellij.web.port}";
   launchd.agents.zellij-web = launchdAgent {
     name = "zellij-web";
-    argv = [(lib.getExe config.programs.zellij.package) "web" "--port" (toString webPort)];
+    argv = [(lib.getExe config.programs.zellij.package) "web" "--port" config.forge.zellij.web.port];
     RunAtLoad = true;
     KeepAlive = true;
     ProcessType = "Interactive";

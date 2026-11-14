@@ -1,5 +1,6 @@
 {
   config,
+  launchdAgent,
   lib,
   pkgs,
   ...
@@ -24,12 +25,16 @@ in {
 
   # --- [DAILY_COPY]
   forge.protectedAgents.menu-record = {
-    argv = ["/bin/sh" "-c" menuRecordCopy stream store];
-    StartCalendarInterval = [
-      {
-        Hour = 13;
-        Minute = 10;
-      }
-    ];
+    reads = stream;
+    agent = launchdAgent {
+      name = "menu-record";
+      argv = ["/bin/sh" "-c" menuRecordCopy stream store];
+      StartCalendarInterval = [
+        {
+          Hour = 13;
+          Minute = 10;
+        }
+      ];
+    };
   };
 }

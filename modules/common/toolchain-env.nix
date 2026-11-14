@@ -73,7 +73,7 @@
           RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
           RCLONE_CONFIG_R2_REGION = "auto";
           TSCLI_OUTPUT = "json";
-          __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = "${host.name}.${host.tailnet.domain}";
+          __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = host.tailnet.node;
 
           # --- [SEARCH_DATA]
           RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config";
