@@ -330,14 +330,6 @@
       sha256 = "sha256-TFX+EaOxvi8OKh+7eLhkv2BLdoQgO+vmMop7iI1CMps=";
     };
   };
-  hurl-aarch64-darwin = {
-    pname = "hurl-aarch64-darwin";
-    version = "8.1.0";
-    src = fetchTarball {
-      url = "https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-aarch64-apple-darwin.tar.gz";
-      sha256 = "sha256-jeBuRYrPw0uM6gDqx0wsGo6Dz/w5t6jEbQDhCU/s43A=";
-    };
-  };
   hyperglot = {
     pname = "hyperglot";
     version = "0.8.2";

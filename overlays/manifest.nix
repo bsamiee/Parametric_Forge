@@ -338,15 +338,6 @@ in {
       mainProgram = "coderabbit";
     };
 
-    hurl-current = {
-      version = generatedPins.hurl-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "hurl-aarch64-darwin";
-      license = "asl20";
-      description = "Runs and tests HTTP requests written in plain text";
-      homepage = "https://hurl.dev/";
-      mainProgram = "hurl";
-    };
-
     powershell-current = {
       sourcePackage = "powershell";
       asset = pinAsset "powershell-aarch64-darwin";

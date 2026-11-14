@@ -50,7 +50,6 @@ in {
       pkgs.gawk
       pkgs.hexyl
       pkgs.hostinger
-      pkgs.hurl-current
       pkgs.hyperfine
       pkgs.jq
       pkgs.lychee
@@ -100,9 +99,6 @@ in {
       --hidden
       --glob=!.git
     '';
-
-    # --- [HURL]
-    "hurl/config".text = "--connect-timeout 10\n";
 
     # --- [GNU_PARALLEL]
     "parallel/will-cite".text = "";

@@ -243,20 +243,6 @@ final: prev: let
       versionCheckProgram = "${placeholder "out"}/bin/coderabbit";
       versionCheckKeepEnvironment = "HOME";
     };
-    hurl-current = _: {
-      nativeBuildInputs = [prev.installShellFiles];
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 -t "$out/bin" bin/hurl bin/hurlfmt
-        installManPage man/man1/*.1.gz
-        installShellCompletion --cmd hurl --bash completions/hurl.bash --fish completions/hurl.fish --zsh completions/_hurl
-        installShellCompletion --cmd hurlfmt --bash completions/hurlfmt.bash --fish completions/hurlfmt.fish --zsh completions/_hurlfmt
-        runHook postInstall
-      '';
-      doInstallCheck = true;
-      nativeInstallCheckInputs = [prev.versionCheckHook];
-      versionCheckProgram = "${placeholder "out"}/bin/hurl";
-    };
     utiluti = _: {
       dontUnpack = true;
       nativeBuildInputs = [prev.xar prev.pbzx prev.cpio];
