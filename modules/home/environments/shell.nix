@@ -20,7 +20,6 @@
     // {
       PATH = lib.concatStringsSep ":" toolchainEnv.pathEntries;
       SSH_AUTH_SOCK = sshAgentSocket;
-      inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };
   guiSetenv = pkgs.writeShellApplication {
     name = "gui-setenv";
@@ -80,11 +79,7 @@ in {
     home.sessionVariables =
       toolchainEnv.sessionEnv
       // {
-        # --- [LOCALE]
-        LANG = "en_US.UTF-8";
-
         # --- [TOOL_CONFIGURATIONS]
-        CLAUDE_CODE_DISABLE_AUTO_MEMORY = "0";
         STARSHIP_LOG = "error";
         EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
         ATUIN_LOG = "error";

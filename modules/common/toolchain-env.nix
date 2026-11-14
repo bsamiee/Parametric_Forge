@@ -49,6 +49,13 @@
       all =
         sftpRemotes
         // {
+          # --- [LOCALE_XDG]
+          LANG = "en_US.UTF-8";
+          XDG_CONFIG_HOME = xdgConfigHome;
+          XDG_CACHE_HOME = xdgCacheHome;
+          XDG_DATA_HOME = xdgDataHome;
+          XDG_STATE_HOME = xdgStateHome;
+
           # --- [EDITOR_PAGER]
           EDITOR = editor.name;
           VISUAL = editor.name;
