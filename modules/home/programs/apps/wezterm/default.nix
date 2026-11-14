@@ -118,7 +118,6 @@
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;
     bidi_enabled = true;
-    bidi_direction = "LeftToRight";
     audible_bell = "Disabled";
 
     disable_default_key_bindings = true;

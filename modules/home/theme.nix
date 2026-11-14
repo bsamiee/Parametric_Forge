@@ -36,7 +36,7 @@
     state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
     focus = [["active" palette.cyan] ["inactive" palette.subtle]];
     inbox = [["needs_you" palette.orange] ["failed" palette.red] ["done" palette.green] ["working" palette.blue] ["quiet" palette.subtle] ["new_output" palette.cyan]];
-    mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["renamesession" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
+    mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
     diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };

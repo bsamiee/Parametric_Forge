@@ -116,7 +116,6 @@
           (bindH ["n"] "NewTab;" ["new" 30])
           (bindH ["x"] "CloseTab;" ["close" 40])
           (bindH ["u"] ''MuteTab; SwitchToMode "Normal";'' ["mute" 80])
-          (bindH ["s"] ''ToggleActiveSyncTab; SwitchToMode "Normal";'' ["sync" 90])
         ]
         ++ map (i:
           if i == 1
@@ -228,7 +227,6 @@
       rows = [
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
-        (bindH ["r"] ''SwitchToMode "RenameSession"; SessionNameInput 0;'' ["rename" 22])
         (bindH ["i"] ''ToggleSessionCard; SwitchToMode "Normal";'' ["inbox" 3])
         (bindH ["n"] ''GoToNextAttention; SwitchToMode "Normal";'' ["next" 5])
         (bindH ["u"] ''MuteSession; SwitchToMode "Normal";'' ["mute" 7])
@@ -270,16 +268,6 @@
       rows = [
         (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
         (bindH ["Esc"] ''UndoRenamePane; SwitchToMode "Pane";'' ["esc" "undo" 20])
-        (hintRow "⏎" "done" 10)
-      ];
-    };
-    renamesession = {
-      chip = ["mode_renamesession" "RENAME SESSION"];
-      note = "type name";
-      tail = "none";
-      rows = [
-        (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
-        (bindH ["Esc"] ''UndoRenameSession; SwitchToMode "Session";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];
     };
@@ -342,8 +330,8 @@
       ++ [(lib.concatMapStringsSep "\n" renderRow (lib.filter (x: x ? keys) m.rows))]
       ++ ["      }"]
     );
-  blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane" "renamesession"];
-  hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "renamesession" "prompt" "tmux"];
+  blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
+  hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
   modeBlocksKdl = lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
   chipOf = c:
@@ -380,7 +368,7 @@ in {
         // --- [CORE_CONFIGURATION]
         theme                         "dracula"
         default_shell                 "${config.forge.shell}"
-        post_command_discovery_hook   "true"
+        post_command_discovery_hook   "echo ${config.forge.shell}"
         show_startup_tips             false
         show_release_notes            false
         simplified_ui                 true

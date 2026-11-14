@@ -23,6 +23,7 @@
     ];
     fallbackPathEntries = [
       "/usr/local/bin"
+      "/System/Cryptexes/App/usr/bin"
       "/usr/bin"
       "/bin"
       "/usr/sbin"

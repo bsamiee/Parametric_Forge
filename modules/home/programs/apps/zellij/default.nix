@@ -58,18 +58,32 @@
       [[ -n ''${ZELLIJ_PANE_ID-} ]] || exit 0
       read -r group foreground < <(/bin/ps -o pgid=,tpgid= -p "$PPID")
       [[ $group == "$foreground" ]] || exit 0
-      read -r event id cwd < <(jq -r '[.hook_event_name // .hookEventName, .session_id // .conversationId, .cwd] | @tsv' <<<"$input")
-      if [[ $event == SessionEnd ]]; then
-        zellij action set-resurrect-command --clear
-      else
-        case $harness in
-          claude) resume="claude --resume $id" ;;
-          codex) resume="codex resume $id" ;;
-          agy) resume="agy --remote-control --conversation=$id" ;;
+      read -ra argv < <(/bin/ps -o args= -p "$PPID")
+      for word in "''${argv[@]:1}"; do
+        case $harness/$word in
+          claude/-p | claude/--print | codex/exec | agy/-p | agy/-p=* | agy/--print | agy/--print=* | agy/--prompt | agy/--prompt=*) exit 0 ;;
         esac
-        zellij action set-resurrect-command --cwd "$cwd" -- ${config.forge.shell} -ic "$resume; exec ${config.forge.shell}"
+      done
+      { read -r event; read -r id; read -r cwd; } < <(jq -r '.hook_event_name // .hookEventName, .session_id // .conversationId, .cwd' <<<"$input")
+      case $harness in
+        claude) resume="claude --resume $id" ;;
+        codex) resume="codex resume --no-daemon $id" ;;
+        agy) resume="agy --remote-control --conversation=$id" ;;
+      esac
+      declare_pane() {
+        if [[ $event == SessionEnd ]]; then
+          [[ $(zellij action dump-layout) == *"$resume"* ]] || return 0
+          zellij action set-resurrect-command --clear
+        else
+          zellij action set-resurrect-command --cwd "$cwd" -- ${config.forge.shell} -ic "$resume; exec ${config.forge.shell}"
+        fi
+        zellij action save-session
+      }
+      if [[ $harness == agy ]]; then
+        declare_pane >/dev/null 2>&1 &
+      else
+        declare_pane
       fi
-      zellij action save-session
     '';
   };
 in {
