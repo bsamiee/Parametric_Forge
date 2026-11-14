@@ -30,6 +30,7 @@ in {
         };
         "*" = {
           IdentityAgent = "\"${config.forge.ssh.identityAgent}\"";
+          KexAlgorithms = "^mlkem768x25519-sha256,sntrup761x25519-sha512";
           StrictHostKeyChecking = "accept-new";
           ConnectTimeout = 10;
           TCPKeepAlive = "all";
