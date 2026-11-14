@@ -59,9 +59,9 @@
   cacheNames = tokenNames ++ [stampName namesName];
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
+    excludeShellChecks = ["SC1091"];
     text = ''
       unset ${lib.escapeShellArgs cacheNames}
-      # shellcheck source=/dev/null
       [ ! -f "${opCache}" ] || . "${opCache}"
       rows=()
       for k in ${lib.escapeShellArgs cacheNames}; do
