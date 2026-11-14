@@ -84,7 +84,7 @@ in {
         ATUIN_LOG = "error";
         _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
         _ZO_RESOLVE_SYMLINKS = "1";
-        _ZO_EXCLUDE_DIRS = "${config.home.homeDirectory}:/tmp/*:/var/tmp/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
+        _ZO_EXCLUDE_DIRS = "${config.home.homeDirectory}:/tmp/*:/var/tmp/*:/private/tmp:/private/tmp/*:/private/var/folders/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
 
         # --- [FZF_FORGIT_CONFIGURATION]
         FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";

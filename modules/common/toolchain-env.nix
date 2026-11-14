@@ -29,7 +29,7 @@
       "/sbin"
     ];
     shimPath = "${xdgDataHome}/mise/shims";
-    pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
+    pathEntries = userPathEntries ++ [shimPath] ++ fallbackPathEntries;
     runtimeEnv = lib.concatMapAttrs (_: package: package.runtimeEnvAt "/etc/profiles/per-user/${username}") {inherit (pkgs) energyplus openstudio;};
     designFontDirectory = "${home}/Library/Application Support/design-tools/fonts";
     fontDirectories = [
@@ -66,6 +66,10 @@
           HOSTINGER_NO_INPUT = "true";
           OFFICECLI_SKIP_UPDATE = "1";
           POWERSHELL_UPDATECHECK = "Off";
+          POWERSHELL_TELEMETRY_OPTOUT = "1";
+          CLIMICROSOFT365_NOUPDATE = "1";
+          NOTEBOOKLM_MCP_ALLOWED_ROOTS = "/Users:/Volumes:/private";
+          TLRC_CONFIG = "${xdgConfigHome}/tlrc/config.toml";
           RCLONE_ASK_PASSWORD = "false";
           RCLONE_CACHE_DIR = "${xdgCacheHome}/rclone";
           RCLONE_CONFIG_B2_TYPE = "b2";

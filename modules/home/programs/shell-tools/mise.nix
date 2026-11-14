@@ -17,6 +17,8 @@ in {
         ignored_config_paths = ["/private/tmp" "/private/var/folders"];
         disable_hints = ["*"];
         disable_update_warning = true;
+        use_versions_host_track = false;
+        jobs = 16;
         dotnet.dotnet_root = dotnetRoot;
       };
       hooks.preinstall = ''

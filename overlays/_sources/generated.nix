@@ -164,12 +164,36 @@
       sha256 = "sha256-qeOMS/Vb1IIHPy1Aw6DBM0+t+oGcobeg61maOJNsT9E=";
     };
   };
+  duckdb-fts-aarch64-darwin = {
+    pname = "duckdb-fts-aarch64-darwin";
+    version = "2.0.0";
+    src = fetchurl {
+      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/fts.duckdb_extension.gz";
+      sha256 = "sha256-+l7vNi4fAE0ZwI127U7EfRgdj+sHyjtSjzBY7olFNis=";
+    };
+  };
+  duckdb-httpfs-aarch64-darwin = {
+    pname = "duckdb-httpfs-aarch64-darwin";
+    version = "2.0.0";
+    src = fetchurl {
+      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/httpfs.duckdb_extension.gz";
+      sha256 = "sha256-auotcoy37tuXjKJkzhkOMShCcenqT2iyQkvyCAa0Zjg=";
+    };
+  };
   duckdb-spatial-aarch64-darwin = {
     pname = "duckdb-spatial-aarch64-darwin";
     version = "2.0.0";
     src = fetchurl {
       url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/spatial.duckdb_extension.gz";
       sha256 = "sha256-FtrcZebrWiEhYAcAY7V8wN7W68JMyMIMQBoXqeADLO4=";
+    };
+  };
+  duckdb-sqlite-scanner-aarch64-darwin = {
+    pname = "duckdb-sqlite-scanner-aarch64-darwin";
+    version = "2.0.0";
+    src = fetchurl {
+      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/sqlite_scanner.duckdb_extension.gz";
+      sha256 = "sha256-DFs5IdM2dSVlklHCmJOY3yxGPwU4m7o1eEp6RcF9V6c=";
     };
   };
   energyplus-aarch64-darwin = {

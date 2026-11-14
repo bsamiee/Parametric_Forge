@@ -231,6 +231,24 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://extensions.duckdb.org/v$ver/osx_arm64/excel.duckdb_extension.gz"
 
+[duckdb-httpfs-aarch64-darwin]
+src.github = "duckdb/duckdb"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://extensions.duckdb.org/v$ver/osx_arm64/httpfs.duckdb_extension.gz"
+
+[duckdb-sqlite-scanner-aarch64-darwin]
+src.github = "duckdb/duckdb"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://extensions.duckdb.org/v$ver/osx_arm64/sqlite_scanner.duckdb_extension.gz"
+
+[duckdb-fts-aarch64-darwin]
+src.github = "duckdb/duckdb"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://extensions.duckdb.org/v$ver/osx_arm64/fts.duckdb_extension.gz"
+
 [tscli-aarch64-darwin]
 src.github = "jaxxstorm/tscli"
 src.prerelease = true

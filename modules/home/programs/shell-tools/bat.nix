@@ -12,8 +12,6 @@
       style = "numbers,changes,header,grid";
       wrap = "character";
       tabs = "4";
-
-      map-syntax = [".envrc:Bash"];
     };
 
     themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;

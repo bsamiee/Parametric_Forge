@@ -5,12 +5,7 @@
   ...
 }: let
   duckdbExtensionRows = (import ../../../../overlays/manifest.nix).extensions.duckdb-extensions.rows;
-  duckdbExtensions = pkgs.linkFarm "duckdb-extensions" (lib.mapAttrsToList (name: row: {
-      name = "${name}.duckdb_extension";
-      path = pkgs.runCommand "${name}.duckdb_extension" {src = pkgs.fetchurl {inherit (row) url hash;};} ''gzip -dc "$src" > "$out"'';
-    })
-    duckdbExtensionRows);
-  duckdbStatements = statement: lib.concatMapStrings (name: "${statement name};\n") (lib.attrNames duckdbExtensionRows);
+  duckdbLoads = lib.attrNames (lib.filterAttrs (_: row: row.load or false) duckdbExtensionRows);
 in {
   imports = [
     ./1password.nix
@@ -79,13 +74,22 @@ in {
     ];
 
     # --- [DUCKDB]
-    file.".duckdbrc".text = ''
-      .startup_text none
-      SET temp_directory = '${config.xdg.cacheHome}/duckdb';
-      ${lib.concatMapStrings (name: "LOAD ${name};\n") (lib.attrNames (lib.filterAttrs (_: row: row.load or false) duckdbExtensionRows))}'';
-    activation.installDuckdbExtensions = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      run ${lib.getExe pkgs.duckdb-current} -no-init -c ${lib.escapeShellArg (duckdbStatements (name: "FORCE INSTALL '${duckdbExtensions}/${name}.duckdb_extension'"))}
-    '';
+    file =
+      {
+        ".duckdbrc".text = ''
+          .startup_text none
+          SET temp_directory = '${config.xdg.cacheHome}/duckdb';
+          SET max_temp_directory_size = '64GiB';
+          SET memory_limit = '16GiB';
+          SET errors_as_json = true;
+          ${lib.concatMapStrings (name: "INSTALL AND LOAD ${name};\n") duckdbLoads}${lib.optionalString (lib.elem "spatial" duckdbLoads) "SET geometry_always_xy = true;\n"}'';
+      }
+      // lib.mapAttrs' (name: row:
+        lib.nameValuePair ".duckdb/extensions/v${pkgs.duckdb-current.version}/osx_arm64/${name}.duckdb_extension" {
+          source = pkgs.runCommand "${name}.duckdb_extension" {src = pkgs.fetchurl {inherit (row) url hash;};} ''gzip -dc "$src" > "$out"'';
+          force = true;
+        })
+      duckdbExtensionRows;
   };
 
   xdg.configFile = {
@@ -94,6 +98,9 @@ in {
       --hidden
       --glob=!.git
     '';
+
+    # --- [HURL]
+    "hurl/config".text = "--connect-timeout 10\n";
 
     # --- [GNU_PARALLEL]
     "parallel/will-cite".text = "";

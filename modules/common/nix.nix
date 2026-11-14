@@ -57,7 +57,6 @@ in {
     # --- [DETERMINATE_NIXD]
     determinateNixd = {
       builder.state = "disabled";
-      telemetry.sentry.endpoint = null;
     };
   };
 }

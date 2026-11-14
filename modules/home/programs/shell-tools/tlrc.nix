@@ -40,5 +40,5 @@
 in {
   home.packages = [pkgs.tlrc];
 
-  home.file."Library/Application Support/tlrc/config.toml".source = configToml;
+  xdg.configFile."tlrc/config.toml".source = configToml;
 }

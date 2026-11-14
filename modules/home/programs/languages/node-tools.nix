@@ -38,7 +38,6 @@ in {
   xdg.configFile."configstore/cli-m365-config.json".text = builtins.toJSON {
     autoOpenLinksInBrowser = false;
     copyDeviceCodeToClipboard = false;
-    disableTelemetry = true;
     errorOutput = "stderr";
     output = "json";
     printErrorsAsPlainText = false;

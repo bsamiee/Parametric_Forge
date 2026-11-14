@@ -283,6 +283,36 @@
         },
         "version": "2.0.0"
     },
+    "duckdb-fts-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-fts-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-+l7vNi4fAE0ZwI127U7EfRgdj+sHyjtSjzBY7olFNis=",
+            "type": "url",
+            "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/fts.duckdb_extension.gz"
+        },
+        "version": "2.0.0"
+    },
+    "duckdb-httpfs-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-httpfs-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-auotcoy37tuXjKJkzhkOMShCcenqT2iyQkvyCAa0Zjg=",
+            "type": "url",
+            "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/httpfs.duckdb_extension.gz"
+        },
+        "version": "2.0.0"
+    },
     "duckdb-spatial-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -295,6 +325,21 @@
             "sha256": "sha256-FtrcZebrWiEhYAcAY7V8wN7W68JMyMIMQBoXqeADLO4=",
             "type": "url",
             "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/spatial.duckdb_extension.gz"
+        },
+        "version": "2.0.0"
+    },
+    "duckdb-sqlite-scanner-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-sqlite-scanner-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-DFs5IdM2dSVlklHCmJOY3yxGPwU4m7o1eEp6RcF9V6c=",
+            "type": "url",
+            "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/sqlite_scanner.duckdb_extension.gz"
         },
         "version": "2.0.0"
     },

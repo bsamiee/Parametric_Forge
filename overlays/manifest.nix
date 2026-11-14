@@ -414,7 +414,10 @@ in {
       source = "fetchurl";
       rows = {
         spatial = pinAsset "duckdb-spatial-aarch64-darwin" // {load = true;};
-        excel = pinAsset "duckdb-excel-aarch64-darwin";
+        excel = pinAsset "duckdb-excel-aarch64-darwin" // {load = true;};
+        httpfs = pinAsset "duckdb-httpfs-aarch64-darwin";
+        sqlite_scanner = pinAsset "duckdb-sqlite-scanner-aarch64-darwin";
+        fts = pinAsset "duckdb-fts-aarch64-darwin";
       };
     };
     npm-tools = {
