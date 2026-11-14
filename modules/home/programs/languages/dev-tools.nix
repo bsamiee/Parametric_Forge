@@ -18,6 +18,9 @@
       # --- [GOOGLE_WORKSPACE]
       gogcli-current
       gam-current
+
+      # --- [CONTAINER_REGISTRY]
+      crane
     ];
   };
 

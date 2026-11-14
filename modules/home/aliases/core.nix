@@ -47,7 +47,7 @@
     ["psw" "procs --watch"]
     ["top" "btm"]
     ["load" "/usr/bin/top -l 2 -n 12 -o cpu -stats pid,command,cpu,mem,state | tail -n 24"]
-    ["memhog" ''ps -axo rss=,comm= | awk '{n=$0; sub(/^ *[0-9]+ +/,"",n); sub(/.*\//,"",n); m[n]+=$1} END {for (c in m) printf "%7d MB  %s\n", m[c]/1024, c}' | sort -rn | head -n 20'' "Resident memory summed per program, top 20"]
+    ["memhog" ''ps -axo rss=,comm= | awk '{n=$0; sub(/^ *[0-9]+ +/,"",n); sub(/.*\//,"",n); m[n]+=$1} END {for (c in m) printf "%7d MB  %s\n", m[c]/1024, c}' | sort -rn | head -n 20'']
     ["dfi" "dua i"]
   ];
   navigation = [

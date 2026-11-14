@@ -71,12 +71,6 @@
     '';
   };
 in {
-  options.forge.secrets.templates = lib.mkOption {
-    type = lib.types.attrsOf lib.types.lines;
-    default = {};
-    description = "Files a tool reads its credential from: path -> text with `{{ op://... }}` references, rendered at each activation by `op inject`, mode 600, outside the Nix store.";
-  };
-
   options.forge.secrets.sessionCache = lib.mkOption {
     type = lib.types.str;
     readOnly = true;
@@ -121,19 +115,6 @@ in {
           fi
           run /bin/launchctl kickstart "gui/$UID/$replay_label"
         '';
-
-        # --- [SECRET_TEMPLATES]
-        renderSecretTemplates = lib.hm.dag.entryAfter ["injectSecretsFromVault"] (lib.concatStrings (lib.mapAttrsToList (file: text: ''
-            if [[ -v DRY_RUN ]]; then
-              echo "op inject > ${file}"
-            elif mkdir -p ${lib.escapeShellArg (dirOf file)} \
-              && OP_SERVICE_ACCOUNT_TOKEN="$(<${lib.escapeShellArg opServiceAccount.file})" ${op} inject --force --file-mode 0600 -i ${pkgs.writeText (baseNameOf file) text} -o ${lib.escapeShellArg file} >/dev/null; then
-              verboseEcho "Rendered ${file}"
-            else
-              echo "WARNING: ${file} was not rendered and keeps its previous content" >&2
-            fi
-          '')
-          config.forge.secrets.templates));
 
         # --- [SECRET_FILES]
         restoreSecretFiles = lib.hm.dag.entryAfter ["injectSecretsFromVault"] (lib.concatStrings (lib.mapAttrsToList (file: item: ''

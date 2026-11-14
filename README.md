@@ -30,7 +30,6 @@ Parametric_Forge/
 │       │   │   ├── linearmouse/   # External-mouse schemes
 │       │   │   ├── wezterm/       # Terminal host
 │       │   │   └── zellij/        # Multiplexer layouts and themes
-│       │   ├── container-tools/
 │       │   ├── git-tools/
 │       │   ├── languages/         # Command-line tools by domain
 │       │   ├── mac-tools/         # Application rows and default handlers

@@ -1,7 +1,6 @@
 _: {
   imports = [
     ./apps
-    ./container-tools
     ./git-tools
     ./languages
     ./mac-tools

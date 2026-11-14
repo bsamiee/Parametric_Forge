@@ -79,13 +79,17 @@ in {
     home.sessionVariables =
       toolchainEnv.sessionEnv
       // {
+        # --- [LOCALE]
+        LANG = "en_US.UTF-8";
+
         # --- [TOOL_CONFIGURATIONS]
+        CLAUDE_CODE_DISABLE_AUTO_MEMORY = "0";
         STARSHIP_LOG = "error";
         EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
         ATUIN_LOG = "error";
         _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
         _ZO_RESOLVE_SYMLINKS = "1";
-        _ZO_EXCLUDE_DIRS = "${config.home.homeDirectory}:/tmp/*:/var/tmp/*:/private/tmp:/private/tmp/*:/private/var/folders/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
+        _ZO_EXCLUDE_DIRS = "${config.home.homeDirectory}:/private/tmp:/private/tmp/*:/private/var/tmp/*:/private/var/folders/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
 
         # --- [FZF_FORGIT_CONFIGURATION]
         FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
@@ -97,10 +101,6 @@ in {
         FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
         FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
         FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
-        FORGIT_FZF_DEFAULT_OPTS = ''
-          --height=80%
-          --preview-window=right:60%:border-bold
-        '';
       };
 
     # --- [GUI_SESSION_ENVIRONMENT]

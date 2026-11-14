@@ -1,19 +1,11 @@
 {
-  config,
   inputs,
   lib,
   ...
 }: let
-  inherit (config.cachix) cache;
+  cache = "bsamiee";
 in {
-  options.cachix.cache = lib.mkOption {
-    type = lib.types.str;
-    default = "bsamiee";
-    readOnly = true;
-    description = "Name of the public Cachix binary cache this machine substitutes from; a push is a deliberate `cachix push` of a package path.";
-  };
-
-  config.determinateNix = {
+  determinateNix = {
     shellCompletions.enable = false;
 
     # --- [REGISTRY]
