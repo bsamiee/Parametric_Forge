@@ -38,6 +38,7 @@ in {
       pkgs._7zz-rar
       pkgs.ast-grep
       pkgs.coderabbit
+      pkgs.coreutils-prefixed
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.difftastic
