@@ -23,6 +23,7 @@ in {
     enableZshIntegration = false;
     globalConfig = {
       settings = {
+        experimental = true;
         trusted_config_paths = ["~/Developer"];
         # The global gate every install path checks: off, so no command ever starts a download. It also turns off exec_auto_install and
         # not_found_auto_install, so activation drops the shim segment from PATH; zsh/init.nix keeps activation out of VS Code's

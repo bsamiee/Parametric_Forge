@@ -5,7 +5,28 @@
 # Path          : modules/home/programs/mac-tools/defaults/system.nix
 # ----------------------------------------------------------------------------
 # System-behavior and per-application user defaults.
-{config, ...}: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
+  # Renderer XPC reads the global domain; bundle lookup redirects defaults to the app container.
+  home.activation.setSyntaxHighlightDefaults = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
+    run /usr/bin/defaults import ${lib.escapeShellArg "${config.home.homeDirectory}/Library/Preferences/org.sbarex.SourceCodeSyntaxHighlight"} ${pkgs.writeText "syntax-highlight-renderer.plist" (lib.generators.toPlist {escape = true;} {
+      format = "html";
+      "theme-dark" = "base16/dracula";
+      "font-family" = config.forge.fonts.roles.${config.forge.fonts.surfaces.quicklook.family};
+      "font-size" = config.forge.fonts.surfaces.quicklook.size;
+      "word-wrap" = 2;
+      "word-wrap-hard" = false;
+      "line-numbers" = true;
+      "line-fill-zero" = false;
+      "indent-guides" = true;
+      interactive = true;
+      about = false;
+    })}
+  '';
   targets.darwin.defaults = {
     # --- [ACTIVITY_MONITOR]
     "com.apple.ActivityMonitor" = {
@@ -48,7 +69,7 @@
     # --- [SEARCH_SUGGESTIONS]
     # Spotlight pane rows as macOS writes them: the Custom.relatedContents rule turns Show Related Content (Apple partner content in
     # Spotlight and Look Up) off, and sharing status 2 turns Help Apple Improve Search off. Safari's Search settings: no search engine
-    # suggestions, no Safari Suggestions. Per-app Siri Suggestions learning is the suggestion-blocklist agent's (mac-tools/suggestions.nix).
+    # suggestions, no Safari Suggestions.
     "com.apple.Spotlight".EnabledPreferenceRules = ["Custom.relatedContents"];
     "com.apple.assistant.support"."Search Queries Data Sharing Status" = 2;
     "com.apple.Safari" = {
@@ -56,10 +77,7 @@
       UniversalSearchEnabled = false;
     };
     # --- [APPLICATION_SPECIFIC_SETTINGS]
-    # Screen-lock delay is sysadminctl/profile-owned (com.apple.screensaver askForPassword keys are decorative). The Apple
-    # Intelligence knowledge pipelines (spotlightknowledged embeddings) run independent of Siri and of the suggestion blocklist, and macOS
-    # carries no unsupervised switch for them (the intelligence settings declaration needs a supervised Mac); Spotlight exclusions are the
-    # scope lever.
+    # Screen-lock delay is sysadminctl/profile-owned (com.apple.screensaver askForPassword keys are decorative).
     "com.apple.Terminal".SecureKeyboardEntry = false;
     "com.apple.dt.Xcode".DVTTextEditorTrimTrailingWhitespace = true;
     "com.lujjjh.LinearMouse" = {

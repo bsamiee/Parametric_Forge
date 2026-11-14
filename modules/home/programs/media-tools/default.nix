@@ -18,6 +18,7 @@ in {
   imports = [
     ./models.nix
     ./svgo.nix
+    ./yt-dlp.nix
   ];
 
   home.packages = [
@@ -39,9 +40,7 @@ in {
     pkgs.img2pdf # Images to PDF with the JPEG and PNG bytes embedded unchanged, at the page size their DPI states
     pkgs.jpegli # cjpegli, djpegli: JPEG encode and decode at higher quality per byte than libjpeg-turbo
     pkgs.mpv # Playback backend for media aliases
-    # nixpkgs row on purpose: the next release line needs Pillow 13, pikepdf 10.18, pydantic 2.14, pypdfium2 5.15, and fpdf2 2.9, none of
-    # which the pinned nixpkgs holds; the row moves with nixpkgs. Its recipe binds tesseract, ghostscript, unpaper, pngquant, and jbig2 by
-    # store path, so the command needs none of them on PATH.
+    # The overlay supplies current Python dependencies. OCRmyPDF's recipe binds Tesseract, Ghostscript, unpaper, pngquant, and JBIG2 by store path.
     pkgs.ocrmypdf # Searchable text layer on scanned PDFs: OCR, deskew, clean, PDF/A, and image optimization in one command
     pkgs.oxipng # Lossless PNG recompression for exported raster; no config or env surface
     pkgs.pandoc-current
@@ -53,6 +52,5 @@ in {
     pkgs.typst
     pkgs.vl-convert # Vega and Vega-Lite specs to SVG/PNG/JPEG/PDF; V8 is linked in, so no Node and no browser
     pkgs.verapdf-current # Complete official CLI; the overlay owns its private current Java runtime.
-    pkgs.yt-dlp # URL to media, subtitles, and --dump-json metadata; already inside mpv's wrapper closure, so the row costs nothing
   ];
 }

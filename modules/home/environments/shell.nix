@@ -32,20 +32,13 @@
       SSH_AUTH_SOCK = config.forge.ssh.identityAgent;
       inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };
-  # The one GUI-domain writer every replay agent execs with NAME VALUE pairs; an empty VALUE unsets NAME. launchd orders no user agent against
-  # another and copies the domain env into a process only at spawn, so a resident agent that won the login race (pitchfork's supervisor) holds
-  # the domain as it stood before the replay. A pass that changed a value restarts every running KeepAlive agent in the user agent directory,
-  # where user-scope tools (`pitchfork boot enable`, `brew services`, Home Manager) register: launchd respawns those on exit by their own
-  # declaration, and one-shot replays carry no KeepAlive, so no replay restarts another. A pass that changed nothing restarts nothing, so a
-  # switch that reruns a replay leaves resident agents alone.
-  # The first argument names the writer's ledger of the names it replayed, and a name a later pass of that writer drops is unset, so a row a
-  # generation retires leaves the domain at its next replay in place of at logout.
+  # Replay agents pass NAME VALUE pairs; an empty VALUE unsets NAME. Launchd copies these values into newly spawned processes.
+  # The first argument identifies the writer's ledger, which lets its next replay unset retired names.
   guiSetenv = pkgs.writeShellApplication {
     name = "gui-setenv";
     text = ''
       ledger="${config.xdg.stateHome}/gui-setenv/$1"
       shift
-      changed=0
       declare -A replayed=()
       while (($# >= 2)); do
         replayed["$1"]=1
@@ -55,7 +48,6 @@
           else
             /bin/launchctl unsetenv "$1"
           fi
-          changed=1
         fi
         shift 2
       done
@@ -63,21 +55,12 @@
         while IFS= read -r name; do
           [[ -z "''${replayed[$name]:-}" && -n "$(/bin/launchctl getenv "$name")" ]] || continue
           /bin/launchctl unsetenv "$name"
-          changed=1
         done < "$ledger"
       fi
       mkdir -p "''${ledger%/*}"
-      printf '%s\n' "''${!replayed[@]}" > "$ledger"
-      ((changed == 1)) || exit 0
-      for plist in "${config.home.homeDirectory}"/Library/LaunchAgents/*.plist; do
-        # raw prints true or false for a bool and the key list for a KeepAlive condition dictionary; an absent key fails the extract.
-        keepalive="$(/usr/bin/plutil -extract KeepAlive raw -o - "$plist" 2>/dev/null)" || continue
-        [[ "$keepalive" != false ]] || continue
-        label="$(/usr/bin/plutil -extract Label raw -o - "$plist")"
-        [[ "$(/bin/launchctl print "gui/$UID/$label" 2>/dev/null)" == *"state = running"* ]] || continue
-        /bin/launchctl kickstart -k "gui/$UID/$label"
-        printf 'restarted %s\n' "$label"
-      done
+      for name in "''${!replayed[@]}"; do
+        printf '%s\n' "$name"
+      done > "$ledger"
     '';
   };
   guiEnv = pkgs.writeShellApplication {
@@ -105,7 +88,7 @@ in {
       // removeAttrs row ["name" "argv"];
   };
 
-  # sessionEnv folds the interactive man/bat/info rows; PATH and the cross-surface rows are nix-darwin's set-environment
+  # sessionEnv folds the shell-tool rows; zsh refreshes these values at startup. PATH and cross-surface rows are nix-darwin's set-environment
   # (modules/darwin/settings/system.nix). The rows below are session-only concerns whose tool default is not already the declared path (zsh zle
   # rows live in programs.zsh.localVariables, never the process environment).
   home.sessionVariables =
@@ -143,10 +126,8 @@ in {
     };
 
   # --- [GUI_SESSION_ENVIRONMENT]
-  # RunAtLoad replays the rows at each login, and a changed row set rewrites the argv, so the switch that lands it reloads and reruns the agent;
-  # either run that changes a value restarts the resident agents that spawned before it. 1password.nix replays its secret rows through the same
-  # writer. An app login restores before launchd runs its agents keeps its launch environment; WezTerm projects its own spawn rows
-  # (apps/wezterm/deck.lua).
+  # RunAtLoad publishes values at login, and a changed row set reruns the replay at activation. 1password.nix publishes its secret rows
+  # through the same writer. Existing processes retain their launch environment; their owners control their lifecycle.
   _module.args.guiSetenv = guiSetenv;
   launchd.agents.gui-env = launchdAgent {
     name = "gui-env";

@@ -23,7 +23,7 @@
 
   # --- [PHYSICAL_LAYERS]
   # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes each stack as the derived modifier set.
-  # WezTerm claims no layer — its outer keys live in weztermRows.
+  # Power carries no zellij binds: its stack stays free for whichever app claims it. WezTerm claims no layer — its outer keys live in weztermRows.
   # Glyphs, the zellij prefix, and the WezTerm glyph map all derive from the karabiner `to`
   # row through this vocabulary; `rank` orders the emitted rule document, `display` overrides the cheatsheet prefix.
   modVocab = map (row ["kc" "word" "wez" "glyph"]) [
@@ -57,6 +57,7 @@
     ) (lib.mapAttrs (_: mkLayer) {
       hyper = ["Hyper" "Right Command" "R⌘" 30 "right_command" "left_shift" ["left_command" "left_control" "left_option"] "Hyper"];
       super = ["Super" "Right Option" "R⌥" 20 "right_option" "left_control" ["left_command" "left_option"]];
+      power = ["Power" "Right Shift" "R⇧" 10 "right_shift" "left_option" ["left_control" "left_shift"]];
     });
   layersByRank = dir: lib.sort (a: b: dir a.rank b.rank) (lib.attrValues layers);
 

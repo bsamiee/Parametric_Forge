@@ -4,15 +4,12 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/default.nix
 # ----------------------------------------------------------------------------
-# Language toolchain aggregator.
+# Machine-wide command-line tools by domain.
 _: {
   imports = [
-    # Shared tooling
     ./dev-tools.nix
     ./db-tools.nix
     ./scientific-tools.nix
-
-    # Languages
     ./node-tools.nix
   ];
 }

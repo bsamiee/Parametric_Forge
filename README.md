@@ -32,7 +32,7 @@ Parametric_Forge/
 │       │   │   └── zellij/        # Multiplexer layouts and themes
 │       │   ├── container-tools/
 │       │   ├── git-tools/
-│       │   ├── languages/         # Language toolchains
+│       │   ├── languages/         # Command-line tools by domain
 │       │   ├── mac-tools/         # Application rows and default handlers
 │       │   │   └── defaults/      # User-scope macOS defaults
 │       │   ├── media-tools/       # Media and document tools, speech model files
@@ -70,7 +70,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 
 ## [05]-[MODULE_BOUNDARIES]
 
-- `modules/common/` carries Nix settings and the toolchain env vocabulary: one PATH vector and one cross-surface row set, which nix-darwin's `set-environment` writes for every zsh and bash, `launchctl config user path` and the `gui-env` agent replay into the GUI launchd domain, and `.zshenv` asserts as a never-clobber floor. Interactive-only rows stay Home Manager session variables. The shell is Apple's `/bin/zsh` (`forge.shell`); Nix supplies its configuration, not the binary. The time zone is macOS's automatic zone, never a `TZ` row.
+- `modules/common/` carries Nix settings and the toolchain env vocabulary: one PATH vector and one cross-surface row set, which nix-darwin's `set-environment` writes for every zsh and bash, and `launchctl config user path` and the `gui-env` agent replay into the GUI launchd domain. Every zsh startup runs a config-free mise refresh to unwind inherited state, restores managed values, then applies the current project's mise environment. Interactive-only rows stay Home Manager session variables. The shell is Apple's `/bin/zsh` (`forge.shell`); Nix supplies its configuration, not the binary. The time zone is macOS's automatic zone, never a `TZ` row.
 - `modules/darwin/` carries system-scope macOS state: defaults, security, and the Homebrew bridge. Homebrew carries GUI/proprietary bundles nixpkgs cannot ship; activation updates Homebrew, installs missing roster entries, and upgrades outdated ones, while cleanup stays with the manual Homebrew pass so operator installs survive.
 - `Casks/` owns vendor GUI packages absent from Homebrew's main catalog; Homebrew taps this checkout as `bsamiee/forge` (`modules/darwin/homebrew/`), so a committed cask reaches the next activation without a push.
 - Adobe applications remain Creative Cloud-owned; Typeface uses its native vendor updater. `mac-tools/default-applications.nix` owns the application rows (bundle id, handled extensions and schemes, path where a consumer opens the bundle) that the Dock, LinearMouse, and the utiluti handler reconcile read. `mac-tools/defaults/` owns user-scope macOS defaults as Home Manager `targets.darwin.defaults` rows, imported every switch. `home/fonts.nix` installs the curated catalog through Home Manager's native user font projection and projects its roles into fontconfig's generic families.
@@ -95,11 +95,11 @@ Probe a machine that misbehaves after a switch before theorizing about it: `whic
 
 Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label grammar, each agent declared beside the surface it serves: `launchctl list | grep dev.bsamiee` is the live census of Forge agents (project tools such as Rasm's pitchfork register their own `dev.mise.*` labels outside it), `launchctl print gui/$UID/dev.bsamiee.<name>` the per-agent probe. Each new recurring job lands as one agent declaration.
 
-`gui-setenv` (`environments/shell.nix`) owns every write into the GUI launchd domain: a replay unsets each name its writer's previous replay set and this one drops, and a replay that changes a value restarts each running `KeepAlive` agent in `~/Library/LaunchAgents`, so a resident process that spawned before the replay, a project tool's included, inherits the replayed rows.
+`gui-setenv` (`environments/shell.nix`) publishes machine values into the GUI launchd domain and removes keys retired by each writer. Newly spawned processes inherit those values. Applications and projects own their process lifecycles, and zsh refreshes its declared machine environment before applying project configuration.
 
 ## [09]-[TOOLCHAINS]
 
-- [PYTHON]: no machine interpreter; `uv` is machine-wide, so `uvx <tool>` runs a Python tool from any directory on an interpreter uv fetches, and a project's `mise.toml` and `uv.lock` own `python`, `ruff`, `ty`, `mypy`, and its own `uv` pin inside its tree. `languages/scientific-tools.nix` installs the native command-line roster; a project's Pixi environment owns the native libraries its source builds and ctypes consumers read.
+- [PYTHON]: no machine interpreter; `uv` is machine-wide, so `uvx <tool>` runs a Python tool from any directory on an interpreter uv fetches, and a project's `mise.toml` and `uv.lock` own `python`, `ruff`, `ty`, `mypy`, and its own `uv` pin inside its tree. `languages/scientific-tools.nix` installs the native command-line roster; a project owns the native libraries and headers its builds read.
 - [NODE_DB]: Node, pnpm, and TypeScript are each project's `mise.toml` and `package.json` rows; the SQLite extension libraries (sqlean, spatialite, vec) behind the `sqlite-extended` kernel, the `duckdb` client is machine-wide beside it, and the `sqlite3` client is a project row; PostgreSQL client tools are Home Manager-owned.
 - [DOTNET_AEC]: No machine .NET SDK and no machine .NET tool; each repo's mise install owns the SDK its `global.json` pins and runs its tools through `dotnet dnx <id>`. Every SDK installs into one shared root (mise `dotnet.dotnet_root`, the root `/etc/dotnet/install_location_arm64` names), so a process that captured `DOTNET_ROOT` or the root's PATH segment reaches each SDK a later `global.json` names. That `dotnet` reaches PATH through the mise shim segment `toolchain-env.nix` puts first on the one PATH vector every session and launchd surface projects, so a login shell, a launchd agent, and a GUI app resolve the pinned SDK without the interactive `mise activate` hook. `energyplus` and `openstudio` are Forge-owned machine runtimes with disjoint ambient identities.
 

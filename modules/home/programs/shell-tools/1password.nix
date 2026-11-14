@@ -38,9 +38,8 @@
     GH_PROJECTS_TOKEN = null;
   };
   tokenNames = lib.attrNames tokenRows;
-  # GUI-session replay hands the op cache rows to the shared GUI-domain writer (shell.nix); a name the cache leaves empty clears its stale GUI
-  # value, and a changed token restarts the resident agents that spawned before it. launchd hands this agent the domain values of its last
-  # replay, and the cache rows keep a set value, so each name is unset before the source and a rotated token lands.
+  # GUI-session replay publishes the cache through the shared GUI-domain writer. A name the cache leaves empty clears its prior value.
+  # Each name is unset before sourcing the cache so the next replay reads rotated values.
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     text = ''
@@ -104,8 +103,13 @@ in {
             fi
           fi
 
-          # GUI replay: restart the RunAtLoad agent so GUI apps and resident agents pick up a changed cache on this switch instead of at next login.
-          run /bin/launchctl kickstart -k "gui/$UID/dev.bsamiee.gui-op-secrets"
+          # Finish a running replay before rereading the cache published by this activation.
+          replay_label=${lib.escapeShellArg config.launchd.agents.gui-op-secrets.config.Label}
+          replay_pid=$(/bin/launchctl list | /usr/bin/awk -v label="$replay_label" '$3 == label && $1 != "-" { print $1 }')
+          if [[ -n "$replay_pid" ]]; then
+            run ${lib.getExe' pkgs.coreutils "tail"} --pid="$replay_pid" -f /dev/null
+          fi
+          run /bin/launchctl kickstart "gui/$UID/$replay_label"
         '';
       };
     };

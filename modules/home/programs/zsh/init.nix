@@ -48,11 +48,9 @@
       # Collapses accepted or interrupted lines to HH:MM + pointer without another Starship render.
       if [[ $PROMPT == *starship* ]]; then
         autoload -Uz add-zsh-hook add-zle-hook-widget
-        typeset -g _transient_prompt_live="$PROMPT"
         typeset -gi _transient_prompt_status=0
         _transient-prompt-save() {
           TRAPINT() { _transient-prompt-apply; return $(( 128 + $1 )) }
-          PROMPT="$_transient_prompt_live"
           _transient_prompt_status=''${STARSHIP_CMD_STATUS:-0}
         }
         _transient-prompt-apply() {
@@ -66,13 +64,19 @@
             else
               pointer_color="${config.forge.theme.roles.state.danger.hex}"
             fi
-            PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            local PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
             zle .reset-prompt
           fi
         }
         add-zsh-hook precmd _transient-prompt-save
         add-zle-hook-widget zle-line-finish _transient-prompt-apply
       fi
+    '')
+
+    (lib.mkOrder 1900 ''
+      # --- [TERMINAL_SHELL_INTEGRATION]
+      typeset -U precmd_functions preexec_functions
+      WEZTERM_SHELL_SKIP_USER_VARS=1 source "${config.forge.apps.wezterm.path}/Contents/Resources/wezterm.sh"
     '')
 
     (lib.mkOrder 2000 ''

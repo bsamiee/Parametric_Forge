@@ -48,6 +48,7 @@
     chatgpt = app "com.openai.codex" "/Applications/ChatGPT.app" [] [];
     claude = app "com.anthropic.claudefordesktop" "/Applications/Claude.app" [] [];
     messages = app "com.apple.MobileSMS" "/System/Applications/Messages.app" [] [];
+    epic = app "com.epicgames.EpicGamesLauncher" "/Applications/Epic Games Launcher.app" [] [];
     creativeCloud = app "com.adobe.acc.AdobeCreativeCloud" "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" [] [];
     blender = app "org.blenderfoundation.blender" null [] [];
     linearmouse = app "com.lujjjh.LinearMouse" "/Applications/LinearMouse.app" [] [];
@@ -142,8 +143,6 @@
       "resolved"
     ] [];
     preview = app "com.apple.Preview" null ["jpg" "jpeg" "png" "gif" "webp" "heic" "heif" "avif" "jxl"] [];
-    # lrcat-data is a catalog companion with role None, not a separately openable catalog.
-    lightroom = app "com.adobe.LightroomClassicCC7" null ["lrcat"] [];
     # Rhino's own document types plus the formats its Import command reads (McNeel's file formats index); dae, sat, and x3d
     # are export-only there and stay with the system viewers.
     rhino = app "com.mcneel.rhinoceros.${rhinoMajor}" "/Applications/Rhino ${rhinoMajor}.app" ["stl" "dwg" "dxf" "obj" "fbx" "ply" "step" "stp" "iges" "igs" "skp" "3ds" "wrl" "3mf" "dgn"] [];

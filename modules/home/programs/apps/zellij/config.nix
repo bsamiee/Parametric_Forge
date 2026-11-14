@@ -142,6 +142,9 @@
     (bind ["h" "Left"] "PageScrollUp;")
     (bind ["d"] "HalfPageScrollDown;")
     (bind ["u"] "HalfPageScrollUp;")
+    (gap (bindH ["["] "ScrollToPreviousPrompt;" ["[ ]" "prompt" 70]))
+    (bind ["]"] "ScrollToNextPrompt;")
+    (bindH ["m"] "SelectCommandAtScrollPosition;" ["select" 80])
   ];
   modeTable = {
     locked = {
@@ -234,7 +237,8 @@
           (mkExit modes.scroll.key)
           (bindH ["e"] ''EditScrollback; SwitchToMode "Normal";'' ["edit" 40])
           (bindH ["s"] ''SwitchToMode "EnterSearch"; SearchInput 0;'' ["search" 50])
-          (bindH ["${pH} c"] ''ScrollToBottom; SwitchToMode "Normal";'' ["${layers.hyper.chip}c" "bottom" 60])
+          (bindH ["Ctrl c"] ''ScrollToBottom; SwitchToMode "Normal";'' ["⌃c" "bottom" 60])
+          (bindH ["c"] ''CopyLastCommandOutput; SwitchToMode "Normal";'' ["copy output" 65])
         ]
         ++ navRows
         ++ [
@@ -250,7 +254,7 @@
       rows =
         [
           (mkExit modes.scroll.key)
-          (bind ["${pH} c"] ''ScrollToBottom; SwitchToMode "Normal";'')
+          (bind ["Ctrl c"] ''ScrollToBottom; SwitchToMode "Normal";'')
           (gap (bindH ["c"] ''SearchToggleOption "CaseSensitivity";'' ["case" 20]))
           (bindH ["w"] ''SearchToggleOption "Wrap";'' ["wrap" 30])
           (bindH ["o"] ''SearchToggleOption "WholeWord";'' ["word" 40])
@@ -267,6 +271,7 @@
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
         (launchRow "s" "session-manager" "manager" 10)
+        (launchRow "l" "zellij:layout-manager" "layouts" 25)
         (launchRow "c" "configuration" "config" 30)
         (launchRow "p" "plugin-manager" "plugins" 40)
         (launchRow "a" "zellij:about" "about" 50)
@@ -279,7 +284,7 @@
       note = "type query";
       tail = "none";
       rows = [
-        ((bindH ["${pH} c" "Esc"] ''SwitchToMode "Scroll";'' ["esc" "back" 20]) // {tag = true;})
+        (bindH ["Ctrl c" "Esc"] ''SwitchToMode "Scroll";'' ["esc" "back" 20])
         (bindH ["Enter"] ''SwitchToMode "Search";'' ["⏎" "search" 10])
       ];
     };
@@ -288,7 +293,7 @@
       note = "type name";
       tail = "none";
       rows = [
-        (mkExit "c")
+        (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
         (bindH ["Esc"] ''UndoRenameTab; SwitchToMode "Tab";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];
@@ -298,7 +303,7 @@
       note = "type name";
       tail = "none";
       rows = [
-        (mkExit "c")
+        (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
         (bindH ["Esc"] ''UndoRenamePane; SwitchToMode "Pane";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];

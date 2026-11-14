@@ -4,18 +4,12 @@
 # License       : MIT
 # Path          : modules/darwin/settings/security.nix
 # ----------------------------------------------------------------------------
-# Developer-tool authorization, Gatekeeper, admin authorization rights, SSH host trust, and the passwordless sudo row.
+# Developer-tool authorization, Gatekeeper, SSH host trust, and the passwordless sudo row.
 {config, ...}: {
   # Debugger/developer-tool authorization without per-launch prompts: developer mode is a root activation, and the admin group already nests
   # into _developer. Every write is idempotent. TCC stays reset-only (tccutil); no TCC.db writes, no PPPC on this unmanaged host.
   system.activationScripts.postActivation.text = ''
     /usr/sbin/DevToolsSecurity -enable >/dev/null
-    # Authorization rights behind the System Settings unlock, installer, network, and launchd daemon dialogs: each right reconciles to the
-    # is-admin rule against its live definition; `authorizationdb write` reports its status on stderr, so only a drifted right is written.
-    for right in system.preferences system.preferences.security system.preferences.network system.privilege.admin system.install.software com.apple.ServiceManagement.daemons.modify; do
-      [[ $(/usr/bin/security authorizationdb read "$right" 2>/dev/null | /usr/bin/plutil -extract rule.0 raw -o - -) == is-admin ]] ||
-        /usr/bin/security authorizationdb write "$right" is-admin
-    done
   '';
 
   # --- [GATEKEEPER]

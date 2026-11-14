@@ -5,7 +5,7 @@
 # Path          : modules/common/toolchain-env.nix
 # ----------------------------------------------------------------------------
 # The one PATH vector and toolchain env factory installed as the toolchainEnvFor module argument; the system environment, the GUI launchd
-# replay, and the zsh floor call it with their own home/username/XDG context.
+# replay, and the zsh refresh call it with their own home/username/XDG context.
 {
   lib,
   pkgs,
@@ -23,7 +23,7 @@
     # set-environment, so a bundle name with a space cannot be an entry, and the bundle's scripts locate it from their own directory, so the
     # link is the directory rather than each script.
     rhinoBin = "${xdgDataHome}/rhino/bin";
-    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles; cargo/go user bins return once provisioned.
+    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles.
     userPathEntries = [
       "${home}/.local/bin"
       "/etc/profiles/per-user/${username}/bin"
@@ -48,10 +48,10 @@
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
     # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
-    energyEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
-    # One class-partitioned env owner: `all` rows feed nix-darwin's set-environment (every zsh and bash), the .zshenv never-clobber floor, and the
+    runtimeEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
+    # One class-partitioned env owner: `all` rows feed nix-darwin's set-environment (every zsh and bash), the .zshenv refresh, and the
     # GUI launchd replay, byte-identical everywhere so a shell of any kind and a Dock-launched agent never resolve divergent editor/pager/config env;
-    # `session` rows are interactive-only (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
+    # `session` rows configure shell tools (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
     # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
     # its own config key. A new cross-surface var is one `all` row. No row configures a language toolchain, package manager, or build tool: a
     # repository's own files and mise [env] own how its builds, checks, and tests behave.
@@ -92,26 +92,17 @@
         INFOPATH = "/opt/homebrew/share/info:";
       };
     };
-    # Never-clobber floor: a row exports only where the caller left it unset or empty, so a scoped value (`doppler run`, a project's [env])
-    # survives every zsh child, and a shell whose parent scrubbed the env behind __HM_SESS_VARS_SOURCED recovers it; the fold owns the :- idiom.
-    floorExports = env:
-      lib.concatStrings (
-        lib.mapAttrsToList (name: value: ''
-          export ${name}="''${${name}:-${toString value}}"
-        '')
-        env
-      );
   in {
     inherit
-      floorExports
       fontDirectories
       rhinoBin
+      runtimeEnv
       ;
 
     inherit pathEntries shimPath;
-    # Rows every surface carries: set-environment for every shell kind, the GUI launchd domain, and the .zshenv floor; the session class is
-    # interactive-only and stays in Home Manager.
-    sharedEnv = energyEnv // envByClass.all;
+    # Rows every surface carries: set-environment for every shell kind, the GUI launchd domain, and the .zshenv refresh; the session class is
+    # configured in Home Manager and refreshed by zsh at startup.
+    sharedEnv = runtimeEnv // envByClass.all;
     sessionEnv = envByClass.session;
   };
 }

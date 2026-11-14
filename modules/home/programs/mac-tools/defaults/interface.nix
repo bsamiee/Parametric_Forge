@@ -45,7 +45,7 @@ in {
       enable-spring-load-actions-on-all-items = true;
       # Pin sources: Drafts is masApp-declared; Claude, ChatGPT, and the Adobe suite (Creative Cloud installer-owned) are intentional manual installs.
       # Paths read from the application rows (mac-tools/default-applications.nix).
-      persistent-apps = [{spacer = {};}] ++ map (name: apps.${name}.path) ["heptabase" "drafts" "vscode" "arc" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat"];
+      persistent-apps = [{spacer = {};}] ++ map (name: apps.${name}.path) ["heptabase" "drafts" "vscode" "arc" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat" "epic"];
       persistent-others = [];
     };
     # --- [FINDER_CONFIGURATION]

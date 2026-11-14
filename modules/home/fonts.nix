@@ -32,6 +32,7 @@
   # family-proven only), so a role swap carries its leading with it. Positional constructor keeps rows single-line (alejandra explodes
   # multi-key attrset literals).
   mkSurface = family: size: leading: {inherit family size leading;};
+  surfaces.quicklook = mkSurface "mono" 15.0 1.5;
   surfaces.terminal = mkSurface "mono" 13.0 catalog.${roles.mono}.lineHeight;
 
   # Literal-safe shaping: contextual alternates on, every ligature class off.

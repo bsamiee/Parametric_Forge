@@ -215,6 +215,23 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/watchexec";
     };
+    zellij-unwrapped = _: {
+      sourceRoot = ".";
+      dontStrip = true;
+      nativeBuildInputs = [prev.installShellFiles];
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 zellij "$out/bin/zellij"
+        installShellCompletion --cmd zellij \
+          --bash <("$out/bin/zellij" setup --generate-completion bash) \
+          --fish <("$out/bin/zellij" setup --generate-completion fish) \
+          --zsh <("$out/bin/zellij" setup --generate-completion zsh)
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/zellij";
+    };
     # Release tarball of one file and no top directory: the unpack root is the build directory.
     duckdb-current = _: {
       sourceRoot = ".";
@@ -256,6 +273,12 @@ final: prev: let
   # Source rows rebuild a nixpkgs recipe at the pinned release, its tests left to upstream and Hydra: the pin replaces `srcs` where the recipe
   # unpacks a list (fonts), else `src`, and `sourceOverride` row data feeds the recipe's own flags.
   sourceRecipes = {
+    rclone = old: {
+      src = (srcOf manifest.packages.rclone.asset) // {tag = "v${manifest.packages.rclone.version}";};
+      inherit (manifest.packages.rclone) vendorHash;
+      inherit (old) doCheck doInstallCheck;
+      versionCheckKeepEnvironment = "HOME";
+    };
     # 1.28.5 grew a cmark-gfm row inside the Makerules section nixpkgs' Darwin system-deps patch lifts out of its Linux branch; the same lift
     # rebased onto the pinned tree replaces it, and nixpkgs' C++ wrap patch still applies as shipped.
     mupdf = old: {
@@ -296,6 +319,86 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
+    nvfetcher = prev.haskell.lib.overrideCabal prev.nvfetcher (_: {
+      inherit (manifest.packages.nvfetcher) version;
+      src = srcOf manifest.packages.nvfetcher.asset;
+    });
+    ocrmypdf = let
+      row = manifest.packages.ocrmypdf;
+      python = prev.python3.override {
+        packageOverrides = pythonFinal: pythonPrev: let
+          overrides = {
+            ocrmypdf = old: {
+              build-system = [pythonFinal.hatchling];
+              nativeCheckInputs = old.nativeCheckInputs ++ [pythonFinal.numpy];
+              postPatch =
+                (old.postPatch or "")
+                + ''
+                  substituteInPlace tests/test_plugin_manager.py \
+                    --replace-fail "monkeypatch.setattr(ocrmypdf.builtin_plugins, '__path__', [])" \
+                    "monkeypatch.setattr(pkgutil, 'iter_modules', lambda *args, **kwargs: iter(()))"
+                '';
+            };
+            pikepdf = old: {
+              nativeCheckInputs = old.nativeCheckInputs ++ old.optional-dependencies.pdfa ++ [pythonFinal.pytest-timeout];
+            };
+            pydantic = old: {
+              patches = [];
+              nativeCheckInputs = old.nativeCheckInputs ++ [prev.python3Packages.pytest-examples];
+            };
+            pydantic-core = old: {
+              cargoDeps = prev.rustPlatform.importCargoLock generatedSources.ocr-pydantic-core.cargoLock."pydantic-core/Cargo.lock";
+              passthru =
+                old.passthru
+                // {
+                  tests =
+                    old.passthru.tests
+                    // {
+                      pytest = pythonFinal.pydantic-core.overridePythonAttrs {doCheck = true;};
+                    };
+                };
+            };
+            pypdfium2 = old: let
+              release = builtins.fromJSON (builtins.readFile generatedSources.ocr-pypdfium2.extract."autorelease/record.json");
+              ctypesgen = prev.fetchFromGitHub {
+                owner = "pypdfium2-team";
+                repo = "ctypesgen";
+                rev = release.ctypesgen;
+                hash = row.ctypesgenHash;
+              };
+            in {
+              postPatch = ''
+                mkdir -p deps
+                ln -s ${ctypesgen} deps/ctypesgen
+              '';
+              passthru = old.passthru // {inherit ctypesgen;};
+            };
+          };
+        in
+          lib.mapAttrs (name: source:
+            pythonPrev.${name}.overridePythonAttrs (old:
+              {
+                inherit (source) version;
+                src = (srcOf source.asset) // {tag = lib.removeSuffix ".tar.gz" (baseNameOf source.asset.url);};
+                meta =
+                  old.meta
+                  // lib.optionalAttrs (old.meta ? changelog) {
+                    changelog = lib.replaceStrings [old.version] [source.version] old.meta.changelog;
+                  };
+              }
+              // (overrides.${name} or (_: {})) old))
+          row.pythonPackages;
+      };
+    in
+      python.pkgs.toPythonApplication python.pkgs.ocrmypdf;
+    qsv = prev.qsv.overrideAttrs (old: {
+      buildInputs =
+        old.buildInputs
+        ++ [
+          final.aws-lc
+          final.rust-jemalloc-sys
+        ];
+    });
     # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-extended = let
       row = manifest.packages.sqlite-extended;

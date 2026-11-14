@@ -8,11 +8,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-8UfSuRG7QvHjdEINMYbmUTzjkhna2KzB2ZzAAffcqoI=",
+            "sha256": "sha256-nRMcFPjg3sgdbYu8pjSTHuzHZw4qUQfOG9OUszVyTOA=",
             "type": "url",
-            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.41.1/op_apple_universal_v2.41.1.pkg"
+            "url": "https://cache.agilebits.com/dist/1P/op2/pkg/v2.44.0-beta.02/op_apple_universal_v2.44.0-beta.02.pkg"
         },
-        "version": "2.41.1"
+        "version": "2.44.0-beta.02"
     },
     "biome-aarch64-darwin": {
         "cargoLock": null,
@@ -23,11 +23,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-HR7b2l7jNHUUTFa6RS29oo4bBhCI+4dRAqLfbNqEybQ=",
+            "sha256": "sha256-XqLNfSErEBMu6WDOSA/DOqt2HQ1rZYoREsNsJlftCVc=",
             "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.4/biome-darwin-arm64"
+            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.7/biome-darwin-arm64"
         },
-        "version": "2.6.4"
+        "version": "2.6.7"
     },
     "design-fonttools": {
         "cargoLock": null,
@@ -52,11 +52,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-Crvvil/kltVHdTrUoWBgIfy7jO7BPFKs+8421iG09Jw=",
+            "sha256": "sha256-BRx+tfFs9lurWWRBeyxe2voO8hnzJUOrLweqb4o4cM8=",
             "type": "tarball",
-            "url": "https://github.com/vercel/geist-font/releases/download/v1.9.0/geist-font-v1.9.0.zip"
+            "url": "https://github.com/vercel/geist-font/releases/download/v1.9.2/geist-font-v1.9.2.zip"
         },
-        "version": "1.9.0"
+        "version": "1.9.2"
     },
     "design-harfbuzz": {
         "cargoLock": null,
@@ -67,11 +67,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-loU26avXgvB/eVQETAxAIBmfzdObQdIh7ELSo75KRN8=",
+            "sha256": "sha256-D8fFZUQ6X0vn2mWsXuW9c32bFY3JCHCLdomgpXlrDI0=",
             "type": "url",
-            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/15.0.0/harfbuzz-15.0.0.tar.xz"
+            "url": "https://github.com/harfbuzz/harfbuzz/releases/download/15.1.0/harfbuzz-15.1.0.tar.xz"
         },
-        "version": "15.0.0"
+        "version": "15.1.0"
     },
     "design-librsvg": {
         "cargoLock": {
@@ -115,11 +115,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-DlkbIY8PBd2HPLMWvLibca/voMujF1J2ZSlre+if32c=",
+            "sha256": "sha256-Bm5zN4aVGWSJnrF4NU38Dm0k5FZkfpfNbsVuDP9fVdw=",
             "type": "tarball",
-            "url": "https://github.com/jgm/pandoc/releases/download/3.13/pandoc-3.13-arm64-macOS.zip"
+            "url": "https://github.com/jgm/pandoc/releases/download/3.14/pandoc-3.14-arm64-macOS.zip"
         },
-        "version": "3.13"
+        "version": "3.14"
     },
     "design-scheherazade-new": {
         "cargoLock": null,
@@ -159,11 +159,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-Oqm/gkJMntnTbkjFPjTwTWwjGcePjiKtwLfGowz5D0A=",
+            "sha256": "sha256-qsiyTaaMBVAXfkOlxGEdFqcYqzqZhFZM73taoXyBOts=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.212/cli-1.31.212.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.221/cli-1.31.221.jar"
         },
-        "version": "1.31.212"
+        "version": "1.31.221"
     },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
@@ -203,11 +203,103 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-9pyKT3wmXV8//dBtRBBKoVp//ZtlRah7d2j4k7cPD9g=",
+            "sha256": "sha256-kvG59otgMan3eTig/439enf+nNkYxbCdDtQ08G670/I=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.11.5/mise-v2026.11.5-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.11.7/mise-v2026.11.7-macos-arm64.tar.gz"
         },
-        "version": "2026.11.5"
+        "version": "2026.11.7"
+    },
+    "nvfetcher": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nvfetcher",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-51UtYyzTEzKVY2f6hBkON+Gr7QufKYqWt5nmf+2R4ts=",
+            "type": "url",
+            "url": "https://hackage.haskell.org/package/nvfetcher-0.8.1.0/nvfetcher-0.8.1.0.tar.gz"
+        },
+        "version": "0.8.1.0"
+    },
+    "ocr-pikepdf": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ocr-pikepdf",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-kZhZKM4ssW+vRBfAPRBgNuEwXoX2alHQS019L7HB/m4=",
+            "type": "tarball",
+            "url": "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.0.tar.gz"
+        },
+        "version": "10.18.0"
+    },
+    "ocr-pydantic": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ocr-pydantic",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=",
+            "type": "tarball",
+            "url": "https://github.com/pydantic/pydantic/archive/refs/tags/v2.14.3.tar.gz"
+        },
+        "version": "2.14.3"
+    },
+    "ocr-pydantic-core": {
+        "cargoLock": {
+            "pydantic-core/Cargo.lock": [
+                "sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=/pydantic-core/Cargo.lock",
+                {}
+            ]
+        },
+        "date": null,
+        "extract": null,
+        "name": "ocr-pydantic-core",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=",
+            "type": "tarball",
+            "url": "https://github.com/pydantic/pydantic/archive/refs/tags/core-v2.50.4.tar.gz"
+        },
+        "version": "2.50.4"
+    },
+    "ocr-pypdfium2": {
+        "cargoLock": null,
+        "date": null,
+        "extract": {
+            "autorelease/record.json": "sha256-xomIK2uW7xdBd9zaXblUWqwb0mpfGSsbLwr+kV4ZHU0=/autorelease/record.json"
+        },
+        "name": "ocr-pypdfium2",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-xomIK2uW7xdBd9zaXblUWqwb0mpfGSsbLwr+kV4ZHU0=",
+            "type": "tarball",
+            "url": "https://github.com/pypdfium2-team/pypdfium2/archive/refs/tags/5.15.2.tar.gz"
+        },
+        "version": "5.15.2"
+    },
+    "ocrmypdf": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ocrmypdf",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-K2Ldbqk6QirybGwPzi0CcDTGzXp+pD3jqN3kAQ31NV0=",
+            "type": "tarball",
+            "url": "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v17.14.1.tar.gz"
+        },
+        "version": "17.14.1"
     },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,
@@ -217,11 +309,25 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-ahbG8fvp/4R4M03VCKGD6TWVyl2L21wre/KdaOK4sqo=",
+            "sha256": "sha256-sJ5taPGagEibJxkgrMZWD0k3RJl74V63hwUV9kc1orw=",
             "type": "tarball",
-            "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz"
+            "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
         },
-        "version": "v3.11.0/OpenStudio-3.11.0%2B241b8abb4d-Darwin-arm64.tar.gz"
+        "version": "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
+    },
+    "rclone": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "rclone",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-QHmiqASFr4ZJQE+QsSXEbIlgNfsw8iOVvBLdl57bbDQ=",
+            "type": "tarball",
+            "url": "https://github.com/rclone/rclone/archive/refs/tags/v1.76.0.tar.gz"
+        },
+        "version": "1.76.0"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
@@ -245,11 +351,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-qsUO6lEbTVcYthsU8qaGDYVJSvCtNT8Dep3Cfna39RU=",
+            "sha256": "sha256-6rlQo5Cn1kc0ujrWO5ZxLyHhe6IaqKI2N4wAcPtXPlM=",
             "type": "tarball",
-            "url": "https://github.com/vega/vl-convert/releases/download/v1.9.0/vl-convert_osx-arm64.zip"
+            "url": "https://github.com/vega/vl-convert/releases/download/v2.0.0-rc7/vl-convert_osx-arm64.zip"
         },
-        "version": "1.9.0"
+        "version": "2.0.0-rc7"
     },
     "watchexec-aarch64-darwin": {
         "cargoLock": null,
@@ -264,5 +370,20 @@
             "url": "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz"
         },
         "version": "2.8.0"
+    },
+    "zellij-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "zellij-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-cWoceIe+g8yBOQABKhVqTY4O4UaKxWxYopnJ2ImM3JA=",
+            "type": "url",
+            "url": "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "0.46.0"
     }
 }

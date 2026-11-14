@@ -4,33 +4,28 @@
 # License       : MIT
 # Path          : modules/home/programs/languages/scientific-tools.nix
 # ----------------------------------------------------------------------------
-# Machine-wide native command-line tools and runtimes. The per-user profile links bin and man alone (nix-darwin environment.pathsToLink), so a
-# row here lands commands only; a project's Pixi environment owns the native libraries its builds link. A package landing no command has no
-# consumer here.
+# Machine-wide native command-line tools and runtimes. nix-darwin environment.pathsToLink links no lib or include, so a row here lands
+# commands, man pages, and completions alone. A package landing no command has no consumer here.
 {
   lib,
   pkgs,
   ...
 }: let
-  # The Nix PROJ data ships no datum grids; each gdal and proj command streams them from cdn.proj.org into the user PROJ directory. The
-  # wrapper scopes the switch to these commands, so a project's PROJ consumers keep their own data and network policy.
-  projNetwork = package:
-    pkgs.symlinkJoin {
-      name = "${package.pname}-proj-network-${package.version}";
-      paths = [package];
-      nativeBuildInputs = [pkgs.makeWrapper];
-      postBuild = ''
-        for command in "$out"/bin/*; do
-          wrapProgram "$command" --set-default PROJ_NETWORK ON
-        done
-      '';
-    };
-  geoTools = with pkgs; [
-    (projNetwork gdal) # gdalinfo, gdal_translate, ogr2ogr
-    geos # geosop
-    (projNetwork proj) # proj, cs2cs, projinfo
-    netcdf # ncdump, nccopy, ncgen
-  ];
+  # gdalinfo, gdal_translate, ogr2ogr. `gdal-config` prints compiler and linker flags for gdal's store headers and libraries, and a source
+  # build finding it on PATH links them, so the row drops it. The Nix PROJ data ships no datum grids; each command streams them from
+  # cdn.proj.org into the user PROJ directory, and the wrapper scopes the switch to these commands, so a project's PROJ consumers keep their
+  # own data and network policy.
+  gdalCommands = pkgs.symlinkJoin {
+    inherit (pkgs.gdal) pname version;
+    paths = [pkgs.gdal];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      rm "$out/bin/gdal-config"
+      for command in "$out"/bin/*; do
+        wrapProgram "$command" --set-default PROJ_NETWORK ON
+      done
+    '';
+  };
 
   # qpdf ships no completion file and emits a `#compdef qpdf` drop-in on demand; one runCommand seats it on the profile's site-functions,
   # which zsh/completions.nix already has on fpath ahead of compinit.
@@ -43,15 +38,9 @@
     file # file
     fontconfig # fc-list, fc-match, fc-cache
     ghostscript
-    ktx-tools # KTX2 encode seam: the ktx/ktx2check/toktx CLIs a consumer spawns to encode textures
-    lcms2
-    libheif # heif-enc, heif-dec, heif-info
-    libjpeg_turbo
+    libjpeg_turbo # cjpeg, djpeg, jpegtran
     librsvg-current # rsvg-convert
-    libtiff
-    libwebp
     mupdf
-    openjpeg
     pango # pango-view
     qpdf
     qpdfCompletion
@@ -59,11 +48,10 @@
     vips # vips, vipsthumbnail
   ];
 
-  # gmsh is a project row (the PyPI wheel carries the CLI), never a machine package.
   aecTools = [
     pkgs.energyplus
     pkgs.openstudio
   ];
 in {
-  home.packages = geoTools ++ artifactTools ++ aecTools;
+  home.packages = [gdalCommands] ++ artifactTools ++ aecTools;
 }

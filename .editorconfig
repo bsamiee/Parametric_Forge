@@ -11,6 +11,3 @@ trim_trailing_whitespace = true
 
 [*.{sh,bash}]
 switch_case_indent = true
-
-[{Makefile,*.mk,*.go}]
-indent_style = tab

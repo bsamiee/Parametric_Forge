@@ -10,7 +10,7 @@
 _: {
   homebrew.casks = [
     # --- [SYSTEM_CORE_TOOLS]
-    "1password"
+    "1password@nightly"
     "cleanshot"
     # Nightly conflicts with the stable cask. A :latest row never reads outdated to activation, so a redeploy never swaps the running
     # terminal; HOMEBREW_UPGRADE_GREEDY_CASKS (homebrew/default.nix) lets the manual Homebrew pass refresh it.

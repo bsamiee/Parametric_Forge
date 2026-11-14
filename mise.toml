@@ -10,7 +10,7 @@ FASTMCP_SHOW_SERVER_BANNER = "false"
 
 # --- [TOOLS] ----------------------------------------------------------------------------
 [tools]
-python = "3.15.0"
+python = "3.15.2"
 node = "latest"
 pnpm = "latest"
 uv = "latest"

@@ -28,7 +28,7 @@ in {
     HOMEBREW_NO_EMOJI=1
     HOMEBREW_NO_ASK=1
     HOMEBREW_CLEANUP_MAX_AGE_DAYS=3
-    HOMEBREW_UPGRADE_GREEDY_CASKS=wezterm@nightly blender@daily font-sf-pro font-sf-arabic font-markazi-text font-reem-kufi font-qahiri
+    HOMEBREW_UPGRADE_GREEDY_CASKS=1password@nightly wezterm@nightly blender@daily font-sf-pro font-sf-arabic font-markazi-text font-reem-kufi font-qahiri
   '';
 
   homebrew = {

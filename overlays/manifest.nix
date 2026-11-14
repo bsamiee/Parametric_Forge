@@ -31,7 +31,7 @@ let
   };
   # EnergyPlus and OpenStudio asset names carry a build hash, so each pin's release tag is `v<version>/<asset>` and the bare version is the
   # tag's; the wrapper names below carry it.
-  v = builtins.mapAttrs (_: pin: builtins.head (builtins.match "v([0-9.]+)/.*" generatedPins.${pin}.version)) {
+  v = builtins.mapAttrs (_: pin: builtins.head (builtins.match "v([^/]+)/.*" generatedPins.${pin}.version)) {
     openstudio = "openstudio-aarch64-darwin";
     energyplus = "energyplus-aarch64-darwin";
   };
@@ -39,6 +39,30 @@ in {
   # A row named after a nixpkgs attr overrides it and re-keys every package above it off the binary cache; a `-current` row is a new attr
   # beside nixpkgs', which only its own consumers read.
   packages = {
+    nvfetcher = {
+      asset = pinAsset "nvfetcher";
+      inherit (generatedPins.nvfetcher) version;
+    };
+    rclone = {
+      sourcePackage = "rclone";
+      asset = pinAsset "rclone";
+      inherit (generatedPins.rclone) version;
+      vendorHash = "sha256-+08M76VSLYFZjblRMFXg925k0qOzW25By0YyeIOLNo4=";
+    };
+    ocrmypdf = {
+      pythonPackages =
+        builtins.mapAttrs (_: pin: {
+          asset = pinAsset pin;
+          inherit (generatedPins.${pin}) version;
+        }) {
+          ocrmypdf = "ocrmypdf";
+          pikepdf = "ocr-pikepdf";
+          pydantic = "ocr-pydantic";
+          pydantic-core = "ocr-pydantic-core";
+          pypdfium2 = "ocr-pypdfium2";
+        };
+      ctypesgenHash = "sha256-2+JEjAWGK1lCPeLX4BAIiIXlQo7+OgZ8oh6plwfrHuY=";
+    };
     # Vega's own headless renderer: V8 and the Vega/Vega-Lite JS are linked into one executable, so the chart-export role carries no Node
     # source build and no browser. nixpkgs ships python3Packages.vl-convert-python only, never the CLI, so the attr is new.
     vl-convert = {
@@ -145,6 +169,15 @@ in {
       description = "Executes commands in response to file modifications";
       homepage = "https://watchexec.github.io/";
       mainProgram = "watchexec";
+    };
+
+    zellij-unwrapped = {
+      version = generatedPins.zellij-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "zellij-aarch64-darwin";
+      license = "mit";
+      description = "Terminal workspace with batteries included";
+      homepage = "https://zellij.dev/";
+      mainProgram = "zellij";
     };
 
     # A new attr beside nixpkgs' duckdb, which is a library its dependents link and trails the upstream major: the shell-tools row reads the
