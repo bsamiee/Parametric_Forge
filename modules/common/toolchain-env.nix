@@ -77,6 +77,7 @@
           RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
           RCLONE_CONFIG_R2_REGION = "auto";
           TSCLI_OUTPUT = "json";
+          PYMOBILEDEVICE3_NATIVE = "1";
           __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = host.tailnet.node;
 
           # --- [SEARCH_DATA]
