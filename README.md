@@ -140,7 +140,7 @@ Everything lands declaratively with the first switch; only these steps are manua
     - Command: `SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock git clone git@github.com:bsamiee/Parametric_Forge.git ~/Developer/Parametric_Forge`
     - Verify: repo present at `~/Developer/Parametric_Forge`
 5. Grant the bootstrap terminal Full Disk Access (System Settings → Privacy & Security) — `universalaccess` defaults writes abort activation without it; move the grant to WezTerm after the first switch.
-    - Verify: from the granted terminal (WezTerm after the move), `head -c 15 ~/Library/Messages/chat.db` prints `SQLite format 3`; macOS 27 keeps the user TCC database where no process can read it, so a protected read is the proof
+    - Verify: from the granted terminal (WezTerm after the move), `head -c 15 ~/Library/Messages/chat.db` prints `SQLite format 3`; macOS 27 has no user TCC database at `~/Library/Application Support/com.apple.TCC`, even to a process holding Full Disk Access, so a protected read is the proof
 6. First switch — installs the passwordless sudo row every later `redeploy switch` rides. Installer-written real files at `/etc/pam.d/sudo_local` or `/etc/nix/nix.custom.conf` trip the /etc collision guard: move each aside (`.before-nix-darwin`) and rerun.
     - Command: `sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#macbook`
     - Verify: `redeploy build`
