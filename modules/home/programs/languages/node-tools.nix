@@ -7,7 +7,7 @@
   commands = lib.concatMapAttrs (package: row:
     lib.genAttrs row.commands (command:
       pkgs.writeShellScriptBin command ''
-        PATH=${pkgs.nodejs}/bin:$PATH exec npx --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
+        PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
       ''))
   toolRows;
   headlessShell = pkgs.playwright-driver.browsers.override {
