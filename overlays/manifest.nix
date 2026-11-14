@@ -98,6 +98,16 @@ in {
       homepage = "https://github.com/googlefonts/fontc";
       mainProgram = "fontc";
     };
+    fontforge-current.patches = [
+      {
+        rev = "fbc4114e1af657b0889f78d24f70c4d56937d189";
+        hash = "sha256-ALyD7faiy1RuOXyTTG+U+ab+9w4KA6bVZOGXrK6WqGA=";
+      }
+      {
+        rev = "763b8fc6d05815282b83f9668d23cd2fe58e310a";
+        hash = "sha256-q+HQoEldmaWfWwUbEkadQCHotGARuArIxfFfEH4k6Zc=";
+      }
+    ];
     fontheight-cli = {
       asset = pinAsset "fontheight-cli";
       inherit (generatedPins.fontheight-cli) version;

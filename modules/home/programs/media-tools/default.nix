@@ -41,7 +41,7 @@ in {
     # --- [FONTS]
     pkgs.diffenator3
     pkgs.fontc-current
-    pkgs.fontforge
+    pkgs.fontforge-current
     pkgs.fontheight-cli
     pkgs.fontspector
     pkgs.fonttools-current

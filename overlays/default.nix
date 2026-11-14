@@ -507,6 +507,16 @@ in
       };
     in
       python.pkgs.toPythonApplication python.pkgs.ocrmypdf;
+    fontforge-current = prev.fontforge.overrideAttrs (old: {
+      patches =
+        old.patches
+        ++ map (patch:
+          prev.fetchpatch {
+            url = "https://github.com/fontforge/fontforge/commit/${patch.rev}.patch";
+            inherit (patch) hash;
+          })
+        manifest.packages.fontforge-current.patches;
+    });
     fontheight-cli = let
       row = manifest.packages.fontheight-cli;
     in
