@@ -45,7 +45,10 @@ in {
           ServerAliveInterval = 15;
           ServerAliveCountMax = 4;
         };
-        "Match host ${lib.concatStringsSep "," host.tailnet.servers} sessiontype shell".ForwardAgent = true;
+        "Match host ${lib.concatStringsSep "," host.tailnet.servers} sessiontype shell" = {
+          ForwardAgent = true;
+          ControlPath = "${homeDir}/.ssh/sockets/%C-shell";
+        };
         "Match host ${lib.concatStringsSep "," host.tailnet.serverPublicNames}".RefuseConnection = "\"dial the tailnet name: ${toString host.tailnet.servers}\"";
         "Match sessiontype exec".RequestTTY = "no";
         ${host.name} = {

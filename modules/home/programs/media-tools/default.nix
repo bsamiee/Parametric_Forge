@@ -50,7 +50,10 @@ in {
     pkgs.imagemagickBig
     pkgs.img2pdf
     pkgs.jpegli
+    pkgs.jbig2enc
     pkgs.ocrmypdf
+    pkgs.pngquant
+    pkgs.unpaper
     pkgs.officecli
     pkgs.oxipng
     pkgs.pdfcpu

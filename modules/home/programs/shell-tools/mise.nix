@@ -9,7 +9,6 @@ in {
         experimental = true;
         trusted_config_paths = ["~/Developer"];
         shims.fallback_to_installed = true;
-        not_found_auto_install = false;
         ignored_config_paths = ["/private/tmp" "/private/var/folders"];
         disable_hints = ["*"];
         disable_update_warning = true;

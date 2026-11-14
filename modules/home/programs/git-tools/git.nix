@@ -86,10 +86,7 @@ in {
 
       submodule.fetchJobs = 0;
 
-      branch = {
-        sort = "-committerdate";
-        autosetupmerge = "always";
-      };
+      branch.sort = "-committerdate";
 
       rebase = {
         autoSquash = true;

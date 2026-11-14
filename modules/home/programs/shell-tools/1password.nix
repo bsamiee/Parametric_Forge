@@ -56,6 +56,7 @@
   stampName = "FORGE_OP_STAMP";
   cacheNames = tokenNames ++ [stampName];
   opCensus = "${config.xdg.stateHome}/op/secret-census";
+  keptNames = ["BACKUP_ACCESS_KEY_ID" "BACKUP_ENDPOINT" "BACKUP_KIND" "BACKUP_REGION" "BACKUP_SECRET_ACCESS_KEY" "RUSTFS_ACCESS_KEY" "RUSTFS_SECRET_KEY"];
   censusReaders =
     map (path: "${config.home.homeDirectory}/${path}") ["Developer/Rasm" ".claude/settings.json" ".claude.json" ".codex/config.toml" ".gemini/config/mcp_config.json" ".gemini/settings.json"]
     ++ [host.flakeRoot];
@@ -76,7 +77,8 @@
       listed() { paste -sd, - | sed 's/,/, /g'; }
 
       OP_SERVICE_ACCOUNT_TOKEN="$(<${lib.escapeShellArg opServiceAccount.file})"
-      export OP_SERVICE_ACCOUNT_TOKEN DOPPLER_CONFIG_DIR=${lib.escapeShellArg "${config.xdg.configHome}/doppler"}
+      export OP_SERVICE_ACCOUNT_TOKEN
+      doppler() { command doppler --config-dir ${lib.escapeShellArg "${config.xdg.configHome}/doppler"} "$@"; }
       [[ -s $cache ]] || echo '{}' >"$cache"
       op item list --vault Tokens --format json >"$work/list.json"
       jq -c --slurpfile cache "$cache" '[.[] | select(($cache[0][.id].version // -1) != .version)]' "$work/list.json" >"$work/stale.json"
@@ -121,7 +123,9 @@
         printf 'no-expiry-date: %s\n' "$(jq -r '.[] | select(.expires == null) | .title' "$work/vault.json" | sort | listed)"
         printf 'only-1password: %s\n' "$(comm -23 "$work/vault-names" "$work/doppler-names" | listed)"
         printf 'only-doppler: %s\n' "$(comm -13 "$work/vault-names" "$work/doppler-names" | listed)"
-        printf 'no-reader: %s\n' "$(comm -23 "$work/names" "$work/read-names" | listed)"
+        printf '%s\n' ${lib.escapeShellArgs keptNames} | sort >"$work/kept-names"
+        printf 'kept-by-decision: %s\n' "$(comm -12 "$work/names" "$work/kept-names" | listed)"
+        printf 'no-reader: %s\n' "$(comm -23 "$work/names" "$work/read-names" | comm -23 - "$work/kept-names" | listed)"
         printf 'value-differs: %s\n' "$(jq -r --rawfile doppler "$work/doppler.tsv" '
             (map({key: .title, value: .hash}) | from_entries) as $vault
             | $doppler | split("\n")[] | select(length > 0) | split("\t") | (.[0] | split(" ")) as [$at, $name]
@@ -228,7 +232,6 @@ in {
         # --- [STORE_SHAPE]
         secretCensus = lib.hm.dag.entryAfter ["injectSecretsFromVault"] ''
           if [[ ! -v DRY_RUN ]]; then
-            ${lib.getExe pkgs.doppler} flags disable env-warning >/dev/null 2>&1 || true
             ${lib.getExe secretCensus} || echo "secret-census: did not finish, ${opCensus} keeps its last findings" >&2
           fi
         '';

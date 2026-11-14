@@ -26,11 +26,12 @@
       drifted=0
       printf 'docs-proof %s\n' "$(date +%Y-%m-%dT%H:%M:%S%z)"
       for file in "$@"; do
+        rm -f "$work/proved"
         if ! mdsh --work_dir "$HOME" -i "$file" -o "$work/proved" 2>"$work/errors"; then
           printf 'unproved %s\n' "$file"
           sed -n '/^ERROR/,$p' "$work/errors"
           drifted=$((drifted + 1))
-        elif ! diff -u "$file" "$work/proved"; then
+        elif [[ -e $work/proved ]] && ! diff -u "$file" "$work/proved"; then
           drifted=$((drifted + 1))
           ((write == 0)) || cat "$work/proved" >"$file"
         fi

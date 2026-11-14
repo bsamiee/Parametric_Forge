@@ -42,6 +42,7 @@
     sftpRemotes = lib.concatMapAttrs (name: value: lib.genAttrs' host.tailnet.servers (remote: lib.nameValuePair "RCLONE_CONFIG_${lib.toUpper remote}_${name}" (value remote))) {
       TYPE = _: "sftp";
       SSH = remote: "ssh ${remote}";
+      KNOWN_HOSTS_FILE = _: "none";
     };
     envByClass = {
       all =
@@ -63,7 +64,6 @@
           GH_NO_EXTENSION_UPDATE_NOTIFIER = "1";
           HOSTINGER_FORMAT = "json";
           HOSTINGER_NO_INPUT = "true";
-          NTFY_CONFIG = "${xdgConfigHome}/ntfy/client.yml";
           OFFICECLI_SKIP_UPDATE = "1";
           POWERSHELL_UPDATECHECK = "Off";
           RCLONE_ASK_PASSWORD = "false";

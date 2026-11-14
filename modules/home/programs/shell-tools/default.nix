@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -81,6 +82,7 @@ in {
     # --- [DUCKDB]
     file.".duckdbrc".text = ''
       .startup_text none
+      SET temp_directory = '${config.xdg.cacheHome}/duckdb';
       ${lib.concatMapStrings (name: "LOAD ${name};\n") (lib.attrNames (lib.filterAttrs (_: row: row.load or false) duckdbExtensionRows))}'';
     activation.installDuckdbExtensions = lib.hm.dag.entryAfter ["writeBoundary"] ''
       run ${lib.getExe pkgs.duckdb-current} -no-init -c ${lib.escapeShellArg (duckdbStatements (name: "FORCE INSTALL '${duckdbExtensions}/${name}.duckdb_extension'"))}
