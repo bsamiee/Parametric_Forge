@@ -504,6 +504,21 @@
         },
         "version": "0.17.0"
     },
+    "microsoft-teams-module": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "microsoft-teams-module",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-aqQm03kT3ueGKK0238JuQBYXAgGEefEQ85ZxLolvKII=",
+            "type": "url",
+            "url": "https://www.powershellgallery.com/api/v2/package/MicrosoftTeams/8.0.0"
+        },
+        "version": "8.0.0"
+    },
     "mise-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -699,6 +714,21 @@
             "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
         },
         "version": "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
+    },
+    "pnp-powershell": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "pnp-powershell",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-jLnBPl275pVzwtZcvLBeaNUCCQK5FpLLc18S3XSiDOc=",
+            "type": "url",
+            "url": "https://www.powershellgallery.com/api/v2/package/PnP.PowerShell/3.5.0"
+        },
+        "version": "3.5.0"
     },
     "powershell-aarch64-darwin": {
         "cargoLock": null,

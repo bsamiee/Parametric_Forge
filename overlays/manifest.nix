@@ -298,9 +298,19 @@ in {
       sourcePackage = "powershell";
       asset = pinAsset "powershell-aarch64-darwin";
       inherit (generatedPins.powershell-aarch64-darwin) version;
-      modules.ExchangeOnlineManagement = {
-        asset = pinAsset "exchange-online-management";
-        inherit (generatedPins.exchange-online-management) version;
+      modules = {
+        ExchangeOnlineManagement = {
+          asset = pinAsset "exchange-online-management";
+          inherit (generatedPins.exchange-online-management) version;
+        };
+        MicrosoftTeams = {
+          asset = pinAsset "microsoft-teams-module";
+          inherit (generatedPins.microsoft-teams-module) version;
+        };
+        "PnP.PowerShell" = {
+          asset = pinAsset "pnp-powershell";
+          inherit (generatedPins.pnp-powershell) version;
+        };
       };
     };
 

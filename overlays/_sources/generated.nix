@@ -284,6 +284,14 @@
       sha256 = "sha256-IZYj4JnxV4Ov2tJMwd5reFpwjlQFT9NGg50u/zxFChE=";
     };
   };
+  microsoft-teams-module = {
+    pname = "microsoft-teams-module";
+    version = "8.0.0";
+    src = fetchurl {
+      url = "https://www.powershellgallery.com/api/v2/package/MicrosoftTeams/8.0.0";
+      sha256 = "sha256-aqQm03kT3ueGKK0238JuQBYXAgGEefEQ85ZxLolvKII=";
+    };
+  };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
     version = "2026.11.8";
@@ -395,6 +403,14 @@
     src = fetchTarball {
       url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz";
       sha256 = "sha256-sJ5taPGagEibJxkgrMZWD0k3RJl74V63hwUV9kc1orw=";
+    };
+  };
+  pnp-powershell = {
+    pname = "pnp-powershell";
+    version = "3.5.0";
+    src = fetchurl {
+      url = "https://www.powershellgallery.com/api/v2/package/PnP.PowerShell/3.5.0";
+      sha256 = "sha256-jLnBPl275pVzwtZcvLBeaNUCCQK5FpLLc18S3XSiDOc=";
     };
   };
   powershell-aarch64-darwin = {

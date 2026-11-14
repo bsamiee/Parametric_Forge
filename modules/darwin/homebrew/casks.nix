@@ -75,8 +75,15 @@ in {
     type = lib.types.listOf lib.types.str;
     readOnly = true;
     default = map (row: lib.last (lib.splitString "/" row.latest)) (lib.filter lib.isAttrs rows);
-    description = "Casks without a version, which `brew upgrade` moves only when named greedy.";
+    description = "Casks without a version: Brewfile rows mark them greedy, so `brew bundle --upgrade` replaces one when its download changes.";
   };
 
-  config.homebrew.casks = map (row: row.latest or row) rows;
+  config.homebrew.casks = map (row:
+    if lib.isAttrs row
+    then {
+      name = row.latest;
+      greedy = true;
+    }
+    else row)
+  rows;
 }

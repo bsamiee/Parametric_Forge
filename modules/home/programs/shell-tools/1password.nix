@@ -44,6 +44,9 @@
     GODADDY_API_TOKEN = null;
     PLAYWRIGHT_MCP_EXTENSION_TOKEN = null;
     CODERABBIT_API_KEY = null;
+    CLIMICROSOFT365_ENTRAAPPID = null;
+    CLIMICROSOFT365_TENANT = null;
+    MICROSOFT_AGENT_CERTIFICATE = null;
   };
   fileRows = lib.mapAttrs' (file: lib.nameValuePair "${config.xdg.configHome}/gam/${file}") {
     "oauth2.txt" = "GOOGLE_WORKSPACE_GAM_OAUTH2";

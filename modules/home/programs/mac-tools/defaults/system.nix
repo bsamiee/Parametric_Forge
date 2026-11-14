@@ -100,6 +100,16 @@
       SUAutomaticallyUpdate = true;
       SUSendProfileInfo = false;
     };
+    # --- [AGENT_HOSTS]
+    "com.github.wez.wezterm".NSAppSleepDisabled = true;
+    "com.openai.codex".NSAppSleepDisabled = true;
+    "com.anthropic.claudefordesktop".NSAppSleepDisabled = true;
+    "com.microsoft.VSCode".NSAppSleepDisabled = true;
+    # --- [BATTERY_SLEEP_FLOOR]
+    "com.apphousekitchen.aldente-pro" = {
+      completelyDisableSleep = 1;
+      manualSleepReenableBatteryPercent = 20;
+    };
     pbs.NSServicesStatus."com.mothersruin.SuspiciousPackageApp - Open With Suspicious Package - openSelectedPackage" = {
       enabled_context_menu = true;
       enabled_services_menu = true;
@@ -109,6 +119,9 @@
       };
     };
   };
+
+  # --- [AIRPLAY_RECEIVER]
+  targets.darwin.currentHostDefaults."com.apple.controlcenter".AirplayReceiverEnabled = false;
 
   # --- [AIRBUDDY]
   forge.groupDefaults."8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;

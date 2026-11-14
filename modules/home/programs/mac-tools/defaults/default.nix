@@ -7,6 +7,7 @@
   readers = {
     "com.apple.dock" = "/usr/bin/killall Dock";
     "com.apple.finder" = "/usr/bin/killall Finder";
+    "com.apple.controlcenter" = "/usr/bin/killall ControlCenter";
     pbs = "/System/Library/CoreServices/pbs -update";
   };
   rendered = domain: lib.removePrefix "${config.home.homeDirectory}/" "${config.xdg.stateHome}/forge/defaults/${domain}.plist";
@@ -27,7 +28,7 @@ in {
   config = {
     home.file = lib.mapAttrs' (domain: _:
       lib.nameValuePair (rendered domain) {
-        text = plist (lib.filterAttrs (_: v: v != null) config.targets.darwin.defaults.${domain});
+        text = plist (lib.filterAttrs (_: v: v != null) ((config.targets.darwin.defaults.${domain} or {}) // (config.targets.darwin.currentHostDefaults.${domain} or {})));
       })
     readers;
 
