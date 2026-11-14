@@ -37,7 +37,6 @@
     epic = app "com.epicgames.EpicGamesLauncher" "/Applications/Epic Games Launcher.app" [] [];
     creativeCloud = app "com.adobe.acc.AdobeCreativeCloud" "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" [] [];
     blender = app "org.blenderfoundation.blender" null [] [];
-    linearmouse = app "com.lujjjh.LinearMouse" "/Applications/LinearMouse.app" [] [];
     # --- [BUNDLED_CLI]
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
     sfSymbols = app "com.apple.SFSymbols" "/Applications/SF Symbols.app" [] [];

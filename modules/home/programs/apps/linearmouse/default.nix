@@ -1,8 +1,4 @@
-{
-  config,
-  launchdAgent,
-  ...
-}: let
+{config, ...}: let
   inherit (config.forge) apps;
   settings = {
     schemes = [
@@ -79,12 +75,4 @@
   };
 in {
   xdg.configFile."linearmouse/linearmouse.json".text = builtins.toJSON settings;
-
-  launchd.agents.linearmouse = launchdAgent {
-    name = "linearmouse";
-    argv = ["/usr/bin/open" "-gj" apps.linearmouse.path];
-    RunAtLoad = true;
-    ProcessType = "Interactive";
-    LimitLoadToSessionType = "Aqua";
-  };
 }
