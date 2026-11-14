@@ -4,8 +4,6 @@
     "files.exclude": {
         "**/.artifacts": true,
         "**/.cache": true,
-        "**/.venv": true,
-        "**/__pycache__": true,
         "**/node_modules": true,
         "result": true,
         "result-*": true
@@ -15,8 +13,6 @@
     "files.watcherExclude": {
         "**/.artifacts/**": true,
         "**/.cache/**": true,
-        "**/.venv/**": true,
-        "**/__pycache__/**": true,
         "**/node_modules/**": true,
         "**/result/**": true,
         "**/result-*/**": true
@@ -28,7 +24,6 @@
         ".gitignore": ".gitattributes",
         "flake.nix": ".mcp.json, flake.lock, mise.toml, nvfetcher.toml",
         "package.json": "biome.json, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json",
-        "pyproject.toml": "uv.lock",
         "README.md": "LICENSE"
     },
 
@@ -52,14 +47,6 @@
 
     // --- [LUA] -------------------------------------------------------------------------
     "[lua]": { "editor.defaultFormatter": "johnnymorganz.stylua" },
-
-    // --- [PYTHON] ----------------------------------------------------------------------
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.terminal.activateEnvironment": false,
-    "mypy-type-checker.importStrategy": "fromEnvironment",
-    "ty.experimental.useUv": "on",
-    "ty.diagnosticMode": "workspace",
-    "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" },
 
     // --- [TYPESCRIPT] ------------------------------------------------------------------
     "js/ts.experimental.useTsgo": true,

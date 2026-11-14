@@ -8,7 +8,6 @@
             "!pnpm-lock.yaml",
             "!overlays/_sources/generated.json",
             "!**/.artifacts",
-            "!**/.venv",
             "!**/.archive",
             "!**/_archive",
             "!**/scratch",

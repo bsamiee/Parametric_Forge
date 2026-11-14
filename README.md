@@ -114,11 +114,9 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 | [INDEX] | [SURFACE]       | [STANDARD]                                                                                                      |
 | :-----: | :-------------- | :-------------------------------------------------------------------------------------------------------------- |
 |  [01]   | Nix             | `alejandra`/`deadnix`/`statix`/`nixf-diagnose` gate via treefmt, `statix check` via `nix flake check`.          |
-|  [02]   | Shell source    | `.sh` extension; `set -euo pipefail`; ShellCheck passes.                                                        |
-|  [03]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
-|  [04]   | TypeScript      | Effect rails, tagged faults, redacted config, schema decodes at boundaries, pnpm-only.                          |
-|  [05]   | Python          | `uv`-managed, `ruff` + `ty`.                                                                                    |
-|  [06]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
+|  [02]   | Shell packaging | `writeShellApplication` for any body with a runtime closure; `writeShellScriptBin` for closure-free one-liners. |
+|  [03]   | TypeScript      | Effect rails, tagged faults, redacted config, schema decodes at boundaries, pnpm-only.                          |
+|  [04]   | launchd         | Declared agent rows under the label, log, and lifecycle law, each beside the surface it serves.                 |
 
 ## [12]-[GITHUB_AND_SERVICES]
 

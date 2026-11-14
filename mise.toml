@@ -1,7 +1,3 @@
-# --- [SETTINGS] -------------------------------------------------------------------------
-[settings]
-python.uv_venv_auto = "create|source"
-
 # --- [ENV] ------------------------------------------------------------------------------
 [env]
 DOPPLER_CONFIG             = "dev_machine"
@@ -10,9 +6,7 @@ FASTMCP_SHOW_SERVER_BANNER = "false"
 
 # --- [TOOLS] ----------------------------------------------------------------------------
 [tools]
-python = "3.15.2"
 node = "latest"
 pnpm = "latest"
-uv = "latest"
 pulumi = "latest"
 "pypi:mcp-nixos" = "latest"

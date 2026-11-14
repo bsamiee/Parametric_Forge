@@ -32,11 +32,6 @@ _: {
             column_width = style.width;
           };
         };
-        shfmt = {
-          enable = true;
-          indent_size = style.indent;
-          simplify = false;
-        };
         biome = {
           enable = true;
           package = pkgs.biome-current;
@@ -44,16 +39,7 @@ _: {
           settings = biomeLaw;
         };
       };
-      settings.formatter = {
-        biome.excludes = biomeExcludes;
-        yamlfmt = {
-          command = "${pkgs.yamlfmt}/bin/yamlfmt";
-          options = ["-conf" (toString (pkgs.writeText "yamlfmt-conf" style.yamlfmt))];
-          includes = ["*.yaml" "*.yml"];
-          excludes = ["pnpm-workspace.yaml" "pnpm-lock.yaml"];
-        };
-        shfmt.options = ["-ci"];
-      };
+      settings.formatter.biome.excludes = biomeExcludes;
     };
   };
 }
