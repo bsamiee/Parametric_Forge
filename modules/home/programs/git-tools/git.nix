@@ -15,7 +15,7 @@
   trustedPrincipals = [identity.email];
   idmlText = pkgs.writeShellApplication {
     name = "idml-text";
-    runtimeInputs = [pkgs.unzip pkgs.yq-go];
+    runtimeInputs = [pkgs.unzip pkgs.yq-go-current];
     text = ''
       unzip -Z1 "$1" | LC_ALL=C sort | while IFS= read -r member; do
         printf '== %s\n' "$member"

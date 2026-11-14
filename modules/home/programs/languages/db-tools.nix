@@ -23,7 +23,7 @@
 in {
   home.packages = [
     postgresClientTools
-    pkgs.sqruff
+    pkgs.sqruff-current
     pkgs.sqlite-extended
   ];
 

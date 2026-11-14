@@ -20,8 +20,8 @@
     postFixup = "";
   };
   resvg = pkgs.symlinkJoin {
-    inherit (pkgs.resvg) pname version meta;
-    paths = [pkgs.resvg];
+    inherit (pkgs.resvg-current) pname version meta;
+    paths = [pkgs.resvg-current];
     nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
       for command in resvg usvg; do
@@ -43,7 +43,7 @@ in {
     pkgs.exiftool
     pkgs.ffmpeg-full
     pkgs.ffmpeg-normalize
-    pkgs.fonttools
+    pkgs.fonttools-current
     pkgs.gifski
     pkgs.graphviz
     pkgs.harfbuzz-current.dev
@@ -51,10 +51,10 @@ in {
     pkgs.img2pdf
     pkgs.jpegli
     pkgs.jbig2enc
-    pkgs.ocrmypdf
+    pkgs.ocrmypdf-current
     pkgs.pngquant
     pkgs.unpaper
-    pkgs.officecli
+    pkgs.officecli-current
     pkgs.oxipng
     pkgs.pdfcpu
     pkgs.poppler-utils
@@ -80,13 +80,6 @@ in {
       defaults.pdf-engine = "typst";
     };
   };
-
-  # --- [ZOTERO_PLUGINS]
-  xdg.dataFile = lib.mapAttrs' (name: row:
-    lib.nameValuePair "zotero/plugins/${name}.xpi" {
-      source = pkgs.fetchurl {inherit (row) url hash;};
-    })
-  (import ../../../../overlays/manifest.nix).extensions.zotero-plugins.rows;
 
   # --- [EXIFTOOL]
   xdg.configFile."exiftool/.ExifTool_config".text = ''

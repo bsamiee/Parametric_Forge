@@ -12,7 +12,7 @@
         '';
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
-  geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
+  geist = selectPaths pkgs.geist-font-current (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
   statusAlphabet = [
     ["running" "ea71" "[>]"]
     ["idle" "eabc" "[ ]"]
@@ -33,7 +33,7 @@ in {
     package = selectPaths pkgs.nerd-fonts.symbols-only ["share/fonts/truetype/NerdFonts/Symbols/SymbolsNerdFontMono-Regular.ttf"];
     inherit statusAlphabet;
   };
-  "Scheherazade New".package = pkgs.scheherazade-new;
+  "Scheherazade New".package = pkgs.scheherazade-new-current;
   "Noto Naskh Arabic".package = notoArabic;
   "Noto Sans Arabic".package = notoArabic;
 }

@@ -15,7 +15,7 @@
     ghostscript
     libjpeg_turbo
     librsvg-current
-    mupdf
+    mupdf-current
     pango
     pdal
     qpdf

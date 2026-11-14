@@ -25,15 +25,9 @@ let
   };
 in {
   packages = {
-    nvfetcher = {
+    nvfetcher-current = {
       asset = pinAsset "nvfetcher";
       inherit (generatedPins.nvfetcher) version;
-    };
-    rclone = {
-      sourcePackage = "rclone";
-      asset = pinAsset "rclone";
-      inherit (generatedPins.rclone) version;
-      vendorHash = "sha256-+08M76VSLYFZjblRMFXg925k0qOzW25By0YyeIOLNo4=";
     };
     git-current = {
       sourcePackage = "git";
@@ -45,16 +39,12 @@ in {
       asset = pinAsset "rsync";
       inherit (generatedPins.rsync) version;
     };
-    resvg = {
+    resvg-current = {
       sourcePackage = "resvg";
       asset = pinAsset "resvg";
       inherit (generatedPins.resvg) version;
     };
-    cachix = {
-      asset = pinAsset "cachix";
-      inherit (generatedPins.cachix) version;
-    };
-    ocrmypdf = {
+    ocrmypdf-current = {
       pythonPackages =
         builtins.mapAttrs (_: pin: {
           asset = pinAsset pin;
@@ -76,8 +66,8 @@ in {
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
-    geist-font = designSource "geist-font";
-    scheherazade-new = designSource "scheherazade-new";
+    geist-font-current = designSource "geist-font";
+    scheherazade-new-current = designSource "scheherazade-new";
     harfbuzz-current =
       designSource "harfbuzz"
       // {
@@ -86,8 +76,8 @@ in {
           withGPU = true;
         };
       };
-    mupdf = designSource "mupdf";
-    fonttools = designSource "fonttools";
+    mupdf-current = designSource "mupdf";
+    fonttools-current = designSource "fonttools";
     librsvg-current =
       designSource "librsvg"
       // {
@@ -133,7 +123,7 @@ in {
       mainProgram = "verapdf";
     };
 
-    biome = {
+    biome-current = {
       version = generatedPins.biome-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "biome-aarch64-darwin";
       license = "mit";
@@ -142,7 +132,7 @@ in {
       mainProgram = "biome";
     };
 
-    mise = {
+    mise-current = {
       version = generatedPins.mise-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "mise-aarch64-darwin";
       license = "mit";
@@ -151,7 +141,7 @@ in {
       mainProgram = "mise";
     };
 
-    watchexec = {
+    watchexec-current = {
       version = generatedPins.watchexec-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "watchexec-aarch64-darwin";
       license = "asl20";
@@ -160,16 +150,7 @@ in {
       mainProgram = "watchexec";
     };
 
-    zellij-unwrapped = {
-      version = generatedPins.zellij-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "zellij-aarch64-darwin";
-      license = "mit";
-      description = "Terminal workspace with batteries included";
-      homepage = "https://zellij.dev/";
-      mainProgram = "zellij";
-    };
-
-    gogcli = {
+    gogcli-current = {
       version = generatedPins.gogcli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "gogcli-aarch64-darwin";
       license = "mit";
@@ -187,7 +168,7 @@ in {
       mainProgram = "hostinger";
     };
 
-    gh = {
+    gh-current = {
       version = generatedPins.gh-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "gh-aarch64-darwin";
       license = "mit";
@@ -196,7 +177,7 @@ in {
       mainProgram = "gh";
     };
 
-    nh = {
+    nh-current = {
       version = generatedPins.nh-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "nh-aarch64-darwin";
       license = "eupl12";
@@ -205,7 +186,7 @@ in {
       mainProgram = "nh";
     };
 
-    atuin = {
+    atuin-current = {
       version = generatedPins.atuin-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "atuin-aarch64-darwin";
       license = "mit";
@@ -232,16 +213,7 @@ in {
       mainProgram = "curl-impersonate";
     };
 
-    ntfy-sh = {
-      version = generatedPins.ntfy-darwin.version;
-      assets.aarch64-darwin = pinAsset "ntfy-darwin";
-      license = "asl20";
-      description = "Publish and subscribe client for ntfy topics";
-      homepage = "https://ntfy.sh/";
-      mainProgram = "ntfy";
-    };
-
-    tscli = {
+    tscli-current = {
       version = generatedPins.tscli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "tscli-aarch64-darwin";
       license = "mit";
@@ -250,7 +222,7 @@ in {
       mainProgram = "tscli";
     };
 
-    officecli = {
+    officecli-current = {
       version = generatedPins.officecli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "officecli-aarch64-darwin";
       license = "asl20";
@@ -259,7 +231,7 @@ in {
       mainProgram = "officecli";
     };
 
-    gam = {
+    gam-current = {
       version = v.gam;
       assets.aarch64-darwin = pinAsset "gam-aarch64-darwin";
       license = "asl20";
@@ -268,7 +240,7 @@ in {
       mainProgram = "gam";
     };
 
-    yq-go = {
+    yq-go-current = {
       version = generatedPins.yq-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "yq-aarch64-darwin";
       license = "mit";
@@ -277,7 +249,7 @@ in {
       mainProgram = "yq";
     };
 
-    sqruff = {
+    sqruff-current = {
       version = generatedPins.sqruff-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "sqruff-aarch64-darwin";
       license = "asl20";
@@ -286,7 +258,7 @@ in {
       mainProgram = "sqruff";
     };
 
-    oha = {
+    oha-current = {
       version = generatedPins.oha-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "oha-aarch64-darwin";
       license = "mit";
@@ -295,7 +267,7 @@ in {
       mainProgram = "oha";
     };
 
-    dua = {
+    dua-current = {
       version = generatedPins.dua-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "dua-aarch64-darwin";
       license = "mit";
@@ -304,16 +276,7 @@ in {
       mainProgram = "dua";
     };
 
-    cherri = {
-      version = generatedPins.cherri-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "cherri-aarch64-darwin";
-      license = "gpl2Only";
-      description = "Compiles Cherri source into signed-ready Apple Shortcuts";
-      homepage = "https://cherrilang.org/";
-      mainProgram = "cherri";
-    };
-
-    hurl = {
+    hurl-current = {
       version = generatedPins.hurl-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "hurl-aarch64-darwin";
       license = "asl20";
@@ -322,7 +285,7 @@ in {
       mainProgram = "hurl";
     };
 
-    powershell = {
+    powershell-current = {
       sourcePackage = "powershell";
       asset = pinAsset "powershell-aarch64-darwin";
       inherit (generatedPins.powershell-aarch64-darwin) version;
@@ -454,10 +417,6 @@ in {
         excel = pinAsset "duckdb-excel-aarch64-darwin";
       };
     };
-    zotero-plugins = {
-      source = "fetchurl";
-      rows.better-bibtex = pinAsset "zotero-better-bibtex";
-    };
     npm-tools = {
       source = "npx";
       rows = {
@@ -501,6 +460,12 @@ in {
           extras = ["browser" "cookies" "headless" "mcp"];
           commands = ["notebooklm" "notebooklm-mcp"];
           license = "MIT";
+        };
+        pymobiledevice3 = {
+          inherit (generatedPins.pymobiledevice3) version;
+          extras = [];
+          commands = ["pymobiledevice3"];
+          license = "GPL-3.0-or-later";
         };
         trafilatura = {
           inherit (generatedPins.trafilatura) version;

@@ -1,6 +1,5 @@
 {
   config,
-  launchdAgent,
   lib,
   pkgs,
   toolchainEnvFor,
@@ -416,16 +415,6 @@ in {
 
   home.packages = [resurrectPane];
 
-  # --- [WEB_CLIENT]
-  forge.tailnet.serve.${config.forge.zellij.web.tailnetPort} = "http://127.0.0.1:${config.forge.zellij.web.port}";
-  launchd.agents.zellij-web = launchdAgent {
-    name = "zellij-web";
-    argv = [(lib.getExe config.programs.zellij.package) "web" "--port" config.forge.zellij.web.port];
-    RunAtLoad = true;
-    KeepAlive = true;
-    ProcessType = "Interactive";
-  };
-
   # --- [CLAUDE_SESSION_IDENTITY]
   programs.zsh.initContent = ''
     claude() {
@@ -448,8 +437,6 @@ in {
         serialize_pane_viewport     true
         copy_command                "pbcopy"
         scroll_buffer_size          100000
-
-        web_sharing                 "on"
 
         // --- [PANE_ENVIRONMENT]
         env {

@@ -58,35 +58,6 @@
         },
         "version": "2.6.7"
     },
-    "cachix": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "cachix",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-Jby8fR/4VkuPd0bnq3DFK9D5IsfXnyCtW9fzH4F69xg=",
-            "type": "tarball",
-            "url": "https://github.com/cachix/cachix/archive/refs/tags/v1.14.0.tar.gz"
-        },
-        "version": "1.14.0"
-    },
-    "cherri-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "cherri-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-dF+Wxg0JQGclrV74RjB/3dOpZcPc9StwtVKJVQmjQOw=",
-            "type": "url",
-            "url": "https://github.com/electrikmilk/cherri/releases/download/v2.4.0/cherri_darwin-arm64.zip"
-        },
-        "version": "2.4.0"
-    },
     "cloudflare-cf": {
         "cargoLock": null,
         "date": null,
@@ -533,21 +504,6 @@
         },
         "version": "0.8.6"
     },
-    "ntfy-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "ntfy-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-sBkTXWhZDYDnm1DJ/rzAhA4uW8zHS8V+RLrBYjeVie0=",
-            "type": "url",
-            "url": "https://github.com/binwiederhier/ntfy/releases/download/v2.38.0/ntfy_2.38.0_darwin_all.tar.gz"
-        },
-        "version": "2.38.0"
-    },
     "nvfetcher": {
         "cargoLock": null,
         "date": null,
@@ -699,19 +655,20 @@
         },
         "version": "7.7.0"
     },
-    "rclone": {
+    "pymobiledevice3": {
         "cargoLock": null,
         "date": null,
         "extract": null,
-        "name": "rclone",
+        "name": "pymobiledevice3",
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-QHmiqASFr4ZJQE+QsSXEbIlgNfsw8iOVvBLdl57bbDQ=",
-            "type": "tarball",
-            "url": "https://github.com/rclone/rclone/archive/refs/tags/v1.76.0.tar.gz"
+            "name": null,
+            "sha256": "sha256-2OvQOVdRWZHCyrWsMKsp5U9q21bPmKBHuyi8SM0uMbQ=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.55.0.tar.gz"
         },
-        "version": "1.76.0"
+        "version": "11.55.0"
     },
     "resvg": {
         "cargoLock": {
@@ -863,35 +820,5 @@
             "url": "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64.tar.gz"
         },
         "version": "4.54.3"
-    },
-    "zellij-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "zellij-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-cWoceIe+g8yBOQABKhVqTY4O4UaKxWxYopnJ2ImM3JA=",
-            "type": "url",
-            "url": "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-aarch64-apple-darwin.tar.gz"
-        },
-        "version": "0.46.0"
-    },
-    "zotero-better-bibtex": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "zotero-better-bibtex",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-pfHSuvj/QshXYbej2PZ5n/wwbwgugCTVuDzoDoWSvQs=",
-            "type": "url",
-            "url": "https://github.com/retorquere/zotero-better-bibtex/releases/download/v9.0.77/zotero-better-bibtex-9.0.77.xpi"
-        },
-        "version": "9.0.77"
     }
 }

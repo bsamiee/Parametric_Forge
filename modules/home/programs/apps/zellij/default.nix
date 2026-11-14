@@ -44,16 +44,6 @@ in {
     ./layouts/default.nix
   ];
 
-  options.forge.zellij.web = lib.mkOption {
-    type = lib.types.attrsOf lib.types.str;
-    readOnly = true;
-    default = {
-      port = "8082";
-      tailnetPort = "8443";
-    };
-    description = "Ports of the Zellij web client: the loopback port its server listens on and the tailnet HTTPS port that serves it.";
-  };
-
   options.forge.zellij.attach = lib.mkOption {
     type = lib.types.package;
     readOnly = true;

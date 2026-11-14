@@ -1,8 +1,13 @@
-{config, ...}: let
+{
+  config,
+  pkgs,
+  ...
+}: let
   dotnetRoot = "${config.xdg.dataHome}/mise/dotnet-root";
 in {
   programs.mise = {
     enable = true;
+    package = pkgs.mise-current;
     enableZshIntegration = false;
     globalConfig = {
       settings = {

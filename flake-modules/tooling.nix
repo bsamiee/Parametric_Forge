@@ -39,6 +39,7 @@ _: {
         };
         biome = {
           enable = true;
+          package = pkgs.biome-current;
           formatCommand = "format";
           settings = biomeLaw;
         };

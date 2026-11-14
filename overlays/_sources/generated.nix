@@ -38,22 +38,6 @@
       sha256 = "sha256-XqLNfSErEBMu6WDOSA/DOqt2HQ1rZYoREsNsJlftCVc=";
     };
   };
-  cachix = {
-    pname = "cachix";
-    version = "1.14.0";
-    src = fetchTarball {
-      url = "https://github.com/cachix/cachix/archive/refs/tags/v1.14.0.tar.gz";
-      sha256 = "sha256-Jby8fR/4VkuPd0bnq3DFK9D5IsfXnyCtW9fzH4F69xg=";
-    };
-  };
-  cherri-aarch64-darwin = {
-    pname = "cherri-aarch64-darwin";
-    version = "2.4.0";
-    src = fetchurl {
-      url = "https://github.com/electrikmilk/cherri/releases/download/v2.4.0/cherri_darwin-arm64.zip";
-      sha256 = "sha256-dF+Wxg0JQGclrV74RjB/3dOpZcPc9StwtVKJVQmjQOw=";
-    };
-  };
   cloudflare-cf = {
     pname = "cloudflare-cf";
     version = "1.0.0-beta.32";
@@ -300,14 +284,6 @@
       sha256 = "sha256-UaUKi0y5QlFHk+zSdoIonbme/OR1jRyzC+Is9SouSSU=";
     };
   };
-  ntfy-darwin = {
-    pname = "ntfy-darwin";
-    version = "2.38.0";
-    src = fetchurl {
-      url = "https://github.com/binwiederhier/ntfy/releases/download/v2.38.0/ntfy_2.38.0_darwin_all.tar.gz";
-      sha256 = "sha256-sBkTXWhZDYDnm1DJ/rzAhA4uW8zHS8V+RLrBYjeVie0=";
-    };
-  };
   nvfetcher = {
     pname = "nvfetcher";
     version = "0.8.1.0";
@@ -397,12 +373,12 @@
       sha256 = "sha256-dkSfB48wGT/OnN9mELd/2hT0Ikyvy98jAkXsDaue8Q0=";
     };
   };
-  rclone = {
-    pname = "rclone";
-    version = "1.76.0";
-    src = fetchTarball {
-      url = "https://github.com/rclone/rclone/archive/refs/tags/v1.76.0.tar.gz";
-      sha256 = "sha256-QHmiqASFr4ZJQE+QsSXEbIlgNfsw8iOVvBLdl57bbDQ=";
+  pymobiledevice3 = {
+    pname = "pymobiledevice3";
+    version = "11.55.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.55.0.tar.gz";
+      sha256 = "sha256-2OvQOVdRWZHCyrWsMKsp5U9q21bPmKBHuyi8SM0uMbQ=";
     };
   };
   resvg = {
@@ -489,22 +465,6 @@
     src = fetchurl {
       url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64.tar.gz";
       sha256 = "sha256-FTBpkzygfWo6IhJkGkOT8ZiuoMe/x0GKSp0RRFeSzW0=";
-    };
-  };
-  zellij-aarch64-darwin = {
-    pname = "zellij-aarch64-darwin";
-    version = "0.46.0";
-    src = fetchurl {
-      url = "https://github.com/zellij-org/zellij/releases/download/v0.46.0/zellij-aarch64-apple-darwin.tar.gz";
-      sha256 = "sha256-cWoceIe+g8yBOQABKhVqTY4O4UaKxWxYopnJ2ImM3JA=";
-    };
-  };
-  zotero-better-bibtex = {
-    pname = "zotero-better-bibtex";
-    version = "9.0.77";
-    src = fetchurl {
-      url = "https://github.com/retorquere/zotero-better-bibtex/releases/download/v9.0.77/zotero-better-bibtex-9.0.77.xpi";
-      sha256 = "sha256-pfHSuvj/QshXYbej2PZ5n/wwbwgugCTVuDzoDoWSvQs=";
     };
   };
 }

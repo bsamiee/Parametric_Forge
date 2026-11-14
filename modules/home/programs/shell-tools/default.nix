@@ -23,8 +23,8 @@ in {
     ./fastfetch.nix
     ./fd.nix
     ./fzf.nix
+    ./loc.nix
     ./mise.nix
-    ./monitoring.nix
     ./procs.nix
     ./redeploy.nix
     ./serpl.nix
@@ -41,11 +41,10 @@ in {
     packages = [
       pkgs._7zz-rar
       pkgs.ast-grep
-      pkgs.cherri
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.difftastic
-      pkgs.dua
+      pkgs.dua-current
       pkgs.duckdb-current
       pkgs.dysk
       pkgs.flock
@@ -53,18 +52,18 @@ in {
       pkgs.gawk
       pkgs.hexyl
       pkgs.hostinger
-      pkgs.hurl
+      pkgs.hurl-current
       pkgs.hyperfine
       pkgs.jq
       pkgs.lychee
       pkgs.macmon
       pkgs.monolith
       pkgs.mq
-      pkgs.oha
+      pkgs.oha-current
       pkgs.netcoredbg
       pkgs.ouch
       pkgs.parallel
-      pkgs.powershell
+      pkgs.powershell-current
       pkgs.rclone
       pkgs.ripgrep
       pkgs.rsync-current
@@ -72,11 +71,11 @@ in {
       pkgs.sshs
       pkgs.tmux
       pkgs.tree
-      pkgs.tscli
+      pkgs.tscli-current
       pkgs.uv
-      pkgs.watchexec
+      pkgs.watchexec-current
       pkgs.witr
-      pkgs.yq-go
+      pkgs.yq-go-current
     ];
 
     # --- [DUCKDB]

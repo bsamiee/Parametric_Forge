@@ -1,7 +1,6 @@
 {
   config,
   host,
-  lib,
   pkgs,
   ...
 }: let
@@ -9,9 +8,7 @@
     name = "redeploy";
     runtimeInputs = [config.programs.nh.package];
     text = ''
-      job=(nh darwin "''${1:?usage: redeploy build|switch [nh args]}" ${host.flakeRoot} -H ${host.name} "''${@:2}")
-      [[ $1 != switch ]] || job=(${lib.getExe config.forge.monitoring.heartbeat} mac-jobs_redeploy "''${job[@]}")
-      exec "''${job[@]}"
+      exec nh darwin "''${1:?usage: redeploy build|switch [nh args]}" ${host.flakeRoot} -H ${host.name} "''${@:2}"
     '';
   };
 in {

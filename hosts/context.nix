@@ -22,8 +22,6 @@
       node = "${name}.${domain}";
       range = ["100.64.0.0/10" "fd7a:115c:a1e0::/48"];
       servers = ["derby" "lucky"];
-      serverPublicNames = ["*.parametric-arsenal.cloud" "45.90.223.193" "31.97.131.41"];
-      phone = "iphone";
     };
   };
 }

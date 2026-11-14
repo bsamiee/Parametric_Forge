@@ -54,12 +54,6 @@
     text = "exec ${guiSetenv}/bin/gui-setenv gui-env ${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) guiEnvRows))}";
   };
 in {
-  options.forge.protectedAgents = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
-    default = {};
-    description = "Jobs that read a folder macOS protects: `agent` is a `launchdAgent` row, `reads` the folder. nix-darwin declares them with `/bin/zsh` as the job program, the binary holding Full Disk Access: Home Manager starts its own agents through `/bin/sh`, and macOS attributes a job to its first program.";
-  };
-
   config = {
     # --- [LAUNCHD_AGENT_ROW]
     _module.args.launchdAgent = {

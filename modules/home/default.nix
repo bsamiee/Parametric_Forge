@@ -4,7 +4,6 @@ _: {
     ./fonts.nix
     ./theme.nix
     ./programs
-    ./scripts
     ./xdg.nix
   ];
 

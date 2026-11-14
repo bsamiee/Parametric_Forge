@@ -15,10 +15,9 @@
       # --- [GENERAL_DATA_TOOLS]
       qsv
 
-      # --- [CLOUD_IAC]
-      google-cloud-sdk
-      gogcli
-      gam
+      # --- [GOOGLE_WORKSPACE]
+      gogcli-current
+      gam-current
     ];
   };
 }

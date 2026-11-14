@@ -38,8 +38,6 @@
     TSCLI_OAUTH_CLIENT_SECRET = "TAILSCALE_OAUTH_CLIENT_SECRET/credential";
     RCLONE_CONFIG_B2_ACCOUNT = "BACKBLAZE_ACCESS_KEY_ID/token";
     RCLONE_CONFIG_B2_KEY = "BACKBLAZE_SECRET_ACCESS_KEY/token";
-    NTFY_TOKEN = "NTFY_OWNER_TOKEN/token";
-    GATUS_HEARTBEAT_TOKEN = null;
     CLOUDFLARE_API_TOKEN = null;
     CLOUDFLARE_ACCOUNT_ID = null;
     OPENTOPOGRAPHY_API_KEY = null;
@@ -54,87 +52,6 @@
   tokenNames = lib.attrNames tokenRows;
   stampName = "FORGE_OP_STAMP";
   cacheNames = tokenNames ++ [stampName];
-  opCensus = "${config.xdg.stateHome}/op/secret-census";
-  keptNames = ["BACKUP_ACCESS_KEY_ID" "BACKUP_ENDPOINT" "BACKUP_KIND" "BACKUP_REGION" "BACKUP_SECRET_ACCESS_KEY" "RUSTFS_ACCESS_KEY" "RUSTFS_SECRET_KEY"];
-  censusReaders =
-    map (path: "${config.home.homeDirectory}/${path}") ["Developer" ".claude/settings.json" ".claude.json" ".codex/config.toml" ".gemini/config/mcp_config.json" ".gemini/settings.json"];
-  secretCensus = pkgs.writeShellApplication {
-    name = "secret-census";
-    runtimeInputs = [pkgs._1password-cli-current pkgs.coreutils pkgs.doppler pkgs.gawk pkgs.gnused pkgs.jq pkgs.ripgrep];
-    text = ''
-      work="$(mktemp -d)"
-      trap 'rm -rf "$work"' EXIT
-      cache=${lib.escapeShellArg "${opCensus}.items.json"}
-      hashed() {
-        while IFS=$'\t' read -r key encoded; do
-          printf '%s\t%s\t%s\n' "$key" \
-            "$(base64 -d <<<"$encoded" | sha256sum | cut -c1-16)" \
-            "$(base64 -d <<<"$encoded" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' | sha256sum | cut -c1-16)"
-        done
-      }
-      listed() { paste -sd, - | sed 's/,/, /g'; }
-
-      OP_SERVICE_ACCOUNT_TOKEN="$(<${lib.escapeShellArg opServiceAccount.file})"
-      export OP_SERVICE_ACCOUNT_TOKEN
-      doppler() { command doppler --config-dir ${lib.escapeShellArg "${config.xdg.configHome}/doppler"} "$@"; }
-      [[ -s $cache ]] || echo '{}' >"$cache"
-      op item list --vault Tokens --format json >"$work/list.json"
-      jq -c --slurpfile cache "$cache" '[.[] | select(($cache[0][.id].version // -1) != .version)]' "$work/list.json" >"$work/stale.json"
-      if [[ $(jq length "$work/stale.json") != 0 ]]; then
-        jq -c . "$work/stale.json" | op item get - --format json >"$work/items.json"
-        jq -r '[.id, ((.fields | map(select(.label == "token" or .label == "credential" or .label == "password") | select((.value // "") != "")) | sort_by(.label != "token"))[0].value // "" | @base64)] | @tsv' "$work/items.json" | hashed >"$work/hashes.tsv"
-        jq -s --rawfile hashes "$work/hashes.tsv" --slurpfile cache "$cache" '
-          ($hashes | split("\n") | map(select(length > 0) | split("\t") | {key: .[0], value: {exact: .[1], trimmed: .[2]}}) | from_entries) as $hash
-          | $cache[0] + (map({key: .id, value: {
-              title, version,
-              token: any(.fields[]; .label == "token" and (.value // "") != ""),
-              expires: (first(.fields[] | select(.label == "expires" and .type == "DATE") | .value | tonumber? | select(. > 0)) // null),
-              hash: $hash[.id]
-            }}) | from_entries)
-        ' "$work/items.json" >"$work/cache.json"
-        install -m 600 "$work/cache.json" "$cache"
-      fi
-      jq --slurpfile list "$work/list.json" 'with_entries(select(.key as $id | any($list[0][]; .id == $id)))' "$cache" >"$work/vault.json"
-
-      doppler projects --json | jq -r '.[].id' | while read -r project; do
-        doppler configs --project "$project" --json | jq -r --arg project "$project" '.[] | [$project, .name] | @tsv'
-      done >"$work/configs.tsv"
-      while IFS=$'\t' read -r project config; do
-        doppler secrets download --project "$project" --config "$config" --no-file --format json \
-          | jq -r --arg at "$project/$config" 'del(.DOPPLER_PROJECT, .DOPPLER_ENVIRONMENT, .DOPPLER_CONFIG) | to_entries[] | ["\($at) \(.key)", (.value | @base64)] | @tsv' \
-          | hashed
-      done <"$work/configs.tsv" >"$work/doppler.tsv"
-
-      jq -r '.[].title' "$work/vault.json" | sort -u >"$work/vault-names"
-      cut -f1 "$work/doppler.tsv" | cut -d' ' -f2 | sort -u >"$work/doppler-names"
-      sort -u "$work/vault-names" "$work/doppler-names" >"$work/names"
-      readers=()
-      for path in ${lib.escapeShellArgs censusReaders}; do
-        [[ ! -e $path ]] || readers+=("$path")
-      done
-      rg --no-messages -w -o -N -I -F -f "$work/names" -g '!*.md' -g '!.artifacts' "''${readers[@]}" | sort -u >"$work/read-names" || true
-
-      {
-        printf 'checked: %s, %s items in Tokens, %s Doppler names\n' "$(date +%Y-%m-%dT%H:%M:%S%z)" "$(wc -l <"$work/vault-names")" "$(wc -l <"$work/doppler-names")"
-        printf 'no-token-field: %s\n' "$(jq -r '.[] | select(.token | not) | .title' "$work/vault.json" | sort | listed)"
-        printf 'expires-within-30-days: %s\n' "$(jq -r '.[] | select(.expires != null and .expires <= now + 2592000) | "\(.title) \(.expires | strftime("%Y-%m-%d"))"' "$work/vault.json" | sort | listed)"
-        printf 'no-expiry-date: %s\n' "$(jq -r '.[] | select(.expires == null) | .title' "$work/vault.json" | sort | listed)"
-        printf 'only-1password: %s\n' "$(comm -23 "$work/vault-names" "$work/doppler-names" | listed)"
-        printf 'only-doppler: %s\n' "$(comm -13 "$work/vault-names" "$work/doppler-names" | listed)"
-        printf '%s\n' ${lib.escapeShellArgs keptNames} | sort >"$work/kept-names"
-        printf 'kept-by-decision: %s\n' "$(comm -12 "$work/names" "$work/kept-names" | listed)"
-        printf 'no-reader: %s\n' "$(comm -23 "$work/names" "$work/read-names" | comm -23 - "$work/kept-names" | listed)"
-        printf 'value-differs: %s\n' "$(jq -r --rawfile doppler "$work/doppler.tsv" '
-            (map({key: .title, value: .hash}) | from_entries) as $vault
-            | $doppler | split("\n")[] | select(length > 0) | split("\t") | (.[0] | split(" ")) as [$at, $name]
-            | select($vault[$name] != null and $vault[$name].exact != .[1])
-            | "\($name) (\($at)\(if $vault[$name].trimmed == .[2] then ", trailing newline alone" else "" end))"
-          ' "$work/vault.json" | sort | listed)"
-      } >"$work/findings"
-      install -m 600 "$work/findings" ${lib.escapeShellArg opCensus}
-      awk -F': ' 'NR == 1 { print "secret-census: " $2; next } { printf "  %s %d\n", $1, ($2 == "") ? 0 : split($2, names, ", ") }' ${lib.escapeShellArg opCensus}
-    '';
-  };
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     text = ''
@@ -164,7 +81,7 @@ in {
 
   config = {
     home = {
-      packages = [pkgs._1password-cli-current pkgs.doppler secretCensus];
+      packages = [pkgs._1password-cli-current pkgs.doppler];
 
       activation = {
         # --- [TOKEN_CACHE]
@@ -226,13 +143,6 @@ in {
             fi
           '')
           fileRows));
-
-        # --- [STORE_SHAPE]
-        secretCensus = lib.hm.dag.entryAfter ["injectSecretsFromVault"] ''
-          if [[ ! -v DRY_RUN ]]; then
-            ${lib.getExe secretCensus} || echo "secret-census: did not finish, ${opCensus} keeps its last findings" >&2
-          fi
-        '';
 
         # --- [AUTO_LOGIN_PASSWORD]
         restoreAutoLoginPassword = lib.hm.dag.entryAfter ["injectSecretsFromVault"] ''

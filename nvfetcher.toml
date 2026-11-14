@@ -4,12 +4,6 @@ src.webpage = "https://hackage.haskell.org/package/nvfetcher/preferred.json"
 src.regex = '"([0-9]+(?:\.[0-9]+)+)"'
 fetch.url = "https://hackage.haskell.org/package/nvfetcher-$ver/nvfetcher-$ver.tar.gz"
 
-[rclone]
-src.github = "rclone/rclone"
-src.prerelease = true
-src.prefix = "v"
-fetch.tarball = "https://github.com/rclone/rclone/archive/refs/tags/v$ver.tar.gz"
-
 [ocrmypdf]
 src.pypi = "ocrmypdf"
 fetch.tarball = "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v$ver.tar.gz"
@@ -97,12 +91,6 @@ src.prerelease = true
 src.prefix = "v"
 fetch.tarball = "https://github.com/watchexec/watchexec/releases/download/v$ver/watchexec-$ver-aarch64-apple-darwin.tar.xz"
 
-[zellij-aarch64-darwin]
-src.github = "zellij-org/zellij"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/zellij-org/zellij/releases/download/v$ver/zellij-aarch64-apple-darwin.tar.gz"
-
 [duckdb-aarch64-darwin]
 src.github = "duckdb/duckdb"
 src.prerelease = true
@@ -185,15 +173,13 @@ src.prefix = "v"
 fetch.tarball = "https://github.com/linebender/resvg/archive/refs/tags/v$ver.tar.gz"
 cargo_lock = ["Cargo.lock"]
 
-[cachix]
-src.github_tag = "cachix/cachix"
-src.include_regex = "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
-src.prefix = "v"
-fetch.tarball = "https://github.com/cachix/cachix/archive/refs/tags/v$ver.tar.gz"
-
 [notebooklm-py]
 src.pypi = "notebooklm-py"
 fetch.url = "https://files.pythonhosted.org/packages/source/n/notebooklm-py/notebooklm_py-$ver.tar.gz"
+
+[pymobiledevice3]
+src.pypi = "pymobiledevice3"
+fetch.url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-$ver.tar.gz"
 
 [gh-aarch64-darwin]
 src.github = "cli/cli"
@@ -212,12 +198,6 @@ src.github = "lexiforest/curl-impersonate"
 src.prerelease = true
 src.prefix = "v"
 fetch.tarball = "https://github.com/lexiforest/curl-impersonate/releases/download/v$ver/curl-impersonate-v$ver.arm64-macos.tar.gz"
-
-[ntfy-darwin]
-src.github = "binwiederhier/ntfy"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/binwiederhier/ntfy/releases/download/v$ver/ntfy_$ver_darwin_all.tar.gz"
 
 [gam-aarch64-darwin]
 src.cmd = "gh api repos/GAM-team/GAM/releases --jq '[.[] | select(.draft or .prerelease | not)][0] | . as $r | [.assets[].name | select(test(\"-macos[0-9.]+-arm64\\\\.tar\\\\.xz$\"))] | max_by(capture(\"-macos(?<os>[0-9.]+)-\").os | split(\".\") | map(tonumber)) | $r.tag_name + \"/\" + .'"
@@ -302,12 +282,3 @@ fetch.url = "https://registry.npmjs.org/mcporter/-/mcporter-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/cf/-/cf-$ver.tgz"
 
-[zotero-better-bibtex]
-src.github = "retorquere/zotero-better-bibtex"
-src.prefix = "v"
-fetch.url = "https://github.com/retorquere/zotero-better-bibtex/releases/download/v$ver/zotero-better-bibtex-$ver.xpi"
-
-[cherri-aarch64-darwin]
-src.github = "electrikmilk/cherri"
-src.prefix = "v"
-fetch.url = "https://github.com/electrikmilk/cherri/releases/download/v$ver/cherri_darwin-arm64.zip"

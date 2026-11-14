@@ -120,7 +120,7 @@ final: prev: let
     );
 
   recipes = {
-    gogcli = cliRelease {
+    gogcli-current = cliRelease {
       binary = "gog";
       completion = "completion";
     };
@@ -130,17 +130,17 @@ final: prev: let
       man = "manpages/*.1";
       versionArg = "version";
     };
-    gh = cliRelease {
+    gh-current = cliRelease {
       binary = ''"$src/bin/gh"'';
       completion = "completion -s";
       man = ''"$src"/share/man/man1/*.1'';
       unpack = false;
     };
-    nh = cliRelease {
+    nh-current = cliRelease {
       binary = ''"$src"'';
       unpack = false;
     };
-    atuin = cliRelease {
+    atuin-current = cliRelease {
       binary = ''"$src/atuin"'';
       completion = "gen-completions --shell";
       unpack = false;
@@ -150,9 +150,8 @@ final: prev: let
       completion = "completion";
       unpack = false;
     };
-    ntfy-sh = cliRelease {binary = "*/ntfy";};
-    tscli = cliRelease {binary = "tscli";};
-    officecli = cliRelease {
+    tscli-current = cliRelease {binary = "tscli";};
+    officecli-current = cliRelease {
       binary = ''"$src"'';
       unpack = false;
     };
@@ -167,7 +166,7 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/curl-impersonate";
     };
-    gam = _: {
+    gam-current = _: {
       dontUnpack = true;
       dontFixup = true;
       installPhase = ''
@@ -178,31 +177,22 @@ final: prev: let
         runHook postInstall
       '';
     };
-    yq-go = cliRelease {
+    yq-go-current = cliRelease {
       binary = "yq_darwin_arm64";
       completion = "completion";
       man = "yq.1";
     };
-    sqruff = cliRelease {binary = "sqruff";};
-    oha = cliRelease {
+    sqruff-current = cliRelease {binary = "sqruff";};
+    oha-current = cliRelease {
       binary = ''"$src"'';
       completion = "--completions";
       unpack = false;
     };
-    dua = cliRelease {
+    dua-current = cliRelease {
       binary = "*/dua";
       completion = "completions";
     };
-    cherri = _: {
-      nativeBuildInputs = [prev.unzip];
-      sourceRoot = ".";
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 cherri "$out/bin/cherri"
-        runHook postInstall
-      '';
-    };
-    hurl = _: {
+    hurl-current = _: {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
         runHook preInstall
@@ -274,7 +264,7 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
     };
-    biome = _: {
+    biome-current = _: {
       dontUnpack = true;
       installPhase = ''
         runHook preInstall
@@ -282,7 +272,7 @@ final: prev: let
         runHook postInstall
       '';
     };
-    mise = _: {
+    mise-current = _: {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
         runHook preInstall
@@ -298,7 +288,7 @@ final: prev: let
         runHook postInstall
       '';
     };
-    watchexec = _: {
+    watchexec-current = _: {
       dontUnpack = true;
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
@@ -314,23 +304,6 @@ final: prev: let
       doInstallCheck = true;
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/watchexec";
-    };
-    zellij-unwrapped = _: {
-      sourceRoot = ".";
-      dontStrip = true;
-      nativeBuildInputs = [prev.installShellFiles];
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 zellij "$out/bin/zellij"
-        installShellCompletion --cmd zellij \
-          --bash <("$out/bin/zellij" setup --generate-completion bash) \
-          --fish <("$out/bin/zellij" setup --generate-completion fish) \
-          --zsh <("$out/bin/zellij" setup --generate-completion zsh)
-        runHook postInstall
-      '';
-      doInstallCheck = true;
-      nativeInstallCheckInputs = [prev.versionCheckHook];
-      versionCheckProgram = "${placeholder "out"}/bin/zellij";
     };
     duckdb-current = _: {
       sourceRoot = ".";
@@ -367,17 +340,11 @@ final: prev: let
   };
 
   sourceRecipes = {
-    rclone = old: {
-      src = (srcOf manifest.packages.rclone.asset) // {tag = "v${manifest.packages.rclone.version}";};
-      inherit (manifest.packages.rclone) vendorHash;
-      inherit (old) doCheck doInstallCheck;
-      versionCheckKeepEnvironment = "HOME";
-    };
-    mupdf = old: {
+    mupdf-current = old: {
       patches = [./mupdf-darwin-system-deps.patch (prev.path + "/pkgs/by-name/mu/mupdf/fix-cpp-build.patch")];
-      postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf.version] old.postInstall;
+      postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf-current.version] old.postInstall;
     };
-    fonttools = old: let
+    fonttools-current = old: let
       extras = prev.python3Packages.fonttools.optional-dependencies;
     in {
       propagatedBuildInputs = old.propagatedBuildInputs ++ extras.woff ++ extras.unicode;
@@ -385,16 +352,16 @@ final: prev: let
     librsvg-current = _: {
       cargoDeps = prev.rustPlatform.importCargoLock generatedSources.design-librsvg.cargoLock."Cargo.lock";
     };
-    resvg = _: {
+    resvg-current = _: {
       cargoDeps = prev.rustPlatform.importCargoLock generatedSources.resvg.cargoLock."Cargo.lock";
     };
-    powershell = old: {
+    powershell-current = old: {
       nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
       postInstall = lib.concatStrings (lib.mapAttrsToList (name: module: ''
           mkdir -p "$out/share/powershell/Modules/${name}"
           unzip -q ${srcOf module.asset} -d "$out/share/powershell/Modules/${name}/${module.version}" -x "_rels/*" "package/*" "[[]Content_Types].xml" "*.nuspec"
         '')
-        manifest.packages.powershell.modules);
+        manifest.packages.powershell-current.modules);
     };
     rsync-current = old: {
       buildInputs = old.buildInputs ++ [prev.libidn2];
@@ -420,33 +387,12 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
-    nvfetcher = prev.haskell.lib.overrideCabal prev.nvfetcher (_: {
-      inherit (manifest.packages.nvfetcher) version;
-      src = srcOf manifest.packages.nvfetcher.asset;
+    nvfetcher-current = prev.haskell.lib.overrideCabal prev.nvfetcher (_: {
+      inherit (manifest.packages.nvfetcher-current) version;
+      src = srcOf manifest.packages.nvfetcher-current.asset;
     });
-    cachix = let
-      row = manifest.packages.cachix;
-      release = name: extraDepends: hfinal: hprev:
-        prev.haskell.lib.compose.overrideCabal (old: {
-          inherit (row) version;
-          src = "${srcOf row.asset}/${name}";
-          revision = null;
-          editedCabalFile = null;
-          configureFlags = (old.configureFlags or []) ++ ["-f-ram"];
-          libraryHaskellDepends = old.libraryHaskellDepends ++ map (dep: hfinal.${dep}) extraDepends;
-          doCheck = false;
-        })
-        hprev.${name};
-    in
-      prev.cachix.override {
-        haskellPackages = prev.haskellPackages.extend (hfinal: hprev:
-          lib.mapAttrs (name: extraDepends: release name extraDepends hfinal hprev) {
-            cachix-api = ["openapi3"];
-            cachix = [];
-          });
-      };
-    ocrmypdf = let
-      row = manifest.packages.ocrmypdf;
+    ocrmypdf-current = let
+      row = manifest.packages.ocrmypdf-current;
       python = prev.python3.override {
         packageOverrides = pythonFinal: pythonPrev: let
           overrides = {
@@ -513,14 +459,6 @@ in
       };
     in
       python.pkgs.toPythonApplication python.pkgs.ocrmypdf;
-    qsv = prev.qsv.overrideAttrs (old: {
-      buildInputs =
-        old.buildInputs
-        ++ [
-          final.aws-lc
-          final.rust-jemalloc-sys
-        ];
-    });
     sqlite-extended = let
       row = manifest.packages.sqlite-extended;
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;

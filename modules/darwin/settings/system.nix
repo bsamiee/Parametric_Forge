@@ -70,23 +70,27 @@ in {
     etc."dotnet/install_location_arm64".text = "${userHome.programs.mise.globalConfig.settings.dotnet.dotnet_root}\n";
   };
 
-  # --- [PROTECTED_FILE_AGENTS]
-  launchd.user.agents =
-    lib.mapAttrs (_: row: {
-      serviceConfig =
-        row.agent.config
-        // {
-          ProgramArguments =
-            [
-              userHome.forge.shell
-              "-c"
-              ''/bin/wait4path ${builtins.storeDir} && /bin/ls "$0" >/dev/null 2>&1 || { print -r -- "$(/bin/date +%FT%T) ${userHome.forge.shell} cannot read $0 (no Full Disk Access), skipped"; exit 0 }; "$@"; exit''
-              row.reads
-            ]
-            ++ row.agent.config.ProgramArguments;
-        };
-    })
-    userHome.forge.protectedAgents;
+  # --- [MENU_RECORD]
+  launchd.user.agents.menu-record.serviceConfig = {
+    Label = "dev.bsamiee.menu-record";
+    ProgramArguments = [
+      userHome.forge.shell
+      "-c"
+      ''/bin/mkdir -p "$2" && /bin/cp -p "$1"/* "$2"/ && /usr/bin/find "$2" -type f -mtime +365 -delete''
+      "menu-record"
+      "${userHome.home.homeDirectory}/Library/Biome/streams/restricted/App.MenuItem/local"
+      "${userHome.xdg.stateHome}/menu-record"
+    ];
+    StartCalendarInterval = [
+      {
+        Hour = 13;
+        Minute = 10;
+      }
+    ];
+    ProcessType = "Background";
+    StandardOutPath = "${userHome.home.homeDirectory}/Library/Logs/menu-record.log";
+    StandardErrorPath = "${userHome.home.homeDirectory}/Library/Logs/menu-record.log";
+  };
 
   # --- [APPLICATION_FIREWALL]
   networking.applicationFirewall.enable = false;
