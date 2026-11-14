@@ -1,6 +1,6 @@
 # Parametric_Forge
 
-Parametric_Forge owns the machine: one flake owns the macOS workstation — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, SSH in both directions, tailnet serving, and cache policy. Consumer repos assume the machine's tools on `PATH` and never import Parametric_Forge; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — Forge aligns with consumers, never binds to them.
+Parametric_Forge owns the machine: one flake owns the macOS workstation — system defaults, GUI apps, CLI tools, fonts, overlays, secrets rails, SSH in both directions, tailnet serving, and cache policy. Consumer repos assume the machine's tools on `PATH` and never import Parametric_Forge; when shell, toolchain, credential, or wrapper behavior fails in a consumer, the fix lands here. Nothing in this repo couples to a specific project — it aligns with consumers, never binds to them.
 
 ## [01]-[LAYOUT]
 
