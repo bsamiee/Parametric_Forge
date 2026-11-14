@@ -42,8 +42,6 @@ in {
         "$character"
       ];
 
-      profiles.transient = "$time$character";
-
       # --- [SEMANTIC_ROLE_PALETTE]
       palettes.forge = {
         primary = roles.text.primary.hex;
@@ -161,7 +159,6 @@ in {
         not_capable_style = "danger";
         version_format = "v\${major}";
         format = "[$symbol]($style)[($version)](subtle) ";
-        detect_files = ["package.json" ".node-version" ".nvmrc"];
       };
 
       dotnet = {
@@ -191,13 +188,6 @@ in {
         pipestatus_format = "[\\[$symbol$pipestatus\\]]($style) ";
         pipestatus_segment_format = "[$status]($style)";
         format = "[\\[$symbol$status( $common_meaning)( $signal_name)\\]]($style) ";
-      };
-
-      time = {
-        disabled = false;
-        style = "muted";
-        time_format = projections.timeDisplay.sameDay;
-        format = "[$time]($style) ";
       };
     };
   };

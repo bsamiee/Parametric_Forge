@@ -42,7 +42,7 @@
             else
               pointer_color="${config.forge.theme.roles.state.danger.hex}"
             fi
-            local PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{%H:%M}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            local PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{${config.forge.theme.projections.timeDisplay.sameDay}}%f %B%F{''${pointer_color}}''${pointer}%f%b "
             zle .reset-prompt
           fi
         }

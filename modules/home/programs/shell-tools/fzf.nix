@@ -45,7 +45,7 @@ in {
       command = fdFiles;
       options = [
         "--border-label='[FILES]'"
-        "--preview='bat --color=always --style=numbers --line-range=:500 {} 2>/dev/null || eza --tree --level=2 --all --git-ignore --group-directories-first --color=always --icons=always {}'"
+        "--preview='bat --color=always --style=numbers --line-range=:500 {}'"
       ];
     };
 

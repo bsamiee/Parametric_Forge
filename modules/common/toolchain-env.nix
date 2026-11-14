@@ -65,6 +65,10 @@
           HOSTINGER_FORMAT = "json";
           HOSTINGER_NO_INPUT = "true";
           OFFICECLI_SKIP_UPDATE = "1";
+          OFFICECLI_NO_AUTO_INSTALL = "1";
+          CF_SEND_TELEMETRY = "false";
+          CTX7_TELEMETRY_DISABLED = "1";
+          NPM_CONFIG_CACHE = "${xdgCacheHome}/npm";
           POWERSHELL_UPDATECHECK = "Off";
           POWERSHELL_TELEMETRY_OPTOUT = "1";
           CLIMICROSOFT365_NOUPDATE = "1";

@@ -11,7 +11,7 @@
       theme = "forge-dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
-      tabs = "4";
+      italic-text = "always";
     };
 
     themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;

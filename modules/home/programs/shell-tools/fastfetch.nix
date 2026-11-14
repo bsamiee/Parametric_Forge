@@ -123,7 +123,6 @@ in {
         {
           type = "cpu";
           key = " ├   ";
-          temp = true;
           format = "{name} ({cores-physical}) @ {freq-max}";
         }
         {

@@ -62,12 +62,6 @@ in {
         memory = {
           ram_color = roles.state.success.hex;
           swap_color = roles.state.attention.hex;
-          gpu_colors = [
-            palette.pink.hex
-            palette.cyan.hex
-            palette.green.hex
-            palette.orange.hex
-          ];
         };
         network = {
           rx_color = roles.state.success.hex;

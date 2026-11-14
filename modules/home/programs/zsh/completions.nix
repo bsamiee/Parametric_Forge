@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (config.forge.theme) palette projections;
+  inherit (config.forge.theme) palette;
 
   completionPackages = [pkgs.zsh-completions pkgs.nix-zsh-completions];
   siteFunctions =
@@ -91,17 +91,8 @@
     }
     {
       context = ":fzf-tab:*";
-      key = "fzf-flags";
-      value = lib.concatStringsSep " " ([
-          "--height=80%"
-          "--layout=reverse"
-          "--border=sharp"
-          "--highlight-line"
-          "--prompt='❯ '"
-          "--pointer='❯'"
-          "--marker='✓'"
-        ]
-        ++ projections.fzfColorRows);
+      key = "use-fzf-default-opts";
+      value = "yes";
     }
     {
       context = ":fzf-tab:*";
