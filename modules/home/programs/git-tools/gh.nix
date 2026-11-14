@@ -1,8 +1,7 @@
-{pkgs, ...}: {
+_: {
   programs.gh = {
     enable = true;
     gitCredentialHelper.enable = true;
-    extensions = [pkgs.gh-actions-lock];
     settings = {
       git_protocol = "ssh";
       pager = "delta";

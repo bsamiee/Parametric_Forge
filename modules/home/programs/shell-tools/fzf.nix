@@ -1,11 +1,6 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{config, ...}: let
   inherit (config.forge.theme) projections;
-  fd = lib.getExe pkgs.fd;
+  fd = "fd";
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";
 in {
   programs.fzf = {

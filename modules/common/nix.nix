@@ -4,7 +4,6 @@
   lib,
   ...
 }: let
-  gib = n: n * 1024 * 1024 * 1024;
   inherit (config.cachix) cache;
 in {
   options.cachix.cache = lib.mkOption {
@@ -15,6 +14,8 @@ in {
   };
 
   config.determinateNix = {
+    shellCompletions.enable = false;
+
     # --- [REGISTRY]
     registry = lib.mapAttrs (_: flake: {inherit flake;}) (removeAttrs inputs ["self"]);
 
@@ -32,16 +33,12 @@ in {
 
       # --- [BUILD_BEHAVIOR]
       keep-going = true;
-      keep-outputs = true;
-      min-free-check-interval = 300;
       warn-dirty = false;
       show-trace = true;
       log-lines = 100;
       connect-timeout = 10;
 
       # --- [STORE_MANAGEMENT]
-      min-free = gib 5;
-      max-free = gib 50;
       auto-optimise-store = true;
 
       # --- [CACHE_CONFIGURATION]

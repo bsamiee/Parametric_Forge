@@ -1,6 +1,5 @@
 {
   config,
-  launchdAgent,
   lib,
   pkgs,
   ...
@@ -36,17 +35,15 @@ in {
   home.packages = [pkgs.rclone] ++ lib.mapAttrsToList secondCopy copies;
 
   # --- [SECOND_COPIES]
-  launchd.agents = lib.mapAttrs' (name: row:
-    lib.nameValuePair "second-copy-${name}" (launchdAgent {
-      name = "second-copy-${name}";
+  forge.protectedAgents = lib.mapAttrs' (name: row:
+    lib.nameValuePair "second-copy-${name}" {
       argv = [(lib.getExe (secondCopy name row))];
-      readsProtectedFiles = true;
       StartCalendarInterval = [
         {
           Hour = row.hour;
           Minute = 5;
         }
       ];
-    }))
+    })
   copies;
 }

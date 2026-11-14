@@ -45,11 +45,7 @@ final: prev: let
       }
       // recipe {inherit row a finalAttrs;});
 
-  optRuntime = {
-    row,
-    finalAttrs,
-    ...
-  }: let
+  optRuntime = {row, ...}: let
     root = "${placeholder "out"}/${row.runtime.root}";
     installWrapper = name: target: ''
       makeWrapper ${lib.escapeShellArg "${root}/${target}"} "$out/bin/${name}" ${
@@ -86,7 +82,7 @@ final: prev: let
       ${lib.concatStrings (lib.mapAttrsToList installWrapper row.runtime.wrappers)}
       runHook postInstall
     '';
-    passthru.runtimeEnv = runtimeEnvAt row "${finalAttrs.finalPackage}/${row.runtime.root}";
+    passthru.runtimeEnvAt = profile: runtimeEnvAt row "${profile}/${row.runtime.root}";
   };
 
   cliRelease = {
@@ -196,6 +192,15 @@ final: prev: let
     dua = cliRelease {
       binary = "*/dua";
       completion = "completions";
+    };
+    cherri = _: {
+      nativeBuildInputs = [prev.unzip];
+      sourceRoot = ".";
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 cherri "$out/bin/cherri"
+        runHook postInstall
+      '';
     };
     hurl = _: {
       nativeBuildInputs = [prev.installShellFiles];

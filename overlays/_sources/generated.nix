@@ -46,6 +46,14 @@
       sha256 = "sha256-Jby8fR/4VkuPd0bnq3DFK9D5IsfXnyCtW9fzH4F69xg=";
     };
   };
+  cherri-aarch64-darwin = {
+    pname = "cherri-aarch64-darwin";
+    version = "2.4.0";
+    src = fetchurl {
+      url = "https://github.com/electrikmilk/cherri/releases/download/v2.4.0/cherri_darwin-arm64.zip";
+      sha256 = "sha256-dF+Wxg0JQGclrV74RjB/3dOpZcPc9StwtVKJVQmjQOw=";
+    };
+  };
   cloudflare-cf = {
     pname = "cloudflare-cf";
     version = "1.0.0-beta.32";

@@ -21,6 +21,7 @@ in {
     enable = true;
     extraConfig = ''
       AllowUsers ${lib.concatMapStringsSep " " (range: "${primaryUser}@${range}") host.tailnet.range}
+      PerSourcePenaltyExemptList ${lib.concatStringsSep "," host.tailnet.range}
     '';
   };
   users.users.${primaryUser}.openssh.authorizedKeys.keys = [host.ssh.publicKey];

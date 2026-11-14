@@ -72,6 +72,21 @@
         },
         "version": "1.14.0"
     },
+    "cherri-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cherri-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-dF+Wxg0JQGclrV74RjB/3dOpZcPc9StwtVKJVQmjQOw=",
+            "type": "url",
+            "url": "https://github.com/electrikmilk/cherri/releases/download/v2.4.0/cherri_darwin-arm64.zip"
+        },
+        "version": "2.4.0"
+    },
     "cloudflare-cf": {
         "cargoLock": null,
         "date": null,

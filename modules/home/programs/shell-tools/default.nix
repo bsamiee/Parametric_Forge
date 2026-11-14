@@ -41,6 +41,7 @@ in {
     packages = [
       pkgs._7zz-rar
       pkgs.ast-grep
+      pkgs.cherri
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.difftastic
@@ -68,6 +69,7 @@ in {
       pkgs.rsync-current
       pkgs.sd
       pkgs.sshs
+      pkgs.tmux
       pkgs.tree
       pkgs.tscli
       pkgs.uv

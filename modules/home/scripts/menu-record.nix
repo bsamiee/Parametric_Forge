@@ -1,6 +1,5 @@
 {
   config,
-  launchdAgent,
   lib,
   pkgs,
   ...
@@ -19,23 +18,13 @@
       exec uvx --quiet --from ${lib.escapeShellArg reader} python -I ${./menu-record.py} "''${segments[@]}"
     '';
   };
-  menuRecordCopy = pkgs.writeShellApplication {
-    name = "menu-record-copy";
-    runtimeInputs = [pkgs.coreutils pkgs.findutils];
-    text = ''
-      mkdir -p ${lib.escapeShellArg store}
-      cp -p ${lib.escapeShellArg stream}/* ${lib.escapeShellArg store}/
-      find ${lib.escapeShellArg store} -type f -mtime +${toString retentionDays} -delete
-    '';
-  };
+  menuRecordCopy = ''/bin/mkdir -p "$1" && /bin/cp -p "$0"/* "$1"/ && /usr/bin/find "$1" -type f -mtime +${toString retentionDays} -delete'';
 in {
   home.packages = [menuRecord];
 
   # --- [DAILY_COPY]
-  launchd.agents.menu-record = launchdAgent {
-    name = "menu-record";
-    argv = [(lib.getExe menuRecordCopy)];
-    readsProtectedFiles = true;
+  forge.protectedAgents.menu-record = {
+    argv = ["/bin/sh" "-c" menuRecordCopy stream store];
     StartCalendarInterval = [
       {
         Hour = 13;

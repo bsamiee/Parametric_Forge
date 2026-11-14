@@ -306,3 +306,8 @@ fetch.url = "https://registry.npmjs.org/cf/-/cf-$ver.tgz"
 src.github = "retorquere/zotero-better-bibtex"
 src.prefix = "v"
 fetch.url = "https://github.com/retorquere/zotero-better-bibtex/releases/download/v$ver/zotero-better-bibtex-$ver.xpi"
+
+[cherri-aarch64-darwin]
+src.github = "electrikmilk/cherri"
+src.prefix = "v"
+fetch.url = "https://github.com/electrikmilk/cherri/releases/download/v$ver/cherri_darwin-arm64.zip"

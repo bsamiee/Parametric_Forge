@@ -30,7 +30,7 @@
     ];
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
-    runtimeEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
+    runtimeEnv = lib.concatMapAttrs (_: package: package.runtimeEnvAt "/etc/profiles/per-user/${username}") {inherit (pkgs) energyplus openstudio;};
     designFontDirectory = "${home}/Library/Application Support/design-tools/fonts";
     fontDirectories = [
       "/System/Library/Fonts"
@@ -38,24 +38,22 @@
       "${home}/Library/Fonts"
       designFontDirectory
     ];
-    editor = lib.getExe (pkgs.writeShellScriptBin "code-wait" ''exec code --wait "$@"'');
+    editor = pkgs.writeShellScriptBin "code-wait" ''exec code --wait "$@"'';
     sftpRemotes = lib.concatMapAttrs (name: value: lib.genAttrs' host.tailnet.servers (remote: lib.nameValuePair "RCLONE_CONFIG_${lib.toUpper remote}_${name}" (value remote))) {
       TYPE = _: "sftp";
       SSH = remote: "ssh ${remote}";
-      KNOWN_HOSTS_FILE = _: "none";
     };
     envByClass = {
       all =
         sftpRemotes
         // {
           # --- [EDITOR_PAGER]
-          EDITOR = editor;
-          VISUAL = editor;
+          EDITOR = editor.name;
+          VISUAL = editor.name;
           PAGER = "less";
           LESS = "-RFX";
 
           # --- [SERVICE_CLIENTS]
-          DO_NOT_TRACK = "1";
           GOG_KEYRING_BACKEND = "file";
           GAMCFGDIR = "${xdgConfigHome}/gam";
           CUA_DRIVER_RS_HOME = "${xdgDataHome}/cua-driver";
@@ -114,6 +112,7 @@
     };
   in {
     inherit
+      editor
       designFontDirectory
       fontDirectories
       rhinoBin

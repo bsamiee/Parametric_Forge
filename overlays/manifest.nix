@@ -304,6 +304,15 @@ in {
       mainProgram = "dua";
     };
 
+    cherri = {
+      version = generatedPins.cherri-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "cherri-aarch64-darwin";
+      license = "gpl2Only";
+      description = "Compiles Cherri source into signed-ready Apple Shortcuts";
+      homepage = "https://cherrilang.org/";
+      mainProgram = "cherri";
+    };
+
     hurl = {
       version = generatedPins.hurl-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "hurl-aarch64-darwin";

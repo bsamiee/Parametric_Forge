@@ -9,13 +9,14 @@ import ccl_segb
 
 def _varint(buffer: bytes, index: int) -> tuple[int, int]:
     value = shift = 0
-    while True:
+    while index < len(buffer):
         byte = buffer[index]
         index += 1
         value |= (byte & 0x7F) << shift
         shift += 7
         if byte < 0x80:
             return value, index
+    return 0, len(buffer) + 1
 
 
 def _strings(buffer: bytes) -> Iterator[tuple[int, str]]:
@@ -29,6 +30,8 @@ def _strings(buffer: bytes) -> Iterator[tuple[int, str]]:
                 index += 8
             case 2:
                 length, index = _varint(buffer, index)
+                if index + length > len(buffer):
+                    return
                 yield key >> 3, buffer[index : index + length].decode(errors="replace")
                 index += length
             case 5:
