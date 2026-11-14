@@ -17,6 +17,7 @@
     librsvg-current
     mupdf
     pango
+    pdal
     qpdf
     qpdfCompletion
     tesseract

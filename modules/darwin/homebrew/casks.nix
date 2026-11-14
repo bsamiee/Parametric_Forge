@@ -46,6 +46,7 @@
     "heptabase"
     "libreoffice"
     "scrivener"
+    "zotero"
 
     # --- [QUICKLOOK_PLUGINS]
     "syntax-highlight"

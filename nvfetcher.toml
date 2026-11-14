@@ -301,3 +301,8 @@ fetch.url = "https://registry.npmjs.org/mcporter/-/mcporter-$ver.tgz"
 [cloudflare-cf]
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/cf/-/cf-$ver.tgz"
+
+[zotero-better-bibtex]
+src.github = "retorquere/zotero-better-bibtex"
+src.prefix = "v"
+fetch.url = "https://github.com/retorquere/zotero-better-bibtex/releases/download/v$ver/zotero-better-bibtex-$ver.xpi"

@@ -16,10 +16,8 @@
   loginPassword = "op://Personal/MacBook login/password";
   tokenRows = {
     GREPTILE_API_KEY = null;
-    CODERABBIT_API_KEY = null;
     GOG_KEYRING_PASSWORD = null;
     EXA_API_KEY = null;
-    PERPLEXITY_API_KEY = null;
     TAVILY_API_KEY = null;
     CACHIX_AUTH_TOKEN = null;
     CONTEXT7_API_KEY = null;

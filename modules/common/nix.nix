@@ -11,7 +11,7 @@ in {
     type = lib.types.str;
     default = "bsamiee";
     readOnly = true;
-    description = "Name of the Cachix binary cache this machine substitutes from and pushes built store paths to.";
+    description = "Name of the public Cachix binary cache this machine substitutes from; a push is a deliberate `cachix push` of a package path.";
   };
 
   config.determinateNix = {

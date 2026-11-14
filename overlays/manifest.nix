@@ -445,6 +445,10 @@ in {
         excel = pinAsset "duckdb-excel-aarch64-darwin";
       };
     };
+    zotero-plugins = {
+      source = "fetchurl";
+      rows.better-bibtex = pinAsset "zotero-better-bibtex";
+    };
     npm-tools = {
       source = "npx";
       rows = {

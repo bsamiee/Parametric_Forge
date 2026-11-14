@@ -78,6 +78,13 @@ in {
     };
   };
 
+  # --- [ZOTERO_PLUGINS]
+  xdg.dataFile = lib.mapAttrs' (name: row:
+    lib.nameValuePair "zotero/plugins/${name}.xpi" {
+      source = pkgs.fetchurl {inherit (row) url hash;};
+    })
+  (import ../../../../overlays/manifest.nix).extensions.zotero-plugins.rows;
+
   # --- [EXIFTOOL]
   xdg.configFile."exiftool/.ExifTool_config".text = ''
     %Image::ExifTool::UserDefined::Shortcuts = (

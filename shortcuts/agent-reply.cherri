@@ -13,14 +13,18 @@ const token = getStoredValue("NTFY_BUTTON_TOKEN", true)
 @request = "{ShortcutInput}"
 @target = replaceText('\n[\s\S]*', "", @request, true, true)
 @reply = replaceText('^[^\n]*\n?', "", @request, true, true)
-if !@target {
+const named = count(@target, "Characters")
+if named == 0 {
     const sessions = downloadURL("{server}/sessions/json?poll=1&since=latest", {"Authorization": "Bearer {token}"})
-    const newest = getDictionary(sessions)
+    const renamed = setName(sessions, "sessions.txt")
+    const listing = getText(renamed)
+    const newest = getDictionary(listing)
     const panes = splitText("{newest['message']}", "\n")
     const pane = chooseFromList(panes, "Session")
     @target = replaceText(' [\s\S]*', "", "{pane}", true, true)
 }
-if !@reply {
+const written = count(@reply, "Characters")
+if written == 0 {
     @reply = prompt("Reply to {@target}")
 }
 const sent = fileRequest("{server}/reply", "POST", @reply, {"Authorization": "Bearer {token}", "X-Title": "{@target}"})

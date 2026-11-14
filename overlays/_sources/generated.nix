@@ -491,4 +491,12 @@
       sha256 = "sha256-cWoceIe+g8yBOQABKhVqTY4O4UaKxWxYopnJ2ImM3JA=";
     };
   };
+  zotero-better-bibtex = {
+    pname = "zotero-better-bibtex";
+    version = "9.0.77";
+    src = fetchurl {
+      url = "https://github.com/retorquere/zotero-better-bibtex/releases/download/v9.0.77/zotero-better-bibtex-9.0.77.xpi";
+      sha256 = "sha256-pfHSuvj/QshXYbej2PZ5n/wwbwgugCTVuDzoDoWSvQs=";
+    };
+  };
 }
