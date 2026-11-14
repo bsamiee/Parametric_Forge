@@ -64,7 +64,7 @@ const _opRead = (ref: string) =>
     );
 
 const _settings = Config.all({
-    passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password')),
+    passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/token')),
     tokenRef: Config.NonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token')),
     githubRef: Config.NonEmptyString('SERVICES_GITHUB_TOKEN_REF').pipe(Config.withDefault('op://Tokens/GITHUB_TOKEN/token')),
     stateDir: Config.NonEmptyString('SERVICES_STATE_DIR').pipe(
