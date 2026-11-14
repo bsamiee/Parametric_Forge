@@ -40,6 +40,8 @@
     linearmouse = app "com.lujjjh.LinearMouse" "/Applications/LinearMouse.app" [] [];
     # --- [BUNDLED_CLI]
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
+    sfSymbols = app "com.apple.SFSymbols" "/Applications/SF Symbols.app" [] [];
+    suspiciousPackage = app "com.mothersruin.SuspiciousPackageApp" "/Applications/Suspicious Package.app" [] [];
     # --- [HANDLERS]
     indesign = app "com.adobe.InDesign" "/Applications/Adobe InDesign ${adobeDatedLine}/Adobe InDesign ${adobeDatedLine}.app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [];
     illustrator = app "com.adobe.illustrator${lib.optionalString adobeBeta "Beta"}" "/Applications/Adobe Illustrator ${adobeLine}/Adobe Illustrator.app" ["ai" "ait" "aia" "svg" "svgz" "eps" "ase"] [];
@@ -158,6 +160,10 @@
     arc = app "company.thebrowser.Browser" "/Applications/Arc.app" [] ["http" "ftp"];
     superhuman = app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"];
   };
+  bundledCli = lib.mapAttrsToList (name: path: pkgs.writeShellScriptBin name ''exec ${lib.escapeShellArg path} "$@"'') {
+    sfsymbols = "${apps.sfSymbols.path}/Contents/Executables/sfsymbols";
+    spkg = "${apps.suspiciousPackage.path}/Contents/SharedSupport/spkg";
+  };
   rows = lib.attrValues apps;
   roster = pkgs.writeText "default-applications.json" (builtins.toJSON rows);
   command = pkgs.writeShellApplication {
@@ -192,7 +198,7 @@ in {
 
   config = {
     home = {
-      packages = [command];
+      packages = [command] ++ bundledCli;
       file.${rhinoBin}.source = config.lib.file.mkOutOfStoreSymlink "${apps.rhino.path}/Contents/Resources/bin";
       activation.setDefaultApplications = lib.hm.dag.entryAfter ["writeBoundary" "copyApps"] ''
         run ${command}/bin/default-applications

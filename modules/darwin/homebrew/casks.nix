@@ -64,7 +64,6 @@
     (latest "bsamiee/forge/blender@daily")
     "epic-games"
     "inkscape"
-    "xquartz"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "cuadriver"
