@@ -192,6 +192,26 @@ final: prev: let
       binary = "*/dua";
       completion = "completions";
     };
+    coderabbit = _: {
+      nativeBuildInputs = [prev.installShellFiles prev.unzip];
+      sourceRoot = ".";
+      dontStrip = true;
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 coderabbit "$out/bin/coderabbit"
+        ln -s coderabbit "$out/bin/cr"
+        export HOME="$TMPDIR"
+        installShellCompletion --cmd coderabbit \
+          --bash <("$out/bin/coderabbit" completion bash) \
+          --fish <("$out/bin/coderabbit" completion fish) \
+          --zsh <("$out/bin/coderabbit" completion zsh | sed "1s/\$/ cr/; s/^compdef _coderabbit coderabbit\$/compdef _coderabbit coderabbit cr/")
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/coderabbit";
+      versionCheckKeepEnvironment = "HOME";
+    };
     hurl-current = _: {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''

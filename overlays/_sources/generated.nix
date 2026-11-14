@@ -46,6 +46,14 @@
       sha256 = "sha256-/BqaiBv/pCN9Q/+DHnnJfBZFlXTHXs7gcycufP+2xck=";
     };
   };
+  coderabbit-aarch64-darwin = {
+    pname = "coderabbit-aarch64-darwin";
+    version = "0.9.5";
+    src = fetchurl {
+      url = "https://cli.coderabbit.ai/releases/0.9.5/coderabbit-darwin-arm64.zip";
+      sha256 = "sha256-iylrxAdfsqVzm36aX1TNKlQvobrhKV3jBYuD+NL/pzg=";
+    };
+  };
   ctx7 = {
     pname = "ctx7";
     version = "0.11.1";

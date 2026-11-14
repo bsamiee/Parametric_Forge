@@ -276,6 +276,15 @@ in {
       mainProgram = "dua";
     };
 
+    coderabbit = {
+      version = generatedPins.coderabbit-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "coderabbit-aarch64-darwin";
+      license = "unfree";
+      description = "CodeRabbit AI review of local Git changes, with NDJSON findings in agent mode";
+      homepage = "https://docs.coderabbit.ai/cli";
+      mainProgram = "coderabbit";
+    };
+
     hurl-current = {
       version = generatedPins.hurl-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "hurl-aarch64-darwin";

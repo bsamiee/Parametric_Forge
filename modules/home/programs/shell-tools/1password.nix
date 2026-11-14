@@ -43,6 +43,7 @@
     OPENTOPOGRAPHY_API_KEY = null;
     GODADDY_API_TOKEN = null;
     PLAYWRIGHT_MCP_EXTENSION_TOKEN = null;
+    CODERABBIT_API_KEY = null;
   };
   fileRows = lib.mapAttrs' (file: lib.nameValuePair "${config.xdg.configHome}/gam/${file}") {
     "oauth2.txt" = "GOOGLE_WORKSPACE_GAM_OAUTH2";

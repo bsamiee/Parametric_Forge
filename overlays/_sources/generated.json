@@ -73,6 +73,21 @@
         },
         "version": "1.0.0-beta.32"
     },
+    "coderabbit-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "coderabbit-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-iylrxAdfsqVzm36aX1TNKlQvobrhKV3jBYuD+NL/pzg=",
+            "type": "url",
+            "url": "https://cli.coderabbit.ai/releases/0.9.5/coderabbit-darwin-arm64.zip"
+        },
+        "version": "0.9.5"
+    },
     "ctx7": {
         "cargoLock": null,
         "date": null,

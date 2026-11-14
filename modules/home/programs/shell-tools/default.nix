@@ -36,6 +36,7 @@ in {
     packages = [
       pkgs._7zz-rar
       pkgs.ast-grep
+      pkgs.coderabbit
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.difftastic
