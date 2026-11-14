@@ -5,5 +5,6 @@ _: {
     ./python-tools.nix
     ./scientific-tools.nix
     ./node-tools.nix
+    ./nix-tools.nix
   ];
 }

@@ -5,7 +5,6 @@ _: {
     ./languages
     ./mac-tools
     ./media-tools
-    ./nix-tools
     ./shell-tools
     ./zsh
   ];

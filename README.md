@@ -35,7 +35,6 @@ Parametric_Forge/
 │       │   ├── mac-tools/         # Application rows and default handlers
 │       │   │   └── defaults/      # User-scope macOS defaults
 │       │   ├── media-tools/       # Media and document tools, speech model files
-│       │   ├── nix-tools/
 │       │   ├── shell-tools/       # CLI kernels, SSH, secrets, deploy rail
 │       │   └── zsh/
 ├── overlays/                      # Manifest-folded package admissions
