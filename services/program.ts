@@ -27,7 +27,7 @@ const _mergeHygiene = {
     hasProjects: false,
 } as const;
 
-const program = (f: program.Flags) => async (): Promise<Record<string, unknown>> => {
+const program = (f: program.Flags) => async (): Promise<void> => {
     const _registered = <Row extends { readonly origin: Topology.Origin }>(
         rows: ReadonlyArray<Row>,
         registration: program.Registration<Row>,
@@ -59,7 +59,7 @@ const program = (f: program.Flags) => async (): Promise<Record<string, unknown>>
             new doppler.Environment(`${row.project}-${row.slug}`, { project: row.project, slug: row.slug, name: row.name }, options),
     });
 
-    const config = _registered(Topology.configs, {
+    void _registered(Topology.configs, {
         key: (row) => `${row.project}.${row.name}`,
         importId: (row) => `${row.project}.${row.environment}.${row.name}`,
         anchor: (row) => environment.get(`${row.project}.${row.environment}`),
@@ -76,7 +76,7 @@ const program = (f: program.Flags) => async (): Promise<Record<string, unknown>>
     });
 
     const gh = new github.Provider('github', { owner: Topology.owner });
-    const repository = _registered(Topology.repositories, {
+    void _registered(Topology.repositories, {
         key: (row) => row.name,
         importId: (row) => row.name,
         make: (row, options) =>
@@ -86,44 +86,6 @@ const program = (f: program.Flags) => async (): Promise<Record<string, unknown>>
                 { provider: gh, protect: true, ...options },
             ),
     });
-
-    void _registered(Topology.rulesets, {
-        key: (row) => `${row.repository}-${row.name}`,
-        importId: (row) => `${row.repository}:${row.importId}`,
-        anchor: (row) => repository.get(row.repository),
-        make: (row, options) =>
-            new github.RepositoryRuleset(
-                `${row.repository}-${row.name}`,
-                {
-                    name: row.name,
-                    repository: row.repository,
-                    target: 'branch',
-                    enforcement: 'active',
-                    conditions: {
-                        refName: { includes: ['~DEFAULT_BRANCH'], excludes: [] },
-                    },
-                    rules: Topology.rulesetPolicy,
-                },
-                { provider: gh, ...options },
-            ),
-    });
-
-    return Object.fromEntries(
-        Topology.tokens.map((row) => {
-            const anchor = config.get(`${row.project}.${row.config}`) ?? environment.get(`${row.project}.${row.config}`);
-            const token = new doppler.ServiceToken(
-                `${row.project}-${row.config}-${row.name}`,
-                {
-                    project: row.project,
-                    config: row.config,
-                    name: row.name,
-                    access: row.access,
-                },
-                { ...(anchor ? { dependsOn: anchor } : {}) },
-            );
-            return [`token:${row.project}/${row.config}/${row.name}`, token.key] as const;
-        }),
-    );
 };
 
 // --- [EXPORTS] -------------------------------------------------------------------------

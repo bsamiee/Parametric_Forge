@@ -52,14 +52,6 @@ const _configs = [
     },
 ] as const satisfies ReadonlyArray<_BranchRow>;
 
-type _ConfigName<P extends _ProjectSlug = _ProjectSlug> = _EnvironmentSlug<P> | Extract<(typeof _configs)[number], { readonly project: P }>['name'];
-
-type _Coordinate = { [P in _ProjectSlug]: { readonly project: P; readonly config: _ConfigName<P> } }[_ProjectSlug];
-
-const _tokens: ReadonlyArray<
-    _Coordinate & ({ readonly name: `${string}-readonly`; readonly access: 'read' } | { readonly name: string; readonly access: 'read/write' })
-> = [];
-
 const _owner = 'bsamiee';
 
 const _repositories = [
@@ -74,52 +66,16 @@ const _repositories = [
     readonly origin: _Origin;
 }>;
 
-type _RepositoryName = (typeof _repositories)[number]['name'];
-
-type _RulesetRow = {
-    readonly repository: _RepositoryName;
-    readonly name: string;
-    readonly importId: number;
-    readonly origin: _Origin;
-};
-
-const _rulesets: ReadonlyArray<_RulesetRow> = [];
-
-const _rulesetPolicy = {
-    nonFastForward: true,
-    deletion: true,
-    requiredLinearHistory: true,
-    pullRequest: {
-        allowedMergeMethods: ['squash', 'rebase'] satisfies string[],
-        dismissStaleReviewsOnPush: false,
-        requireCodeOwnerReview: false,
-        requireLastPushApproval: false,
-        requiredApprovingReviewCount: 0,
-        requiredReviewThreadResolution: true,
-    },
-    copilotCodeReview: { reviewOnPush: true, reviewDraftPullRequests: false },
-} as const;
-
 const Topology = {
     projects: _projects,
     environments: _environments,
     configs: _configs,
-    tokens: _tokens,
     owner: _owner,
     repositories: _repositories,
-    rulesets: _rulesets,
-    rulesetPolicy: _rulesetPolicy,
 } as const;
 
 declare namespace Topology {
     type Origin = _Origin;
-    type Project = (typeof _projects)[number];
-    type Environment = (typeof _environments)[number];
-    type Config = (typeof _configs)[number];
-    type Token = (typeof _tokens)[number];
-    type Repository = (typeof _repositories)[number];
-    type Ruleset = _RulesetRow;
-    type RulesetPolicy = typeof _rulesetPolicy;
 }
 
 // --- [EXPORTS] -------------------------------------------------------------------------

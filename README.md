@@ -75,7 +75,7 @@ This machine runs Determinate Nix, not vanilla: Determinate owns the daemon and 
 - `modules/home/` carries user-scope state under Home Manager: XDG hygiene, session environments, program owners. System and home scopes never mix in one module.
 - `overlays/` is the admission gate for upstream packages nixpkgs lacks or pins wrongly: `manifest.nix` owns admission and recipes consume nvfetcher-generated versions and hashes. A row for a tool nixpkgs also ships is named `<attr>-current` and its consumers name it, so nixpkgs packages built against the nixpkgs attribute stay substitutable, and a row whose version nixpkgs reached goes. Admission requires a real consumer now — never anticipatory packaging.
 - `services/` owns live service state as code under the TypeScript quality bar. `package.json` and `pnpm-workspace.yaml` bind the repo-root workspace without per-folder manifests. Existing service domains extend their rows; new domains get one organized owner.
-- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<p>/<c>/<token>]` converges the topology; `outputs [<name>] [--reveal]` prints stack outputs. `services/driver.ts` brokers the Pulumi, Doppler, and GitHub credentials from 1Password, an ambient value of each taking its place. `mise.toml` `[env]` names Forge's Doppler project and config, so no directory scope exists.
+- `services/` workspace commands: `node services/driver.ts preview|up|refresh [--adopt] [--refresh] [--expect-no-changes]` converges the topology. `services/driver.ts` brokers the Pulumi, Doppler, and GitHub credentials from 1Password, an ambient value of each taking its place. `mise.toml` `[env]` names Forge's Doppler project and config, so no directory scope exists.
 
 ## [06]-[SECRETS]
 
@@ -120,7 +120,7 @@ Recurring machine work is launchd-owned under the `dev.bsamiee.<name>` label gra
 
 ## [12]-[GITHUB_AND_SERVICES]
 
-`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene, rulesets, feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node services/driver.ts preview --expect-no-changes` is the verification surface, exiting non-zero on drift — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own Forge's Doppler project, environment, and branch config. Every other repository declares its Doppler project, environments, and GitHub Actions syncs in its own IaC and names the project in its mise `[env]` `DOPPLER_PROJECT` row.
+`services/topology.ts` holds Forge's own GitHub repository settings (merge hygiene and feature booleans) as `@pulumi/github` rows, and each other repository owns its own; `node services/driver.ts preview --expect-no-changes` is the verification surface, exiting non-zero on drift — repo state is never enumerated in prose or edited in the GitHub UI. Rows in the same file own Forge's Doppler project, environment, and branch config. Every other repository declares its Doppler project, environments, and GitHub Actions syncs in its own IaC and names the project in its mise `[env]` `DOPPLER_PROJECT` row.
 
 ## [13]-[FRESH_MACHINE_BOOTSTRAP]
 

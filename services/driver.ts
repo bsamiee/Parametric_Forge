@@ -2,7 +2,7 @@ import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { NodeRuntime, NodeServices } from '@effect/platform-node';
 import { LocalWorkspace, type Stack } from '@pulumi/pulumi/automation/index.js';
-import { Array as Arr, Config, Console, Data, Effect, FileSystem, Option, Record, Redacted, Result, Schema, Stream, Struct } from 'effect';
+import { Array as Arr, Config, Console, Data, Effect, FileSystem, Option, Redacted, Schema, Stream, Struct } from 'effect';
 import { ChildProcess } from 'effect/process';
 import { program } from './program.ts';
 import { Topology } from './topology.ts';
@@ -16,10 +16,8 @@ const STACK = Topology.owner;
 
 type Flags = {
     readonly adopt: boolean;
-    readonly reveal: boolean;
     readonly refresh: boolean;
     readonly expectNoChanges: boolean;
-    readonly targets: ReadonlyArray<string>;
 };
 
 // --- [ERRORS] --------------------------------------------------------------------------
@@ -52,20 +50,18 @@ class UsageFault extends Data.TaggedError('UsageFault')<{
 
 // --- [OPERATIONS] ----------------------------------------------------------------------
 
-const _run = (command: string, args: ReadonlyArray<string>, label: string, env?: Record<string, string>) =>
+const _opRead = (ref: string) =>
     Effect.gen(function* () {
-        const spawned = yield* ChildProcess.make(command, args, env === undefined ? {} : { env, extendEnv: true });
+        const spawned = yield* ChildProcess.make('op', ['read', ref], {});
         const [code, out, err] = yield* Effect.all(
             [spawned.exitCode, Stream.mkString(Stream.decodeText(spawned.stdout)), Stream.mkString(Stream.decodeText(spawned.stderr))],
             { concurrency: 3 },
         );
-        return code === 0 ? out : yield* new ShellFault({ command: label, detail: err.trim() || `exit ${code}` });
+        return code === 0 ? Redacted.make(out.trim()) : yield* new ShellFault({ command: `op read ${ref}`, detail: err.trim() || `exit ${code}` });
     }).pipe(
         Effect.scoped,
-        Effect.catchTag('PlatformError', (fault) => Effect.fail(new ShellFault({ command: label, detail: fault.message }))),
+        Effect.catchTag('PlatformError', (fault) => Effect.fail(new ShellFault({ command: `op read ${ref}`, detail: fault.message }))),
     );
-
-const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(command, args, `${command} ${args.join(' ')}`);
 
 const _settings = Config.all({
     passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password')),
@@ -84,7 +80,7 @@ const _settings = Config.all({
 const _brokered = (ambient: Option.Option<Redacted.Redacted<string>>, ref: string) =>
     Option.match(ambient, {
         onSome: (value) => Effect.succeed(value),
-        onNone: () => Effect.map(_shell('op', 'read', ref), (raw) => Redacted.make(raw.trim())),
+        onNone: () => _opRead(ref),
     });
 
 const _openStack = (flags: Flags) =>
@@ -146,28 +142,15 @@ const _echo = (chunk: string): void => {
 
 // --- [ENTRY] ---------------------------------------------------------------------------
 
-const USAGE =
-    'services driver\n' +
-    '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
-    '  outputs [name] [--reveal]';
+const USAGE = 'services driver\n  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes]';
 
-const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
-
-const _known = (arg: string): boolean =>
-    Arr.some(Struct.keys(_FLAGS), (key) => (_FLAGS[key].endsWith('=') ? arg.startsWith(_FLAGS[key]) : arg === _FLAGS[key]));
+const _FLAGS = { adopt: '--adopt', refresh: '--refresh', expectNoChanges: '--expect-no-changes' } as const;
 
 const _flags = (argv: ReadonlyArray<string>): Flags => ({
     adopt: Arr.contains(argv, _FLAGS.adopt),
-    reveal: Arr.contains(argv, _FLAGS.reveal),
     refresh: Arr.contains(argv, _FLAGS.refresh),
     expectNoChanges: Arr.contains(argv, _FLAGS.expectNoChanges),
-    targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Result.succeed(arg.slice(_FLAGS.target.length)) : Result.failVoid)),
 });
-
-const _tokenUrn = (coordinate: string): string =>
-    `urn:pulumi:${STACK}::${PROJECT}::doppler:index/serviceToken:ServiceToken::${coordinate.split('/').join('-')}`;
-
-const _targeted = (flags: Flags): { readonly target?: string[] } => (flags.targets.length === 0 ? {} : { target: flags.targets.map(_tokenUrn) });
 
 const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChanges?: true } => ({
     ...(flags.refresh ? { refresh: true as const } : {}),
@@ -175,66 +158,31 @@ const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChang
 });
 
 const _verbs = {
-    preview: (flags: Flags, _positional: ReadonlyArray<string>) =>
+    preview: (flags: Flags) =>
         Effect.flatMap(
-            _stackAct('preview', flags, (stack) => stack.preview({ diff: true, onOutput: _echo, ..._targeted(flags), ..._modes(flags) })),
+            _stackAct('preview', flags, (stack) => stack.preview({ diff: true, onOutput: _echo, ..._modes(flags) })),
             (result) => Console.log(JSON.stringify(result.changeSummary ?? {})),
         ),
-    up: (flags: Flags, _positional: ReadonlyArray<string>) =>
+    up: (flags: Flags) =>
         Effect.flatMap(
-            _stackAct('up', flags, (stack) => stack.up({ onOutput: _echo, ..._targeted(flags), ..._modes(flags) })),
+            _stackAct('up', flags, (stack) => stack.up({ onOutput: _echo, ..._modes(flags) })),
             (result) => Console.log(JSON.stringify(result.summary.resourceChanges ?? {})),
         ),
-    refresh: (flags: Flags, _positional: ReadonlyArray<string>) =>
-        Effect.asVoid(
-            _stackAct('refresh', flags, (stack) => stack.refresh({ onOutput: _echo, ..._targeted(flags), ..._modes({ ...flags, refresh: false }) })),
-        ),
-    outputs: (flags: Flags, positional: ReadonlyArray<string>) =>
-        Effect.flatMap(
-            _stackAct('outputs', flags, (stack) => stack.outputs()),
-            (outputs) =>
-                Option.match(Option.fromNullishOr(positional[1]), {
-                    onNone: () =>
-                        Effect.forEach(
-                            Record.toEntries(outputs),
-                            ([name, value]) => Console.log(`${name}\t${value.secret ? '<secret>' : String(value.value)}`),
-                            { concurrency: 1, discard: true },
-                        ),
-                    onSome: (selected) =>
-                        Option.match(
-                            Option.orElse(Option.fromNullishOr(outputs[`token:${selected}`]), () => Option.fromNullishOr(outputs[selected])),
-                            {
-                                onNone: () => Effect.fail(new UsageFault({ wanted: `no output named ${selected}` })),
-                                onSome: (matched) =>
-                                    matched.secret && !flags.reveal
-                                        ? Console.log('secret output; pass --reveal for one-time handoff')
-                                        : Console.log(String(matched.value)),
-                            },
-                        ),
-                }),
-        ),
+    refresh: (flags: Flags) =>
+        Effect.asVoid(_stackAct('refresh', flags, (stack) => stack.refresh({ onOutput: _echo, ..._modes({ ...flags, refresh: false }) }))),
 } as const;
 
 const _verb = Schema.decodeUnknownOption(Schema.Literals(Struct.keys(_verbs)));
 
 const _program = Effect.gen(function* () {
     const argv = process.argv.slice(2);
-    const positional = Arr.filter(argv, (arg) => !arg.startsWith('--'));
-    const flags = _flags(argv);
-    const stray = Arr.findFirst(argv, (arg) => arg.startsWith('--') && !_known(arg));
-    const malformed = Arr.findFirst(flags.targets, (coordinate) => coordinate.split('/').length !== 3);
+    const stray = Arr.findFirst(argv, (arg) => arg.startsWith('--') && !Arr.contains(Object.values(_FLAGS), arg));
     return yield* Option.isSome(stray)
         ? Effect.fail(new UsageFault({ wanted: `unknown flag ${stray.value}\n${USAGE}` }))
-        : Option.isSome(malformed)
-          ? Effect.fail(
-                new UsageFault({
-                    wanted: `--target wants <project>/<config>/<token>, got ${malformed.value}`,
-                }),
-            )
-          : Option.match(_verb(positional[0]), {
-                onNone: () => Effect.fail(new UsageFault({ wanted: USAGE })),
-                onSome: (verb) => _verbs[verb](flags, positional),
-            });
+        : Option.match(_verb(Arr.findFirst(argv, (arg) => !arg.startsWith('--')).pipe(Option.getOrUndefined)), {
+              onNone: () => Effect.fail(new UsageFault({ wanted: USAGE })),
+              onSome: (verb) => _verbs[verb](_flags(argv)),
+          });
 });
 
 NodeRuntime.runMain(Effect.provide(_program, NodeServices.layer));
