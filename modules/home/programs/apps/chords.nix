@@ -343,30 +343,25 @@
     (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
     + " ";
 in {
-  options.forge.chords = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = {
-      inherit layers modes;
-      wezterm.rows = weztermRows;
-      karabiner.rules =
-        [capsRule]
-        ++ map (l:
-          mkKarabinerRule {
-            description = "${l.physical} → ${l.name} (${l.glyphs}) leader";
-            inherit (l) from to;
-          }) (layersByRank (a: b: a < b));
-      zellij = {
-        inherit headerComment normalBindsKdl entryBindsKdl hintsRight;
-        hyperBindsKdl = bindsKdl.hyper;
-        superBindsKdl = bindsKdl.super;
-        prefix = lib.mapAttrs (_: l: l.zellij) layers;
-        ribbon = {
-          hyperGroup = ribbonHyperGroup;
-          superGroup = ribbonSuperGroup;
-        };
+  _module.args.chords = {
+    inherit layers modes;
+    wezterm.rows = weztermRows;
+    karabiner.rules =
+      [capsRule]
+      ++ map (l:
+        mkKarabinerRule {
+          description = "${l.physical} → ${l.name} (${l.glyphs}) leader";
+          inherit (l) from to;
+        }) (layersByRank (a: b: a < b));
+    zellij = {
+      inherit headerComment normalBindsKdl entryBindsKdl hintsRight;
+      hyperBindsKdl = bindsKdl.hyper;
+      superBindsKdl = bindsKdl.super;
+      prefix = lib.mapAttrs (_: l: l.zellij) layers;
+      ribbon = {
+        hyperGroup = ribbonHyperGroup;
+        superGroup = ribbonSuperGroup;
       };
     };
-    description = "Chord-vocabulary owner: leader layers, zellij binds, which-key, ribbon, and register rows.";
   };
 }

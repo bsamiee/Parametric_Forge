@@ -1,9 +1,9 @@
 {
-  config,
   lib,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) roles palette icons projections;
+  inherit (theme) roles palette icons projections;
 
   glyph = lib.mapAttrs (_: c: builtins.fromJSON ''"\u${c}"'') {
     ellipsis = "EA7C";
@@ -22,7 +22,7 @@ in {
       "$schema" = "https://starship.rs/config-schema.json";
 
       # --- [GLOBAL_CONFIGURATION]
-      palette = "forge";
+      palette = "dracula";
       continuation_prompt = "[❯](muted) ";
       format = lib.concatStrings [
         "$username"
@@ -43,7 +43,7 @@ in {
       ];
 
       # --- [SEMANTIC_ROLE_PALETTE]
-      palettes.forge = {
+      palettes.dracula = {
         primary = roles.text.primary.hex;
         subtle = roles.text.subtle.hex;
         muted = roles.text.muted.hex;

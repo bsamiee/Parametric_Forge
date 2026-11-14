@@ -2,9 +2,12 @@
   config,
   lib,
   toolchainEnvFor,
+  theme,
+  chords,
+  host,
   ...
 }: let
-  inherit (config.forge.theme) roles;
+  inherit (theme) roles;
   inherit
     (toolchainEnvFor {
       home = config.home.homeDirectory;
@@ -17,7 +20,6 @@
     pathEntries
     ;
 
-  chords = config.forge.chords;
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
 
@@ -366,9 +368,9 @@ in {
   programs.zellij.extraConfig = ''
 
         // --- [CORE_CONFIGURATION]
-        theme                         "forge-dracula"
-        default_shell                 "${config.forge.shell}"
-        post_command_discovery_hook   "echo ${config.forge.shell}"
+        theme                         "dracula"
+        default_shell                 "${host.user.shell}"
+        post_command_discovery_hook   "echo ${host.user.shell}"
         show_startup_tips             false
         show_release_notes            false
         simplified_ui                 true

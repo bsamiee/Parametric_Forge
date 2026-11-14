@@ -14,6 +14,7 @@
     user = {
       name = "bardiasamiee";
       inherit home;
+      shell = "/bin/zsh";
     };
     flakeRoot = "${home}/Developer/Parametric_Forge";
     ssh.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Bardia SSH Key";

@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  host,
   ...
 }: let
   statusbar = pkgs.pkgsCross.wasm32-wasip1.callPackage ./statusbar/package.nix {};
@@ -75,7 +76,7 @@
           [[ $(zellij action dump-layout) == *"$resume"* ]] || return 0
           zellij action set-resurrect-command --clear
         else
-          zellij action set-resurrect-command --cwd "$cwd" -- ${config.forge.shell} -ic "$resume; exec ${config.forge.shell}"
+          zellij action set-resurrect-command --cwd "$cwd" -- ${host.user.shell} -ic "$resume; exec ${host.user.shell}"
         fi
         zellij action save-session
       }
@@ -89,18 +90,12 @@
 in {
   imports = [
     ./config.nix
-    ./themes/forge-dracula.nix
+    ./themes/dracula.nix
     ./layouts/default.nix
   ];
 
-  options.forge.zellij.attach = lib.mkOption {
-    type = lib.types.package;
-    readOnly = true;
-    default = sessionAttach;
-    description = "Session attach for WezTerm spawns: retires servers from an ended login session, then attaches or rebuilds the named session.";
-  };
-
   config = {
+    _module.args.zellijAttach = sessionAttach;
     programs.zellij.enable = true;
     home.packages = [agentResume];
 

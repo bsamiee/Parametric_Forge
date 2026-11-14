@@ -2,6 +2,7 @@
   config,
   toolchainEnvFor,
   lib,
+  opSessionCache,
   ...
 }: let
   toolchainEnv = toolchainEnvFor {
@@ -34,18 +35,18 @@ in {
       unset _session_path _session_missing
 
       ${config.lib.shell.exportAll toolchainEnv.runtimeEnv}
-      if [[ ''${FORGE_ENV_STAMP-} != ${envStamp} ]]; then
+      if [[ ''${SESSION_ENV_STAMP-} != ${envStamp} ]]; then
         typeset -A _session_defaults=(${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) sessionRows))})
-        for _session_name in ''${=FORGE_ENV_NAMES-}; do
+        for _session_name in ''${=SESSION_ENV_NAMES-}; do
           (( ''${+_session_defaults[$_session_name]} )) || unset "$_session_name"
         done
         for _session_name _session_default in "''${(@kv)_session_defaults}"; do
           export "$_session_name=$_session_default"
         done
-        export FORGE_ENV_STAMP=${envStamp} FORGE_ENV_NAMES=${lib.escapeShellArg (toString (builtins.attrNames sessionRows))}
+        export SESSION_ENV_STAMP=${envStamp} SESSION_ENV_NAMES=${lib.escapeShellArg (toString (builtins.attrNames sessionRows))}
         unset _session_defaults _session_name _session_default
       fi
-      [[ ! -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.forge.secrets.sessionCache}
+      [[ ! -f ${lib.escapeShellArg opSessionCache} ]] || source ${lib.escapeShellArg opSessionCache}
 
       [[ -o interactive || -o login ]] || ${miseRefresh}
     '';
@@ -55,9 +56,9 @@ in {
     initContent = lib.mkOrder 1950 ''
       # --- [SESSION_CACHE_REFRESH]
       _session-cache-refresh() {
-        local stamp=$FORGE_OP_STAMP
-        [[ ! -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.forge.secrets.sessionCache}
-        [[ $stamp == $FORGE_OP_STAMP ]] || ${miseRefresh}
+        local stamp=$SESSION_CACHE_STAMP
+        [[ ! -f ${lib.escapeShellArg opSessionCache} ]] || source ${lib.escapeShellArg opSessionCache}
+        [[ $stamp == $SESSION_CACHE_STAMP ]] || ${miseRefresh}
       }
       autoload -Uz add-zsh-hook
       add-zsh-hook precmd _session-cache-refresh

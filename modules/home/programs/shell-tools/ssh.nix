@@ -3,18 +3,13 @@
   host,
   lib,
   pkgs,
+  sshAgentSocket,
   ...
 }: let
   homeDir = config.home.homeDirectory;
 in {
-  options.forge.ssh.identityAgent = lib.mkOption {
-    type = lib.types.str;
-    readOnly = true;
-    default = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
-    description = "1Password agent socket every SSH client pins.";
-  };
-
   config = {
+    _module.args.sshAgentSocket = "${homeDir}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock";
     home.file.".ssh/id_ed25519.pub".text = host.ssh.publicKey + "\n";
 
     programs.ssh = {
@@ -29,7 +24,7 @@ in {
           BatchMode = true;
         };
         "*" = {
-          IdentityAgent = "\"${config.forge.ssh.identityAgent}\"";
+          IdentityAgent = "\"${sshAgentSocket}\"";
           KexAlgorithms = "^mlkem768x25519-sha256,sntrup761x25519-sha512";
           StrictHostKeyChecking = "accept-new";
           ConnectTimeout = 10;

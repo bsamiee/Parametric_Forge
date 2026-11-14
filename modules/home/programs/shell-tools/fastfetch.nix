@@ -1,5 +1,9 @@
-{config, ...}: let
-  inherit (config.forge.theme) roles;
+{
+  theme,
+  typography,
+  ...
+}: let
+  inherit (theme) roles;
 in {
   programs.fastfetch = {
     enable = true;
@@ -112,7 +116,7 @@ in {
         {
           type = "terminalfont";
           key = " └   ";
-          format = config.forge.fonts.projections.fastfetchLabel;
+          format = typography.projections.fastfetchLabel;
         }
         {type = "break";}
 

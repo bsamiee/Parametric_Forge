@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  theme,
   ...
 }: {
   programs.zsh.initContent = lib.mkMerge [
@@ -36,13 +37,13 @@
             local pointer=❯ pointer_color
             if [[ $KEYMAP == vicmd ]]; then
               pointer=❮
-              pointer_color="${config.forge.theme.roles.state.success.hex}"
+              pointer_color="${theme.roles.state.success.hex}"
             elif (( _transient_prompt_status == 0 )); then
-              pointer_color="${config.forge.theme.roles.state.success.hex}"
+              pointer_color="${theme.roles.state.success.hex}"
             else
-              pointer_color="${config.forge.theme.roles.state.danger.hex}"
+              pointer_color="${theme.roles.state.danger.hex}"
             fi
-            local PROMPT="%F{${config.forge.theme.roles.text.muted.hex}}%D{${config.forge.theme.projections.timeDisplay.sameDay}}%f %B%F{''${pointer_color}}''${pointer}%f%b "
+            local PROMPT="%F{${theme.roles.text.muted.hex}}%D{${theme.projections.timeDisplay.sameDay}}%f %B%F{''${pointer_color}}''${pointer}%f%b "
             zle .reset-prompt
           fi
         }

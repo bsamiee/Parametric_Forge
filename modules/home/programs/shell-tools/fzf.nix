@@ -1,9 +1,10 @@
 {
   config,
   lib,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) projections;
+  inherit (theme) projections;
   fd = "fd";
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";
   share = "${config.programs.fzf.package}/share/fzf";

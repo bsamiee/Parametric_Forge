@@ -10,20 +10,15 @@
     "com.apple.controlcenter" = "/usr/bin/killall ControlCenter";
     pbs = "/System/Library/CoreServices/pbs -update";
   };
-  rendered = domain: lib.removePrefix "${config.home.homeDirectory}/" "${config.xdg.stateHome}/forge/defaults/${domain}.plist";
+  rendered = domain: lib.removePrefix "${config.home.homeDirectory}/" "${config.xdg.stateHome}/macos-defaults/${domain}.plist";
   plist = lib.generators.toPlist {escape = true;};
+  groupDefaults."8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
 in {
   imports = [
     ./input.nix
     ./interface.nix
     ./system.nix
   ];
-
-  options.forge.groupDefaults = lib.mkOption {
-    type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
-    default = {};
-    description = "App-group suite defaults, suite -> keys; each suite imports into its group container's plist every switch.";
-  };
 
   config = {
     home.file = lib.mapAttrs' (domain: _:
@@ -43,7 +38,7 @@ in {
       setGroupDefaults = lib.hm.dag.entryAfter ["writeBoundary"] (lib.concatStrings (lib.mapAttrsToList (suite: keys: ''
           run /usr/bin/defaults import ${lib.escapeShellArg "${config.home.homeDirectory}/Library/Group Containers/${suite}/Library/Preferences/${suite}"} ${pkgs.writeText "${suite}.plist" (plist keys)}
         '')
-        config.forge.groupDefaults));
+        groupDefaults));
 
       # --- [SCREEN_CAPTURE_HINTS]
       screenCaptureHints = lib.hm.dag.entryAfter ["writeBoundary"] ''

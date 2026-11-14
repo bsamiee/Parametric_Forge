@@ -54,8 +54,8 @@
     "oauth2service.json" = "GOOGLE_WORKSPACE_SERVICE_ACCOUNT";
   };
   tokenNames = lib.attrNames tokenRows;
-  stampName = "FORGE_OP_STAMP";
-  namesName = "FORGE_OP_NAMES";
+  stampName = "SESSION_CACHE_STAMP";
+  namesName = "SESSION_CACHE_NAMES";
   cacheNames = tokenNames ++ [stampName namesName];
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
@@ -71,14 +71,8 @@
     '';
   };
 in {
-  options.forge.secrets.sessionCache = lib.mkOption {
-    type = lib.types.str;
-    readOnly = true;
-    default = opCache;
-    description = "Path of the op-injected session cache published at activation.";
-  };
-
   config = {
+    _module.args.opSessionCache = opCache;
     home = {
       packages = [pkgs._1password-cli-current pkgs.doppler];
       file.".doppler".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/doppler";

@@ -1,4 +1,4 @@
-{lib, ...}: {
+_: {
   imports = [
     ./init.nix
     ./completions.nix
@@ -8,14 +8,7 @@
     ../../aliases
   ];
 
-  options.forge.shell = lib.mkOption {
-    type = lib.types.str;
-    readOnly = true;
-    default = "/bin/zsh";
-    description = "The one interactive zsh every terminal, multiplexer, and rail spawn runs.";
-  };
-
-  config.programs.zsh = {
+  programs.zsh = {
     enable = true;
     package = null;
   };

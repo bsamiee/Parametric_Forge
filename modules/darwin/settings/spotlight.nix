@@ -123,9 +123,9 @@
     runtimeInputs = [pkgs.coreutils pkgs.fd];
     text = ''
       shopt -s nullglob nocasematch
-      stateDirectory=/var/db/parametric-forge
+      stateDirectory=/var/db/spotlight-exclusions
       mkdir -p "$stateDirectory"
-      state="$stateDirectory/spotlight-exclusions.json"
+      state="$stateDirectory/state.json"
       work=$(mktemp -d "$stateDirectory/spotlight.XXXXXX")
       finish() {
         local exitCode=$?

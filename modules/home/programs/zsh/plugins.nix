@@ -1,10 +1,10 @@
 {
-  config,
   lib,
   pkgs,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) roles;
+  inherit (theme) roles;
   sgr = c: "\\e[38;2;${toString c.r};${toString c.g};${toString c.b}m";
 in {
   home.packages = [pkgs.zsh-forgit];

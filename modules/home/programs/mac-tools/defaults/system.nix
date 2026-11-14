@@ -2,14 +2,15 @@
   config,
   lib,
   pkgs,
+  typography,
   ...
 }: {
   home.activation.setSyntaxHighlightDefaults = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
     run /usr/bin/defaults import ${lib.escapeShellArg "${config.home.homeDirectory}/Library/Preferences/org.sbarex.SourceCodeSyntaxHighlight"} ${pkgs.writeText "syntax-highlight-renderer.plist" (lib.generators.toPlist {escape = true;} {
       format = "html";
       "theme-dark" = "base16/dracula";
-      "font-family" = config.forge.fonts.roles.${config.forge.fonts.surfaces.quicklook.family};
-      "font-size" = config.forge.fonts.surfaces.quicklook.size;
+      "font-family" = typography.roles.${typography.surfaces.quicklook.family};
+      "font-size" = typography.surfaces.quicklook.size;
       "word-wrap" = 2;
       "word-wrap-hard" = false;
       "line-numbers" = true;
@@ -122,7 +123,4 @@
 
   # --- [AIRPLAY_RECEIVER]
   targets.darwin.currentHostDefaults."com.apple.controlcenter".AirplayReceiverEnabled = false;
-
-  # --- [AIRBUDDY]
-  forge.groupDefaults."8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
 }

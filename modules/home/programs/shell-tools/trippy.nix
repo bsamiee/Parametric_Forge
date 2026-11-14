@@ -1,9 +1,9 @@
 {
-  config,
   lib,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) roles palette;
+  inherit (theme) roles palette;
 
   trippyConfig = {
     # --- [TRIPPY]

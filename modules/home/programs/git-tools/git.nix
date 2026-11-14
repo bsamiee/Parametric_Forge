@@ -1,11 +1,11 @@
 {
-  config,
   host,
   lib,
   pkgs,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) roles projections;
+  inherit (theme) roles projections;
   git = projections.gitHex;
   identity = {
     name = "Bardia Samiee";
@@ -168,7 +168,7 @@ in {
       word-diff-regex = "\\w+|[^[:space:]]";
       relative-paths = true;
 
-      syntax-theme = "forge-dracula";
+      syntax-theme = "dracula";
       true-color = "always";
       zero-style = "dim syntax";
 

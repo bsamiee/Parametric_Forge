@@ -38,7 +38,7 @@
     "sf-symbols"
 
     # --- [MEDIA_ENTERTAINMENT]
-    "bsamiee/forge/voicebox"
+    "bsamiee/parametric-forge/voicebox"
     "spotify"
 
     # --- [NOTES_READING]
@@ -61,7 +61,7 @@
     (latest "font-qahiri")
 
     # --- [3D_CREATION]
-    (latest "bsamiee/forge/blender@daily")
+    (latest "bsamiee/parametric-forge/blender@daily")
     "epic-games"
     "inkscape"
 
@@ -70,14 +70,7 @@
     "karabiner-elements"
   ];
 in {
-  options.forge.homebrew.latestCasks = lib.mkOption {
-    type = lib.types.listOf lib.types.str;
-    readOnly = true;
-    default = map (row: lib.last (lib.splitString "/" row.latest)) (lib.filter lib.isAttrs rows);
-    description = "Casks without a version: Brewfile rows mark them greedy, so `brew bundle --upgrade` replaces one when its download changes.";
-  };
-
-  config.homebrew.casks = map (row:
+  homebrew.casks = map (row:
     if lib.isAttrs row
     then {
       name = row.latest;

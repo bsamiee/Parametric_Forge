@@ -2,9 +2,10 @@
   config,
   lib,
   pkgs,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (theme) palette;
 
   completionPackages = [pkgs.zsh-completions pkgs.nix-zsh-completions];
   siteFunctions =

@@ -1,9 +1,10 @@
 {
   config,
   pkgs,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (theme) palette;
   toml = pkgs.formats.toml {};
   configToml = toml.generate "tlrc-config.toml" {
     cache = {

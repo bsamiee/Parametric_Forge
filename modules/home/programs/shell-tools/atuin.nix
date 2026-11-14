@@ -3,9 +3,10 @@
   launchdAgent,
   lib,
   pkgs,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) roles;
+  inherit (theme) roles;
 in {
   # --- [DAEMON]
   launchd.agents.atuin-daemon = launchdAgent {

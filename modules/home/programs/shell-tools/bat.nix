@@ -2,19 +2,20 @@
   config,
   lib,
   pkgs,
+  theme,
   ...
 }: {
   programs.bat = {
     enable = true;
 
     config = {
-      theme = "forge-dracula";
+      theme = "dracula";
       style = "numbers,changes,header,grid";
       wrap = "character";
       italic-text = "always";
     };
 
-    themes."forge-dracula".src = config.forge.theme.projections.tmThemeFile;
+    themes."dracula".src = theme.projections.tmThemeFile;
   };
 
   home.activation.batCache = lib.mkForce (lib.hm.dag.entryAfter ["linkGeneration"] ''

@@ -2,15 +2,21 @@
   config,
   lib,
   pkgs,
+  theme,
+  typography,
+  applications,
+  chords,
+  zellijAttach,
+  host,
   ...
 }: let
-  inherit (config.forge.theme) roles projections;
-  chordRows = config.forge.chords.wezterm.rows;
+  inherit (theme) roles projections;
+  chordRows = chords.wezterm.rows;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
 
   # --- [FONT_ROW]
-  fontRow = config.forge.fonts.projections.luaFont;
+  fontRow = typography.projections.luaFont;
 
   # --- [WORKSPACE_ROWS]
   workspaceRows = [
@@ -86,13 +92,13 @@
       label = "deck: scratch shell";
       float = "utility";
       scope = "workspace";
-      args = [config.forge.shell "-l"];
+      args = [host.user.shell "-l"];
     }
   ];
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
   settings = {
-    color_scheme = "forge-dracula";
+    color_scheme = "dracula";
     check_for_updates = false;
 
     window_background_opacity = 0.85;
@@ -149,9 +155,9 @@
   # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
     paths = {
-      zsh = config.forge.shell;
-      zellij_attach = lib.getExe config.forge.zellij.attach;
-      code = "${config.forge.apps.vscode.path}/Contents/Resources/app/bin/code";
+      zsh = host.user.shell;
+      zellij_attach = lib.getExe zellijAttach;
+      code = "${applications.vscode.path}/Contents/Resources/app/bin/code";
     };
     font = fontRow;
     commands = commandRows;
@@ -183,9 +189,9 @@
     require("events").apply(config)
     return config
   '';
-  schemeToml = (pkgs.formats.toml {}).generate "forge-dracula.toml" {
+  schemeToml = (pkgs.formats.toml {}).generate "dracula.toml" {
     colors = projections.weztermColorScheme;
-    metadata.name = "forge-dracula";
+    metadata.name = "dracula";
   };
 in {
   xdg.configFile."wezterm" = {
@@ -194,7 +200,7 @@ in {
       "events.lua" = ./events.lua;
       "wezterm.lua" = weztermLua;
       "rows.lua" = rowsLua;
-      "colors/forge-dracula.toml" = schemeToml;
+      "colors/dracula.toml" = schemeToml;
     };
     recursive = false;
   };

@@ -4,6 +4,7 @@
   toolchainEnvFor,
   lib,
   pkgs,
+  sshAgentSocket,
   ...
 }: let
   toolchainEnv = toolchainEnvFor {
@@ -18,7 +19,7 @@
     toolchainEnv.sharedEnv
     // {
       PATH = lib.concatStringsSep ":" toolchainEnv.pathEntries;
-      SSH_AUTH_SOCK = config.forge.ssh.identityAgent;
+      SSH_AUTH_SOCK = sshAgentSocket;
       inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };
   guiSetenv = pkgs.writeShellApplication {

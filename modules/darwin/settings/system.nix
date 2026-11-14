@@ -2,6 +2,7 @@
   config,
   lib,
   toolchainEnvFor,
+  host,
   ...
 }: let
   inherit (config.system) primaryUser;
@@ -39,7 +40,7 @@ in {
     # --- [AGENT_LOG_ROTATION]
     newsyslog = {
       enable = true;
-      files.forge-agents =
+      files.launchd-agents =
         map (logfilename: {
           inherit logfilename;
           owner = primaryUser;
@@ -78,7 +79,7 @@ in {
   launchd.user.agents.menu-record.serviceConfig = {
     Label = "dev.bsamiee.menu-record";
     ProgramArguments = [
-      userHome.forge.shell
+      host.user.shell
       "-c"
       ''/bin/mkdir -p "$2" && /bin/cp -p "$1"/* "$2"/ && /usr/bin/find "$2" -type f -mtime +365 -delete''
       "menu-record"

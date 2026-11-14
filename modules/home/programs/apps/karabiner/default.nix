@@ -2,11 +2,12 @@
   config,
   lib,
   pkgs,
+  chords,
   ...
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  chordRules = config.forge.chords.karabiner.rules;
+  chordRules = chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [

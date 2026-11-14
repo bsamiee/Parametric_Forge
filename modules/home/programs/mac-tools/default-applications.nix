@@ -188,14 +188,8 @@
     '';
   };
 in {
-  options.forge.apps = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = apps;
-    description = "Application rows (bundle id, handled extensions and schemes, path where a consumer opens the bundle) read by the handler reconcile, the Dock, and LinearMouse.";
-  };
-
   config = {
+    _module.args.applications = apps;
     home = {
       packages = [command] ++ bundledCli;
       file.${rhinoBin}.source = config.lib.file.mkOutOfStoreSymlink "${apps.rhino.path}/Contents/Resources/bin";

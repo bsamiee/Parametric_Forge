@@ -1,5 +1,5 @@
-{config, ...}: let
-  inherit (config.forge.theme) roles palette;
+{theme, ...}: let
+  inherit (theme) roles palette;
 
   ezaTheme = {
     filekinds = {

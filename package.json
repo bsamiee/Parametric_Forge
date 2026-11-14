@@ -2,7 +2,7 @@
     "name": "parametric-forge",
     "private": true,
     "type": "module",
-    "description": "Forge workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
+    "description": "Workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
     "engines": {
         "node": ">=26"
     },

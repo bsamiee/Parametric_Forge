@@ -1,5 +1,9 @@
-{config, ...}: let
-  inherit (config.forge.theme) roles palette;
+{
+  config,
+  theme,
+  ...
+}: let
+  inherit (theme) roles palette;
   fg = c: "fg=${c.hex}";
 in {
   programs.zsh = {

@@ -19,10 +19,8 @@
   surfaces.quicklook = mkSurface "mono" 15.0 1.5;
   surfaces.terminal = mkSurface "mono" 13.0 catalog.${roles.mono}.lineHeight;
 in {
-  options.forge.fonts = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = {
+  config = {
+    _module.args.typography = {
       inherit catalog roles chains surfaces;
       projections = {
         luaFont = {
@@ -34,10 +32,7 @@ in {
         fastfetchLabel = "${roles.mono} ${toString (builtins.floor surfaces.terminal.size)}pt";
       };
     };
-    description = "Forge font owner: family catalog, roles, chains, per-surface typography, projections.";
-  };
 
-  config = {
     home.packages = lib.unique (lib.mapAttrsToList (_: row: row.package) catalog);
     fonts.fontconfig = {
       enable = true;

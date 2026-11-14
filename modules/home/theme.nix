@@ -1,10 +1,10 @@
 {
-  config,
   lib,
   pkgs,
+  typography,
   ...
 }: let
-  fonts = config.forge.fonts;
+  fonts = typography;
   byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
   mkColor = raw: let
@@ -143,7 +143,7 @@
     <plist version="1.0">
     <dict>
       <key>name</key>
-      <string>Forge Dracula</string>
+      <string>Dracula</string>
       <key>settings</key>
       <array>
         <dict>
@@ -157,7 +157,7 @@
     </dict>
     </plist>
   '';
-  tmThemeFile = pkgs.writeText "forge-dracula.tmTheme" tmTheme;
+  tmThemeFile = pkgs.writeText "dracula.tmTheme" tmTheme;
 
   fzfColorRows = [
     "--color=fg:${roles.text.primary.hex},fg+:${roles.text.inverse.hex},bg:${roles.surface.base.hex},bg+:${roles.focus.active.hex},selected-fg:${roles.text.inverse.hex},selected-bg:${roles.focus.active.hex}"
@@ -228,10 +228,5 @@
     ];
   };
 in {
-  options.forge.theme = lib.mkOption {
-    type = lib.types.raw;
-    readOnly = true;
-    default = {inherit palette derived roles ansi16 syntaxScopes icons projections;};
-    description = "Forge palette owner: enriched Dracula tokens, roles, ANSI-16, syntax scopes, icons, projections.";
-  };
+  _module.args.theme = {inherit palette derived roles ansi16 syntaxScopes icons projections;};
 }

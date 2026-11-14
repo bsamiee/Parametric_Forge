@@ -1,5 +1,4 @@
-{config, ...}: let
-  inherit (config.forge) apps;
+{applications, ...}: let
   settings = {
     schemes = [
       {
@@ -41,7 +40,7 @@
       }
       {
         "if" = {
-          app = apps.rhino.id;
+          app = applications.rhino.id;
           device = {
             vendorID = "0x046d";
             productID = "0xb034";
@@ -57,7 +56,7 @@
       }
       {
         "if" = {
-          app = apps.blender.id;
+          app = applications.blender.id;
           device = {
             vendorID = "0x046d";
             productID = "0xb034";

@@ -1,9 +1,9 @@
 {
-  config,
   pkgs,
+  applications,
   ...
 }: let
-  app = config.forge.apps.tailscale;
+  app = applications.tailscale;
 in {
   home.packages = [(pkgs.writeShellScriptBin "tailscale" ''exec "${app.path}/Contents/MacOS/Tailscale" "$@"'')];
 

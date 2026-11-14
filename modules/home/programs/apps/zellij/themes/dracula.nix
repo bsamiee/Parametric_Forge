@@ -1,9 +1,9 @@
 {
-  config,
   lib,
+  theme,
   ...
 }: let
-  inherit (config.forge.theme) palette;
+  inherit (theme) palette;
   rgb = role: palette.${role}.triple;
   slots = ["base" "background" "emphasis_0" "emphasis_1" "emphasis_2" "emphasis_3"];
   components = [
@@ -30,10 +30,10 @@
     ${name} {
     ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
-  programs.zellij.themes.forge-dracula = ''
+  programs.zellij.themes.dracula = ''
 
     themes {
-      "forge-dracula" {
+      "dracula" {
         ${lib.concatMapStringsSep "\n    " renderComponent components}
         multiplayer_user_colors {
     ${lib.concatStrings (lib.imap1 (i: role: "          player_${toString i} ${rgb role}\n") playerRoles)}        }

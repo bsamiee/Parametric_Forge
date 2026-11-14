@@ -1,6 +1,8 @@
-{config, ...}: let
-  inherit (config.forge) apps;
-in {
+{
+  applications,
+  config,
+  ...
+}: {
   targets.darwin.defaults = {
     # --- [DOCK_CONFIGURATION]
     "com.apple.dock" = {
@@ -33,7 +35,7 @@ in {
       wvous-br-corner = 1;
       no-bouncing = false;
       enable-spring-load-actions-on-all-items = true;
-      persistent-apps = [{spacer = {};}] ++ map (name: apps.${name}.path) ["heptabase" "drafts" "vscode" "arc" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat" "epic"];
+      persistent-apps = [{spacer = {};}] ++ map (name: applications.${name}.path) ["heptabase" "drafts" "vscode" "arc" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat" "epic"];
       persistent-others = [];
     };
     # --- [FINDER_CONFIGURATION]
