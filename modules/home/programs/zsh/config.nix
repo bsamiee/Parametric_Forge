@@ -12,6 +12,8 @@
     xdgDataHome = config.xdg.dataHome;
     xdgStateHome = config.xdg.stateHome;
   };
+  sessionRows = removeAttrs (toolchainEnv.sessionEnv // toolchainEnv.sharedEnv) (builtins.attrNames toolchainEnv.runtimeEnv);
+  envStamp = builtins.substring 0 16 (builtins.hashString "sha256" (builtins.toJSON sessionRows));
   mise = lib.getExe config.programs.mise.package;
   miseRefresh = ''{ (( $+functions[compdef] )) || compdef() { :; }; eval "$(${mise} hook-env --force -s zsh)"; }'';
 in {
@@ -32,24 +34,17 @@ in {
       unset _session_path _session_missing
 
       ${config.lib.shell.exportAll toolchainEnv.runtimeEnv}
-      typeset -A _session_defaults=(${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) (removeAttrs (toolchainEnv.sessionEnv // toolchainEnv.sharedEnv) (builtins.attrNames toolchainEnv.runtimeEnv))))})
-      for _session_name _session_default in "''${(@kv)_session_defaults}"; do
-        _session_value="''${(P)_session_name:-}"
-        if [[ -z $_session_value ]]; then
-          export "$_session_name=$_session_default"
-          continue
-        fi
-        for _session_word in ''${(z)_session_value}; do
-          _session_word="''${(Q)_session_word}"
-          _session_root="''${_session_word#${builtins.storeDir}/}"
-          _session_root="${builtins.storeDir}/''${_session_root%%[/:]*}"
-          if [[ $_session_word == "${builtins.storeDir}/"* && ! -e $_session_root ]]; then
-            export "$_session_name=$_session_default"
-            break
-          fi
+      if [[ ''${FORGE_ENV_STAMP-} != ${envStamp} ]]; then
+        typeset -A _session_defaults=(${lib.escapeShellArgs (lib.concatLists (lib.mapAttrsToList (name: value: [name value]) sessionRows))})
+        for _session_name in ''${=FORGE_ENV_NAMES-}; do
+          (( ''${+_session_defaults[$_session_name]} )) || unset "$_session_name"
         done
-      done
-      unset _session_defaults _session_name _session_default _session_value _session_word _session_root
+        for _session_name _session_default in "''${(@kv)_session_defaults}"; do
+          export "$_session_name=$_session_default"
+        done
+        export FORGE_ENV_STAMP=${envStamp} FORGE_ENV_NAMES=${lib.escapeShellArg (toString (builtins.attrNames sessionRows))}
+        unset _session_defaults _session_name _session_default
+      fi
       [[ ! -f ${lib.escapeShellArg config.forge.secrets.sessionCache} ]] || source ${lib.escapeShellArg config.forge.secrets.sessionCache}
 
       [[ -o interactive || -o login ]] || ${miseRefresh}

@@ -67,6 +67,10 @@ in {
     pathsToLink = ["/opt"];
     systemPath = lib.mkForce toolchainEnv.pathEntries;
     variables = toolchainEnv.sharedEnv;
+    etc.paths = {
+      text = lib.concatLines toolchainEnv.pathEntries;
+      knownSha256Hashes = ["b69252d9ef27a2902707ee4a1217110cd2ab49d013a0a52cc9c39b81dd0298b5"];
+    };
     etc."dotnet/install_location_arm64".text = "${userHome.programs.mise.globalConfig.settings.dotnet.dotnet_root}\n";
   };
 

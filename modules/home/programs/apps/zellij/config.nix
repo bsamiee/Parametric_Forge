@@ -18,38 +18,6 @@
     pathEntries
     ;
 
-  # --- [RESURRECT_COMMAND]
-  claudeHome = "${config.home.homeDirectory}/.claude";
-
-  # --- [RESURRECT_PANE]
-  resurrectPane = pkgs.writeScriptBin "zellij-resurrect-pane" ''
-    #!${config.forge.shell} -i
-    "$@"
-    exec ${config.forge.shell}
-  '';
-  resurrectCommand = pkgs.writeShellApplication {
-    name = "zellij-resurrect-command";
-    runtimeInputs = [pkgs.jq];
-    text = ''
-      read -ra argv <<<"$RESURRECT_COMMAND"
-      [[ ''${argv[0]##*/} == claude ]] || exit 0
-      shopt -s nullglob
-      held=()
-      for record in ${claudeHome}/sessions/*.json; do
-        entry=$(jq -er 'select(.kind == "interactive") | "\(.pid) \(.sessionId)"' "$record") || continue
-        args=$(/bin/ps -o args= -p "''${entry%% *}") || continue
-        if [[ $args == "$RESURRECT_COMMAND" ]]; then held+=("''${entry#* }"); fi
-      done
-      ((''${#held[@]} == 1)) || exit 0
-      transcripts=(${claudeHome}/projects/*/"''${held[0]}".jsonl)
-      if ((''${#transcripts[@]})); then
-        printf '${resurrectPane.meta.mainProgram} claude --resume %s\n' "''${held[0]}"
-      else
-        printf '${resurrectPane.meta.mainProgram} claude --session-id %s\n' "''${held[0]}"
-      fi
-    '';
-  };
-
   # --- [INBOX_COUNT]
   inboxCount = pkgs.writeShellApplication {
     name = "zellij-inbox-count";
@@ -166,6 +134,7 @@
           (bindH ["n"] "NewTab;" ["new" 30])
           (bindH ["x"] "CloseTab;" ["close" 40])
           (bindH ["u"] ''MuteTab; SwitchToMode "Normal";'' ["mute" 80])
+          (bindH ["s"] ''ToggleActiveSyncTab; SwitchToMode "Normal";'' ["sync" 90])
         ]
         ++ map (i:
           if i == 1
@@ -200,6 +169,11 @@
         (bindH ["v"] ''WatchPane; SwitchToMode "Normal";'' ["watch" 130])
         (bindH ["u"] ''MutePane; SwitchToMode "Normal";'' ["mute" 140])
         (bind ["g"] ''IgnorePaneOutput; SwitchToMode "Normal";'')
+        (bind [";"] "FocusLastPane;")
+        (bindH ["a"] ''NewFloatingPane; SwitchToMode "Normal";'' ["new float" 85])
+        (bind ["Shift f"] ''ToggleFocusNoUiFullscreen; SwitchToMode "Normal";'')
+        (bind ["Shift s"] ''ToggleStackListOrientation; SwitchToMode "Normal";'')
+        (bind ["Shift z"] ''ToggleBars; SwitchToMode "Normal";'')
       ];
     };
     move = {
@@ -272,6 +246,7 @@
       rows = [
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
+        (bindH ["r"] ''SwitchToMode "RenameSession"; SessionNameInput 0;'' ["rename" 22])
         (bindH ["i"] ''ToggleSessionCard; SwitchToMode "Normal";'' ["inbox" 3])
         (bindH ["n"] ''GoToNextAttention; SwitchToMode "Normal";'' ["next" 5])
         (bindH ["u"] ''MuteSession; SwitchToMode "Normal";'' ["mute" 7])
@@ -313,6 +288,16 @@
       rows = [
         (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
         (bindH ["Esc"] ''UndoRenamePane; SwitchToMode "Pane";'' ["esc" "undo" 20])
+        (hintRow "⏎" "done" 10)
+      ];
+    };
+    renamesession = {
+      chip = ["mode_renamesession" "RENAME SESSION"];
+      note = "type name";
+      tail = "none";
+      rows = [
+        (bind ["Ctrl c"] ''SwitchToMode "Normal";'')
+        (bindH ["Esc"] ''UndoRenameSession; SwitchToMode "Session";'' ["esc" "undo" 20])
         (hintRow "⏎" "done" 10)
       ];
     };
@@ -375,8 +360,8 @@
       ++ [(lib.concatMapStringsSep "\n" renderRow (lib.filter (x: x ? keys) m.rows))]
       ++ ["      }"]
     );
-  blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
-  hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
+  blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane" "renamesession"];
+  hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "renamesession" "prompt" "tmux"];
   modeBlocksKdl = lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
   chipOf = c:
@@ -405,46 +390,40 @@
     entersearch = "enter_search";
     renametab = "rename_tab";
     renamepane = "rename_pane";
+    renamesession = "rename_session";
   };
   modeHintLines = lib.concatMapStringsSep "\n" (m: let
     n = "mode_${zjModeName.${m} or m}";
-  in "        ${n}${lib.strings.replicate (18 - lib.stringLength n) " "}\"${ribbons.${m}}\"")
+  in "        ${n}${lib.strings.replicate (lib.max 1 (20 - lib.stringLength n)) " "}\"${ribbons.${m}}\"")
   hintOrder;
 in {
   imports = [../chords.nix];
 
-  home.packages = [resurrectPane];
-
-  # --- [CLAUDE_SESSION_IDENTITY]
-  programs.zsh.initContent = ''
-    claude() {
-      (($#)) || set -- --session-id ''${(L)$(/usr/bin/uuidgen)}
-      command claude "$@"
-    }
-  '';
-
   programs.zellij.extraConfig = ''
 
         // --- [CORE_CONFIGURATION]
-        theme                       "dracula"
-        default_shell               "${config.forge.shell}"
-        post_command_discovery_hook "${lib.getExe resurrectCommand}"
-        show_startup_tips           false
-        show_release_notes          false
-        simplified_ui               true
-        pane_frame_style            "full"
-        stacked_pane_list           false
-        serialize_pane_viewport     true
-        copy_command                "pbcopy"
-        scroll_buffer_size          100000
+        theme                         "dracula"
+        default_shell                 "${config.forge.shell}"
+        post_command_discovery_hook   "true"
+        show_startup_tips             false
+        show_release_notes            false
+        simplified_ui                 true
+        pane_frame_style              "full"
+        stacked_pane_list             false
+        serialize_pane_viewport       true
+        scrollback_lines_to_serialize 5000
+        scroll_buffer_size            100000
 
         // --- [PANE_ENVIRONMENT]
         env {
           PATH "${lib.concatStringsSep ":" pathEntries}"
+          TERM "xterm-256color"
+          COLORTERM "truecolor"
         }
 
         // --- [ATTENTION]
         attention {
+          track_commands true
           tray_badge_colors {
     ${lib.concatStrings (lib.mapAttrsToList (n: c: "        ${n} \"${c.hex}\"\n") roles.inbox)}      }
         }

@@ -38,15 +38,28 @@ in {
   ];
 
   home.packages = [
+    # --- [FONTS]
+    pkgs.diffenator3
+    pkgs.fontc-current
+    pkgs.fontforge
+    pkgs.fontheight-cli
+    pkgs.fontspector
+    pkgs.fonttools-current
+    pkgs.fribidi
+    pkgs.gftools
+    pkgs.harfbuzz-current.dev
+    pkgs.opentype-sanitizer
+    pkgs.shaperglot-current
+    pkgs.ttfautohint
+
+    # --- [MEDIA_DOCUMENTS]
     pkgs.ab-av1
     czkawkaCli
     pkgs.exiftool
     pkgs.ffmpeg-full
     pkgs.ffmpeg-normalize
-    pkgs.fonttools-current
     pkgs.gifski
     pkgs.graphviz
-    pkgs.harfbuzz-current.dev
     pkgs.imagemagickBig
     pkgs.img2pdf
     pkgs.jpegli

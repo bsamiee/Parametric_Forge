@@ -37,6 +37,32 @@
       exec ${lib.getExe config.programs.zellij.package} attach --create --force-run-commands "$@"
     '';
   };
+
+  # --- [AGENT_RESUME]
+  agentResume = pkgs.writeShellApplication {
+    name = "zellij-agent-resume";
+    runtimeInputs = [config.programs.zellij.package pkgs.jq];
+    text = ''
+      harness=''${1:?usage: zellij-agent-resume claude|codex|agy}
+      input=$(cat)
+      [[ $harness == agy ]] && printf '{}\n'
+      [[ -n ''${ZELLIJ_PANE_ID-} ]] || exit 0
+      read -r group foreground < <(/bin/ps -o pgid=,tpgid= -p "$PPID")
+      [[ $group == "$foreground" ]] || exit 0
+      read -r event id cwd < <(jq -r '[.hook_event_name // .hookEventName, .session_id // .conversationId, .cwd] | @tsv' <<<"$input")
+      if [[ $event == SessionEnd ]]; then
+        zellij action set-resurrect-command --clear
+      else
+        case $harness in
+          claude) resume="claude --resume $id" ;;
+          codex) resume="codex resume $id" ;;
+          agy) resume="agy --remote-control --conversation=$id" ;;
+        esac
+        zellij action set-resurrect-command --cwd "$cwd" -- ${config.forge.shell} -ic "$resume; exec ${config.forge.shell}"
+      fi
+      zellij action save-session
+    '';
+  };
 in {
   imports = [
     ./config.nix
@@ -53,6 +79,7 @@ in {
 
   config = {
     programs.zellij.enable = true;
+    home.packages = [agentResume];
 
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
       plugDir = "${config.xdg.configHome}/zellij/plugins";

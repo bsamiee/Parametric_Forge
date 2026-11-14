@@ -14,6 +14,21 @@
         },
         "version": "2.44.0-beta.02"
     },
+    "afdko": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "afdko",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-CDtQShzYZei/u0ITSjQxjOQu9RMNrr/FsOLy+0RDJsU=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/a/afdko/afdko-5.0.1.tar.gz"
+        },
+        "version": "5.0.1"
+    },
     "aredotna-cli": {
         "cargoLock": null,
         "date": null,
@@ -253,6 +268,20 @@
         },
         "version": "1.31.224"
     },
+    "diffenator3-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "diffenator3-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-0ipo7L4aLY19S6IbvH6EEk7UC0mTXX6tls8Bx+m9eX8=",
+            "type": "tarball",
+            "url": "https://github.com/googlefonts/diffenator3/releases/download/v1.1.4/diffenator3-1.1.4-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "1.1.4"
+    },
     "dua-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -387,6 +416,84 @@
         },
         "version": "3.11.1"
     },
+    "fontc-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "fontc-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-fkh21Ktv7SX9RtAfRWrp9NdhrQgW9hLJM9CI0lpnsdg=",
+            "type": "url",
+            "url": "https://github.com/googlefonts/fontc/releases/download/fontc-v2.0.1/fontc-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "2.0.1"
+    },
+    "fontheight-cli": {
+        "cargoLock": {
+            "Cargo.lock": [
+                "sha256-VEbAOTB5404V89fxXsJ0lntptNPBgiEX3pKLjydx87U=/Cargo.lock",
+                {}
+            ]
+        },
+        "date": null,
+        "extract": null,
+        "name": "fontheight-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-VEbAOTB5404V89fxXsJ0lntptNPBgiEX3pKLjydx87U=",
+            "type": "tarball",
+            "url": "https://github.com/googlefonts/fontheight/archive/refs/tags/fontheight-cli-v0.1.3.tar.gz"
+        },
+        "version": "0.1.3"
+    },
+    "fontmake": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "fontmake",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-AgtGLOflHpTtl5wWIstotFIfX2pedAkuBhuX+/+KpA8=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/f/fontmake/fontmake-3.12.2.tar.gz"
+        },
+        "version": "3.12.2"
+    },
+    "fontspector-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "fontspector-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-DGemClAy754Z+39kQ9urx+3OJng5QRhkvFEDwmioDxc=",
+            "type": "tarball",
+            "url": "https://github.com/fonttools/fontspector/releases/download/fontspector-v1.9.1/fontspector-1.9.1-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "1.9.1"
+    },
+    "foundrytools-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "foundrytools-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-xjV+7L1aKV1kzJQ1A3W06OJcXnkxXQWKJjYSxtFx718=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/f/foundrytools-cli/foundrytools_cli-2.2.2.tar.gz"
+        },
+        "version": "2.2.2"
+    },
     "gam-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -429,6 +536,21 @@
             "url": "https://www.kernel.org/pub/software/scm/git/git-2.56.1.tar.xz"
         },
         "version": "2.56.1"
+    },
+    "glyphslib": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "glyphslib",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-MNHrJq6Nq0FvUq3bz+YKRxhv59dLBwJox5FwdhugkH4=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/g/glyphslib/glyphslib-6.17.2.tar.gz"
+        },
+        "version": "6.17.2"
     },
     "gogcli-aarch64-darwin": {
         "cargoLock": null,
@@ -473,6 +595,21 @@
             "url": "https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-aarch64-apple-darwin.tar.gz"
         },
         "version": "8.1.0"
+    },
+    "hyperglot": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "hyperglot",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-HUa/mxFmiXoVN/A7mV04lHXCNapXisZTTXCCsyKIshE=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/h/hyperglot/hyperglot-0.8.2.tar.gz"
+        },
+        "version": "0.8.2"
     },
     "m365-cli": {
         "cargoLock": null,
@@ -548,6 +685,21 @@
             "url": "https://github.com/harehare/mq/releases/download/v0.10.1/mq-aarch64-apple-darwin"
         },
         "version": "0.10.1"
+    },
+    "nanoemoji": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nanoemoji",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-VCoyzYfdEuVcXKKboujxCLb2JxcPGcPwUBkDl2IG4bc=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoji-0.16.0.tar.gz"
+        },
+        "version": "0.16.0"
     },
     "nh-aarch64-darwin": {
         "cargoLock": null,
@@ -794,6 +946,20 @@
         },
         "version": "3.5.2"
     },
+    "shaperglot-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "shaperglot-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-vlERGP3eibev87gemJY2Ez4GdPOK3tVEcHnPar93/yM=",
+            "type": "tarball",
+            "url": "https://github.com/googlefonts/shaperglot/releases/download/v1.2.2/shaperglot-1.2.2-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "1.2.2"
+    },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -895,6 +1061,21 @@
             "url": "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz"
         },
         "version": "2.8.0"
+    },
+    "youseedee": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "youseedee",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-b5gxBIr/mowzlG4/N0C22S1XTq0NAGTq1/+iMUfxD18=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/y/youseedee/youseedee-0.7.0.tar.gz"
+        },
+        "version": "0.7.0"
     },
     "yq-aarch64-darwin": {
         "cargoLock": null,

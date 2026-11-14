@@ -312,3 +312,56 @@ fetch.url = "https://registry.npmjs.org/mcporter/-/mcporter-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/cf/-/cf-$ver.tgz"
 
+
+[fontspector-aarch64-darwin]
+src.cmd = '''gh api repos/fonttools/fontspector/releases --jq '[.[] | select(.tag_name | startswith("fontspector-v"))][0].tag_name' '''
+src.prefix = "fontspector-v"
+fetch.tarball = "https://github.com/fonttools/fontspector/releases/download/fontspector-v$ver/fontspector-$ver-aarch64-apple-darwin.tar.gz"
+
+[shaperglot-aarch64-darwin]
+src.github = "googlefonts/shaperglot"
+src.prefix = "v"
+fetch.tarball = "https://github.com/googlefonts/shaperglot/releases/download/v$ver/shaperglot-$ver-aarch64-apple-darwin.tar.gz"
+
+[diffenator3-aarch64-darwin]
+src.github = "googlefonts/diffenator3"
+src.prefix = "v"
+fetch.tarball = "https://github.com/googlefonts/diffenator3/releases/download/v$ver/diffenator3-$ver-aarch64-apple-darwin.tar.gz"
+
+[fontc-aarch64-darwin]
+src.cmd = '''gh api repos/googlefonts/fontc/releases --jq '[.[] | select(.tag_name | startswith("fontc-v"))][0].tag_name' '''
+src.prefix = "fontc-v"
+fetch.url = "https://github.com/googlefonts/fontc/releases/download/fontc-v$ver/fontc-aarch64-apple-darwin.tar.gz"
+
+[fontheight-cli]
+src.cmd = "gh api repos/googlefonts/fontheight/git/matching-refs/tags/fontheight-cli-v --jq '.[].ref' | sed s,refs/tags/fontheight-cli-v,, | sort -V | tail -1"
+fetch.tarball = "https://github.com/googlefonts/fontheight/archive/refs/tags/fontheight-cli-v$ver.tar.gz"
+cargo_lock = ["Cargo.lock"]
+
+[fontmake]
+src.pypi = "fontmake"
+fetch.url = "https://files.pythonhosted.org/packages/source/f/fontmake/fontmake-$ver.tar.gz"
+
+[glyphslib]
+src.pypi = "glyphsLib"
+fetch.url = "https://files.pythonhosted.org/packages/source/g/glyphslib/glyphslib-$ver.tar.gz"
+
+[foundrytools-cli]
+src.pypi = "foundrytools-cli"
+fetch.url = "https://files.pythonhosted.org/packages/source/f/foundrytools-cli/foundrytools_cli-$ver.tar.gz"
+
+[afdko]
+src.pypi = "afdko"
+fetch.url = "https://files.pythonhosted.org/packages/source/a/afdko/afdko-$ver.tar.gz"
+
+[hyperglot]
+src.pypi = "hyperglot"
+fetch.url = "https://files.pythonhosted.org/packages/source/h/hyperglot/hyperglot-$ver.tar.gz"
+
+[nanoemoji]
+src.pypi = "nanoemoji"
+fetch.url = "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoji-$ver.tar.gz"
+
+[youseedee]
+src.pypi = "youseedee"
+fetch.url = "https://files.pythonhosted.org/packages/source/y/youseedee/youseedee-$ver.tar.gz"

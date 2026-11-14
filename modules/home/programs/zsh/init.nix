@@ -6,11 +6,6 @@
 }: {
   programs.zsh.initContent = lib.mkMerge [
     (lib.mkBefore ''
-      # --- [ZELLIJ_PANE_WEZTERM_IDENTITY]
-      if [[ -n $ZELLIJ ]]; then
-        unset WEZTERM_UNIX_SOCKET WEZTERM_PANE
-      fi
-
       # --- [FZF_COMPGEN_PATH_DIR]
       _fzf_compgen_path() {
         ${lib.getExe pkgs.fd} --hidden --follow --exclude .git . "$1"
@@ -57,9 +52,33 @@
     '')
 
     (lib.mkOrder 1900 ''
-      # --- [TERMINAL_SHELL_INTEGRATION]
+      # --- [TERMINAL_MARKS]
+      autoload -Uz add-zsh-hook
       typeset -U precmd_functions preexec_functions
-      WEZTERM_SHELL_SKIP_USER_VARS=1 source "${config.forge.apps.wezterm.path}/Contents/Resources/wezterm.sh"
+      typeset -gi _terminal_command=0
+      _terminal-encode() {
+        local LC_ALL=C char
+        REPLY=
+        for char in ''${(s::)1}; do
+          [[ $char == [[:alnum:]/._~-] ]] && REPLY+=$char || REPLY+=%''${(l:2::0:)$(( [##16] #char ))}
+        done
+      }
+      _terminal-marks-precmd() {
+        local code=$?
+        (( _terminal_command )) && print -n "\e]133;D;$code\a"
+        _terminal_command=0
+        _terminal-encode $PWD
+        print -n "\e]7;file://$HOST$REPLY\a"
+      }
+      _terminal-marks-preexec() {
+        _terminal_command=1
+        _terminal-encode $1
+        print -n "\e]133;C;cmdline_url=$REPLY\a"
+      }
+      add-zsh-hook precmd _terminal-marks-precmd
+      add-zsh-hook preexec _terminal-marks-preexec
+      PROMPT=$'%{\e]133;A;k=i\a%}'$PROMPT$'%{\e]133;B\a%}'
+      RPROMPT=
     '')
 
     (lib.mkOrder 2000 ''

@@ -26,8 +26,8 @@ in {
     };
     localVariables.YSU_MESSAGE_FORMAT = "${sgr roles.state.warning}Found existing %alias_type for ${sgr roles.accent.primary}\"%command\"${sgr roles.state.warning}. You should use: ${sgr roles.accent.primary}\"%alias\"\\e[0m";
     initContent = lib.mkOrder 950 ''
-      source ${pkgs.zsh-defer}/share/zsh-defer/zsh-defer.plugin.zsh
-      zsh-defer source ${pkgs.zsh-you-should-use}/share/zsh/plugins/you-should-use/you-should-use.plugin.zsh
+      source ${pkgs.zsh-you-should-use}/share/zsh/plugins/you-should-use/you-should-use.plugin.zsh
+      add-zsh-hook -d preexec _check_global_aliases
     '';
   };
 }

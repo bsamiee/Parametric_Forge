@@ -66,6 +66,46 @@ in {
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
+    fontspector = {
+      version = generatedPins.fontspector-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "fontspector-aarch64-darwin";
+      license = "asl20";
+      description = "OpenType font quality checks with universal, OpenType, and Google Fonts profiles";
+      homepage = "https://github.com/fonttools/fontspector";
+      mainProgram = "fontspector";
+    };
+    shaperglot-current = {
+      version = generatedPins.shaperglot-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "shaperglot-aarch64-darwin";
+      license = "asl20";
+      description = "Language support checks of a font by shaping, with JSON output";
+      homepage = "https://github.com/googlefonts/shaperglot";
+      mainProgram = "shaperglot";
+    };
+    diffenator3 = {
+      version = generatedPins.diffenator3-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "diffenator3-aarch64-darwin";
+      license = "asl20";
+      description = "Font version comparison over tables, kerning, glyphs, and rendered words";
+      homepage = "https://github.com/googlefonts/diffenator3";
+      mainProgram = "diffenator3";
+    };
+    fontc-current = {
+      version = generatedPins.fontc-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "fontc-aarch64-darwin";
+      license = "asl20";
+      description = "Font compiler from UFO, Glyphs, and designspace sources";
+      homepage = "https://github.com/googlefonts/fontc";
+      mainProgram = "fontc";
+    };
+    fontheight-cli = {
+      asset = pinAsset "fontheight-cli";
+      inherit (generatedPins.fontheight-cli) version;
+      license = "asl20";
+      description = "Vertical extents a font reaches on shaped words of each language";
+      homepage = "https://github.com/googlefonts/fontheight";
+      mainProgram = "fontheight";
+    };
     geist-font-current = designSource "geist-font";
     scheherazade-new-current = designSource "scheherazade-new";
     harfbuzz-current =
@@ -74,6 +114,9 @@ in {
         sourceOverride = {
           withVector = true;
           withGPU = true;
+          withRaster = true;
+          withCairo = true;
+          withIcu = true;
         };
       };
     mupdf-current = designSource "mupdf";
@@ -398,21 +441,6 @@ in {
   };
 
   extensions = {
-    wezterm-plugins = {
-      source = "fetchFromGitHub";
-      rows = {
-        sync-panes = {
-          owner = "annie444";
-          repo = "sync-panes.wez";
-          rev = "2cfa9fea761e507b62a09daa1d8bef440a40265c";
-          hash = "sha256-RgrMNW5GJ+WaJnioj2DfAWdBw6fxQezNJEYV4tqroSo=";
-          license = "mit";
-          permissions = ["broadcast-input-active-tab" "clipboard-paste" "window-frame-overrides"];
-          surface = "runtime";
-          apply = "apply_to_config";
-        };
-      };
-    };
     zellij-plugins = {
       source = "nixpkgs:zellijPlugins | fetchurl";
       rows = {
@@ -477,6 +505,49 @@ in {
     uv-tools = {
       source = "uvx";
       rows = {
+        afdko = {
+          inherit (generatedPins.afdko) version;
+          extras = [];
+          python = "3.13";
+          commands = ["spot" "tx" "otfautohint" "makeotf" "ttxn" "sfntdiff"];
+          license = "Apache-2.0";
+        };
+        fontmake = {
+          inherit (generatedPins.fontmake) version;
+          extras = ["pathops"];
+          commands = ["fontmake"];
+          license = "Apache-2.0";
+        };
+        foundrytools-cli = {
+          inherit (generatedPins.foundrytools-cli) version;
+          extras = [];
+          commands = ["ftcli"];
+          license = "MIT";
+        };
+        glyphsLib = {
+          inherit (generatedPins.glyphslib) version;
+          extras = [];
+          commands = ["glyphs2ufo" "ufo2glyphs"];
+          license = "Apache-2.0";
+        };
+        hyperglot = {
+          inherit (generatedPins.hyperglot) version;
+          extras = [];
+          commands = ["hyperglot" "hyperglot-data" "hyperglot-report"];
+          license = "Apache-2.0";
+        };
+        nanoemoji = {
+          inherit (generatedPins.nanoemoji) version;
+          extras = [];
+          commands = ["nanoemoji"];
+          license = "Apache-2.0";
+        };
+        youseedee = {
+          inherit (generatedPins.youseedee) version;
+          extras = [];
+          commands = ["youseedee"];
+          license = "Apache-2.0";
+        };
         notebooklm-py = {
           inherit (generatedPins.notebooklm-py) version;
           extras = ["browser" "cookies" "headless" "mcp"];

@@ -7,7 +7,7 @@
   commands = lib.concatMapAttrs (package: row:
     lib.genAttrs row.commands (command:
       pkgs.writeShellScriptBin command ''
-        exec ${pkgs.uv}/bin/uvx --from ${lib.escapeShellArg "${package}[${lib.concatStringsSep "," row.extras}]==${row.version}"} ${command} "$@"
+        exec ${pkgs.uv}/bin/uvx ${lib.optionalString (row ? python) "--python ${row.python} "}--from ${lib.escapeShellArg "${package}[${lib.concatStringsSep "," row.extras}]==${row.version}"} ${command} "$@"
       ''))
   toolRows;
 in {

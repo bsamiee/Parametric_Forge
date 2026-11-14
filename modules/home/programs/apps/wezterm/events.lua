@@ -45,11 +45,6 @@ local handlers = {
         end
     end,
 
-    ["mux-startup"] = function()
-        local ws = wezterm.mux.get_active_workspace()
-        wezterm.mux.spawn_window({ cwd = wezterm.home_dir, args = deck.session_args(ws) })
-    end,
-
     ["update-status"] = function(window)
         local items = {}
         local function push(fragments)
@@ -61,9 +56,6 @@ local handlers = {
         local key_table = window:active_key_table()
         if key_table then
             push(cell(roles.state.danger, "[" .. key_table:upper() .. "]"))
-        end
-        if deck.sync and deck.sync.is_synced(window) then
-            push(cell(roles.state.danger, "[SYNC]"))
         end
 
         window:set_right_status(wezterm.format(items))

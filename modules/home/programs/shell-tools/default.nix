@@ -27,6 +27,7 @@ in {
     ./starship.nix
     ./tailscale.nix
     ./tlrc.nix
+    ./tmux.nix
     ./trippy.nix
     ./xh.nix
     ./zoxide.nix
@@ -65,7 +66,6 @@ in {
       pkgs.rsync-current
       pkgs.sd
       pkgs.sshs
-      pkgs.tmux
       pkgs.tree
       pkgs.tscli-current
       pkgs.uv

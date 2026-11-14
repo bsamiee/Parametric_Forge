@@ -6,25 +6,19 @@
 }: let
   inherit (config.forge.theme) roles projections;
   chordRows = config.forge.chords.wezterm.rows;
-  manifest = import ../../../../../overlays/manifest.nix;
   profileBin = "/etc/profiles/per-user/${config.home.username}/bin";
   homeDir = config.home.homeDirectory;
-
-  # --- [PLUGIN_PINS_MANIFEST_ROWS_FILE_STORE_PATH_LOADS_ONLY]
-  syncPanesSrc = pkgs.fetchFromGitHub {
-    inherit (manifest.extensions.wezterm-plugins.rows.sync-panes) owner repo rev hash;
-  };
 
   # --- [FONT_ROW]
   fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS]
-  mkWorkspace = name: label: cwd: {
-    inherit name label cwd;
-    float = "utility";
-  };
   workspaceRows = [
-    (mkWorkspace "main" "[MAIN]" homeDir)
+    {
+      name = "main";
+      label = "[MAIN]";
+      cwd = homeDir;
+    }
   ];
   defaultWorkspace = "main";
 
@@ -33,23 +27,19 @@
     {
       id = "nix-store-path";
       regex = "/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+";
-      priority = 10;
     }
     {
       id = "flake-ref";
       regex = "(github|gitlab|sourcehut):[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(/[A-Za-z0-9._/-]+)?";
-      priority = 20;
     }
     {
       id = "file-span";
       regex = "[A-Za-z0-9~._/-]+[.][a-z]+:[0-9]+(:[0-9]+)?";
-      priority = 30;
       select = "edit";
     }
     {
       id = "issue-id";
       regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
-      priority = 40;
     }
   ];
   # --- [FLOATING_UTILITY_DECK_ROWS]
@@ -116,10 +106,6 @@
     };
     initial_cols = 150;
     initial_rows = 34;
-    inactive_pane_hsb = {
-      saturation = 0.75;
-      brightness = 0.75;
-    };
 
     default_cursor_style = "SteadyBar";
     cursor_thickness = 2;
@@ -131,6 +117,8 @@
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;
+    bidi_enabled = true;
+    bidi_direction = "LeftToRight";
     audible_bell = "Disabled";
 
     disable_default_key_bindings = true;
@@ -154,26 +142,23 @@
     scrollback_lines = 5000;
 
     default_workspace = defaultWorkspace;
-    quick_select_patterns = map (r: r.regex) (lib.sort (a: b: a.priority < b.priority) quickSelectRows);
+    quick_select_patterns = map (r: r.regex) quickSelectRows;
     quick_select_remove_styling = true;
-    default_ssh_auth_sock = config.forge.ssh.identityAgent;
+    mux_enable_ssh_agent = false;
   };
 
   # --- [GENERATED_LUA_DATA_ENTRY_POINT]
   rows = {
     paths = {
       zsh = config.forge.shell;
-      zellij = "${pkgs.zellij}/bin/zellij";
       zellij_attach = lib.getExe config.forge.zellij.attach;
       code = "${config.forge.apps.vscode.path}/Contents/Resources/app/bin/code";
     };
-    plugins.sync_panes = "${syncPanesSrc}";
     font = fontRow;
     commands = commandRows;
     keys =
       map (r: {
-        inherit (r) id key mods action class;
-        destructive = r.destructive or false;
+        inherit (r) id key mods action;
       })
       chordRows;
     floats = floatRows;

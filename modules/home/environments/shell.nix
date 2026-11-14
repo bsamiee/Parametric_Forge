@@ -17,6 +17,7 @@
   guiEnvRows =
     toolchainEnv.sharedEnv
     // {
+      PATH = lib.concatStringsSep ":" toolchainEnv.pathEntries;
       SSH_AUTH_SOCK = config.forge.ssh.identityAgent;
       inherit (config.home.sessionVariables) LANG XDG_CONFIG_HOME XDG_CACHE_HOME XDG_DATA_HOME XDG_STATE_HOME;
     };

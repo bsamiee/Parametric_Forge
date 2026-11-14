@@ -185,7 +185,7 @@
       else row.key;
   in "${glyphs}${keyLabel}";
   mkWez = t: let
-    r = row ["id" "key" "mods" "label" "class" "frank" "flabel" "fdisplay" "destructive"] t;
+    r = row ["id" "key" "mods" "label" "frank" "flabel" "fdisplay"] t;
   in
     (removeAttrs r ["frank" "flabel" "fdisplay"])
     // {action = r.id;}
@@ -197,28 +197,23 @@
       };
     };
   weztermRows = map mkWez [
-    ["copy" "c" "CMD" "copy" "native"]
-    ["paste" "v" "CMD" "paste" "native"]
-    ["spawn-window" "n" "CMD" "new window" "native"]
-    ["quit" "q" "CMD" "quit wezterm" "native"]
-    ["hide-app" "h" "CMD" "hide app" "native"]
-    ["minimize" "m" "CMD" "minimize" "native"]
-    ["font-inc" "=" "CMD" "font size +" "native"]
-    ["font-dec" "-" "CMD" "font size -" "native"]
-    ["font-reset" "0" "CMD" "font size reset" "native"]
-    ["reload" "r" "CMD" "reload config" "native"]
-    ["palette" "p" "CMD|SHIFT" "wezterm palette" "overlay" 310]
-    ["quick-select" "Space" "CMD|SHIFT" "wezterm quick select" "overlay" 320]
-    ["launcher" "l" "CMD|SHIFT" "wezterm launcher" "overlay" 330]
-    ["char-select" "u" "CMD|SHIFT" "wezterm unicode picker" "overlay" 340]
-    ["debug-overlay" "d" "CMD|SHIFT" "wezterm debug overlay" "overlay" 350]
-    ["workspace-switch" "o" "CMD|SHIFT" "wezterm workspace switch" "deck" 360]
-    ["workspace-new" "n" "CMD|SHIFT" "wezterm workspace new" "deck" 365]
-    ["sync-toggle" "e" "CMD|SHIFT" "wezterm sync panes" "deck" 370 null null true]
-    ["nav-left" "h" "CTRL" "pane nav left" "nav" 380 "wezterm pane nav" "⌃H/J/K/L (plain splits)"]
-    ["nav-down" "j" "CTRL" "pane nav down" "nav"]
-    ["nav-up" "k" "CTRL" "pane nav up" "nav"]
-    ["nav-right" "l" "CTRL" "pane nav right" "nav"]
+    ["copy" "c" "CMD" "copy"]
+    ["paste" "v" "CMD" "paste"]
+    ["spawn-window" "n" "CMD" "new window"]
+    ["quit" "q" "CMD" "quit wezterm"]
+    ["hide-app" "h" "CMD" "hide app"]
+    ["minimize" "m" "CMD" "minimize"]
+    ["font-inc" "=" "CMD" "font size +"]
+    ["font-dec" "-" "CMD" "font size -"]
+    ["font-reset" "0" "CMD" "font size reset"]
+    ["reload" "r" "CMD" "reload config"]
+    ["palette" "p" "CMD|SHIFT" "wezterm palette" 310]
+    ["quick-select" "Space" "CMD|SHIFT" "wezterm quick select" 320]
+    ["launcher" "l" "CMD|SHIFT" "wezterm launcher" 330]
+    ["char-select" "u" "CMD|SHIFT" "wezterm unicode picker" 340]
+    ["debug-overlay" "d" "CMD|SHIFT" "wezterm debug overlay" 350]
+    ["workspace-switch" "o" "CMD|SHIFT" "wezterm workspace switch" 360]
+    ["workspace-new" "n" "CMD|SHIFT" "wezterm workspace new" 365]
   ];
   weztermForgot =
     lib.concatMap (
@@ -347,108 +342,12 @@
     lib.concatMapStringsSep " · " (l: "${l.chip} ${lib.toLower l.name}")
     (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
     + " ";
-
-  # --- [REGISTER_PROJECTION]
-  zjRegRow = layer: row: {
-    chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
-    consumer = "zellij";
-    physical_layer = layer.name;
-    mods = layer.zellij;
-    key = lib.concatStringsSep "," row.keys;
-    label = row.label or row.forgot.label or row.ribbon.label or row.kdl or "bound action";
-    action = row.kdl or row.body or "";
-    scope = "shared_except locked";
-    projection_path = ".config/zellij/config.kdl";
-    rendered = renderBind layer.zellij row;
-  };
-  modeRegRows =
-    map (m: {
-      chord_id = "zellij:hyper:${modes.${m}.key}";
-      consumer = "zellij";
-      physical_layer = layers.hyper.name;
-      mods = layers.hyper.zellij;
-      key = modes.${m}.key;
-      label = "${m} mode";
-      action = "SwitchToMode \"${lib.strings.toSentenceCase m}\";";
-      scope = "shared_except ${m} locked";
-      toggle = true;
-      projection_path = ".config/zellij/config.kdl";
-      rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${lib.strings.toSentenceCase m}\"; }";
-    })
-    entryOrder;
-  lockedExitRow = {
-    chord_id = "zellij:hyper:${modes.locked.exitKey}";
-    consumer = "zellij";
-    physical_layer = layers.hyper.name;
-    mods = layers.hyper.zellij;
-    key = modes.locked.exitKey;
-    label = "unlock (locked mode)";
-    action = "SwitchToMode \"Normal\";";
-    scope = "locked";
-    projection_path = ".config/zellij/config.kdl";
-    rendered = "bind \"${layers.hyper.zellij} ${modes.locked.exitKey}\" { SwitchToMode \"Normal\"; }";
-  };
-  register =
-    lib.concatLists (lib.mapAttrsToList (n: map (zjRegRow layers.${n})) bindRows)
-    ++ map (r: {
-      chord_id = "zellij:normal:${r.key}";
-      consumer = "zellij";
-      physical_layer = "none";
-      mods = "Super";
-      label = r.forgot.label or r.comment;
-      inherit (r) key action;
-      scope = "normal";
-      projection_path = ".config/zellij/config.kdl";
-      rendered = renderNormal r;
-    })
-    normalRows
-    ++ modeRegRows
-    ++ [
-      lockedExitRow
-      {
-        chord_id = "karabiner:caps_lock";
-        consumer = "karabiner";
-        physical_layer = "Caps Lock";
-        mods = "";
-        key = "caps_lock";
-        label = "⌘⌥ super-modifier (hold) / Caps Lock (tap)";
-        action = builtins.toJSON capsRule.manipulators;
-        scope = "os";
-        projection_path = ".config/karabiner/karabiner.json";
-        rendered = builtins.toJSON capsRule;
-      }
-    ]
-    ++ map (l: {
-      chord_id = "karabiner:${l.from}";
-      consumer = "karabiner";
-      physical_layer = l.physical;
-      mods = "";
-      key = l.from;
-      label = "${l.physical} → ${l.name} (${l.glyphs}) leader";
-      action = builtins.toJSON l.to;
-      scope = "os";
-      projection_path = ".config/karabiner/karabiner.json";
-      rendered = builtins.toJSON l.to;
-    }) (lib.attrValues layers)
-    ++ map (r: {
-      chord_id = "wezterm:${r.id}";
-      consumer = "wezterm";
-      physical_layer = "none";
-      inherit (r) mods key label action;
-      scope =
-        if r.class == "nav"
-        then "app passthrough:zellij"
-        else "app";
-      projection_path = ".config/wezterm/rows.lua";
-      rendered = weztermDisplay r;
-    })
-    weztermRows;
 in {
   options.forge.chords = lib.mkOption {
     type = lib.types.raw;
     readOnly = true;
     default = {
-      inherit layers modes register;
+      inherit layers modes;
       wezterm.rows = weztermRows;
       karabiner.rules =
         [capsRule]

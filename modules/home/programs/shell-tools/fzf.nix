@@ -1,10 +1,24 @@
-{config, ...}: let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (config.forge.theme) projections;
   fd = "fd";
   fdFiles = "${fd} --type f --hidden --follow --exclude .git";
+  share = "${config.programs.fzf.package}/share/fzf";
 in {
+  # --- [ZSH_WIDGETS]
+  programs.zsh.initContent = lib.mkOrder 910 ''
+    if [[ -o zle && -t 0 ]]; then
+      source ${share}/key-bindings.zsh
+      source ${share}/completion.zsh
+    fi
+  '';
+
   programs.fzf = {
     enable = true;
+    enableZshIntegration = false;
 
     # --- [DEFAULT_CONFIGURATION]
     defaultCommand = fdFiles;

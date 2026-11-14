@@ -55,7 +55,8 @@
   };
   tokenNames = lib.attrNames tokenRows;
   stampName = "FORGE_OP_STAMP";
-  cacheNames = tokenNames ++ [stampName];
+  namesName = "FORGE_OP_NAMES";
+  cacheNames = tokenNames ++ [stampName namesName];
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     text = ''
@@ -86,6 +87,7 @@ in {
   config = {
     home = {
       packages = [pkgs._1password-cli-current pkgs.doppler];
+      file.".doppler".source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/doppler";
 
       activation = {
         # --- [TOKEN_CACHE]
@@ -183,8 +185,9 @@ in {
       # --- [SECRET_TEMPLATE]
       "op/env.template".text =
         ''
-          [ "''${${stampName}:-}" = "@stamp@" ] || unset ${toString tokenNames}
+          [ "''${${stampName}:-}" = "@stamp@" ] || eval "unset ''${${namesName}:-} ${toString tokenNames}"
           export ${stampName}="@stamp@"
+          export ${namesName}="${toString tokenNames}"
         ''
         + lib.concatLines (lib.mapAttrsToList (name: ref: ''export ${name}="''${${name}:-{{ op://Tokens/${
             if ref == null

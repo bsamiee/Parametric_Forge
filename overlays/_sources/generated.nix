@@ -14,6 +14,14 @@
       sha256 = "sha256-nRMcFPjg3sgdbYu8pjSTHuzHZw4qUQfOG9OUszVyTOA=";
     };
   };
+  afdko = {
+    pname = "afdko";
+    version = "5.0.1";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/a/afdko/afdko-5.0.1.tar.gz";
+      sha256 = "sha256-CDtQShzYZei/u0ITSjQxjOQu9RMNrr/FsOLy+0RDJsU=";
+    };
+  };
   aredotna-cli = {
     pname = "aredotna-cli";
     version = "0.12.0";
@@ -148,6 +156,14 @@
       sha256 = "sha256-LVGZDoP4dYJ52diD8RJcbGiI+R1KSnl9bjLBzGEVM38=";
     };
   };
+  diffenator3-aarch64-darwin = {
+    pname = "diffenator3-aarch64-darwin";
+    version = "1.1.4";
+    src = fetchTarball {
+      url = "https://github.com/googlefonts/diffenator3/releases/download/v1.1.4/diffenator3-1.1.4-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-0ipo7L4aLY19S6IbvH6EEk7UC0mTXX6tls8Bx+m9eX8=";
+    };
+  };
   dua-aarch64-darwin = {
     pname = "dua-aarch64-darwin";
     version = "3.0.3";
@@ -220,6 +236,52 @@
       sha256 = "sha256-C0EmVrdY2OpXl4rz6mzSjbhEMxjIbPUjdVRdQ0HpdZE=";
     };
   };
+  fontc-aarch64-darwin = {
+    pname = "fontc-aarch64-darwin";
+    version = "2.0.1";
+    src = fetchurl {
+      url = "https://github.com/googlefonts/fontc/releases/download/fontc-v2.0.1/fontc-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-fkh21Ktv7SX9RtAfRWrp9NdhrQgW9hLJM9CI0lpnsdg=";
+    };
+  };
+  fontheight-cli = {
+    pname = "fontheight-cli";
+    version = "0.1.3";
+    src = fetchTarball {
+      url = "https://github.com/googlefonts/fontheight/archive/refs/tags/fontheight-cli-v0.1.3.tar.gz";
+      sha256 = "sha256-VEbAOTB5404V89fxXsJ0lntptNPBgiEX3pKLjydx87U=";
+    };
+    cargoLock."Cargo.lock" = {
+      lockFile = ./. + "/sha256-VEbAOTB5404V89fxXsJ0lntptNPBgiEX3pKLjydx87U=/Cargo.lock";
+      outputHashes = {
+        
+      };
+    };
+  };
+  fontmake = {
+    pname = "fontmake";
+    version = "3.12.2";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/f/fontmake/fontmake-3.12.2.tar.gz";
+      sha256 = "sha256-AgtGLOflHpTtl5wWIstotFIfX2pedAkuBhuX+/+KpA8=";
+    };
+  };
+  fontspector-aarch64-darwin = {
+    pname = "fontspector-aarch64-darwin";
+    version = "1.9.1";
+    src = fetchTarball {
+      url = "https://github.com/fonttools/fontspector/releases/download/fontspector-v1.9.1/fontspector-1.9.1-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-DGemClAy754Z+39kQ9urx+3OJng5QRhkvFEDwmioDxc=";
+    };
+  };
+  foundrytools-cli = {
+    pname = "foundrytools-cli";
+    version = "2.2.2";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/f/foundrytools-cli/foundrytools_cli-2.2.2.tar.gz";
+      sha256 = "sha256-xjV+7L1aKV1kzJQ1A3W06OJcXnkxXQWKJjYSxtFx718=";
+    };
+  };
   gam-aarch64-darwin = {
     pname = "gam-aarch64-darwin";
     version = "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz";
@@ -244,6 +306,14 @@
       sha256 = "sha256-8LC/iSZLm9LhxkA2PnUpZDmJ2nYoFgBHPFB0XNNKYH8=";
     };
   };
+  glyphslib = {
+    pname = "glyphslib";
+    version = "6.17.2";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/g/glyphslib/glyphslib-6.17.2.tar.gz";
+      sha256 = "sha256-MNHrJq6Nq0FvUq3bz+YKRxhv59dLBwJox5FwdhugkH4=";
+    };
+  };
   gogcli-aarch64-darwin = {
     pname = "gogcli-aarch64-darwin";
     version = "0.48.0";
@@ -266,6 +336,14 @@
     src = fetchTarball {
       url = "https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-aarch64-apple-darwin.tar.gz";
       sha256 = "sha256-jeBuRYrPw0uM6gDqx0wsGo6Dz/w5t6jEbQDhCU/s43A=";
+    };
+  };
+  hyperglot = {
+    pname = "hyperglot";
+    version = "0.8.2";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/h/hyperglot/hyperglot-0.8.2.tar.gz";
+      sha256 = "sha256-HUa/mxFmiXoVN/A7mV04lHXCNapXisZTTXCCsyKIshE=";
     };
   };
   m365-cli = {
@@ -306,6 +384,14 @@
     src = fetchurl {
       url = "https://github.com/harehare/mq/releases/download/v0.10.1/mq-aarch64-apple-darwin";
       sha256 = "sha256-IjUW79yPPBT3k0s7wHkchsw/LIS/oRWbsWTe48zN4IM=";
+    };
+  };
+  nanoemoji = {
+    pname = "nanoemoji";
+    version = "0.16.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoji-0.16.0.tar.gz";
+      sha256 = "sha256-VCoyzYfdEuVcXKKboujxCLb2JxcPGcPwUBkDl2IG4bc=";
     };
   };
   nh-aarch64-darwin = {
@@ -451,6 +537,14 @@
       sha256 = "sha256-oQ1ZGCUlHgcPdMmN89qtGV3vTtgbSi3hYWkCauoz9sg=";
     };
   };
+  shaperglot-aarch64-darwin = {
+    pname = "shaperglot-aarch64-darwin";
+    version = "1.2.2";
+    src = fetchTarball {
+      url = "https://github.com/googlefonts/shaperglot/releases/download/v1.2.2/shaperglot-1.2.2-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-vlERGP3eibev87gemJY2Ez4GdPOK3tVEcHnPar93/yM=";
+    };
+  };
   sqlean-aarch64-darwin = {
     pname = "sqlean-aarch64-darwin";
     version = "0.29.0";
@@ -505,6 +599,14 @@
     src = fetchTarball {
       url = "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz";
       sha256 = "sha256-33cZozNm/IxiVg/ISXRPO6eMyGDwg0QoaB8TSePxwkE=";
+    };
+  };
+  youseedee = {
+    pname = "youseedee";
+    version = "0.7.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/y/youseedee/youseedee-0.7.0.tar.gz";
+      sha256 = "sha256-b5gxBIr/mowzlG4/N0C22S1XTq0NAGTq1/+iMUfxD18=";
     };
   };
   yq-aarch64-darwin = {

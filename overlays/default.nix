@@ -119,6 +119,37 @@ final: prev: let
       else {dontUnpack = true;}
     );
 
+  binaryInstall = {
+    binaries,
+    reportsVersion ? true,
+  }: {row, ...}:
+    {
+      dontUnpack = true;
+      installPhase = ''
+        runHook preInstall
+        ${lib.concatMapStrings (binary: ''
+            install -Dm755 "$src/${binary}" "$out/bin/${binary}"
+          '')
+          binaries}
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+    }
+    // (
+      if reportsVersion
+      then {
+        nativeInstallCheckInputs = [prev.versionCheckHook];
+        versionCheckProgram = "${placeholder "out"}/bin/${row.mainProgram}";
+      }
+      else {
+        installCheckPhase = ''
+          runHook preInstallCheck
+          "$out/bin/${row.mainProgram}" --version
+          runHook postInstallCheck
+        '';
+      }
+    );
+
   recipes = {
     gogcli-current = cliRelease {
       binary = "gog";
@@ -344,17 +375,14 @@ final: prev: let
         runHook postInstall
       '';
     };
-    vl-convert = _: {
-      dontUnpack = true;
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 "$src/vl-convert" "$out/bin/vl-convert"
-        runHook postInstall
-      '';
-      doInstallCheck = true;
-      nativeInstallCheckInputs = [prev.versionCheckHook];
-      versionCheckProgram = "${placeholder "out"}/bin/vl-convert";
+    vl-convert = binaryInstall {binaries = ["vl-convert"];};
+    fontspector = binaryInstall {
+      binaries = ["fontspector"];
+      reportsVersion = false;
     };
+    shaperglot-current = binaryInstall {binaries = ["shaperglot"];};
+    diffenator3 = binaryInstall {binaries = ["diffenator3" "diff3proof"];};
+    fontc-current = cliRelease {binary = "fontc";};
     energyplus = optRuntime;
     openstudio = optRuntime;
   };
@@ -479,6 +507,25 @@ in
       };
     in
       python.pkgs.toPythonApplication python.pkgs.ocrmypdf;
+    fontheight-cli = let
+      row = manifest.packages.fontheight-cli;
+    in
+      prev.rustPlatform.buildRustPackage {
+        pname = "fontheight-cli";
+        inherit (row) version;
+        src = srcOf row.asset;
+        cargoLock = generatedSources.fontheight-cli.cargoLock."Cargo.lock";
+        cargoBuildFlags = ["--package" "fontheight-cli"];
+        cargoTestFlags = ["--package" "fontheight-cli"];
+        env.STATIC_LANG_WORD_LISTS_LOCAL = "1";
+        doInstallCheck = true;
+        nativeInstallCheckInputs = [prev.versionCheckHook];
+        meta = {
+          inherit (row) description homepage mainProgram;
+          license = lib.licenses.${row.license};
+          platforms = ["aarch64-darwin"];
+        };
+      };
     sqlite-extended = let
       row = manifest.packages.sqlite-extended;
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;
