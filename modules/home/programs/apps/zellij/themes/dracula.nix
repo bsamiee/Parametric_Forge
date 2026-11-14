@@ -1,24 +1,16 @@
-# Title         : dracula.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/zellij/themes/dracula.nix
-# ----------------------------------------------------------------------------
-# Nix-generated Zellij component theme from the Forge palette owner. One row per component:
-# [ base background emphasis_0 emphasis_1 emphasis_2 emphasis_3 ] as palette role names; the renderer is one fold over the rows.
 {
   config,
   lib,
   ...
 }: let
   inherit (config.forge.theme) palette;
-  rgb = role: palette.${role}.triple; # Component theme rows take decimal RGB triples
+  rgb = role: palette.${role}.triple;
   slots = ["base" "background" "emphasis_0" "emphasis_1" "emphasis_2" "emphasis_3"];
   components = [
     ["text_unselected" ["cyan" "current_line" "orange" "yellow" "cyan" "orange"]]
     ["text_selected" ["orange" "current_line" "cyan" "foreground" "foreground" "foreground"]]
     ["ribbon_unselected" ["foreground" "current_line" "cyan" "foreground" "foreground" "foreground"]]
-    ["ribbon_selected" ["current_line" "orange" "cyan" "yellow" "magenta" "comment"]] # Highlighted when a mode is entered.
+    ["ribbon_selected" ["current_line" "orange" "cyan" "yellow" "magenta" "comment"]]
     ["table_title" ["foreground" "current_line" "cyan" "yellow" "magenta" "comment"]]
     ["table_cell_unselected" ["foreground" "background" "comment" "cyan" "yellow" "magenta"]]
     ["table_cell_selected" ["foreground" "selection" "cyan" "yellow" "pink" "comment"]]
@@ -39,13 +31,6 @@
     ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
   programs.zellij.themes.dracula = ''
-    // Title         : dracula.kdl
-    // Author        : Bardia Samiee
-    // Project       : Parametric Forge
-    // License       : MIT
-    // Path          : ~/.config/zellij/themes/dracula.kdl
-    // ----------------------------------------------------------------------------
-    // Zellij component theme generated from the Forge palette owner
 
     themes {
       "dracula" {

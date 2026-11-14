@@ -14,6 +14,35 @@
         },
         "version": "2.44.0-beta.02"
     },
+    "aredotna-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "aredotna-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-e3NUjgGQxm2gXbQS9DofH8d0rxaArGfpRLvTtKmtyjg=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@aredotna/cli/-/cli-0.12.0.tgz"
+        },
+        "version": "0.12.0"
+    },
+    "atuin-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "atuin-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=",
+            "type": "tarball",
+            "url": "https://github.com/atuinsh/atuin/releases/download/v18.24.8/atuin-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "18.24.8"
+    },
     "biome-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -28,6 +57,64 @@
             "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.7/biome-darwin-arm64"
         },
         "version": "2.6.7"
+    },
+    "cachix": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cachix",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-Jby8fR/4VkuPd0bnq3DFK9D5IsfXnyCtW9fzH4F69xg=",
+            "type": "tarball",
+            "url": "https://github.com/cachix/cachix/archive/refs/tags/v1.14.0.tar.gz"
+        },
+        "version": "1.14.0"
+    },
+    "cloudflare-cf": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "cloudflare-cf",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-/BqaiBv/pCN9Q/+DHnnJfBZFlXTHXs7gcycufP+2xck=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/cf/-/cf-1.0.0-beta.32.tgz"
+        },
+        "version": "1.0.0-beta.32"
+    },
+    "ctx7": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ctx7",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-zrFI8piKYlNDkNP/WMP3O9M52NlH9lhs+esPeIYQAKc=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/ctx7/-/ctx7-0.11.1.tgz"
+        },
+        "version": "0.11.1"
+    },
+    "curl-impersonate-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "curl-impersonate-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-UZx753ViTM9EjyfE8ac/J9d0BgBDPKZrvF2HzLoGW1U=",
+            "type": "tarball",
+            "url": "https://github.com/lexiforest/curl-impersonate/releases/download/v2.3.2/curl-impersonate-v2.3.2.arm64-macos.tar.gz"
+        },
+        "version": "2.3.2"
     },
     "design-fonttools": {
         "cargoLock": null,
@@ -159,11 +246,26 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-qsiyTaaMBVAXfkOlxGEdFqcYqzqZhFZM73taoXyBOts=",
+            "sha256": "sha256-LVGZDoP4dYJ52diD8RJcbGiI+R1KSnl9bjLBzGEVM38=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.221/cli-1.31.221.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.224/cli-1.31.224.jar"
         },
-        "version": "1.31.221"
+        "version": "1.31.224"
+    },
+    "dua-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "dua-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-EzYEf16joRHBBJKGGt4DIzVFom/9TK3U/T68L02xS2U=",
+            "type": "url",
+            "url": "https://github.com/Byron/dua-cli/releases/download/v3.0.3/dua-v3.0.3-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "3.0.3"
     },
     "duckdb-aarch64-darwin": {
         "cargoLock": null,
@@ -177,6 +279,36 @@
             "sha256": "sha256-GIo2/oiD71LmkWWgy7YDHvZ5yObESKHOIpUZZBSbf5Y=",
             "type": "url",
             "url": "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-cli-osx-arm64.tar.gz"
+        },
+        "version": "2.0.0"
+    },
+    "duckdb-excel-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-excel-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-qeOMS/Vb1IIHPy1Aw6DBM0+t+oGcobeg61maOJNsT9E=",
+            "type": "url",
+            "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/excel.duckdb_extension.gz"
+        },
+        "version": "2.0.0"
+    },
+    "duckdb-spatial-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "duckdb-spatial-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FtrcZebrWiEhYAcAY7V8wN7W68JMyMIMQBoXqeADLO4=",
+            "type": "url",
+            "url": "https://extensions.duckdb.org/v2.0.0/osx_arm64/spatial.duckdb_extension.gz"
         },
         "version": "2.0.0"
     },
@@ -194,6 +326,138 @@
         },
         "version": "v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz"
     },
+    "exchange-online-management": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "exchange-online-management",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-C0EmVrdY2OpXl4rz6mzSjbhEMxjIbPUjdVRdQ0HpdZE=",
+            "type": "url",
+            "url": "https://www.powershellgallery.com/api/v2/package/ExchangeOnlineManagement/3.11.1"
+        },
+        "version": "3.11.1"
+    },
+    "gam-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gam-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=",
+            "type": "tarball",
+            "url": "https://github.com/GAM-team/GAM/releases/download/v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
+        },
+        "version": "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
+    },
+    "gh-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gh-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-KyX46Gln1mOyEa/Ll5Hbwaw8DAcMNIp1n3+HM9UYdvs=",
+            "type": "tarball",
+            "url": "https://github.com/cli/cli/releases/download/v2.104.0/gh_2.104.0_macOS_arm64.zip"
+        },
+        "version": "2.104.0"
+    },
+    "git": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "git",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-8LC/iSZLm9LhxkA2PnUpZDmJ2nYoFgBHPFB0XNNKYH8=",
+            "type": "url",
+            "url": "https://www.kernel.org/pub/software/scm/git/git-2.56.1.tar.xz"
+        },
+        "version": "2.56.1"
+    },
+    "gogcli-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gogcli-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-qMYUL8ufQfDv8C/+94KYy+SYEGHxScKzpC1aE7rZMb0=",
+            "type": "url",
+            "url": "https://github.com/openclaw/gogcli/releases/download/v0.48.0/gogcli_0.48.0_darwin_arm64.tar.gz"
+        },
+        "version": "0.48.0"
+    },
+    "hostinger-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "hostinger-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-TFX+EaOxvi8OKh+7eLhkv2BLdoQgO+vmMop7iI1CMps=",
+            "type": "url",
+            "url": "https://github.com/hostinger/api-cli/releases/download/v5.0.0/hostinger-5.0.0-darwin-arm64.tar.gz"
+        },
+        "version": "5.0.0"
+    },
+    "hurl-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "hurl-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-jeBuRYrPw0uM6gDqx0wsGo6Dz/w5t6jEbQDhCU/s43A=",
+            "type": "tarball",
+            "url": "https://github.com/Orange-OpenSource/hurl/releases/download/8.1.0/hurl-8.1.0-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "8.1.0"
+    },
+    "m365-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "m365-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-j5bVytavBeuMD1vIW3+cQ6jN5aCRLxP0W2uafyH7iNQ=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@pnp/cli-microsoft365/-/cli-microsoft365-12.0.0.tgz"
+        },
+        "version": "12.0.0"
+    },
+    "mcporter": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mcporter",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-IZYj4JnxV4Ov2tJMwd5reFpwjlQFT9NGg50u/zxFChE=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/mcporter/-/mcporter-0.17.0.tgz"
+        },
+        "version": "0.17.0"
+    },
     "mise-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -203,11 +467,71 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-kvG59otgMan3eTig/439enf+nNkYxbCdDtQ08G670/I=",
+            "sha256": "sha256-en+TQlWcxMpnAFQzfs9JfmnYMqBfZuUxYoOB3JK4j0g=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.11.7/mise-v2026.11.7-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.11.8/mise-v2026.11.8-macos-arm64.tar.gz"
         },
-        "version": "2026.11.7"
+        "version": "2026.11.8"
+    },
+    "mq-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mq-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-IjUW79yPPBT3k0s7wHkchsw/LIS/oRWbsWTe48zN4IM=",
+            "type": "url",
+            "url": "https://github.com/harehare/mq/releases/download/v0.10.1/mq-aarch64-apple-darwin"
+        },
+        "version": "0.10.1"
+    },
+    "nh-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nh-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-/6YOLgy3sC7q528KFzCyE0FiwTJmBW3ymcTeP5Xuunk=",
+            "type": "url",
+            "url": "https://github.com/nix-community/nh/releases/download/v4.5.0/nh-aarch64-darwin"
+        },
+        "version": "4.5.0"
+    },
+    "notebooklm-py": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "notebooklm-py",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-UaUKi0y5QlFHk+zSdoIonbme/OR1jRyzC+Is9SouSSU=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/n/notebooklm-py/notebooklm_py-0.8.6.tar.gz"
+        },
+        "version": "0.8.6"
+    },
+    "ntfy-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ntfy-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-sBkTXWhZDYDnm1DJ/rzAhA4uW8zHS8V+RLrBYjeVie0=",
+            "type": "url",
+            "url": "https://github.com/binwiederhier/ntfy/releases/download/v2.38.0/ntfy_2.38.0_darwin_all.tar.gz"
+        },
+        "version": "2.38.0"
     },
     "nvfetcher": {
         "cargoLock": null,
@@ -232,11 +556,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-kZhZKM4ssW+vRBfAPRBgNuEwXoX2alHQS019L7HB/m4=",
+            "sha256": "sha256-JFbCeuMUZJ3lqc+lL0aA0XLIXmYF0QmqxVFT6ASY3ZI=",
             "type": "tarball",
-            "url": "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.0.tar.gz"
+            "url": "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.1.tar.gz"
         },
-        "version": "10.18.0"
+        "version": "10.18.1"
     },
     "ocr-pydantic": {
         "cargoLock": null,
@@ -301,6 +625,36 @@
         },
         "version": "17.14.1"
     },
+    "officecli-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "officecli-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FMce1isE6JWw3EgYkIzNwU9gElEzUL5O4ZwMvvkfxxs=",
+            "type": "url",
+            "url": "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.161/officecli-mac-arm64"
+        },
+        "version": "1.0.161"
+    },
+    "oha-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "oha-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-LFjyusEa4joS9hiKZyP9GIL6gvc9mHTCFB63jCInUsc=",
+            "type": "url",
+            "url": "https://github.com/hatoo/oha/releases/download/v1.17.0/oha-macos-arm64"
+        },
+        "version": "1.17.0"
+    },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -314,6 +668,21 @@
             "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
         },
         "version": "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
+    },
+    "powershell-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "powershell-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-dkSfB48wGT/OnN9mELd/2hT0Ikyvy98jAkXsDaue8Q0=",
+            "type": "url",
+            "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.7.0/powershell-7.7.0-osx-arm64.tar.gz"
+        },
+        "version": "7.7.0"
     },
     "rclone": {
         "cargoLock": null,
@@ -329,6 +698,40 @@
         },
         "version": "1.76.0"
     },
+    "resvg": {
+        "cargoLock": {
+            "Cargo.lock": [
+                "sha256-lsJktYzwkWRzetU+rNLZrZSRT5jSNVPTtbwE3gnT5wk=/Cargo.lock",
+                {}
+            ]
+        },
+        "date": null,
+        "extract": null,
+        "name": "resvg",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-lsJktYzwkWRzetU+rNLZrZSRT5jSNVPTtbwE3gnT5wk=",
+            "type": "tarball",
+            "url": "https://github.com/linebender/resvg/archive/refs/tags/v0.50.0.tar.gz"
+        },
+        "version": "0.50.0"
+    },
+    "rsync": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "rsync",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-oQ1ZGCUlHgcPdMmN89qtGV3vTtgbSi3hYWkCauoz9sg=",
+            "type": "url",
+            "url": "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz"
+        },
+        "version": "3.5.2"
+    },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -342,6 +745,66 @@
             "url": "https://github.com/nalgeon/sqlean/releases/download/0.29.0/sqlean-macos-arm64.zip"
         },
         "version": "0.29.0"
+    },
+    "sqruff-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "sqruff-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-pCRqGSCAudnW7zp0f848uk2u1C2jyAoJdnDNTtTE+kE=",
+            "type": "url",
+            "url": "https://github.com/quarylabs/sqruff/releases/download/v0.44.0/sqruff-darwin-aarch64.tar.gz"
+        },
+        "version": "0.44.0"
+    },
+    "tavily-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "tavily-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-a2+g17ZXoJNaYcFK+V/TOEkBBznyFnX2R8/n4a4djYM=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@tavily/cli/-/cli-1.0.1.tgz"
+        },
+        "version": "1.0.1"
+    },
+    "trafilatura": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "trafilatura",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-LlVXrqsy0zudp/8N67tnemdsW2SKkn5Q2RuCdwEeEQU=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/t/trafilatura/trafilatura-2.3.1.tar.gz"
+        },
+        "version": "2.3.1"
+    },
+    "tscli-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "tscli-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-7SKQqXiKsiXxMjqnhtVHY6oS97RQlnuyOSLo1w2EAQ8=",
+            "type": "url",
+            "url": "https://github.com/jaxxstorm/tscli/releases/download/v0.12.0/tscli_0.12.0_darwin_arm64.tar.gz"
+        },
+        "version": "0.12.0"
     },
     "vl-convert-aarch64-darwin": {
         "cargoLock": null,
@@ -370,6 +833,21 @@
             "url": "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz"
         },
         "version": "2.8.0"
+    },
+    "yq-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "yq-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FTBpkzygfWo6IhJkGkOT8ZiuoMe/x0GKSp0RRFeSzW0=",
+            "type": "url",
+            "url": "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64.tar.gz"
+        },
+        "version": "4.54.3"
     },
     "zellij-aarch64-darwin": {
         "cargoLock": null,

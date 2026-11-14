@@ -1,13 +1,3 @@
--- Title         : deck.lua
--- Author        : Bardia Samiee
--- Project       : Parametric Forge
--- License       : MIT
--- Path          : modules/home/programs/apps/wezterm/deck.lua
--- ----------------------------------------------------------------------------
--- Row interpreter for constructor-bound config: fonts, session seam, key dispatch, pane-nav handoff, guarded broadcast, launcher menu,
--- floats, and palette entries. Every vocabulary it consumes is generated (rows.lua); no private literals.
--- Actions build once per config generation: action_callback registers a permanent handler per call, so per-press construction leaks.
-
 local wezterm = require("wezterm")
 local act = wezterm.action
 local rows = require("rows")
@@ -15,21 +5,9 @@ local rows = require("rows")
 local M = {}
 
 M.rows = rows
-M.sync = nil -- populated in apply(); events.lua reads is_synced for status
-M.palette = {} -- populated in apply(); events.lua replays it per palette open
+M.sync = nil
+M.palette = {}
 
--- Workspace identity crosses the outer-inner seam intact: the zellij session carries the workspace name, so windows in different
--- workspaces never mirror one shared session. The client starts through a login shell at the home directory, so the login shell's mise
--- refresh reads no project's config; the body then enters the workspace cwd, which seeds a brand-new session's first pane. The server the
--- client forks keeps that session environment for every pane, and a command a rebuilt session runs takes its own directory's environment
--- from the pane shell it starts under (zellij-resurrect-pane, zellij/config.nix). The body clears
--- the login shell's mise refresh state and the Home Manager session guards, so a pane shell activates from a clean slate and re-reads the
--- current generation's session variables. The attach (zellij-session-attach, zellij/default.nix) first retires any server left by an ended
--- login session, whose panes can no longer reach a system service. A rebuilt session (its server died with the machine or the login session)
--- runs its recorded commands at once instead of parking each behind a Press-ENTER banner; the zellij discovery hook decides what gets
--- recorded. A gated client waits for one line:
--- zellij sends its startup size before installing its SIGWINCH handler, so a resize inside that gap strands the session at the startup
--- size. Spawns carrying these args start at wezterm.home_dir.
 function M.workspace_row(name)
     for _, w in ipairs(rows.workspaces) do
         if w.name == name then
@@ -53,15 +31,10 @@ function M.session_args(name, gated)
     }
 end
 
--- Destructive-action gate: the native Confirmation overlay wraps the action at build time.
 function M.confirm(message, on_confirm)
     return act.Confirmation({ message = message, action = on_confirm })
 end
 
--- Float rows are singletons: a live float for the row focuses instead of duplicating (a second redeploy press must never fork a second
--- run). Workspace-scoped rows key the singleton per workspace, so each workspace owns its own instance (one scratch float per workspace,
--- not one global). The registry rides wezterm.GLOBAL, surviving config reloads; a dead or workspace-hidden window fails resolution and
--- falls through to a spawn.
 local function float_key(cmd)
     if cmd.scope == "workspace" then
         return cmd.id .. "@" .. wezterm.mux.get_active_workspace()
@@ -83,10 +56,6 @@ local function focus_float(cmd)
     return true
 end
 
--- Floating utility deck: float rows shape the spawn natively — width/height ride wezterm.mux.spawn_window as cell counts and the
--- window level lands through SetWindowLevel. Workspace-scoped rows take the active workspace row's float policy, so each
--- workspace's floats take its own shape. The spawn rides a pcall rail: a failure lands a log line, never an unhandled callback
--- fault (the second result is the error value).
 function M.spawn_float(cmd)
     if focus_float(cmd) then
         return
@@ -94,7 +63,6 @@ function M.spawn_float(cmd)
     local shape = cmd.float
     local cwd = nil
     if cmd.scope == "workspace" then
-        -- Workspace-scoped floats take the active workspace row's shape AND land at its cwd: the per-workspace scratch opens in the workspace.
         local wrow = M.workspace_row(wezterm.mux.get_active_workspace())
         shape = (wrow and wrow.float) or shape
         cwd = wrow and wrow.cwd
@@ -124,7 +92,6 @@ function M.spawn_float(cmd)
     wezterm.GLOBAL.deck_floats = registry
 end
 
--- Command rows project to float actions once; a destructive row wraps its action in the confirm gate at build time.
 local function command_action(cmd)
     local action = wezterm.action_callback(function()
         M.spawn_float(cmd)
@@ -135,8 +102,6 @@ local function command_action(cmd)
     return action
 end
 
--- Every WezTerm pane is a zellij client started at the home directory, so a span's directory is the cwd of the pane the client focuses:
--- list-clients names each client's focused pane and list-panes carries every pane's cwd.
 local function zellij_action(session, args)
     local argv = { rows.paths.zellij, "--session", session, "action" }
     for _, arg in ipairs(args) do
@@ -166,9 +131,6 @@ local function focused_cwd(session)
     return nil
 end
 
--- Quick-select action bus: per-row `select` arms convert the selected span to a deck action; rows without an arm keep the native clipboard default.
--- The edit arm hands a `file:line[:column]` span to Visual Studio Code's own `code --goto`, which takes the position suffix as selected. The
--- command runs outside any pane, so a relative file is joined to the focused pane's cwd and a `~/` file to the home directory first.
 local select_kinds = {
     ["edit"] = function(window, _, sel)
         local file, position = sel:match("^([^:]+)(:%d.*)$")
@@ -198,7 +160,6 @@ local function select_action(row)
     end)
 end
 
--- Workspace switcher: configured name-policy rows plus live mux workspaces.
 local function workspace_choices()
     local choices, seen = {}, {}
     for _, w in ipairs(rows.workspaces) do
@@ -214,19 +175,16 @@ local function workspace_choices()
 end
 
 local function switch_workspace(window, pane, name)
-    -- Fresh workspaces land their slug-named inner session at the policy cwd; live workspaces ignore spawn, so reattach converges on that session.
     local spawn = { args = M.session_args(name), cwd = wezterm.home_dir }
     window:perform_action(act.SwitchToWorkspace({ name = name, spawn = spawn }), pane)
 end
 
--- Workspace picker action, registered once: choices rebuild per press inside the key callback; every selection replays this one handler.
 local pick_workspace = wezterm.action_callback(function(win, p, id)
     if id then
         switch_workspace(win, p, id)
     end
 end)
 
--- Pane-nav handoff: one generated row set crosses the WezTerm boundary — zellij panes receive the raw chord, plain splits get pane motion.
 local nav_direction = {
     ["nav-left"] = "Left",
     ["nav-down"] = "Down",
@@ -244,8 +202,6 @@ local function nav_action(row)
     end)
 end
 
--- Guarded broadcast: destructive confirmation, only then the plugin toggle. Disabling an active sync never prompts. The enable and
--- confirm actions build once; the per-press body only performs them.
 local function guarded_sync_action(sync)
     local enable = wezterm.action_callback(function(win, p)
         win:perform_action(sync.toggle, p)
@@ -260,8 +216,6 @@ local function guarded_sync_action(sync)
     end)
 end
 
--- Chord-row action dispatch: semantic id -> action, built once. Total over the generated vocabulary minus the
--- plugin-owned sync row and class-routed nav rows.
 local function key_actions(launcher, quick_select)
     local prompt = {
         description = "New workspace name:",
@@ -307,19 +261,14 @@ local function key_actions(launcher, quick_select)
 end
 
 function M.apply(config)
-    -- Fonts: font-owner rows (modules/home/fonts.nix); the chain is a family list and the leading is the terminal surface's one value.
     config.font = wezterm.font_with_fallback(rows.font.chain)
     config.font_size = rows.font.size
     config.line_height = rows.font.line_height
     config.harfbuzz_features = rows.font.harfbuzz_features
-    -- The palette font is the terminal font object (a constructor value), so it lands here rather than in the pure-data settings.
     config.command_palette_font = config.font
 
-    -- Outer-inner seam: deck-owned spawns carry their workspace session explicitly; this is the fallback for panes spawned outside deck
-    -- control (`wezterm cli spawn` without a prog).
     config.default_prog = M.session_args(config.default_workspace)
 
-    -- Launcher menu: non-destructive command rows become launch items.
     config.launch_menu = {}
     for _, cmd in ipairs(rows.commands) do
         if not cmd.destructive then
@@ -327,8 +276,6 @@ function M.apply(config)
         end
     end
 
-    -- Palette rows build once: command entries plus per-pattern quick select; the palette event replays this table
-    -- (a per-open rebuild registers a fresh callback set on every open).
     M.palette = {}
     for _, cmd in ipairs(rows.commands) do
         M.palette[#M.palette + 1] = { brief = cmd.label, icon = rows.palette_icons.command, action = command_action(cmd) }
@@ -345,7 +292,6 @@ function M.apply(config)
         }
     end
 
-    -- Mouse: SHIFT bypasses inner-plane reporting; SHIFT-click opens links.
     config.mouse_bindings = {
         {
             event = { Up = { streak = 1, button = "Left" } },
@@ -354,7 +300,6 @@ function M.apply(config)
         },
     }
 
-    -- Quick select skips the paste action on a plain selection; the launcher carries its chrome rows.
     local quick_select = act.QuickSelectArgs({ skip_action_on_paste = true })
     local launcher = {
         flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES|LAUNCH_MENU_ITEMS",
@@ -363,7 +308,6 @@ function M.apply(config)
         fuzzy_help_text = "Launcher: ",
     }
 
-    -- Key rows: generated chord vocabulary through the dispatch table.
     local actions = key_actions(launcher, quick_select)
     config.keys = {}
     local sync_row = nil
@@ -382,9 +326,6 @@ function M.apply(config)
         end
     end
 
-    -- Store-owned plugin rail: direct store-path load. plugin.require git-clones into the runtime cache (and a
-    -- fetchFromGitHub tree is not a repo); dofile consumes the pin with zero cache mutation, so the cache stays empty
-    -- and update_all() has nothing to touch.
     local sync = dofile(rows.plugins.sync_panes .. "/plugin/init.lua")
     M.sync = sync
     if sync_row then
@@ -392,10 +333,8 @@ function M.apply(config)
             toggle_key = sync_row.key,
             toggle_mods = sync_row.mods,
             border = true,
-            -- Active broadcast is the danger state everywhere: this border and the events.lua [SYNC] chip read one role.
             border_color = rows.theme.roles.state.danger,
         })
-        -- Wrap the plugin-inserted toggle with the confirmation guard.
         local guarded = guarded_sync_action(sync)
         for _, k in ipairs(config.keys) do
             if k.key == sync_row.key and k.mods == sync_row.mods then

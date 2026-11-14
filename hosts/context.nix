@@ -1,10 +1,3 @@
-# Title         : context.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : hosts/context.nix
-# ----------------------------------------------------------------------------
-# Host-context registry: one row per machine. The host factory projects each row into darwinSystem, and the home graph reads the same row.
 {
   macbook = let
     home = "/Users/bardiasamiee";
@@ -20,9 +13,12 @@
       name = "bardiasamiee";
       inherit home;
     };
-    # Forge checkout the deploy rail builds from and the editor's nixd evaluates.
     flakeRoot = "${home}/Developer/Parametric_Forge";
-    # 1Password-held key: SSH auth and commit signing.
     ssh.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ13xqqm/BVTzJNN/V0Cukvk4xAentt3qqE525URRqwS Bardia SSH Key";
+    tailnet = {
+      domain = "tailec0014.ts.net";
+      range = ["100.64.0.0/10" "fd7a:115c:a1e0::/48"];
+      servers = ["derby" "lucky"];
+    };
   };
 }

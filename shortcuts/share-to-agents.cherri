@@ -1,0 +1,31 @@
+#define name Share to Agents
+#define color orange
+#define glyph textBubble
+#define from sharesheet, search
+#define inputs text, url, image, media, pdf, file
+#define outputs text
+#include 'actions/web'
+#include 'actions/storage'
+
+action 'properties.files' fileDetail(variable file: 'WFInput', text detail: 'WFContentItemPropertyName')
+
+const server = "https://ntfy.parametric-arsenal.cloud"
+const token = getStoredValue("NTFY_BUTTON_TOKEN", true)
+
+@receipts: text
+for item in ShortcutInput {
+    const type = typeOf(@item)
+    @kind = "{type}"
+    @body = "{@item}"
+    @filename: text
+    if @kind != "Text" && @kind != "URL" {
+        const name = getName(@item)
+        const extension = fileDetail(@item, "File Extension")
+        @body = @item
+        @filename = "{name}.{extension}"
+    }
+    const sent = fileRequest("{server}/inbox", "PUT", @body, {"Authorization": "Bearer {token}", "X-Title": "{@filename}", "X-Filename": "{@filename}"})
+    const receipt = getDictionary(sent)
+    @receipts += "{receipt['id']} {@filename}\n"
+}
+mustOutput("{@receipts}", "Sent to agents")

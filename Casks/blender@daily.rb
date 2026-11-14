@@ -1,6 +1,4 @@
 cask "blender@daily" do
-  # The builder replaces main's build daily and deletes the one before it, so no version written here outlives a day.
-  # Its download action redirects to the one build its filters select, and main is the only alpha track.
   version :latest
   sha256 :no_check
 
@@ -21,10 +19,6 @@ cask "blender@daily" do
     set_permissions "*.app/**/__pycache__", "u+w", recursive: false
   end
 
-  # Blender's Python writes .pyc files into the bundle on every run, so a quarantined bundle whose executable ran
-  # by path before its first LaunchServices launch fails Gatekeeper's assessment (a sealed resource is missing or
-  # invalid) with a Move to Trash dialog; the notarized build passes `spctl -a -t exec` only while pristine.
-  # No quarantine, no assessment.
   postflight_steps do
     run "/usr/bin/xattr", args: ["-d", "com.apple.quarantine", "{{appdir}}/Blender.app"]
   end

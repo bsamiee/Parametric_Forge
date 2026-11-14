@@ -1,12 +1,5 @@
-# Title         : toolchain-env.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/common/toolchain-env.nix
-# ----------------------------------------------------------------------------
-# The one PATH vector and toolchain env factory installed as the toolchainEnvFor module argument; the system environment, the GUI launchd
-# replay, and the zsh refresh call it with their own home/username/XDG context.
 {
+  host,
   lib,
   pkgs,
   ...
@@ -15,15 +8,11 @@
     home,
     username,
     xdgCacheHome,
-    xdgConfigHome ? "${home}/.config", # XDG default; env and PATH owners pass their scope's configHome, font-only callers inherit.
-    xdgDataHome ? "${home}/.local/share", # Same convention: the shim segment reads it.
-    xdgStateHome ? "${home}/.local/state", # Same convention: the interactive history rows read it.
+    xdgConfigHome ? "${home}/.config",
+    xdgDataHome ? "${home}/.local/share",
+    xdgStateHome ? "${home}/.local/state",
   }: let
-    # Rhino's command directory, the link default-applications.nix keeps on the installed bundle: nix-darwin writes this vector unquoted into
-    # set-environment, so a bundle name with a space cannot be an entry, and the bundle's scripts locate it from their own directory, so the
-    # link is the directory rather than each script.
     rhinoBin = "${xdgDataHome}/rhino/bin";
-    # Only provisioned directories: useUserPackages replaces ~/.nix-profile with /etc/profiles.
     userPathEntries = [
       "${home}/.local/bin"
       "/etc/profiles/per-user/${username}/bin"
@@ -31,8 +20,6 @@
       "/nix/var/nix/profiles/default/bin"
       "/opt/homebrew/bin"
       rhinoBin
-      # carapace's zsh snippet prepends this directory unless PATH already holds it; listing it here keeps the vector the one PATH owner.
-      "${xdgConfigHome}/carapace/bin"
     ];
     fallbackPathEntries = [
       "/usr/local/bin"
@@ -41,67 +28,99 @@
       "/usr/sbin"
       "/sbin"
     ];
-    # First segment of every vector, as mise documents for processes without `mise activate`: a login shell, a launchd agent, and a GUI app
-    # resolve a project's pinned tool from the caller's directory, and outside a project a shim
-    # whose tool has no version there execs the next copy on PATH. A shell that applies mise (zsh at startup, a Claude Code Bash command
-    # through its project's `SessionStart` row) puts a project's install paths first, and zsh drops this segment.
     shimPath = "${xdgDataHome}/mise/shims";
     pathEntries = [shimPath] ++ userPathEntries ++ fallbackPathEntries;
-    # EnergyPlus/OpenStudio layout facts fold from each package's manifest-derived runtimeEnv.
     runtimeEnv = pkgs.energyplus.runtimeEnv // pkgs.openstudio.runtimeEnv;
-    # One class-partitioned env owner: `all` rows feed nix-darwin's set-environment (every zsh and bash), the .zshenv refresh, and the
-    # GUI launchd replay, byte-identical everywhere so a shell of any kind and a Dock-launched agent never resolve divergent editor/pager/config env;
-    # `session` rows configure shell tools (man/bat/info/sqlite/node). Every row moves a tool off a non-XDG default or names a fact its config file
-    # cannot: gh, gcloud, gws, bat, starship, and WezTerm already read the XDG paths, git's pager is the delta git integration, gh's pager is
-    # its own config key. A new cross-surface var is one `all` row. No row configures a language toolchain, package manager, or build tool: a
-    # repository's own files and mise [env] own how its builds, checks, and tests behave.
-    # One font root list feeds fontconfig's fonts.conf (media.nix) and Typst, which reads no fontconfig; the design store is operator-owned.
+    designFontDirectory = "${home}/Library/Application Support/design-tools/fonts";
     fontDirectories = [
       "/System/Library/Fonts"
       "/Library/Fonts"
       "${home}/Library/Fonts"
-      "${home}/Library/Application Support/design-tools/fonts"
+      designFontDirectory
     ];
-    # The editor as one program: crontab execs the value as a single word and zsh never splits an unquoted `$EDITOR`, so Visual Studio
-    # Code's blocking form (`code --wait` returns when the file's tab closes) sits behind a script both rows name by store path.
     editor = lib.getExe (pkgs.writeShellScriptBin "code-wait" ''exec code --wait "$@"'');
+    sftpRemotes = lib.concatMapAttrs (name: value: lib.genAttrs' host.tailnet.servers (remote: lib.nameValuePair "RCLONE_CONFIG_${lib.toUpper remote}_${name}" (value remote))) {
+      TYPE = _: "sftp";
+      SSH = remote: "ssh ${remote}";
+      KNOWN_HOSTS_FILE = _: "none";
+    };
     envByClass = {
-      all = {
-        EDITOR = editor;
-        VISUAL = editor;
-        PAGER = "less";
-        LESS = "-RFX";
-        GOOGLE_WORKSPACE_PROJECT_ID = "workspace-mcp-500605";
-        # fontconfig consumers (fc-*, magick, vips text, gs, Pango) and Typst each resolve fonts through one of these two rows on every surface.
-        FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
-        TYPST_FONT_PATHS = lib.concatStringsSep ":" fontDirectories;
-        QSV_CACHE_DIR = "${xdgCacheHome}/qsv"; # qsv validate and dynamicEnum lookups; the default is ~/.qsv-cache
-        # Doppler's login and scope store defaults to ~/.doppler, and a Doppler run starts outside a login shell
-        DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
-        # Python writes __pycache__ beside every imported source file by default and reads no config file for it, so a Dock-launched Blender
-        # or a script outside a project tree reaches the cache through this row alone
-        PYTHONPYCACHEPREFIX = "${xdgCacheHome}/pycache";
-      };
+      all =
+        sftpRemotes
+        // {
+          # --- [EDITOR_PAGER]
+          EDITOR = editor;
+          VISUAL = editor;
+          PAGER = "less";
+          LESS = "-RFX";
+
+          # --- [SERVICE_CLIENTS]
+          DO_NOT_TRACK = "1";
+          GOG_KEYRING_BACKEND = "file";
+          GAMCFGDIR = "${xdgConfigHome}/gam";
+          CUA_DRIVER_RS_HOME = "${xdgDataHome}/cua-driver";
+          DOPPLER_CONFIG_DIR = "${xdgConfigHome}/doppler";
+          DOPPLER_ENABLE_VERSION_CHECK = "false";
+          GH_NO_UPDATE_NOTIFIER = "1";
+          GH_NO_EXTENSION_UPDATE_NOTIFIER = "1";
+          HOSTINGER_FORMAT = "json";
+          HOSTINGER_NO_INPUT = "true";
+          NTFY_CONFIG = "${xdgConfigHome}/ntfy/client.yml";
+          OFFICECLI_SKIP_UPDATE = "1";
+          POWERSHELL_UPDATECHECK = "Off";
+          RCLONE_ASK_PASSWORD = "false";
+          RCLONE_CACHE_DIR = "${xdgCacheHome}/rclone";
+          RCLONE_CONFIG_B2_TYPE = "b2";
+          RCLONE_CONFIG_R2_TYPE = "s3";
+          RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
+          RCLONE_CONFIG_R2_REGION = "auto";
+          TSCLI_OUTPUT = "json";
+          __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = "${host.name}.${host.tailnet.domain}";
+
+          # --- [SEARCH_DATA]
+          RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config";
+          DFT_UNSTABLE = "yes";
+          DFT_DISPLAY = "inline";
+          QSV_CACHE_DIR = "${xdgCacheHome}/qsv";
+          QSV_DOTENV_PATH = "<NONE>";
+          QSV_ERROR_FORMAT = "json";
+          PSQLRC = "${xdgConfigHome}/psql/psqlrc";
+          PSQL_HISTORY = "${xdgStateHome}/psql/history";
+          PGSERVICEFILE = "${xdgConfigHome}/pg/pg_service.conf";
+          PGPASSFILE = "${xdgConfigHome}/pg/pgpass";
+          PYTHONPYCACHEPREFIX = "${xdgCacheHome}/pycache";
+
+          # --- [FONTS_MEDIA]
+          FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
+          TYPST_FONT_PATHS = designFontDirectory;
+          TYPST_PACKAGE_PATH = "${xdgDataHome}/typst/packages";
+          TYPST_PACKAGE_CACHE_PATH = "${xdgCacheHome}/typst/packages";
+          VLC_FONT_DIR = designFontDirectory;
+          VLC_MISSING_FONTS = "error";
+          EXIFTOOL_HOME = "${xdgConfigHome}/exiftool";
+          CZKAWKA_CONFIG_PATH = "${xdgConfigHome}/czkawka";
+          CZKAWKA_CACHE_PATH = "${xdgCacheHome}/czkawka";
+          PDFCPU_CONFIG_ROOT = xdgConfigHome;
+          AB_AV1_TEMP_DIR = "${xdgCacheHome}/ab-av1";
+          PROJ_NETWORK = "ON";
+        };
       session = {
-        BAT_PAGER = "less -RFXK"; # -X fixes macOS Terminal.app clearing
-        MANPAGER = "sh -c 'col -bx | bat -plman'"; # col strips man's overstrike bytes, bat pages the text plain under the man syntax
-        SQLITE_HISTORY = "${xdgStateHome}/sqlite/history"; # sqlite3's default is ~/.sqlite_history
-        NODE_REPL_HISTORY = "${xdgStateHome}/node_repl_history"; # the node REPL's default is ~/.node_repl_history
-        # The one `brew shellenv` row PATH resolution does not cover: macOS manpath derives /opt/homebrew/share/man from /opt/homebrew/bin,
-        # GNU info reads INFOPATH alone; the trailing colon appends info's built-in directories.
+        BAT_PAGER = "less -RFXK";
+        MANPAGER = "sh -c 'col -bx | bat -plman'";
+        SQLITE_HISTORY = "${xdgStateHome}/sqlite/history";
+        NODE_REPL_HISTORY = "${xdgStateHome}/node_repl_history";
         INFOPATH = "/opt/homebrew/share/info:";
       };
     };
   in {
     inherit
+      designFontDirectory
       fontDirectories
       rhinoBin
       runtimeEnv
       ;
 
     inherit pathEntries shimPath;
-    # Rows every surface carries: set-environment for every shell kind, the GUI launchd domain, and the .zshenv refresh; the session class is
-    # configured in Home Manager and refreshed by zsh at startup.
     sharedEnv = runtimeEnv // envByClass.all;
     sessionEnv = envByClass.session;
   };

@@ -1,15 +1,5 @@
-# Title         : manifest.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : overlays/manifest.nix
-# ----------------------------------------------------------------------------
-# Package registry: rows own the generated pin reference, version, derivation metadata, and projection of every non-nixpkgs package, beside
-# the host-runtime extension rows. overlays/default.nix folds `packages` rows into derivations; flake-modules/packages.nix folds
-# `projection.package/app` into public outputs. Pure data plus builtins-only accessors — no pkgs, no lib.
 let
   generatedPins = builtins.fromJSON (builtins.readFile ./_sources/generated.json);
-  # A tarball pin hashes the unpacked tree (nvfetcher prefetches with --unpack), so the overlay fetches it as an unpacked fixed-output source.
   pinAsset = pin:
     {
       inherit pin;
@@ -21,7 +11,6 @@ let
       then {fetch = "zip";}
       else {}
     );
-  # A source row rebuilds a nixpkgs recipe at the pinned release: `sourcePackage` names the recipe, the pin's asset replaces its source.
   designSource = name: let
     pin = "design-${name}";
   in {
@@ -29,15 +18,12 @@ let
     asset = pinAsset pin;
     inherit (generatedPins.${pin}) version;
   };
-  # EnergyPlus and OpenStudio asset names carry a build hash, so each pin's release tag is `v<version>/<asset>` and the bare version is the
-  # tag's; the wrapper names below carry it.
   v = builtins.mapAttrs (_: pin: builtins.head (builtins.match "v([^/]+)/.*" generatedPins.${pin}.version)) {
     openstudio = "openstudio-aarch64-darwin";
     energyplus = "energyplus-aarch64-darwin";
+    gam = "gam-aarch64-darwin";
   };
 in {
-  # A row named after a nixpkgs attr overrides it and re-keys every package above it off the binary cache; a `-current` row is a new attr
-  # beside nixpkgs', which only its own consumers read.
   packages = {
     nvfetcher = {
       asset = pinAsset "nvfetcher";
@@ -48,6 +34,25 @@ in {
       asset = pinAsset "rclone";
       inherit (generatedPins.rclone) version;
       vendorHash = "sha256-+08M76VSLYFZjblRMFXg925k0qOzW25By0YyeIOLNo4=";
+    };
+    git-current = {
+      sourcePackage = "git";
+      asset = pinAsset "git";
+      inherit (generatedPins.git) version;
+    };
+    rsync-current = {
+      sourcePackage = "rsync";
+      asset = pinAsset "rsync";
+      inherit (generatedPins.rsync) version;
+    };
+    resvg = {
+      sourcePackage = "resvg";
+      asset = pinAsset "resvg";
+      inherit (generatedPins.resvg) version;
+    };
+    cachix = {
+      asset = pinAsset "cachix";
+      inherit (generatedPins.cachix) version;
     };
     ocrmypdf = {
       pythonPackages =
@@ -63,8 +68,6 @@ in {
         };
       ctypesgenHash = "sha256-2+JEjAWGK1lCPeLX4BAIiIXlQo7+OgZ8oh6plwfrHuY=";
     };
-    # Vega's own headless renderer: V8 and the Vega/Vega-Lite JS are linked into one executable, so the chart-export role carries no Node
-    # source build and no browser. nixpkgs ships python3Packages.vl-convert-python only, never the CLI, so the attr is new.
     vl-convert = {
       version = generatedPins.vl-convert-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "vl-convert-aarch64-darwin";
@@ -73,12 +76,8 @@ in {
       homepage = "https://github.com/vega/vl-convert";
       mainProgram = "vl-convert";
     };
-    # The font projection and every typography consumer render the current Geist release, whose Mono ligatures nixpkgs' copy lacks.
     geist-font = designSource "geist-font";
-    # The script fallback chain and the design apps render the current SIL release, which nixpkgs lags.
     scheherazade-new = designSource "scheherazade-new";
-    # A new attr beside nixpkgs' harfbuzz: an override re-keys pango, libass, libraqm, and every package above them off the binary cache.
-    # `sourceOverride` feeds the recipe's own flags: the experimental vector and GPU libraries carry hb-vector and libharfbuzz-gpu.
     harfbuzz-current =
       designSource "harfbuzz"
       // {
@@ -88,11 +87,7 @@ in {
         };
       };
     mupdf = designSource "mupdf";
-    # nixpkgs trails the fonttools release line by several minors. The row rebuilds the top-level application attr, which no package in the
-    # system closure reads; python3Packages.fonttools and everything built on it stay on the binary cache.
     fonttools = designSource "fonttools";
-    # A new attr beside nixpkgs' librsvg, which GTK, ImageMagick, and ffmpeg link and which trails the stable series: the artifact-tools row
-    # reads rsvg-convert from it. The build drops introspection and the pixbuf loader, which serve the linking packages alone.
     librsvg-current =
       designSource "librsvg"
       // {
@@ -120,7 +115,6 @@ in {
       mainProgram = "pandoc";
     };
 
-    # A new attr beside nixpkgs' _1password-cli, which trails the 1Password release line; its one consumer reads it, so nothing else re-keys.
     _1password-cli-current = {
       version = generatedPins."1password-cli-aarch64-darwin".version;
       assets.aarch64-darwin = pinAsset "1password-cli-aarch64-darwin";
@@ -133,13 +127,12 @@ in {
     verapdf-current = {
       version = generatedPins.design-verapdf-cli.version;
       assets.aarch64-darwin = pinAsset "design-verapdf-cli";
-      license = "mpl20"; # The unmodified upstream JAR retains the alternative GPLv3+ license and third-party notices.
+      license = "mpl20";
       description = "Current veraPDF conformance inspection on the current Temurin Java runtime";
       homepage = "https://verapdf.org/";
       mainProgram = "verapdf";
     };
 
-    # nixpkgs source-builds biome behind the upstream release line; the override routes the treefmt row through the official release binary.
     biome = {
       version = generatedPins.biome-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "biome-aarch64-darwin";
@@ -149,8 +142,6 @@ in {
       mainProgram = "biome";
     };
 
-    # nixpkgs source-builds mise behind the upstream release line; the override routes programs.mise and the zsh activation line through the
-    # official release binary.
     mise = {
       version = generatedPins.mise-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "mise-aarch64-darwin";
@@ -160,8 +151,6 @@ in {
       mainProgram = "mise";
     };
 
-    # nixpkgs source-builds watchexec behind the upstream release line; the override routes the shell-tools row through the official release
-    # tarball, which carries the binary, man page, and completions.
     watchexec = {
       version = generatedPins.watchexec-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "watchexec-aarch64-darwin";
@@ -180,8 +169,160 @@ in {
       mainProgram = "zellij";
     };
 
-    # A new attr beside nixpkgs' duckdb, which is a library its dependents link and trails the upstream major: the shell-tools row reads the
-    # official CLI release, whose tarball holds the one executable.
+    gogcli = {
+      version = generatedPins.gogcli-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "gogcli-aarch64-darwin";
+      license = "mit";
+      description = "Google Workspace command-line client for Gmail, Calendar, Drive, Docs, Sheets, and Slides";
+      homepage = "https://gogcli.sh/";
+      mainProgram = "gog";
+    };
+
+    hostinger = {
+      version = generatedPins.hostinger-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "hostinger-aarch64-darwin";
+      license = "mit";
+      description = "Hostinger API command-line client for VPS, DNS, domains, mail, and hosting";
+      homepage = "https://github.com/hostinger/api-cli";
+      mainProgram = "hostinger";
+    };
+
+    gh = {
+      version = generatedPins.gh-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "gh-aarch64-darwin";
+      license = "mit";
+      description = "GitHub command-line client";
+      homepage = "https://cli.github.com/";
+      mainProgram = "gh";
+    };
+
+    nh = {
+      version = generatedPins.nh-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "nh-aarch64-darwin";
+      license = "eupl12";
+      description = "Nix helper that builds, diffs, and activates system configurations";
+      homepage = "https://github.com/nix-community/nh";
+      mainProgram = "nh";
+    };
+
+    atuin = {
+      version = generatedPins.atuin-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "atuin-aarch64-darwin";
+      license = "mit";
+      description = "Shell history database with command output capture and agent thread search";
+      homepage = "https://atuin.sh/";
+      mainProgram = "atuin";
+    };
+
+    mq = {
+      version = generatedPins.mq-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "mq-aarch64-darwin";
+      license = "mit";
+      description = "jq-style queries and edits over Markdown structure";
+      homepage = "https://mqlang.org/";
+      mainProgram = "mq";
+    };
+
+    curl-impersonate-current = {
+      version = generatedPins.curl-impersonate-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "curl-impersonate-aarch64-darwin" // {stripRoot = false;};
+      license = "mit";
+      description = "curl build that sends browser TLS and HTTP/2 fingerprints";
+      homepage = "https://github.com/lexiforest/curl-impersonate";
+      mainProgram = "curl-impersonate";
+    };
+
+    ntfy-sh = {
+      version = generatedPins.ntfy-darwin.version;
+      assets.aarch64-darwin = pinAsset "ntfy-darwin";
+      license = "asl20";
+      description = "Publish and subscribe client for ntfy topics";
+      homepage = "https://ntfy.sh/";
+      mainProgram = "ntfy";
+    };
+
+    tscli = {
+      version = generatedPins.tscli-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "tscli-aarch64-darwin";
+      license = "mit";
+      description = "Tailscale HTTP API command-line client for devices, keys, policy, and services";
+      homepage = "https://github.com/jaxxstorm/tscli";
+      mainProgram = "tscli";
+    };
+
+    officecli = {
+      version = generatedPins.officecli-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "officecli-aarch64-darwin";
+      license = "asl20";
+      description = "Reads, queries, edits, and renders Word, Excel, and PowerPoint files";
+      homepage = "https://github.com/iOfficeAI/OfficeCLI";
+      mainProgram = "officecli";
+    };
+
+    gam = {
+      version = v.gam;
+      assets.aarch64-darwin = pinAsset "gam-aarch64-darwin";
+      license = "asl20";
+      description = "Google Workspace administration command-line client";
+      homepage = "https://github.com/GAM-team/GAM";
+      mainProgram = "gam";
+    };
+
+    yq-go = {
+      version = generatedPins.yq-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "yq-aarch64-darwin";
+      license = "mit";
+      description = "YAML, JSON, XML, CSV, TOML, and properties processor";
+      homepage = "https://mikefarah.gitbook.io/yq/";
+      mainProgram = "yq";
+    };
+
+    sqruff = {
+      version = generatedPins.sqruff-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "sqruff-aarch64-darwin";
+      license = "asl20";
+      description = "SQL linter and formatter";
+      homepage = "https://github.com/quarylabs/sqruff";
+      mainProgram = "sqruff";
+    };
+
+    oha = {
+      version = generatedPins.oha-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "oha-aarch64-darwin";
+      license = "mit";
+      description = "HTTP load generator";
+      homepage = "https://github.com/hatoo/oha";
+      mainProgram = "oha";
+    };
+
+    dua = {
+      version = generatedPins.dua-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "dua-aarch64-darwin";
+      license = "mit";
+      description = "Disk usage analyzer";
+      homepage = "https://github.com/Byron/dua-cli";
+      mainProgram = "dua";
+    };
+
+    hurl = {
+      version = generatedPins.hurl-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "hurl-aarch64-darwin";
+      license = "asl20";
+      description = "Runs and tests HTTP requests written in plain text";
+      homepage = "https://hurl.dev/";
+      mainProgram = "hurl";
+    };
+
+    powershell = {
+      sourcePackage = "powershell";
+      asset = pinAsset "powershell-aarch64-darwin";
+      inherit (generatedPins.powershell-aarch64-darwin) version;
+      modules.ExchangeOnlineManagement = {
+        asset = pinAsset "exchange-online-management";
+        inherit (generatedPins.exchange-online-management) version;
+      };
+    };
+
     duckdb-current = {
       version = generatedPins.duckdb-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "duckdb-aarch64-darwin";
@@ -193,10 +334,9 @@ in {
 
     sqlean = {
       version = generatedPins.sqlean-aarch64-darwin.version;
-      # The flat release zip has no top directory to strip.
       assets.aarch64-darwin = pinAsset "sqlean-aarch64-darwin" // {stripRoot = false;};
       license = "mit";
-      projection.package = true; # package-only: extension library set consumed by sqlite-extended
+      projection.package = true;
       description = "Bundled SQLite extension libraries from SQLean";
       homepage = "https://github.com/nalgeon/sqlean";
     };
@@ -205,13 +345,9 @@ in {
       version = v.openstudio;
       assets.aarch64-darwin = pinAsset "openstudio-aarch64-darwin";
       license = "bsd3";
-      # Opt-runtime spec: the shared overlay recipe folds these layout, env, and wrapper facts into the derivation; a next platform
-      # runtime is one row, never a new kernel file.
       runtime = {
         root = "opt/openstudio";
         shebangDirs = ["bin"];
-        # OpenStudio reads none of its layout from the environment; the one name is the session's route to the bundled Radiance binaries,
-        # which land on no PATH.
         env = {
           roots = [];
           paths = {OPENSTUDIO_RADIANCE_ROOT = "Radiance";};
@@ -233,7 +369,6 @@ in {
       runtime = {
         root = "opt/energyplus";
         shebangDirs = ["."];
-        # runenergyplus, runepmacro, and runreadvars read ENERGYPLUS_DIR and fall back to /usr on macOS without it.
         env = {
           roots = ["ENERGYPLUS_DIR"];
           paths = {};
@@ -260,7 +395,6 @@ in {
         package = true;
         app = true;
       };
-      # Shell-kernel data: base modules load on every profile, a profile row adds extras, and `all` derives in the fold as the union of every row.
       shell = {
         baseModules = ["regexp" "uuid" "stats" "text" "time" "crypto" "math"];
         profiles = {
@@ -272,10 +406,9 @@ in {
     };
   };
 
-  # Host-runtime extension registries: package-like assets consumed by a host. One family, per-lane sources; each host module reads its lane's rows.
   extensions = {
     wezterm-plugins = {
-      source = "fetchFromGitHub"; # file:// store-path loads only
+      source = "fetchFromGitHub";
       rows = {
         sync-panes = {
           owner = "annie444";
@@ -284,14 +417,12 @@ in {
           hash = "sha256-RgrMNW5GJ+WaJnioj2DfAWdBw6fxQezNJEYV4tqroSo=";
           license = "mit";
           permissions = ["broadcast-input-active-tab" "clipboard-paste" "window-frame-overrides"];
-          surface = "runtime"; # direct store-path dofile (fetched trees are not git repos; plugin.require cannot clone them); toggle chord guarded by the deck
+          surface = "runtime";
           apply = "apply_to_config";
         };
       };
     };
     zellij-plugins = {
-      # One release wasm per row into ~/.config/zellij/plugins: a row with `attr` resolves in nixpkgs zellijPlugins, a row with url/hash pins an
-      # upstream release nixpkgs omits; `permissions` seeds the grant cache.
       source = "nixpkgs:zellijPlugins | fetchurl";
       rows = {
         zjstatus = {
@@ -307,37 +438,94 @@ in {
         };
       };
     };
+    duckdb-extensions = {
+      source = "fetchurl";
+      rows = {
+        spatial = pinAsset "duckdb-spatial-aarch64-darwin" // {load = true;};
+        excel = pinAsset "duckdb-excel-aarch64-darwin";
+      };
+    };
+    npm-tools = {
+      source = "npx";
+      rows = {
+        "@aredotna/cli" = {
+          inherit (generatedPins.aredotna-cli) version;
+          commands = ["arena"];
+          license = "MIT";
+        };
+        "@pnp/cli-microsoft365" = {
+          inherit (generatedPins.m365-cli) version;
+          commands = ["m365"];
+          license = "MIT";
+        };
+        "@tavily/cli" = {
+          inherit (generatedPins.tavily-cli) version;
+          commands = ["tvly"];
+          license = "MIT";
+        };
+        cf = {
+          inherit (generatedPins.cloudflare-cf) version;
+          commands = ["cf"];
+          license = "Apache-2.0";
+        };
+        ctx7 = {
+          inherit (generatedPins.ctx7) version;
+          commands = ["ctx7"];
+          license = "MIT";
+        };
+        mcporter = {
+          inherit (generatedPins.mcporter) version;
+          commands = ["mcporter"];
+          license = "MIT";
+        };
+      };
+    };
+    uv-tools = {
+      source = "uvx";
+      rows = {
+        notebooklm-py = {
+          inherit (generatedPins.notebooklm-py) version;
+          extras = ["browser" "cookies" "headless" "mcp"];
+          commands = ["notebooklm" "notebooklm-mcp"];
+          license = "MIT";
+        };
+        trafilatura = {
+          inherit (generatedPins.trafilatura) version;
+          extras = [];
+          commands = ["trafilatura"];
+          license = "Apache-2.0";
+        };
+      };
+    };
     models = let
       whisperCpp = "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1";
     in {
-      # One weight file per row into $XDG_DATA_HOME/models (media-tools/models.nix), named as upstream names it and fetched from `base` at
-      # the revision that holds it. whisper.cpp and ffmpeg load a model by path and ship none.
       source = "fetchurl";
       rows = {
         "ggml-base.en-q5_1.bin" = {
           base = whisperCpp;
           hash = "sha256-S69w3Q18Qke6K4H6/ZwBAFrHfC+e8GTgDc8ZXQ4v3S8=";
-          license = "MIT"; # English speech, 60 MB: the fastest model for clean narration
+          license = "MIT";
         };
         "ggml-small.en-q5_1.bin" = {
           base = whisperCpp;
           hash = "sha256-v9/0iU3Ldrv2R9ViY+oqlmRUI/FmkXb0hEob+OR4rTA=";
-          license = "MIT"; # English speech, 190 MB
+          license = "MIT";
         };
         "ggml-large-v3-turbo-q5_0.bin" = {
           base = whisperCpp;
           hash = "sha256-OUIhcJzVrR9AxG5gMcphvOiJMebgiMGIKUxtWlX/p+I=";
-          license = "MIT"; # Every language whisper knows, 574 MB
+          license = "MIT";
         };
         "ggml-silero-v6.2.0.bin" = {
           base = "https://huggingface.co/ggml-org/whisper-vad/resolve/9ffd54a1e1ee413ddf265af9913beaf518d1639b";
           hash = "sha256-KqJpt4XutTqCmDogUB3ffB2cSOM6tjpBORrGyff7aYc=";
-          license = "MIT"; # Silero voice-activity detection for `whisper-cli --vad -vm` and whisper-vad-speech-segments
+          license = "MIT";
         };
         "cb.rnnn" = {
           base = "https://raw.githubusercontent.com/GregorR/rnnoise-models/3eee541a283fd3b8f81b85b1748e3b9ccbefa04d/conjoined-burgers-2018-08-28";
           hash = "sha256-8TV8Tlvp3uhGe+rUht/O0tdbZAwmrQtZT6fxAjIjcdk=";
-          license = "public-domain"; # RNNoise speech denoiser for ffmpeg's arnndn filter (`arnndn=m=<path>`); upstream states the weights carry no copyright
+          license = "public-domain";
         };
       };
     };

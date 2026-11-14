@@ -1,39 +1,30 @@
-# Title         : config.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/zellij/config.nix
-# ----------------------------------------------------------------------------
-# Nix-generated Zellij configuration: leader, entry, and normal-mode chord rows project from the chord owner (chords.nix); mode-interior binds and
-# their hint ribbons render from ONE per-mode row table, so a bind and its ribbon hint cannot drift apart. The resurrect hook, the pane body
-# its recorded command runs under, and the bare-claude session identity it reads sit together here.
 {
   config,
+  launchdAgent,
   lib,
   pkgs,
+  toolchainEnvFor,
   ...
 }: let
-  inherit (config.forge.theme) roles; # Forge palette owner (modules/home/theme.nix): semantic roles
+  inherit (config.forge.theme) roles;
+  inherit
+    (toolchainEnvFor {
+      home = config.home.homeDirectory;
+      inherit (config.home) username;
+      xdgCacheHome = config.xdg.cacheHome;
+      xdgConfigHome = config.xdg.configHome;
+      xdgDataHome = config.xdg.dataHome;
+      xdgStateHome = config.xdg.stateHome;
+    })
+    pathEntries
+    ;
+
+  webPort = 8082;
 
   # --- [RESURRECT_COMMAND]
-  # zellij runs the discovery hook under `sh -c` once a minute per pane with a foreground command, handing it that command line alone
-  # (RESURRECT_COMMAND), and serializes what it prints; empty output rebuilds the pane as a plain shell in its directory. A Claude Code pane
-  # rebuilds as the conversation its process holds now: Claude Code keeps one record per live process (sessions/<pid>.json) whose
-  # sessionId follows /clear and /resume, and the one interactive process running this exact command line names it. A session writes its
-  # transcript at its first entry and --resume refuses an id without one, so a session still empty reopens under --session-id. Bare `claude`
-  # gains a --session-id at launch (initContent below), so no two panes share a command line; a line no single process holds rebuilds as a
-  # shell, since `--continue` would land every pane of one directory in the same transcript.
   claudeHome = "${config.home.homeDirectory}/.claude";
 
   # --- [RESURRECT_PANE]
-  # zellij starts a recorded command itself, in the server's environment, which is the home directory's (deck.lua): a bare `claude` would
-  # start without its project's mise PATH and [env] rows, and every MCP server and hook it spawns would lack them too. The hook therefore
-  # records the command under this body, where an interactive zsh in the pane's directory runs it as its foreground job, as the pane first
-  # ran it, and the pane is a plain shell once the command ends. The foreground job also keeps the record current: zellij hands the hook a
-  # pane's foreground job alone and serializes a pane's own process verbatim, so a `claude` that was the pane's process would keep its
-  # launch arguments through every /clear and /resume. The body is a script file because zsh replaces itself with the last command of a
-  # `-c` string. The hook prints the profile name, which the server resolves on PATH and a layout serialized under an older generation
-  # still finds.
   resurrectPane = pkgs.writeScriptBin "zellij-resurrect-pane" ''
     #!${config.forge.shell} -i
     "$@"
@@ -61,12 +52,28 @@
       fi
     '';
   };
-  chords = config.forge.chords; # Chord-vocabulary owner (modules/home/programs/apps/chords.nix)
+
+  # --- [INBOX_COUNT]
+  inboxCount = pkgs.writeShellApplication {
+    name = "zellij-inbox-count";
+    runtimeInputs = [config.programs.zellij.package pkgs.jq];
+    text = ''
+      while read -r session; do
+        zellij --session "$session" action list-panes --json --all 2>/dev/null || true
+      done < <(zellij list-sessions --short --no-formatting) \
+        | jq -rs '
+          [.[][] | select(.is_plugin | not) | .attention | select(.muted != true) | .status] as $states
+          | [["NeedsYou", "need you"], ["Working", "running"]]
+          | map(. as [$state, $label] | ($states | map(select(. == $state)) | length) | select(. > 0) | "\(.) \($label)")
+          | select(length > 0)
+          | "◉ " + join(" · ")
+        '
+    '';
+  };
+  chords = config.forge.chords;
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
 
-  # zjstatus variable vocabulary for both instances: role-named tokens derived from the theme owner — the bar reads semantic roles
-  # (surface steps, text tiers, accents, states, focus pair, mode ladder), never a raw palette hue.
   zjVars =
     {
       base = roles.surface.base;
@@ -84,11 +91,10 @@
       focus_inactive = roles.focus.inactive;
     }
     // lib.mapAttrs' (n: c: lib.nameValuePair "state_${n}" c) roles.state
+    // lib.mapAttrs' (n: c: lib.nameValuePair "inbox_${n}" c) roles.inbox
     // lib.mapAttrs' (n: c: lib.nameValuePair "mode_${n}" c) roles.mode;
   colorRows = lib.concatStrings (lib.mapAttrsToList (n: c: "        color_${n}    \"${c.hex}\"\n") zjVars);
 
-  # Hint-ribbon grammar: native macOS modifier glyphs; a layer chip (R⌘ Hyper, R⌥ Super) prefixes its key group once. The mode ribbon sits on the
-  # surface elevation step (the top bar recedes onto base); chips carry inverse text on their mode/accent fill. Keys accent, labels muted; the renderer owns all padding.
   seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
   segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
   chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "muted" " ";
@@ -99,10 +105,6 @@
   done = pl "⏎" "done";
 
   # --- [MODE_INTERIOR_ROW_TABLE]
-  # One row per bind renders BOTH the mode's KDL block and its zjstatus ribbon, so a bind and its hint cannot drift; constructors keep rows single-line.
-  # The hint tuple is [l rank] or [k l rank] with k defaulting to the first key; hintRow is a grouped label over adjacent binds with no bind of its own,
-  # gap prefixes a blank line, mkExit tags a Normal exit, and launchRow floats a plugin body. Mode meta: header is a section comment, chip is [c label]
-  # or [c fg label], note is input-mode text, tail is "done" (default) or "none"; rows render in list order, hint rank orders the ribbon independently.
   bind = keys: kdl: {inherit keys kdl;};
   hintOf = h:
     if builtins.length h == 3
@@ -166,6 +168,7 @@
           (bindH ["r"] ''SwitchToMode "RenameTab"; TabNameInput 0;'' ["rename" 50])
           (bindH ["n"] "NewTab;" ["new" 30])
           (bindH ["x"] "CloseTab;" ["close" 40])
+          (bindH ["u"] ''MuteTab; SwitchToMode "Normal";'' ["mute" 80])
         ]
         ++ map (i:
           if i == 1
@@ -197,6 +200,9 @@
         (bindH ["e"] ''TogglePaneEmbedOrFloating; SwitchToMode "Normal";'' ["float" 80])
         (bindH ["c"] ''SwitchToMode "RenamePane"; PaneNameInput 0;'' ["rename" 100])
         (bindH ["i"] ''TogglePanePinned; SwitchToMode "Normal";'' ["pin" 110])
+        (bindH ["v"] ''WatchPane; SwitchToMode "Normal";'' ["watch" 130])
+        (bindH ["u"] ''MutePane; SwitchToMode "Normal";'' ["mute" 140])
+        (bind ["g"] ''IgnorePaneOutput; SwitchToMode "Normal";'')
       ];
     };
     move = {
@@ -247,7 +253,6 @@
           (hintRow "du" "half" 30)
         ];
     };
-    # Search exits on the scroll entry chord: the pair toggles as one surface.
     search = {
       header = "Search Mode";
       chip = ["mode_search" "SEARCH"];
@@ -270,6 +275,12 @@
       rows = [
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
+        (bindH ["i"] ''ToggleSessionCard; SwitchToMode "Normal";'' ["inbox" 3])
+        (bindH ["n"] ''GoToNextAttention; SwitchToMode "Normal";'' ["next" 5])
+        (bindH ["u"] ''MuteSession; SwitchToMode "Normal";'' ["mute" 7])
+        (bindH ["Tab"] ''ToggleSession; SwitchToMode "Normal";'' ["⇥" "last" 8])
+        (bindH ["Left"] ''GoToPreviousSession; SwitchToMode "Normal";'' ["← →" "history" 9])
+        (bind ["Right"] ''GoToNextSession; SwitchToMode "Normal";'')
         (launchRow "s" "session-manager" "manager" 10)
         (launchRow "l" "zellij:layout-manager" "layouts" 25)
         (launchRow "c" "configuration" "config" 30)
@@ -308,7 +319,6 @@
         (hintRow "⏎" "done" 10)
       ];
     };
-    # Ribbon-only: prompt is a zellij UI state, never a keybind block.
     prompt = {
       chip = ["mode_prompt" "PROMPT"];
       tail = "none";
@@ -344,7 +354,6 @@
   };
 
   # --- [RENDERERS]
-  # KDL fold: rows render at their full emitted indentation; tagged exit rows align the layer comment at byte 83; headers dash-fill to width 83.
   hyperTag = "// ${layers.hyper.name} (${layers.hyper.glyphs}) | ${layers.hyper.physical}";
   alignTag = line: line + lib.strings.replicate (lib.max 1 (82 - lib.stringLength line)) " " + hyperTag;
   headerLine = label: "      // --- ${label} " + lib.strings.replicate (lib.max 0 (69 - lib.stringLength label)) "-";
@@ -369,12 +378,10 @@
       ++ [(lib.concatMapStringsSep "\n" renderRow (lib.filter (x: x ? keys) m.rows))]
       ++ ["      }"]
     );
-  # Emission orders are curated vocabularies over modeTable: blocks skip the ribbon-only prompt row (tmux renders at the keybind tail).
   blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
   hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
   modeBlocksKdl = lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
-  # Ribbon fold over the same rows: chip, optional input note, rank-ordered hints, then the done tail. Normal mode composes from the chord owner.
   chipOf = c:
     if builtins.length c == 3
     then chipOn (builtins.elemAt c 0) (builtins.elemAt c 1) (builtins.elemAt c 2)
@@ -411,8 +418,17 @@ in {
 
   home.packages = [resurrectPane];
 
+  # --- [WEB_CLIENT]
+  forge.tailnet.serve."8443" = "http://127.0.0.1:${toString webPort}";
+  launchd.agents.zellij-web = launchdAgent {
+    name = "zellij-web";
+    argv = [(lib.getExe config.programs.zellij.package) "web" "--port" (toString webPort)];
+    RunAtLoad = true;
+    KeepAlive = true;
+    ProcessType = "Interactive";
+  };
+
   # --- [CLAUDE_SESSION_IDENTITY]
-  # A bare launch names its own session id (Claude Code's documented --session-id), the identity the resurrect hook reads off the command line.
   programs.zsh.initContent = ''
     claude() {
       (($#)) || set -- --session-id ''${(L)$(/usr/bin/uuidgen)}
@@ -421,59 +437,49 @@ in {
   '';
 
   programs.zellij.extraConfig = ''
-        // Title         : config.kdl
-        // Author        : Bardia Samiee
-        // Project       : Parametric Forge
-        // License       : MIT
-        // Path          : modules/home/programs/apps/zellij/config.kdl
-        // ----------------------------------------------------------------------------
-        // Core Zellij options referencing the shared Parametric Forge theme
 
         // --- [CORE_CONFIGURATION]
-        // Rows differ from zellij's documented defaults. default_shell names the one zsh every spawn runs: the $SHELL default is whatever
-        // the server's launcher exported, which an agent harness sets to bash.
         theme                       "dracula"
         default_shell               "${config.forge.shell}"
-        // on_force_close keeps its documented `detach` default: a WezTerm quit hangs the client up, the server and every pane process survive,
-        // and the next `attach --create main` reattaches them live. Only a dead server (the machine rebooted, or the attach retired a server
-        // left by an ended login session) rebuilds the session from its
-        // serialized layout, and the WezTerm spawn runs the recorded commands at once (deck.lua), so the hook is the one admission gate: a
-        // Claude Code pane resumes its own conversation under a pane shell, every other pane rebuilds as a plain shell in its directory. The stale WEZTERM_*
-        // variables a surviving server hands its panes are cleared in zsh init, not here.
         post_command_discovery_hook "${lib.getExe resurrectCommand}"
         show_startup_tips           false
         show_release_notes          false
         simplified_ui               true
-        // 0.45 moved the frame default to "titles" (a title line, no gap) and stacks to a pinned list; both pins keep the windowed panes and the
-        // classic stack the swap layouts were tuned on.
         pane_frame_style            "full"
         stacked_pane_list           false
         serialize_pane_viewport     true
         copy_command                "pbcopy"
         scroll_buffer_size          100000
 
-        // Host web stance: sharing disabled until reverse-proxy + token-lifecycle rows exist (annex-gated exposure); the server is off by default.
-        web_sharing                 "disabled"
+        web_sharing                 "on"
+
+        // --- [PANE_ENVIRONMENT]
+        env {
+          PATH "${lib.concatStringsSep ":" pathEntries}"
+        }
+
+        // --- [ATTENTION]
+        attention {
+          tray_badge_colors {
+    ${lib.concatStrings (lib.mapAttrsToList (n: c: "        ${n} \"${c.hex}\"\n") roles.inbox)}      }
+        }
 
         // --- [PLUGIN_ALIASES]
-        // Forge-owned aliases only: the user block merges over zellij's own default alias table, so session-manager, configuration,
-        // plugin-manager, and about resolve upstream and never restate here.
         plugins {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
           // --- [ZJSTATUS_TOP_BAR]
-          // Native zjstatus widgets only: tab labels index-projected (TAB [N]), the swap-layout name, and the session identity ({session}). {name}
-          // survives only in the rename cell as live typing feedback. WezTerm's tab bar hides at one tab, so no second bar ever stacks above this one.
-          // format_left starts at column 0 so the active-tab fill aligns with the pane frame edge. Receding cells (space, normal tab, swap label) carry
-          // no bg escape so they inherit WezTerm's translucent default background and blend into the body; only the active-tab and session chips set an
-          // explicit fill and read solid (text_background_opacity holds them opaque) — the session chip carries accent2 (magenta), one grammar with TAB.
           zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left               "{tabs}"
             format_center             "{swap_layout}"
-            format_right              "#[bg=$accent2,fg=$inverse,bold] {session} "
+            format_right              "{command_inbox}#[bg=$accent2,fg=$inverse,bold] {session} "
 
-            // Narrow panes: hide whole parts by precedence instead of letting them overlap — the session cell outranks tabs and the swap label.
+            command_inbox_command           "${lib.getExe inboxCount}"
+            command_inbox_format            "#[fg=$inbox_needs_you,bold]{stdout} "
+            command_inbox_interval          "10"
+            command_inbox_hideonemptystdout "true"
+
             format_hide_on_overlength "true"
             format_precedence         "rlc"
 
@@ -487,14 +493,12 @@ in {
           }
 
           // --- [ZJSTATUS_HINTS_BOTTOM_BAR_MODE_CHIP_ALWAYS_VISIBLE_KEY_RIBBON]
-          // Same wasm, second instance; layer chips R⌘ (Hyper) and R⌥ (Super).
           zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
     ${colorRows}
             format_left   "{mode}"
             format_right  "#[bg=$surface,fg=$muted]${chords.zellij.hintsRight}"
             format_space  "#[bg=$surface]"
 
-            // Narrow panes: the mode ribbon outranks the layer legend.
             format_hide_on_overlength "true"
             format_precedence         "lrc"
 

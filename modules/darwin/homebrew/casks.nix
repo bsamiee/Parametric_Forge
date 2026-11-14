@@ -1,38 +1,31 @@
-# Title         : casks.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/darwin/homebrew/casks.nix
-# ----------------------------------------------------------------------------
-# Homebrew GUI applications, and the font casks Homebrew serves newer than nixpkgs: the Apple-proprietary families, whose pkg installers land in
-# /Library/Fonts, and the Google OFL Arabic-script families, whose casks track google/fonts main into ~/Library/Fonts while nixpkgs google-fonts
-# trails it. The design apps need both permanently active (the design-tools store is Typeface-activated on demand).
-_: {
-  homebrew.casks = [
+{lib, ...}: let
+  latest = name: {latest = name;};
+  rows = [
     # --- [SYSTEM_CORE_TOOLS]
-    "1password@nightly"
+    (latest "1password@nightly")
     "cleanshot"
-    # Nightly conflicts with the stable cask. A :latest row never reads outdated to activation, so a redeploy never swaps the running
-    # terminal; HOMEBREW_UPGRADE_GREEDY_CASKS (homebrew/default.nix) lets the manual Homebrew pass refresh it.
-    "wezterm@nightly"
+    (latest "wezterm@nightly")
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
-    "airbuddy" # AirPods management
-    "aldente" # Battery charging limiter
-    # Beta cask conflicts with the stable cask; it tracks the Sparkle beta feed the app follows, so Homebrew's record and the app agree.
-    "linearmouse@beta" # Mouse pointer/scroll engine; config declared in home/programs/apps/linearmouse
-    "raycast" # Launcher/productivity
+    "airbuddy"
+    "aldente"
+    "linearmouse@beta"
+    "raycast"
 
     # --- [BROWSERS_INTERNET]
     "arc"
     "firefox"
+    "google-chrome"
     "tor-browser"
+
+    # --- [NETWORK]
+    "tailscale-app"
 
     # --- [COMMUNICATION_SOCIAL]
     "discord"
     "microsoft-auto-update"
     "microsoft-teams"
-    "superhuman" # Email client
+    "superhuman"
     "whatsapp"
 
     # --- [CLOUD_STORAGE]
@@ -42,43 +35,48 @@ _: {
 
     # --- [DEVELOPMENT]
     "visual-studio-code"
-    # Typeface is installed and updated through its native vendor channel.
-    "sf-symbols" # Apple's symbol library
+    "sf-symbols"
 
     # --- [MEDIA_ENTERTAINMENT]
-    # Release bundle from this tap (Casks/voicebox.rb); no upstream cask exists. Its bundled backend serves dictation and the HTTP MCP server
-    # on port 17493 while the app or its kept server runs; profiles and recordings live in ~/Library/Application Support/sh.voicebox.app.
     "bsamiee/forge/voicebox"
     "spotify"
 
     # --- [NOTES_READING]
-    "calibre" # E-book management
-    "heptabase" # Knowledge management
-    "libreoffice" # Office suite; the cask links `soffice`, whose headless `--convert-to` renders docx, pptx, xlsx, and odt to PDF
-    "scrivener" # Writing tool
+    "calibre"
+    "heptabase"
+    "libreoffice"
+    "scrivener"
 
     # --- [QUICKLOOK_PLUGINS]
-    # Plugins below use the App Extension API; legacy .qlgenerator plugins are dead. Each app registers its extension on
-    # its first launch, and .ts files are system-reserved (MPEG-2 UTI), so no QL plugin can override them.
-    "syntax-highlight" # Source code: 150+ languages (py,js,cs,go,rust,nix,yaml,json,dockerfile,lua,etc.)
-    "qlmarkdown" # Rendered markdown preview with GitHub-style formatting
-    "betterzip" # Archive preview, Finder extension, and the betterzip command-line tool
-    "suspicious-package" # .pkg inspector
+    "syntax-highlight"
+    "qlmarkdown"
+    "betterzip"
+    "suspicious-package"
 
     # --- [FONTS]
-    "font-sf-pro" # Apple proprietary
-    "font-sf-arabic" # Apple proprietary
-    "font-markazi-text" # Persian/Arabic naskh text face, variable weight
-    "font-reem-kufi" # Arabic kufi display face, variable weight
-    "font-qahiri" # Arabic kufic display face
+    (latest "font-sf-pro")
+    (latest "font-sf-arabic")
+    (latest "font-markazi-text")
+    (latest "font-reem-kufi")
+    (latest "font-qahiri")
 
     # --- [3D_CREATION]
-    "bsamiee/forge/blender@daily" # 3D creation suite at the newest daily build of the main branch; the manual Homebrew pass refreshes it through HOMEBREW_UPGRADE_GREEDY_CASKS; the cask links its blender command wrapper into /opt/homebrew/bin
-    "epic-games" # Epic Games Launcher; Unreal Engine and Twinmotion install into /Users/Shared/Epic Games and update through the self-updating launcher
-    "inkscape" # Bonsai's SVG to DXF/PDF sheet converter, read at its app bundle; the cask links its inkscape command wrapper into /opt/homebrew/bin
-    "xquartz" # X11 server the VI-Suite LiVi preview (Radiance rvu) opens its window on
+    (latest "bsamiee/forge/blender@daily")
+    "epic-games"
+    "inkscape"
+    "xquartz"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
-    "karabiner-elements" # Keyboard remapping
+    "cuadriver"
+    "karabiner-elements"
   ];
+in {
+  options.forge.homebrew.latestCasks = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    readOnly = true;
+    default = map (row: lib.last (lib.splitString "/" row.latest)) (lib.filter lib.isAttrs rows);
+    description = "Casks without a version, which `brew upgrade` moves only when named greedy.";
+  };
+
+  config.homebrew.casks = map (row: row.latest or row) rows;
 }

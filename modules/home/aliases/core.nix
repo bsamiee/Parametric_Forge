@@ -1,10 +1,3 @@
-# Title         : core.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/aliases/core.nix
-# ----------------------------------------------------------------------------
-# Core register rows: system, files, monitoring, data, network, dev.
 {
   "1password" = [
     ["opls" "op item list"]
@@ -17,13 +10,11 @@
   ];
   data = [
     ["sqlite3" "sqlite3 -column -header -nullvalue NULL"]
-    ["jqi" "jnv"]
     ["fqd" "fq d"]
   ];
   dev = [
     ["watch" "watchexec -c"]
     ["watchr" "watchexec -r"]
-    ["pc" "process-compose"]
     ["pdev" "pnpm dev"]
     ["pbuild" "pnpm build"]
     ["ptest" "pnpm test"]
@@ -87,8 +78,6 @@
   ];
   text-search = [
     ["tldru" "tldr --update"]
-    ["rgx" "grex -xc"]
-    ["rgxf" "grex -xc -f"]
     ["sr" "serpl"]
   ];
   time = [

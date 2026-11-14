@@ -7,8 +7,6 @@ cask "voicebox" do
   desc "Local voice studio with cloning, dictation and an HTTP MCP server"
   homepage "https://github.com/jamiepine/voicebox"
 
-  # The app's own Tauri updater feed: a release counts once it carries a macOS build, since upstream releases have
-  # shipped with the macOS jobs failed while the Windows ones passed.
   livecheck do
     url "https://github.com/jamiepine/voicebox/releases/latest/download/latest.json"
     strategy :json do |json|
@@ -16,16 +14,12 @@ cask "voicebox" do
     end
   end
 
-  # The updater reads that same feed, so the bundle can lead this record and activation then leaves it alone.
   auto_updates true
   depends_on arch: :arm64
   depends_on :macos
 
   app "Voicebox.app"
 
-  # With "keep server running" on, quitting the app leaves Contents/MacOS/voicebox-server on port 17493,
-  # and the next launch reuses any voicebox process holding that port without a version check. Stopping it
-  # after the quit makes a replacement bundle start its own backend instead of attaching to the old one.
   uninstall_postflight_steps do
     terminate_process "voicebox-server"
   end

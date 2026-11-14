@@ -1,14 +1,3 @@
-# Title         : starship.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/starship.nix
-# ----------------------------------------------------------------------------
-# Prompt themed from the palette and roles of modules/home/theme.nix. One $fill-composed top line (context left, telemetry right) over a bare pointer line; every
-# segment is a round-paren conditional group so inactive modules vanish gap-free. Enclosure law: the branch is a bare WORD in its role color;
-# brackets wrap discrete marker clusters (the git-status readout, exit status) as ONE outer pair around space-separated `<marker><count>`
-# tokens; parens wrap transient operations (rebase/merge). Git markers project from the theme vocabulary's ASCII register (roles.git .ascii);
-# the transient profile collapses scrollback prompts via zsh/init.nix.
 {
   config,
   lib,
@@ -16,22 +5,18 @@
 }: let
   inherit (config.forge.theme) roles palette icons projections;
 
-  # BMP private-use glyphs mint from codepoint escapes: the harness edit path strips raw 3-byte PUA literals, so rows
-  # land as \uXXXX through fromJSON. Supplementary-plane glyphs (U+F0000+) survive writes and stay literal below.
   glyph = lib.mapAttrs (_: c: builtins.fromJSON ''"\u${c}"'') {
-    ellipsis = "EA7C"; # codicon ellipsis
-    github = "EA84"; # codicon github
-    dotnet = "E77F"; # devicon dotnet
+    ellipsis = "EA7C";
+    github = "EA84";
+    dotnet = "E77F";
   };
-  # Bare marker chars: the ascii twins shed their own brackets inside the cluster's one outer pair; format-string
-  # metachars ($ for the stash marker) ride behind starship's backslash escape.
   m = lib.mapAttrs (_: r: lib.escape ["$"] (lib.removePrefix "[" (lib.removeSuffix "]" r.ascii))) roles.git;
   badges = projections.contextBadges;
-  badgeRole = b: lib.last (lib.splitString "." b.role); # dotted theme path -> palette token (leaf names match)
+  badgeRole = b: lib.last (lib.splitString "." b.role);
 in {
   programs.starship = {
     enable = true;
-    validateFiles.config = true; # build-time check of the generated starship.toml against the package's JSON schema
+    validateFiles.config = true;
 
     settings = {
       "$schema" = "https://starship.rs/config-schema.json";
@@ -57,14 +42,9 @@ in {
         "$character"
       ];
 
-      # Scrollback law: past prompts collapse to HH:MM + pointer via this profile; the zsh hook swaps PROMPT on
-      # zle-line-finish, so the collapsed line keeps exactly the pointer color the live prompt showed. Time rides the
-      # left prompt — zle never paints RPROMPT during the finish repaint, so an rtransient profile cannot land.
       profiles.transient = "$time$character";
 
       # --- [SEMANTIC_ROLE_PALETTE]
-      # Styles reference the theme roles by intent, never raw hue names; `syntax` carries string-yellow, the one hue
-      # with no semantic role. Only tokens a module style consumes get a row.
       palettes.forge = {
         primary = roles.text.primary.hex;
         subtle = roles.text.subtle.hex;
@@ -92,22 +72,18 @@ in {
         vimcmd_replace_one_symbol = "[❮](bold accent2)";
       };
 
-      # Renders only for root or over SSH, the upstream default.
       username = {
         style_user = "primary";
         style_root = "bold danger";
         format = "[$user]($style) ";
       };
 
-      # Remote-host badge binds the shared context vocabulary (projections.contextBadges.remote).
       hostname = {
         ssh_symbol = "${badges.remote.glyph} ";
         style = "bold ${badgeRole badges.remote}";
         format = "[$ssh_symbol$hostname]($style) ";
       };
 
-      # In-container badge (contextBadges.container): native detection fires only inside a linux container rootfs
-      # (/run/.containerenv, /.dockerenv) — the macOS host never renders it; edits that die with the rootfs are the stakes.
       container = {
         symbol = "${badges.container.glyph} ";
         style = "bold ${badgeRole badges.container}";
@@ -119,27 +95,22 @@ in {
         read_only = " 󰌾";
         read_only_style = "danger";
         style = "accent";
-        before_repo_root_style = "muted"; # Ancestors dim, repo name carries the weight
+        before_repo_root_style = "muted";
         repo_root_style = "bold accent";
         substitutions."~/Developer" = "${glyph.github} ";
       };
 
       # --- [GIT_MODULES]
-      # vcs composes the git payload with one repo-detection pass per prompt; four cooperating modules own one concern
-      # each — branch identity, detached hash, in-progress operation, counted tree state. git_metrics is deliberately
-      # absent: line churn is a passive magnitude meter, redundant with the file counts, banned from standing chrome.
       vcs = {
         order = ["git"];
         git_modules = "$git_branch$git_commit$git_state$git_status";
       };
 
-      # Branch is a WORD: the name renders as text in its role color on every branch — trunk included — because the
-      # word IS the information; no suppression, no symbol, ASCII truncation on the rare over-long name.
       git_branch = {
         style = "bold accent2";
         truncation_length = 24;
         truncation_symbol = "..";
-        only_attached = true; # Detached HEAD hands the slot to git_commit
+        only_attached = true;
         format = "[$branch]($style) ";
       };
 
@@ -150,16 +121,8 @@ in {
         format = "[@$hash$tag]($style) ";
       };
 
-      # Transient in-progress operation: parens per the enclosure law (the upstream format), plain weight — self-clearing, never an anchor.
       git_state.style = "attention";
 
-      # One outer bracket, semiotic marker grammar: the cluster reads `main [ +10 ~69 ?12 ^3 ]` — each state is a
-      # space-terminated `<marker><count>` token whose marker char is the theme vocabulary's ASCII register, and one
-      # muted bracket pair (symmetric inner padding) encloses the whole readout. Color carries state meaning from the
-      # theme git vocabulary — added/staged/untracked=success (green, new content), deleted=danger (red), modified and
-      # typechange=info (blue), renamed=structural (purple), conflict=bold accent2 (magenta, the alarm), stash=muted —
-      # while sync topology (ahead/behind/diverged) holds accent so a commit distance never reads as a worktree file
-      # count. Clean renders nothing and the paren group vanishes gap-free.
       git_status = {
         format = "([\\[ ](muted)$all_status$ahead_behind[\\]](muted) )";
         conflicted = "[${m.conflict}$count ](bold accent2)";
@@ -182,10 +145,6 @@ in {
         format = "[$symbol$state( $name)]($style) ";
       };
 
-      # direnv is deliberately absent: the binary ships nowhere on the machine (nix-direnv rides the unratified adoption
-      # menu), so the blocked/denied footgun row could never fire; it returns as one row with that adoption.
-      # Toolchain hierarchy: the symbol keeps its brand hue, the version tail dims to subtle — static facts recede
-      # under the live git state.
       python = {
         symbol = "${icons.process.python} ";
         style = "syntax";
@@ -224,8 +183,6 @@ in {
         format = "[󱎫 $duration]($style) ";
       };
 
-      # Exit truth in the marker register: a discrete atomic event earns the brackets — code plus meaning ([X 130 INT],
-      # [X 127 NOTFOUND]); pipelines surface every stage ([X 0|1]) through the segment projection.
       status = {
         disabled = false;
         symbol = "${icons.alphabet.failure.glyph} ";
@@ -236,7 +193,6 @@ in {
         format = "[\\[$symbol$status( $common_meaning)( $signal_name)\\]]($style) ";
       };
 
-      # Rendered only through the transient profile: scrollback rows carry the theme display-time grammar.
       time = {
         disabled = false;
         style = "muted";

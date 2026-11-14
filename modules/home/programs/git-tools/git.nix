@@ -1,36 +1,41 @@
-# Title         : git.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/git-tools/git.nix
-# ----------------------------------------------------------------------------
-# Git identity, op-backed SSH signing, workflow settings, delta
 {
   config,
   host,
   lib,
+  pkgs,
   ...
 }: let
   inherit (config.forge.theme) roles projections;
-  # Delta output routinely pipes to files and CI logs, so its git-state labels are the ASCII markers.
   git = projections.gitHex;
-  # One universal identity; the one key (in the Personal vault, the hosts/context.nix ssh.publicKey without its comment)
-  # authenticates and signs. op-ssh-sign resolves it by public key through the 1Password agent seam in shell-tools/1password.nix.
   identity = {
     name = "Bardia Samiee";
     email = "b.samiee93@gmail.com";
     publicKey = lib.concatStringsSep " " (lib.take 2 (lib.splitString " " host.ssh.publicKey));
   };
-  # Principal table for local `git log --show-signature` verification.
   trustedPrincipals = [identity.email];
+  idmlText = pkgs.writeShellApplication {
+    name = "idml-text";
+    runtimeInputs = [pkgs.unzip pkgs.yq-go];
+    text = ''
+      unzip -Z1 "$1" | LC_ALL=C sort | while IFS= read -r member; do
+        printf '== %s\n' "$member"
+        [[ $member != *.xml ]] || unzip -p "$1" "$member" | yq -p xml -o xml
+      done
+    '';
+  };
+  textconv = {
+    pdf = "sh -c '${lib.getExe' pkgs.poppler-utils "pdftotext"} -layout \"$1\" -' textconv";
+    exif = lib.getExe pkgs.exiftool;
+    idml = lib.getExe idmlText;
+  };
 in {
   programs.git = {
     enable = true;
+    package = pkgs.git-current;
 
-    # Machine-wide excludes for macOS noise; each repo's .gitignore names its own outputs.
     ignores = [".DS_Store"];
+    attributes = ["*.pdf diff=pdf" "*.psd diff=exif" "*.idml diff=idml"];
 
-    # allowedSigners lands the $XDG_CONFIG_HOME/git/allowed_signers file and the gpg.ssh.allowedSignersFile row through the module.
     signing = {
       key = "key::${identity.publicKey}";
       format = "ssh";
@@ -46,7 +51,7 @@ in {
       user = {inherit (identity) name email;};
       init.defaultBranch = "main";
 
-      pull.rebase = true; # Always rebase on pull (ff setting ignored with rebase)
+      pull.rebase = true;
 
       push = {
         default = "current";
@@ -54,11 +59,17 @@ in {
         followTags = true;
       };
 
-      diff = {
-        algorithm = "histogram";
-        colorMoved = "default";
-        submodule = "log"; # Show submodule changes in diffs
-      };
+      diff =
+        {
+          algorithm = "histogram";
+          colorMoved = "default";
+          submodule = "log";
+        }
+        // lib.mapAttrs (_: command: {
+          textconv = command;
+          cachetextconv = true;
+        })
+        textconv;
 
       merge = {
         conflictstyle = "zdiff3";
@@ -68,8 +79,12 @@ in {
       fetch = {
         prune = true;
         prunetags = true;
-        writeCommitGraph = true; # Update commit graph cache on fetch
+        writeCommitGraph = true;
+        parallel = 0;
+        followRemoteHEAD = "always";
       };
+
+      submodule.fetchJobs = 0;
 
       branch = {
         sort = "-committerdate";
@@ -83,17 +98,22 @@ in {
 
       status = {
         branch = true;
-        submoduleSummary = true; # Show submodule summary in status
+        submoduleSummary = true;
       };
 
       log.date = "iso";
 
-      column.ui = "auto"; # Multi-column output for branch/tag lists
-      tag.sort = "version:refname"; # Sort tags as semantic versions
+      column.ui = "auto";
+      tag.sort = "version:refname";
 
       commit.verbose = true;
       rerere.enabled = true;
-      help.autocorrect = "prompt"; # Never auto-runs a guessed command in agent lanes
+
+      alias = {
+        dft = "-c diff.external=difft diff";
+        dlog = "-c diff.external=difft log -p --ext-diff";
+        dshow = "-c diff.external=difft show --ext-diff";
+      };
     };
   };
 
@@ -101,12 +121,10 @@ in {
     enable = true;
     enableGitIntegration = true;
 
-    # Rows differ from delta's defaults (`delta --show-config` under an empty HOME); the tmTheme rides bat's cache.
     options = {
       navigate = true;
       side-by-side = true;
 
-      # Line numbers: minus/plus lanes carry the owner git-state hues.
       line-numbers = true;
       line-numbers-minus-style = git.deleted.color;
       line-numbers-plus-style = git.added.color;
@@ -114,7 +132,6 @@ in {
       line-numbers-left-format = "{nm:>4}⋮";
       line-numbers-right-format = "{np:>4}│";
 
-      # File headers: state labels are the ASCII twins, so a piped diff carries state in text; copied folds into the rename family (identity move).
       file-style = "bold";
       file-decoration-style = "none";
       file-added-label = git.added.ascii;
@@ -123,42 +140,34 @@ in {
       file-removed-label = git.deleted.ascii;
       file-renamed-label = git.renamed.ascii;
 
-      # Hunk headers
       hunk-header-style = "file line-number";
       hunk-header-decoration-style = "box";
 
-      # Commit/blame styles
       commit-decoration-style = "bold box ul";
 
-      # Blame configuration
       blame-palette = projections.blameRamp;
       blame-separator-style = "dim";
       blame-timestamp-output-format = "%Y-%m-%d %H:%M";
 
-      # Diff styles: owner-derived fills tint the background and hold the code foreground neutral; word-level emphasis is the same hue lifted.
       minus-style = "syntax ${roles.diff.del.hex}";
       minus-emph-style = "syntax bold ${roles.diff.delEmph.hex}";
       plus-style = "syntax ${roles.diff.add.hex}";
       plus-emph-style = "syntax bold ${roles.diff.addEmph.hex}";
 
-      # Grep integration
       grep-output-type = "ripgrep";
       grep-match-line-style = "syntax";
       grep-match-word-style = "bold magenta";
       grep-file-style = "blue bold";
 
-      # Advanced diff features
       word-diff-regex = "\\w+|[^[:space:]]";
       relative-paths = true;
 
-      # UI elements
-      syntax-theme = "forge-dracula"; # bat theme from shell-tools/bat.nix; delta reads the bat cache
+      syntax-theme = "forge-dracula";
       true-color = "always";
       zero-style = "dim syntax";
 
-      # Interactive features
       hyperlinks = true;
-      hyperlinks-file-link-format = "vscode://file/{path}:{line}"; # Visual Studio Code's own URL handler opens the file at the line from any terminal
+      hyperlinks-file-link-format = "vscode://file/{path}:{line}";
     };
   };
 }

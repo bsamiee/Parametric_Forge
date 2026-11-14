@@ -1,37 +1,3 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/linearmouse/default.nix
-# ----------------------------------------------------------------------------
-# LinearMouse owner: settings rows render to the XDG config the app hot-reloads. Schemes scope to external mice only, so the
-# trackpad keeps native behavior, and a later row overrides an earlier one at match time. Generic mouse row lifts
-# the side buttons to universal back/forward and sets pointer.acceleration 0, which collapses the macOS accel table to its
-# identity curve: pointer gain is a constant 96/HIDPointerResolution points per count, free of velocity dependence, where
-# pointer.speed drives HIDPointerResolution = 1/(1/1200 + speed*(1/40 - 1/1200)). Screen travel per inch is
-# hardwareDPI * 96 / HIDPointerResolution, so the MX Master 3S row (Bluetooth 0x046d:0xb034) carries its own speed pinned
-# to its own DPI — 3200 DPI at speed 0.0544 holds 660 pt/inch while cutting the per-count quantum to 0.21 pt, and either
-# number moves only with a compensating move in the other. Both scroll axes ride the smoothed engine, which emits
-# continuous synthetic deltas at 120 Hz in place of quantized line-steps. An enabled smoothed axis puts the Logitech
-# hi-res normalizer in passthrough and the transformer restores detent-scale input itself — 36pt per wheel detent, ~11pt
-# per thumbwheel notch — so highResolutionWheel stays on, and the axis owns its preset, response, speed, acceleration,
-# and inertia while ignoring scrolling.acceleration outright. Travel per event follows desiredVelocity = magnitude *
-# velocityScale * (0.85 + 0.4*speed) * (1 + acceleration*accelerationGain), integrated over a blend that rises with
-# preset response plus response — travel is exactly linear in that speed term, so one factor moves both axes together.
-# Vertical pairs easeIn's velocityScale 24 with response 0 for the softest ramp the mode offers, 46pt per detent at
-# speed 0.9; the same row at speed 0 is the density floor of the whole engine, 32pt. Horizontal takes the smooth preset
-# for its 0.93 decay — the longest carry — at speed 6.5 for 65pt per notch, and past the speed ceiling of 8 the only
-# remaining density lever is acceleration against the preset's 0.06 gain. bouncing false keeps synthetic momentum while
-# dropping the app rubber-band phases. Viewport apps break the smoothed contract: Rhino applies its zoom scale factor per
-# scroll event instead of integrating deltas, so the 120 Hz synthetic stream turns one detent into dozens of zoom steps
-# and a free-spin flick into hundreds. The Rhino row ANDs app bundle with the MX device (one if-object is a conjunction;
-# an array would be a disjunction, and app-only scope would drag the trackpad in) and disables both smoothed axes, which
-# leaves the line transformer to coalesce hi-res micro-ticks into one discrete event per detent. Rhino's viewport reads
-# only the sign of that event (one (1/ZoomScale)^2 step per event), while AppKit scroll views move lines times
-# verticalLineScroll (10pt, one row in a table), so vertical distance 3 sets list and menu travel to three lines per
-# detent and leaves zoom at one step. Blender applies a fixed 1.2 zoom factor per wheel event and has no zoom scale
-# setting, so the Blender row takes the same shape on the same device: one detent, one event, one 1.2 step. launchd
-# owns login start.
 {
   config,
   launchdAgent,
@@ -114,8 +80,6 @@
 in {
   xdg.configFile."linearmouse/linearmouse.json".text = builtins.toJSON settings;
 
-  # Login start through the shared launchd agent grammar (label, dual log) with the GUI rows: Interactive class and the Aqua session,
-  # since `open` needs the login-window session; `open` exits once the app is launched, so the row is one-shot.
   launchd.agents.linearmouse = launchdAgent {
     name = "linearmouse";
     argv = ["/usr/bin/open" "-gj" apps.linearmouse.path];

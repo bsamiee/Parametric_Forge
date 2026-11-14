@@ -1,56 +1,92 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/media-tools/default.nix
-# ----------------------------------------------------------------------------
-# Media tool inventory; imports carry real configuration only, and each imported file declares its own package. The table holds tools with
-# no configuration.
-{pkgs, ...}: let
-  # nixpkgs builds the whole czkawka workspace, three GUI programs over gtk4 among it; the CLI crate alone links none of that.
+{
+  config,
+  lib,
+  pkgs,
+  toolchainEnvFor,
+  ...
+}: let
+  inherit
+    (toolchainEnvFor {
+      home = config.home.homeDirectory;
+      username = config.home.username;
+      xdgCacheHome = config.xdg.cacheHome;
+    })
+    designFontDirectory
+    ;
   czkawkaCli = pkgs.czkawka.overrideAttrs {
     cargoBuildFlags = ["--package" "czkawka_cli"];
     buildInputs = [];
     postInstall = "";
     postFixup = "";
   };
+  resvg = pkgs.symlinkJoin {
+    inherit (pkgs.resvg) pname version meta;
+    paths = [pkgs.resvg];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      for command in resvg usvg; do
+        wrapProgram "$out/bin/$command" --add-flags ${lib.escapeShellArg "--use-fonts-dir ${lib.escapeShellArg designFontDirectory}"}
+      done
+    '';
+  };
 in {
   imports = [
+    ./gallery-dl.nix
     ./models.nix
     ./svgo.nix
     ./yt-dlp.nix
   ];
 
   home.packages = [
-    pkgs.ab-av1 # CRF search to a VMAF target per video, over the profile's ffmpeg (libvmaf, SVT-AV1)
-    czkawkaCli # czkawka_cli: similar images, videos, and music by perceptual hash; broken files, empty folders, big files
-    pkgs.exiftool # Metadata read/write across image, video, PDF, and font containers
-    pkgs.ffmpeg-full # Every codec, filter, and hwaccel nixpkgs offers on this platform; its whisper and arnndn filters load the models.nix files
-    pkgs.ffmpeg-normalize # Two-pass EBU R128 loudnorm; the measure-then-apply JSON handoff is the one ffmpeg lane worth a wrapper
-    pkgs.fonttools # fonttools, pyftsubset, ttx: subsetting that keeps layout features, TTX dump and patch, variable-font instancing, WOFF2
-    pkgs.gallery-dl # Every image of a gallery or page at full resolution with metadata sidecars; yt-dlp is the video twin
-    pkgs.gifski # GIF encoder reading video directly (nixpkgs builds the video feature); beats palettegen/paletteuse
-    # nixpkgs row on purpose: the 16.x release tarball fails on Darwin three ways (no autogen.sh, plugin modules with unresolved libgvc symbols,
-    # a bundled libltdl missing argz), and nothing in 16.x is load-bearing for dot; the pin returns when nixpkgs or upstream fixes the lane.
-    pkgs.graphviz # dot layout family; ImageMagick's shipped `dot` delegate renders .dot sources through it
-    # HarfBuzz builds its utilities by default (meson `utilities` is enabled) and seats them in the dev output. No hb-view: it is the one
-    # utility that needs cairo, which harfbuzz-current disables, and pango-view covers that lane.
-    pkgs.harfbuzz-current.dev # hb-shape, hb-subset, hb-info, hb-vector: shaping traces, font subsetting, face dumps, vector render
-    pkgs.imagemagick
-    pkgs.img2pdf # Images to PDF with the JPEG and PNG bytes embedded unchanged, at the page size their DPI states
-    pkgs.jpegli # cjpegli, djpegli: JPEG encode and decode at higher quality per byte than libjpeg-turbo
-    pkgs.mpv # Playback backend for media aliases
-    # The overlay supplies current Python dependencies. OCRmyPDF's recipe binds Tesseract, Ghostscript, unpaper, pngquant, and JBIG2 by store path.
-    pkgs.ocrmypdf # Searchable text layer on scanned PDFs: OCR, deskew, clean, PDF/A, and image optimization in one command
-    pkgs.oxipng # Lossless PNG recompression for exported raster; no config or env surface
-    pkgs.pandoc-current
-    pkgs.pdfcpu # Booklet imposition, n-up, grid, stamps, watermarks, page boxes, form fill, and validation
+    pkgs.ab-av1
+    czkawkaCli
+    pkgs.exiftool
+    pkgs.ffmpeg-full
+    pkgs.ffmpeg-normalize
+    pkgs.fonttools
+    pkgs.gifski
+    pkgs.graphviz
+    pkgs.harfbuzz-current.dev
+    pkgs.imagemagickBig
+    pkgs.img2pdf
+    pkgs.jpegli
+    pkgs.ocrmypdf
+    pkgs.officecli
+    pkgs.oxipng
+    pkgs.pdfcpu
     pkgs.poppler-utils
-    pkgs.potrace # potrace, mkbitmap: black-and-white bitmap to vector outline
-    pkgs.resvg # SVG to PNG renderer
-    pkgs.ssimulacra2 # Perceptual image-difference score between an original and its compressed copy
+    pkgs.potrace
+    resvg
+    pkgs.ssimulacra2
     pkgs.typst
-    pkgs.vl-convert # Vega and Vega-Lite specs to SVG/PNG/JPEG/PDF; V8 is linked in, so no Node and no browser
-    pkgs.verapdf-current # Complete official CLI; the overlay owns its private current Java runtime.
+    pkgs.vl-convert
+    pkgs.verapdf-current
   ];
+
+  programs = {
+    # --- [MPV]
+    mpv = {
+      enable = true;
+      config.input-ipc-server = "~~/socket";
+    };
+
+    # --- [PANDOC]
+    pandoc = {
+      enable = true;
+      package = pkgs.pandoc-current;
+      defaults.pdf-engine = "typst";
+    };
+  };
+
+  # --- [EXIFTOOL]
+  xdg.configFile."exiftool/.ExifTool_config".text = ''
+    %Image::ExifTool::UserDefined::Shortcuts = (
+        Provenance => [qw(XMP-dc:Creator XMP-dc:Source XMP-dc:Rights XMP-xmpRights:WebStatement XMP-xmpRights:UsageTerms
+                          XMP-iptcExt:ArtworkTitle XMP-iptcExt:ArtworkCreator XMP-iptcExt:ArtworkDateCreated XMP-iptcExt:ArtworkSource
+                          XMP-iptcExt:ArtworkSourceInventoryNo XMP-iptcExt:ArtworkSourceInvURL)],
+        Inventory  => [qw(File:FileType File:MIMEType Composite:ImageSize EXIF:Orientation ICC_Profile:ProfileDescription
+                          File:BitsPerSample File:YCbCrSubSampling XMP-dc:Creator XMP-dc:Source XMP-dc:Rights)],
+    );
+    1;
+  '';
 }

@@ -1,10 +1,3 @@
-# Title         : loc.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/scripts/loc.nix
-# ----------------------------------------------------------------------------
-# scc code counter + loc wrapper: grouped per-file / per-folder LOC and complexity. --json emits the machine envelope.
 {pkgs, ...}: let
   loc = pkgs.writeShellApplication {
     name = "loc";
@@ -12,8 +5,6 @@
     text = ''
       shopt -s inherit_errexit
 
-      # Payloads ride pipelines, never <<<.
-      # Pure printer: help requests route it to stdout with exit 0, usage errors to stderr with exit 2.
       _usage() { printf 'usage: %s [--json] [target...]\n' "''${0##*/}"; }
 
       json_mode=0
@@ -30,8 +21,6 @@
       done
       ((''${#targets[@]})) || targets=(.)
 
-      # Polymorphic target admission: every entry realpaths to an existing path or the run dies loudly on the envelope rail; a directory-only run
-      # unlocks the corpus filters below.
       resolved=()
       dirs_only=1
       for t in "''${targets[@]}"; do
@@ -48,8 +37,6 @@
         resolved+=("$p")
         [[ -d "$p" ]] || dirs_only=0
       done
-      # Relpath root: a sole dir is its own root, a sole file anchors at its parent, several targets anchor at the deepest common ancestor. The
-      # quoted-slash trim pattern is deliberate: a bare slash-star byte pair reads as a Nix block comment to scc and poisons this file's own count.
       root="''${resolved[0]}"
       [[ -d "$root" ]] || root="''${root%"/"*}"
       for p in "''${resolved[@]}"; do
@@ -63,16 +50,12 @@
       targets_json="$(jq -nc '$ARGS.positional' --args -- "''${resolved[@]}")"
       readonly targets_json
 
-      # Corpus filters ride directory scans only: minified/generated detection and the large-file guard would silently vanish an explicitly named
-      # file from its own report, so explicit file targets always count verbatim.
       scc_flags=(--by-file --format json --no-cocomo --no-size --sort code)
       ((dirs_only)) && scc_flags+=(--no-min-gen --no-large)
 
-      # Detached stdin: a dead invoking session never strands this command substitution as an orphaned subshell.
       json="$(scc "''${resolved[@]}" "''${scc_flags[@]}" </dev/null)"
       readonly json
 
-      # jq owns $root/$targets inside this single-quoted filter.
       # shellcheck disable=SC2016
       readonly report_filter='
         def relpath:
@@ -146,7 +129,6 @@
       '
 
       if ((json_mode)); then
-        # Machine envelope: same folder grouping the table renders, plus per-language and overall totals for agent consumption.
         printf '%s\n' "$json" | jq -c --arg root "$root" --argjson targets "$targets_json" "$report_filter"'
           {
             target: $root,

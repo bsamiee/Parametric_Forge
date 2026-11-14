@@ -1,10 +1,3 @@
-# Title         : fastfetch.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/fastfetch.nix
-# ----------------------------------------------------------------------------
-# System information display themed from the palette and roles of modules/home/theme.nix
 {config, ...}: let
   inherit (config.forge.theme) roles;
 in {
@@ -32,7 +25,6 @@ in {
         };
         percent = {
           type = 3;
-          # Traffic-light health thresholds ride the state ladder; the `yellow` key carries the warning role (amber), never string-yellow.
           color = {
             green = roles.state.success.hex;
             yellow = roles.state.warning.hex;
@@ -60,7 +52,6 @@ in {
 
       # --- [MODULES_CONFIGURATION]
       modules = [
-        # Title and separator
         {type = "break";}
         {
           type = "title";
@@ -69,7 +60,6 @@ in {
         }
         {type = "break";}
 
-        # System Section
         {
           type = "os";
           key = "OS   ";
@@ -96,7 +86,6 @@ in {
         }
         {type = "break";}
 
-        # Desktop Section
         {
           type = "wm";
           key = "UI   ";
@@ -127,7 +116,6 @@ in {
         }
         {type = "break";}
 
-        # Hardware Section
         {
           type = "chassis";
           key = "HW   ";
@@ -166,7 +154,6 @@ in {
         }
         {type = "break";}
 
-        # Network Section
         {
           type = "wifi";
           key = "NET  ";
@@ -188,7 +175,6 @@ in {
         }
         {type = "break";}
 
-        # Colors display
         {
           type = "colors";
           symbol = "circle";

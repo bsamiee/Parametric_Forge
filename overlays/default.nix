@@ -1,12 +1,3 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : overlays/default.nix
-# ----------------------------------------------------------------------------
-# Row-folded package projection over overlays/manifest.nix: one binary-release template consumes asset rows; opt-runtime rows (energyplus,
-# openstudio) share one recipe folding row-owned layout, env, and wrapper facts; the sqlite-extended shell kernel generates from its row's profile data;
-# patch rows override upstream packages with row-owned facts.
 final: prev: let
   manifest = import ./manifest.nix;
   generatedSources = import ./_sources/generated.nix {
@@ -15,8 +6,6 @@ final: prev: let
   inherit (prev) lib;
   system = prev.stdenv.hostPlatform.system;
 
-  # A zip asset (a manual row's choice, or a tarball pin) is an unpacked fixed-output source whose hash is `nix-prefetch-url --unpack`:
-  # the single release directory is stripped, and the extracted tree survives every stdenv move. Flat pins keep nvfetcher's fetchurl.
   srcOf = a:
     if (a.fetch or "url") == "zip"
     then
@@ -29,16 +18,12 @@ final: prev: let
     then generatedSources.${a.pin}.src
     else prev.fetchurl {inherit (a) url hash;};
 
-  # Prebuilt trees install as a link farm into their unpacked source, so the input-addressed derivation holds links and wrappers alone.
   linkTree = src: dst: ''lndir -silent ${src} ${dst}'';
 
-  # Env vocabulary of an opt-runtime row projected at a root: names bind to the runtime root or to root-relative subpaths.
   runtimeEnvAt = row: root:
     lib.genAttrs row.runtime.env.roots (_: root)
     // lib.mapAttrs (_: sub: "${root}/${sub}") row.runtime.env.paths;
 
-  # One derivation template for every binary-release row; recipes carry only the install kernel and unpack facts,
-  # with finalAttrs threaded through for passthru projections.
   mkBinaryRelease = name: recipe: let
     row = manifest.packages.${name};
     a = row.assets.${system};
@@ -60,9 +45,6 @@ final: prev: let
       }
       // recipe {inherit row a finalAttrs;});
 
-  # Shared opt-runtime recipe: the release tree lands under $out/<root>, each wrapper exports the row env before exec, and passthru.runtimeEnv serves
-  # session-env consumers the same vocabulary at the installed root. makeWrapper refuses a target the release layout lacks, so upstream layout
-  # drift fails the build instead of shipping a thinner bin/.
   optRuntime = {
     row,
     finalAttrs,
@@ -76,8 +58,6 @@ final: prev: let
     '';
   in {
     nativeBuildInputs = [prev.bash prev.lndir prev.makeWrapper];
-    # The runtime root is a link farm into the unpacked source; only what patchShebangs rewrites (a named directory, or the top-level
-    # scripts of `.`) is a real copy, so a nixpkgs move re-keys links and wrappers instead of a gigabyte tree.
     dontUnpack = true;
     installPhase = ''
       runHook preInstall
@@ -109,7 +89,128 @@ final: prev: let
     passthru.runtimeEnv = runtimeEnvAt row "${finalAttrs.finalPackage}/${row.runtime.root}";
   };
 
+  cliRelease = {
+    binary,
+    completion ? null,
+    man ? null,
+    versionArg ? "--version",
+    unpack ? true,
+  }: {row, ...}:
+    {
+      nativeBuildInputs = [prev.installShellFiles];
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 ${binary} "$out/bin/${row.mainProgram}"
+        ${lib.optionalString (man != null) "installManPage ${man}"}
+        ${lib.optionalString (completion != null) ''
+          export HOME="$TMPDIR"
+          installShellCompletion --cmd ${row.mainProgram} \
+            --bash <("$out/bin/${row.mainProgram}" ${completion} bash) \
+            --fish <("$out/bin/${row.mainProgram}" ${completion} fish) \
+            --zsh <("$out/bin/${row.mainProgram}" ${completion} zsh)
+        ''}
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/${row.mainProgram}";
+      versionCheckProgramArg = versionArg;
+      versionCheckKeepEnvironment = "HOME";
+    }
+    // (
+      if unpack
+      then {sourceRoot = ".";}
+      else {dontUnpack = true;}
+    );
+
   recipes = {
+    gogcli = cliRelease {
+      binary = "gog";
+      completion = "completion";
+    };
+    hostinger = cliRelease {
+      binary = "hostinger";
+      completion = "completion";
+      man = "manpages/*.1";
+      versionArg = "version";
+    };
+    gh = cliRelease {
+      binary = ''"$src/bin/gh"'';
+      completion = "completion -s";
+      man = ''"$src"/share/man/man1/*.1'';
+      unpack = false;
+    };
+    nh = cliRelease {
+      binary = ''"$src"'';
+      unpack = false;
+    };
+    atuin = cliRelease {
+      binary = ''"$src/atuin"'';
+      completion = "gen-completions --shell";
+      unpack = false;
+    };
+    mq = cliRelease {
+      binary = ''"$src"'';
+      completion = "completion";
+      unpack = false;
+    };
+    ntfy-sh = cliRelease {binary = "*/ntfy";};
+    tscli = cliRelease {binary = "tscli";};
+    officecli = cliRelease {
+      binary = ''"$src"'';
+      unpack = false;
+    };
+    curl-impersonate-current = _: {
+      dontUnpack = true;
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 -t "$out/bin" "$src"/curl*
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/curl-impersonate";
+    };
+    gam = _: {
+      dontUnpack = true;
+      dontFixup = true;
+      installPhase = ''
+        runHook preInstall
+        mkdir -p "$out/bin" "$out/lib"
+        cp -R "$src" "$out/lib/gam7"
+        ln -s "$out/lib/gam7/gam" "$out/bin/gam"
+        runHook postInstall
+      '';
+    };
+    yq-go = cliRelease {
+      binary = "yq_darwin_arm64";
+      completion = "completion";
+      man = "yq.1";
+    };
+    sqruff = cliRelease {binary = "sqruff";};
+    oha = cliRelease {
+      binary = ''"$src"'';
+      completion = "--completions";
+      unpack = false;
+    };
+    dua = cliRelease {
+      binary = "*/dua";
+      completion = "completions";
+    };
+    hurl = _: {
+      nativeBuildInputs = [prev.installShellFiles];
+      installPhase = ''
+        runHook preInstall
+        install -Dm755 -t "$out/bin" bin/hurl bin/hurlfmt
+        installManPage man/man1/*.1.gz
+        installShellCompletion --cmd hurl --bash completions/hurl.bash --fish completions/hurl.fish --zsh completions/_hurl
+        installShellCompletion --cmd hurlfmt --bash completions/hurlfmt.bash --fish completions/hurlfmt.fish --zsh completions/_hurlfmt
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/hurl";
+    };
     utiluti = _: {
       dontUnpack = true;
       nativeBuildInputs = [prev.xar prev.pbzx prev.cpio];
@@ -123,7 +224,6 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # The universal flat package's gzip cpio payload holds `op`; completions generate from the installed binary.
     _1password-cli-current = _: {
       dontUnpack = true;
       dontStrip = true;
@@ -169,7 +269,6 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
     };
-    # Flat single-binary release: no archive, the fetched file IS the tool.
     biome = _: {
       dontUnpack = true;
       installPhase = ''
@@ -178,9 +277,6 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # Release tarball: the binary and its man page. Completions generate from the installed binary (they resolve usage-cli on PATH at
-    # completion time, as the generated scripts do everywhere); the nixpkgs self-update marker keeps `mise self-update` a typed refusal
-    # on a store-owned binary, so the update path stays the pin.
     mise = _: {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
@@ -197,7 +293,6 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # Release tarball, pinned unpacked: the binary, its man page, and the shipped completions.
     watchexec = _: {
       dontUnpack = true;
       nativeBuildInputs = [prev.installShellFiles];
@@ -232,7 +327,6 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/zellij";
     };
-    # Release tarball of one file and no top directory: the unpack root is the build directory.
     duckdb-current = _: {
       sourceRoot = ".";
       installPhase = ''
@@ -244,7 +338,6 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/duckdb";
     };
-    # Library-only release, pinned unpacked: a flat tree of extension modules and no CLI binary.
     sqlean = _: {
       dontUnpack = true;
       installPhase = ''
@@ -253,8 +346,6 @@ final: prev: let
         runHook postInstall
       '';
     };
-    # Release zip: one executable with the V8 runtime linked in, under a single bin/ directory the unpacked pin strips. A layout move fails the
-    # build loudly, never a bin/ that lost its tool.
     vl-convert = _: {
       dontUnpack = true;
       installPhase = ''
@@ -270,8 +361,6 @@ final: prev: let
     openstudio = optRuntime;
   };
 
-  # Source rows rebuild a nixpkgs recipe at the pinned release, its tests left to upstream and Hydra: the pin replaces `srcs` where the recipe
-  # unpacks a list (fonts), else `src`, and `sourceOverride` row data feeds the recipe's own flags.
   sourceRecipes = {
     rclone = old: {
       src = (srcOf manifest.packages.rclone.asset) // {tag = "v${manifest.packages.rclone.version}";};
@@ -279,22 +368,31 @@ final: prev: let
       inherit (old) doCheck doInstallCheck;
       versionCheckKeepEnvironment = "HOME";
     };
-    # 1.28.5 grew a cmark-gfm row inside the Makerules section nixpkgs' Darwin system-deps patch lifts out of its Linux branch; the same lift
-    # rebased onto the pinned tree replaces it, and nixpkgs' C++ wrap patch still applies as shipped.
     mupdf = old: {
       patches = [./mupdf-darwin-system-deps.patch (prev.path + "/pkgs/by-name/mu/mupdf/fix-cpp-build.patch")];
       postInstall = lib.replaceStrings [old.version] [manifest.packages.mupdf.version] old.postInstall;
     };
-    # The application carries the woff and unicode extras: pyftsubset writes WOFF2 through brotli, and unicodedata2 holds the current
-    # Unicode tables.
     fonttools = old: let
       extras = prev.python3Packages.fonttools.optional-dependencies;
     in {
       propagatedBuildInputs = old.propagatedBuildInputs ++ extras.woff ++ extras.unicode;
     };
-    # The pin carries its Cargo.lock, so the crates vendor from the lock in place of the recipe's hash over the nixpkgs release.
     librsvg-current = _: {
       cargoDeps = prev.rustPlatform.importCargoLock generatedSources.design-librsvg.cargoLock."Cargo.lock";
+    };
+    resvg = _: {
+      cargoDeps = prev.rustPlatform.importCargoLock generatedSources.resvg.cargoLock."Cargo.lock";
+    };
+    powershell = old: {
+      nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
+      postInstall = lib.concatStrings (lib.mapAttrsToList (name: module: ''
+          mkdir -p "$out/share/powershell/Modules/${name}"
+          unzip -q ${srcOf module.asset} -d "$out/share/powershell/Modules/${name}/${module.version}" -x "_rels/*" "package/*" "[[]Content_Types].xml" "*.nuspec"
+        '')
+        manifest.packages.powershell.modules);
+    };
+    rsync-current = old: {
+      buildInputs = old.buildInputs ++ [prev.libidn2];
     };
   };
   mkSourceRelease = name: row: let
@@ -314,8 +412,6 @@ final: prev: let
       )
       // (sourceRecipes.${name} or (_: {})) old);
 in
-  # Every binary-release attr derives from the recipes table: a next platform runtime or wrapped release is one manifest
-  # row plus one recipe row, never a new output attr or kernel file.
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
@@ -323,6 +419,27 @@ in
       inherit (manifest.packages.nvfetcher) version;
       src = srcOf manifest.packages.nvfetcher.asset;
     });
+    cachix = let
+      row = manifest.packages.cachix;
+      release = name: extraDepends: hfinal: hprev:
+        prev.haskell.lib.compose.overrideCabal (old: {
+          inherit (row) version;
+          src = "${srcOf row.asset}/${name}";
+          revision = null;
+          editedCabalFile = null;
+          configureFlags = (old.configureFlags or []) ++ ["-f-ram"];
+          libraryHaskellDepends = old.libraryHaskellDepends ++ map (dep: hfinal.${dep}) extraDepends;
+          doCheck = false;
+        })
+        hprev.${name};
+    in
+      prev.cachix.override {
+        haskellPackages = prev.haskellPackages.extend (hfinal: hprev:
+          lib.mapAttrs (name: extraDepends: release name extraDepends hfinal hprev) {
+            cachix-api = ["openapi3"];
+            cachix = [];
+          });
+      };
     ocrmypdf = let
       row = manifest.packages.ocrmypdf;
       python = prev.python3.override {
@@ -399,7 +516,6 @@ in
           final.rust-jemalloc-sys
         ];
     });
-    # SQLite shell kernel generated from the manifest row: base modules load on every profile, profile rows add extras, `all` derives as their union.
     sqlite-extended = let
       row = manifest.packages.sqlite-extended;
       ext = prev.stdenv.hostPlatform.extensions.sharedLibrary;
@@ -421,7 +537,6 @@ in
               ;;
           esac
 
-          # exec skips EXIT traps, so the init script rides a process-substitution fd instead of a temp file a trap must reap.
           exec sqlite3 -init <(
             printf '.load ${final.sqlean}/lib/%s${ext}\n' "''${modules[@]}"
             printf '.load %s\n' '${final.sqlite-vec}/lib/vec0${ext}' '${final.libspatialite}/lib/mod_spatialite${ext}'

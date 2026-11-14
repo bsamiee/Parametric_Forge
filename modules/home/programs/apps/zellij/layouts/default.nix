@@ -1,23 +1,8 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/zellij/layouts/default.nix
-# ----------------------------------------------------------------------------
-# Shell-first Zellij layout
 _: {
   programs.zellij.layouts.default = ''
-    // Title         : default.kdl
-    // Author        : Bardia Samiee
-    // Project       : Parametric Forge
-    // License       : MIT
-    // Path          : modules/home/programs/apps/zellij/layouts/default.kdl
-    // ----------------------------------------------------------------------------
-    // Shell-first layout: one pane between the two bars
 
     layout {
         // --- [TAB_TEMPLATES]
-        // Top zjstatus: tabs/layout/session. Bottom zjstatus-hints: mode + key ribbon.
         tab_template name="ui" {
             pane size=1 borderless=true {
                 plugin location="zjstatus"
@@ -39,7 +24,6 @@ _: {
         }
 
         // --- [LAYOUTS]
-        // Pane counts include the two bars from the ui template
         swap_tiled_layout name="[DEFAULT]" {
             ui exact_panes=3 {
                 pane

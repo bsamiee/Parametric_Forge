@@ -1,14 +1,3 @@
-# Title         : default-applications.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/mac-tools/default-applications.nix
-# ----------------------------------------------------------------------------
-# Application row owner and native association reconcile. One row per application (bundle id, handled extensions and schemes, and a path where
-# a consumer opens the bundle) feeds the handler reconcile, the Dock, and LinearMouse. At every switch a handler whose bundle id differs from its
-# row is set. A row names the app that opens the type: LaunchServices takes an app that never claims the type (Rhino for the CAD formats it
-# imports) and an extension with no system type (a dynamic UTI such as .sln) alike, and utiluti raises no per-type consent dialog. utiluti exits
-# non-zero on an application it cannot resolve, so a renamed bundle fails the switch by name.
 {
   config,
   lib,
@@ -25,10 +14,7 @@
     })
     rhinoBin
     ;
-  # McNeel spells the major release into the bundle name and id.
   rhinoMajor = "9";
-  # Creative Cloud spells the installed release line into folder and bundle names, which the Dock pins by path, and a beta drops the year
-  # everywhere but InDesign; these two facts select the line every Adobe row derives.
   adobeYear = "2027";
   adobeBeta = true;
   adobeLine =
@@ -52,8 +38,9 @@
     creativeCloud = app "com.adobe.acc.AdobeCreativeCloud" "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" [] [];
     blender = app "org.blenderfoundation.blender" null [] [];
     linearmouse = app "com.lujjjh.LinearMouse" "/Applications/LinearMouse.app" [] [];
+    # --- [BUNDLED_CLI]
+    tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
     # --- [HANDLERS]
-    # ICAP is an InCopy-bound package; InDesign explicitly declares role None. IDAP is its supported return package.
     indesign = app "com.adobe.InDesign" "/Applications/Adobe InDesign ${adobeDatedLine}/Adobe InDesign ${adobeDatedLine}.app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [];
     illustrator = app "com.adobe.illustrator${lib.optionalString adobeBeta "Beta"}" "/Applications/Adobe Illustrator ${adobeLine}/Adobe Illustrator.app" ["ai" "ait" "aia" "svg" "svgz" "eps" "ase"] [];
     photoshop = app "com.adobe.Photoshop" "/Applications/Adobe Photoshop ${adobeLine}/Adobe Photoshop ${adobeLine}.app" [
@@ -98,8 +85,6 @@
     distiller = app "com.adobe.distiller" null ["joboptions"] [];
     typeface = app "com.criminalbird.typeface.beta" null ["otf" "ttf" "ttc" "otc" "woff" "woff2" "dfont" "typeface-license" "typeface-backup"] [];
     colorsync = app "com.apple.ColorSyncUtility" null ["icc" "icm"] [];
-    # .typ now resolves to its own dynamic type; never assign Oracle's older shared SQL declaration. .ts is MPEG transport; .vg.json shares JSON.
-    # Do not broaden script editing into generic JSON/XML/data, or assign ambiguous Photoshop/CAD preset extensions.
     vscode = app "com.microsoft.VSCode" "/Applications/Visual Studio Code.app" [
       "txt"
       "md"
@@ -143,14 +128,9 @@
       "resolved"
     ] [];
     preview = app "com.apple.Preview" null ["jpg" "jpeg" "png" "gif" "webp" "heic" "heif" "avif" "jxl"] [];
-    # Rhino's own document types plus the formats its Import command reads (McNeel's file formats index); dae, sat, and x3d
-    # are export-only there and stay with the system viewers.
     rhino = app "com.mcneel.rhinoceros.${rhinoMajor}" "/Applications/Rhino ${rhinoMajor}.app" ["stl" "dwg" "dxf" "obj" "fbx" "ply" "step" "stp" "iges" "igs" "skp" "3ds" "wrl" "3mf" "dgn"] [];
-    # BetterZip's Archive Types tab claims the formats it lists; these three resolve through system type identifiers the tab cannot take
-    # (com.sun.web-application-archive, org.gnu.gnu-tar-archive, com.microsoft.cab). ePub stays unchecked there so calibre keeps the type.
     betterzip = app "com.macitbetter.betterzip" null ["war" "gtar" "cab"] [];
     calibre = app "net.kovidgoyal.calibre" null ["epub"] [];
-    # The one media player Forge installs, copied by Home Manager into its app directory.
     mpv = app "io.mpv" "${copyRoot}/mpv.app" [
       "mp3"
       "m4a"
@@ -183,8 +163,6 @@
   command = pkgs.writeShellApplication {
     name = "default-applications";
     runtimeInputs = [pkgs.jq pkgs.utiluti];
-    # A bundle copyApps rewrote this generation reaches the LaunchServices database on its next Finder scan or launch; registering each
-    # copied bundle first makes the handler read below current.
     text = ''
       ${lib.concatMapStrings (r: ''
         /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f ${lib.escapeShellArg r.path}

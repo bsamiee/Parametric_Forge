@@ -1,0 +1,26 @@
+#define name Status
+#define color green
+#define glyph waveform
+#define outputs text
+#include 'actions/web'
+
+const statuses = downloadURL("http://lucky.tailec0014.ts.net:8080/api/v1/endpoints/statuses?pageSize=1")
+@total = 0
+@down: text
+for endpoint in statuses {
+    const row = getDictionary(@endpoint)
+    const results = getValue(row, "results")
+    const latest = getLastItem(results)
+    const check = getDictionary(latest)
+    const success = getValue(check, "success")
+    const passed = number(success)
+    @total += 1
+    if passed != 1 {
+        @down += " {row['key']}"
+    }
+}
+@summary = "{@total} up"
+if @down {
+    @summary = "Down of {@total}:{@down}"
+}
+mustOutput("{@summary}", "{@summary}")

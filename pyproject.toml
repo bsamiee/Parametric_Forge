@@ -1,11 +1,3 @@
-# Title         : pyproject.toml
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : pyproject.toml
-# ----------------------------------------------------------------------------
-# Python law for Forge-owned scripts: the language-law tool sections, with no runtime dependency until a script in this tree imports one.
-# `package = false` keeps the repo a virtual uv project: locked, synced, and nothing here ever builds.
 
 [project]
 name = "parametric-forge"
@@ -56,7 +48,6 @@ all = "error"
 
 # --- [MYPY] -----------------------------------------------------------------------------
 
-# `ty` is the binding type gate; mypy is the advisory strict secondary, invoked per target — no pinned files row, Forge has no package tree.
 [tool.mypy]
 python_version = "3.15"
 cache_dir = "$MYPY_CONFIG_FILE_DIR/.cache/mypy"
@@ -108,7 +99,7 @@ extend-exclude = [
 ]
 
 [tool.ruff.format]
-exclude = ["*.md"]               # Markdown fences: the linter skips *.md natively; fence layout is design-doc law, so the formatter skips them too.
+exclude = ["*.md"]
 line-ending = "lf"
 docstring-code-format = true
 skip-magic-trailing-comma = true
@@ -117,37 +108,37 @@ skip-magic-trailing-comma = true
 select = ["ALL"]
 ignore = [
     # --- [FORMATTER]
-    "missing-trailing-comma",                    # ruff format owns trailing commas
-    "single-line-implicit-string-concatenation", # ruff format owns implicit string concatenation
+    "missing-trailing-comma",
+    "single-line-implicit-string-concatenation",
     # --- [MATCH_DISPATCH]
-    "unnecessary-assign",              # named intermediates keep flow pipelines readable
-    "superfluous-else-return",         # explicit match dispatch keeps exhaustive arms visible
-    "superfluous-else-raise",          # explicit error branches keep ROP rails visible
-    "if-else-block-instead-of-if-exp", # match/case owns dispatch, not ternaries
-    "if-with-same-arms",               # match/case owns dispatch, not merged if arms
+    "unnecessary-assign",
+    "superfluous-else-return",
+    "superfluous-else-raise",
+    "if-else-block-instead-of-if-exp",
+    "if-with-same-arms",
     # --- [DENSITY]
-    "too-many-branches",            # one dispatch surface owns every branch; a branch cap pressures arm extraction
-    "too-many-locals",              # dense dispatch surfaces own their locals; a variable cap pressures fragmentation
-    "too-many-statements",          # one surface owns every arm; a statement cap never justifies splitting a closed union
-    "too-many-boolean-expressions", # dense dispatch predicates stay on the owning surface; a boolean-expression cap pressures fragmentation
+    "too-many-branches",
+    "too-many-locals",
+    "too-many-statements",
+    "too-many-boolean-expressions",
     # --- [ERROR_RAILS]
-    "raw-string-in-exception",    # frozen errors carry inline messages
-    "f-string-in-exception",      # error constructors carry formatted context
-    "raise-vanilla-args",         # domain errors carry descriptive messages
-    "raise-within-try",           # `@safe` ROP boundaries may raise inside the guarded call
-    "error-instead-of-exception", # structlog `.error()` is valid outside exception handlers
+    "raw-string-in-exception",
+    "f-string-in-exception",
+    "raise-vanilla-args",
+    "raise-within-try",
+    "error-instead-of-exception",
     # --- [DOCSTRINGS]
-    "docstring-extraneous-exception", # Raises sections may document propagated helper exceptions; DOC501 still requires direct raises
+    "docstring-extraneous-exception",
     # --- [SEMANTIC_ORDER]
-    "unsorted-dunder-all",   # semantic public-surface order beats alphabetical `__all__`
-    "unsorted-dunder-slots", # semantic slot order beats alphabetical `__slots__`
+    "unsorted-dunder-all",
+    "unsorted-dunder-slots",
     # --- [WORKFLOW]
-    "missing-todo-link",          # TODO links are not required for local maintenance notes
-    "line-contains-todo",         # TODO comments are accepted source markers
-    "implicit-namespace-package", # monorepo packages may be implicit namespaces
-    "missing-copyright-notice",   # top-level LICENSE owns copyright notice
+    "missing-todo-link",
+    "line-contains-todo",
+    "implicit-namespace-package",
+    "missing-copyright-notice",
     # --- [SECTION_DIVIDERS]
-    "commented-out-code", # compact `# --- [LABEL]` subsection dividers are source structure
+    "commented-out-code",
 ]
 
 [tool.ruff.lint.per-file-ignores]

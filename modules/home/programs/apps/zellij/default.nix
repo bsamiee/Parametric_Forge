@@ -1,32 +1,14 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/zellij/default.nix
-# ----------------------------------------------------------------------------
-# Zellij terminal multiplexer configuration
 {
   config,
   lib,
   pkgs,
   ...
 }: let
-  # Plugin admission rows (nixpkgs attr or wasm url and hash, plus permissions) are the zellij-plugins lane of overlays/manifest.nix.
   pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
 
   # --- [SESSION_ATTACH]
-  # The one attach every WezTerm spawn runs (deck.lua). A zellij server is a daemon that outlives the login session which forked it, and a
-  # logout (a WindowServer watchdog restart is one) leaves it, and every pane it later spawns, bound to that session's dead launchd bootstrap
-  # namespace: no Mach lookup resolves, so user lookups (sudo), DNS, logd, and pgrep all fail inside it. A server whose start precedes this
-  # login's loginwindow therefore belongs to an ended session: it takes SIGTERM, which ends it as a shutdown does and keeps its serialized
-  # layout (zellij's kill-session deletes that layout, so it is never used here), and the attach rebuilds the session with its recorded
-  # commands running at once, each Claude Code pane resuming its conversation through the discovery hook (config.nix). Only /bin/ps is read,
-  # filtered on the numeric uid: pgrep resolves through sysmond and `ps -U` through the user directory, lookups a stale namespace cannot make,
-  # so the attach decides the same from any namespace. A server signalled here is awaited up to five seconds so the
-  # attach never reaches a socket that is still closing.
   sessionAttach = pkgs.writeShellApplication {
     name = "zellij-session-attach";
-    runtimeInputs = [pkgs.zellij pkgs.coreutils];
     text = ''
       started() {
         local stamp
@@ -47,19 +29,19 @@
           if since=$(started "$pid") && ((since < boundary)) && kill -TERM "$pid" 2>/dev/null; then
             for _ in {1..50}; do
               kill -0 "$pid" 2>/dev/null || break
-              sleep 0.1
+              /bin/sleep 0.1
             done
           fi
         done
       fi
-      exec zellij attach --create --force-run-commands "$@"
+      exec ${lib.getExe config.programs.zellij.package} attach --create --force-run-commands "$@"
     '';
   };
 in {
   imports = [
-    ./config.nix # Nix-generated main config
-    ./themes/dracula.nix # Nix-generated Dracula theme
-    ./layouts/default.nix # Shell-first layout
+    ./config.nix
+    ./themes/dracula.nix
+    ./layouts/default.nix
   ];
 
   options.forge.zellij.attach = lib.mkOption {
@@ -72,10 +54,6 @@ in {
   config = {
     programs.zellij.enable = true;
 
-    # Grant reconcile, not append: a 1-row bar pane cannot render the interactive permission prompt, so the manifest rows' exact upstream
-    # grant names seed zellij's permission cache. plugDir-scoped rows PROJECT from those rows every activation — stale plugin rows are pruned,
-    # grant edits propagate, rows outside plugDir (interactive grants for foreign paths) stay untouched. Clearing the plugin cache revokes
-    # grants, and the next activation reseeds them.
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
       plugDir = "${config.xdg.configHome}/zellij/plugins";
       permsFile = "${config.home.homeDirectory}/Library/Caches/org.Zellij-Contributors.Zellij/permissions.kdl";
@@ -106,9 +84,6 @@ in {
     '');
 
     # --- [PLUGIN_INSTALLATION]
-    # Every third-party wasm is file-owned from its manifest row: a row with `attr` resolves in nixpkgs zellijPlugins, a row with url/hash is a
-    # pinned release wasm nixpkgs omits. Aliases resolve through file: locations, so plugin load never depends on the network. The plugins
-    # block lives in config.kdl (programs.zellij.extraConfig); programs.zellij.plugins would add a second one plus load_plugins.
     xdg.configFile = lib.mapAttrs' (name: row:
       lib.nameValuePair "zellij/plugins/${name}.wasm" {
         source =

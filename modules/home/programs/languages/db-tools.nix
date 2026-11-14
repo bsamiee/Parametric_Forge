@@ -1,18 +1,6 @@
-# Title         : db-tools.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/languages/db-tools.nix
-# ----------------------------------------------------------------------------
-# Database and SQL tooling: PostgreSQL clients, the SQL linter, and the extended SQLite shell.
-{
-  lib,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   style = import ../../../style.nix;
 
-  # PostgreSQL client commands alone; the package's server binaries stay off PATH.
   postgresClientTools = pkgs.linkFarm "postgres-client-tools" (map (bin: {
       name = "bin/${bin}";
       path = "${pkgs.postgresql_18}/bin/${bin}";
@@ -34,11 +22,15 @@
     ]);
 in {
   home.packages = [
-    postgresClientTools # PostgreSQL client commands
-    pkgs.sqruff # SQL linter/formatter
-    pkgs.sqlite-extended # Explicit SQLite shell with SQLean, sqlite-vec, and SpatiaLite loaded
+    postgresClientTools
+    pkgs.sqruff
+    pkgs.sqlite-extended
   ];
 
-  # sqruff reads no user-level config: each file is an explicit `sqruff --config` target carrying the style vocabulary for its dialect.
-  xdg.configFile = lib.genAttrs' ["postgres" "duckdb"] (d: lib.nameValuePair "sqruff/${d}.cfg" {text = style.sqruff d;});
+  xdg.configFile = {
+    "sqruff/.sqruff".text = style.sqruff;
+    "psql/psqlrc".text = ''
+      \set ON_ERROR_STOP on
+    '';
+  };
 }

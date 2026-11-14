@@ -1,18 +1,9 @@
-# Title         : flake.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : /flake.nix
-# ----------------------------------------------------------------------------
-# Flake entrypoint.
 {
   description = "nix-darwin + Home Manager for the Mac";
 
   inputs = {
-    # Hydra-gated channel tarball: locks rev and lastModified through its immutable Link URL and resolves without api.github.com.
     nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.xz";
 
-    # Supplies darwinModules.default alone, a configuration-only module; its own inputs are fetched only when its packages are forced.
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
     flake-parts = {

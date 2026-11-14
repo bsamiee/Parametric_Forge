@@ -35,7 +35,18 @@
     // --- [NIX] -------------------------------------------------------------------------
     "nix.enableLanguageServer": true,
     "nix.serverPath": "nixd",
-    "nix.serverSettings": { "nixd": { "formatting": { "command": ["alejandra"] }, "nixpkgs": { "expr": "import <nixpkgs> { }" } } },
+    "nix.serverSettings": {
+        "nixd": {
+            "formatting": { "command": ["alejandra"] },
+            "nixpkgs": { "expr": "(builtins.getFlake (builtins.toString ./.)).darwinConfigurations.macbook.pkgs" },
+            "options": {
+                "nix-darwin": { "expr": "(builtins.getFlake (builtins.toString ./.)).darwinConfigurations.macbook.options" },
+                "home-manager": {
+                    "expr": "(builtins.getFlake (builtins.toString ./.)).darwinConfigurations.macbook.options.home-manager.users.type.getSubOptions []"
+                }
+            }
+        }
+    },
     "nix.formatterPath": "alejandra",
     "[nix]": { "editor.defaultFormatter": "jnoortheen.nix-ide" },
 

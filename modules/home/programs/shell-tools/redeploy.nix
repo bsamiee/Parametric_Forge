@@ -1,16 +1,7 @@
-# Title         : redeploy.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/redeploy.nix
-# ----------------------------------------------------------------------------
-# redeploy, the only activation path: `redeploy build|switch [nh args]` runs `nh darwin` on the host flake (nom progress, dix diff, system
-# profile set, elevated activation) under `cachix watch-exec`, whose post-build hook pushes each locally built path as it lands, so a failed
-# build retries from the cache. The push token is the ambient CACHIX_AUTH_TOKEN that every zsh (.zshenv) and GUI session (gui-op-secrets)
-# carries from the op session cache.
 {
   config,
   host,
+  lib,
   osConfig,
   pkgs,
   ...
@@ -19,7 +10,9 @@
     name = "redeploy";
     runtimeInputs = [pkgs.cachix config.programs.nh.package];
     text = ''
-      exec cachix watch-exec ${osConfig.cachix.cache} -- nh darwin "''${1:?usage: redeploy build|switch [nh args]}" ${host.flakeRoot} -H ${host.name} --show-activation-logs "''${@:2}"
+      job=(cachix watch-exec ${osConfig.cachix.cache} -- nh darwin "''${1:?usage: redeploy build|switch [nh args]}" ${host.flakeRoot} -H ${host.name} "''${@:2}")
+      [[ $1 != switch ]] || job=(${lib.getExe config.forge.monitoring.heartbeat} mac-jobs_redeploy "''${job[@]}")
+      exec "''${job[@]}"
     '';
   };
 in {

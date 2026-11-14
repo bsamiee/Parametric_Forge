@@ -1,31 +1,18 @@
-# Title         : trippy.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/trippy.nix
-# ----------------------------------------------------------------------------
-# Network diagnostic tool combining traceroute and ping. Rows land under the sections trippy reads (`trip --print-config-template`); every
-# strategy, tui, and binding default stays upstream, so only the privilege mode, the resolver family, and the theme carry rows.
 {
   config,
   lib,
   ...
 }: let
-  # palette retained for the one hue with no semantic role: string-yellow (radius ring, current-flow label).
   inherit (config.forge.theme) roles palette;
 
   trippyConfig = {
     # --- [TRIPPY]
-    # IPPROTO_ICMP datagram sockets trace without root, so `trip` runs without sudo.
     trippy.unprivileged = true;
 
     # --- [STRATEGY]
-    # The OS resolver's first answer decides the family; the upstream default tries IPv4 before IPv6 regardless of what the resolver returned.
     strategy.addr-family = "system";
 
     # --- [THEME_COLORS]
-    # Selected chart series ride the focus fill; borders read the canonical ui.border; dialogs sit on the raised surface. trippy reads a raw
-    # color as six hex digits and rejects a leading `#`.
     theme-colors = lib.mapAttrs (_: color: lib.removePrefix "#" color.hex) {
       bg-color = roles.surface.base;
       border-color = roles.ui.border;
@@ -64,7 +51,6 @@
     };
   };
 in {
-  # forceUserConfig only adds a `trip -c` alias for sudo runs; unprivileged ICMP sockets drop sudo, and aliases/core.nix owns the trip aliases.
   programs.trippy = {
     enable = true;
     forceUserConfig = false;

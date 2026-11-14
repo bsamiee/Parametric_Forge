@@ -1,25 +1,35 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/darwin/homebrew/default.nix
-# ----------------------------------------------------------------------------
-# Homebrew configuration and aggregator
 {
   config,
   lib,
   host,
+  pkgs,
   ...
 }: let
   inherit (lib) mkDefault;
+  appStoreApps = {
+    Drafts = 1435957248;
+    Xcode = 497799835;
+    "Microsoft Word" = 462054704;
+    "Microsoft Excel" = 462058435;
+    "MEGA VPN" = 6456784858;
+  };
+  appStoreMinutes = 60;
 in {
   imports = [./casks.nix];
 
+  # --- [MAC_APP_STORE]
+  environment.systemPackages = [pkgs.mas];
+  home-manager.users.${config.system.primaryUser} = {lib, ...}: {
+    home.activation.appStoreApps = lib.hm.dag.entryAfter ["writeBoundary"] (lib.concatStrings (lib.mapAttrsToList (name: id: ''
+        if [[ ! -d ${lib.escapeShellArg "/Applications/${name}.app"} ]]; then
+          run ${lib.getExe' pkgs.coreutils "timeout"} ${toString (appStoreMinutes * 60)} ${lib.getExe pkgs.mas} install ${toString id} \
+            || echo "app-store: ${name} is not installed (mas failed or passed ${toString appStoreMinutes} minutes), the next switch retries" >&2
+        fi
+      '')
+      appStoreApps));
+  };
+
   # --- [ENVIRONMENT]
-  # bin/brew exports /etc/homebrew/brew.env first in every context (shells, agents, activation's sudo `brew bundle`): the one owner of the standing
-  # HOMEBREW_* rows. Values are literal (no quotes, no expansion). HOMEBREW_XDG_CONFIG_HOME is bin/brew's own fallback when XDG_CONFIG_HOME is
-  # unset, so activation and every shell read the one trust store under the Home Manager config root. Homebrew updates itself to the newest stable
-  # tag even after a developer command; a zero-argument upgrade carries the :latest rows, while activation's bundle stays non-greedy.
   environment.etc."homebrew/brew.env".text = ''
     HOMEBREW_XDG_CONFIG_HOME=${config.home-manager.users.${config.system.primaryUser}.xdg.configHome}
     HOMEBREW_UPDATE_TO_TAG=1
@@ -28,15 +38,13 @@ in {
     HOMEBREW_NO_EMOJI=1
     HOMEBREW_NO_ASK=1
     HOMEBREW_CLEANUP_MAX_AGE_DAYS=3
-    HOMEBREW_UPGRADE_GREEDY_CASKS=1password@nightly wezterm@nightly blender@daily font-sf-pro font-sf-arabic font-markazi-text font-reem-kufi font-qahiri
+    HOMEBREW_UPGRADE_GREEDY_CASKS=${toString config.forge.homebrew.latestCasks}
   '';
 
   homebrew = {
     enable = mkDefault true;
     global.brewfile = true;
 
-    # The tap clones this checkout: a committed cask reaches the next activation without a push or SSH, and the local clone hardlinks the
-    # checkout's objects. A custom-remote tap is trusted by its remote, which this row writes.
     taps = [
       {
         name = "bsamiee/forge";
@@ -45,19 +53,7 @@ in {
       }
     ];
 
-    # --- [MAC_APP_STORE]
-    masApps = {
-      Drafts = 1435957248;
-      # The GA line, free on the store; a beta is a developer.apple.com xip the operator installs beside it, never a second Xcode.app.
-      Xcode = 497799835;
-      "Microsoft Word" = 462054704;
-      "Microsoft Excel" = 462058435;
-      "MEGA VPN" = 6456784858;
-    };
-
     # --- [ACTIVATION_BEHAVIOR]
-    # Activation updates Homebrew and the catalog, installs missing rows, and upgrades every outdated one: an `auto_updates` cask only when its
-    # bundle trails the tap, and Homebrew reopens the apps it quit. Cleanup stays with the manual Homebrew pass, so operator installs survive.
     onActivation = {
       autoUpdate = true;
       upgrade = true;

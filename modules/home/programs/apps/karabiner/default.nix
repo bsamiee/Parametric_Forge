@@ -1,10 +1,3 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/karabiner/default.nix
-# ----------------------------------------------------------------------------
-# Karabiner-Elements writable config staging: Karabiner rewrites its own store, so the target stays a real file — generate JSON, copy only on change.
 {
   config,
   lib,
@@ -13,7 +6,6 @@
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  # Physical leader scheme projected from the chord owner: Hyper (Right Command), Super (Right Option), Power (Right Shift), Caps Lock dual-role.
   chordRules = config.forge.chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
@@ -27,10 +19,6 @@
     ];
   });
 
-  # Karabiner writes its own GUI and runtime state back into karabiner.json, so the declarative document owns only complex_modifications.rules and the
-  # declared profile identity; every other key merges from the live file and activation never destroys app-owned state. Declared keys win except
-  # `selected`, which stays GUI-owned. The stage gate merges only when the live file is structurally a Karabiner document (object; profiles an array
-  # of objects); any other JSON shape falls to wholesale declared replacement instead of killing activation mid-merge.
   mergeProgram = ''
     ($live[0]) as $l
     | (.profiles | map(.name)) as $names
@@ -47,8 +35,6 @@
   '';
   target = "${cfgDir}/karabiner.json";
 
-  # Karabiner misses changes through a symlinked karabiner.json (only the directory may be linked) and the GUI must write the file, so a store link
-  # cannot serve: a real writable file is staged in place by atomic write-if-changed (mktemp in the target directory, compare, rename).
   stageConfig = pkgs.writeShellApplication {
     name = "stage-karabiner-config";
     runtimeInputs = [pkgs.coreutils pkgs.diffutils pkgs.jq];

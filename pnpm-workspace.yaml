@@ -8,13 +8,10 @@ allowBuilds:
     protobufjs: false
 
 catalog:
-    # substrate — the Effect core family; moves as one peer-locked wave
     effect: 4.1.1
     "@effect/platform-node": 4.1.1
-    # services — the Pulumi engine and provider set; pins follow package schema
     "@pulumi/pulumi": 3.273.0
     "@pulumi/github": 6.15.0
     "@pulumiverse/doppler": 0.9.0
-    # toolchain — TypeScript 7 (the native compiler) is the one gate
     typescript: 7.0.2
     "@types/node": 26.6.6

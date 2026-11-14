@@ -1,17 +1,15 @@
-# Title         : ssh.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/ssh.nix
-# ----------------------------------------------------------------------------
-# SSH client configuration: the 1Password agent socket, the public half of the signing key, and OpenSSH client defaults.
 {
   config,
   host,
   lib,
+  pkgs,
   ...
 }: let
   homeDir = config.home.homeDirectory;
+  tailnetHostKeys = pkgs.writeShellScript "tailnet-host-keys" ''
+    ${config.forge.tailnet.cli} status --json \
+      | ${lib.getExe pkgs.jq} -r --arg host "$1" --arg name "$2" '.Peer[] | select(.HostName == $host) | .sshHostKeys[] | "\($name) \(.)"'
+  '';
 in {
   options.forge.ssh.identityAgent = lib.mkOption {
     type = lib.types.str;
@@ -25,15 +23,27 @@ in {
 
     programs.ssh = {
       enable = true;
+      package = pkgs.openssh;
       enableDefaultConfig = false;
       settings = {
+        ${lib.concatStringsSep " " host.tailnet.servers} = {
+          User = "root";
+          KnownHostsCommand = "${tailnetHostKeys} %n %H";
+          StrictHostKeyChecking = "yes";
+          BatchMode = true;
+          ForwardAgent = true;
+        };
         "github.com" = {
           User = "git";
           HostName = "github.com";
           IdentitiesOnly = true;
+          BatchMode = true;
         };
         "*" = {
           IdentityAgent = "\"${config.forge.ssh.identityAgent}\"";
+          KexAlgorithms = "^mlkem768x25519-sha256,sntrup761x25519-sha512";
+          StrictHostKeyChecking = "accept-new";
+          ConnectTimeout = 10;
           ControlMaster = "auto";
           ControlPath = "${homeDir}/.ssh/sockets/%C";
           ControlPersist = "10m";

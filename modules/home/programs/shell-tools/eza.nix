@@ -1,26 +1,5 @@
-# Title         : eza.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/eza.nix
-# ----------------------------------------------------------------------------
-# Modern ls replacement themed from the palette and roles of modules/home/theme.nix
-{
-  config,
-  pkgs,
-  ...
-}: let
-  # palette retained for the one hue with no semantic role: string-yellow (size emphasis, octal, build kind, SELinux type).
+{config, ...}: let
   inherit (config.forge.theme) roles palette;
-  # --all shows the dotfile trees an agent navigates by (.claude, .github, a lone .gitkeep); --git-ignore lets each repo's .gitignore prune
-  # its own outputs.
-  treeCommand = pkgs.writeShellApplication {
-    name = "tree";
-    runtimeInputs = [pkgs.eza];
-    text = ''
-      exec eza --tree --level "''${TREE_LEVEL:-4}" --all --git-ignore --group-directories-first "$@"
-    '';
-  };
 
   ezaTheme = {
     filekinds = {
@@ -88,8 +67,6 @@
       normal = {foreground = roles.accent.structural.hex;};
       multi_link_file = {foreground = roles.state.attention.hex;};
     };
-    # Git column hues project from the owner state ladder (roles.git); the glyph column stays eza-fixed (N/M/D/R/T/I/U — not themable), the one
-    # sanctioned tool-owned-glyph exception. Ignored keeps muted text (no owner row: ignore is a visibility tier, not a git state).
     git = {
       new = {foreground = roles.git.added.color.hex;};
       modified = {foreground = roles.git.modified.color.hex;};
@@ -163,5 +140,4 @@ in {
     ];
     theme = ezaTheme;
   };
-  home.packages = [treeCommand];
 }

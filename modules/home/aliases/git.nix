@@ -1,10 +1,3 @@
-# Title         : git.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/aliases/git.nix
-# ----------------------------------------------------------------------------
-# Git register rows: daily ops, branch/remote, history, external tools.
 {
   git-branch = [
     ["gb" "git branch -avv"]
@@ -36,8 +29,6 @@
     ["grs" "git reset"]
     ["gcp" "git cherry-pick"]
   ];
-  # forgit's fzf commands through git-forgit's subcommands; the seven names the register spends on plain git (ga gd gcp grb gbd gco grs) take
-  # an f suffix. gwt and gwa are site functions (zsh/plugins.nix) because they cd.
   git-forgit = [
     ["gaf" "git forgit add"]
     ["gdf" "git forgit diff"]

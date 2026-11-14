@@ -1,15 +1,5 @@
-# Title         : chords.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/chords.nix
-# ----------------------------------------------------------------------------
-# Single chord-vocabulary owner: physical leader layers, zellij leader binds, mode table, which-key rows, ribbon hints, and per-consumer register
-# rows are ONE parameterized table projected into karabiner JSON, zellij KDL, zellij-forgot content, and WezTerm rows.lua. A new bind is one
-# row here; consumers never hand-duplicate chords.
 {lib, ...}: let
   # --- [ROW_GRAMMAR]
-  # Positional tuples zip against a field schema: a short tuple drops trailing fields and null skips a slot.
   row = fields: t: lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t));
   sub = long: short: t:
     row (
@@ -22,10 +12,6 @@
   mkRibbon = sub ["label" "key" "rank"] ["label" "rank"];
 
   # --- [PHYSICAL_LAYERS]
-  # Karabiner rewrites right-hand modifiers into leader stacks; zellij consumes each stack as the derived modifier set.
-  # Power carries no zellij binds: its stack stays free for whichever app claims it. WezTerm claims no layer — its outer keys live in weztermRows.
-  # Glyphs, the zellij prefix, and the WezTerm glyph map all derive from the karabiner `to`
-  # row through this vocabulary; `rank` orders the emitted rule document, `display` overrides the cheatsheet prefix.
   modVocab = map (row ["kc" "word" "wez" "glyph"]) [
     ["left_command" "Super" "CMD" "⌘"]
     ["left_option" "Alt" "ALT" "⌥"]
@@ -61,7 +47,6 @@
     });
   layersByRank = dir: lib.sort (a: b: dir a.rank b.rank) (lib.attrValues layers);
 
-  # One manipulator grammar owns every karabiner rule: leader rewrites and the Caps Lock dual-role are rows; `alone` adds the tap arm.
   mkKarabinerRule = r: {
     inherit (r) description;
     manipulators = [
@@ -89,8 +74,6 @@
     };
   };
 
-  # Leader-role documentation block derived from the ranked layer rows: ASCII fields pad by byte width, glyph fields by modifier count, so a new
-  # layer lands aligned with zero curated padding; every fragment line carries its full emitted indentation.
   headerRoles = ["Primary" "Secondary" "Tertiary" "Quaternary"];
   headerComment = let
     rows = layersByRank (a: b: a > b);
@@ -112,7 +95,6 @@
     lib.concatStringsSep "\n" (lib.zipListsWith line roles rows);
 
   # --- [MODE_TABLE]
-  # One row per zellij mode reachable from a Hyper leader key; entryOrder and ribbonOrder are curated presentation sequences over the same rows.
   modes = lib.mapAttrs (_: row ["key" "ribbon" "rank" "exitKey"]) {
     pane = ["p" "pane" 30];
     tab = ["t" "tab" 40];
@@ -127,9 +109,6 @@
   ribbonOrder = ["pane" "tab" "resize" "move" "scroll" "session" "locked"];
 
   # --- [BIND_ROWS]
-  # Bind tuple: [keys kdl label forgot ribbon] — keys is one key or an alias list, forgot/ribbon are [label rank] or [label display|key rank].
-  # An attrset escape carries the tuple as `t` plus verbatim extras: body (multi-line KDL at emitted indentation) XOR kdl, gap (blank line
-  # before).
   mkBind = spec: let
     base =
       if lib.isList spec
@@ -144,16 +123,16 @@
     // lib.optionalAttrs (r ? ribbon) {ribbon = mkRibbon r.ribbon;};
   hyperRows = map mkBind [
     [modes.locked.key ''SwitchToMode "Locked";'' "locked mode" ["lock" 10]]
+    ["i" "ToggleSessionCard;" null ["attention inbox" 104]]
+    ["n" "GoToNextAttention;" null ["next pane that needs you" 106]]
     ["[" "PreviousSwapLayout;" null ["swap layout prev/next" "Hyper [ / Hyper ]" 100]]
     ["]" "NextSwapLayout;"]
     {
-      # Which-key sheet: the body interpolates forgotKdl, which reads only the forgot metadata of these rows — laziness keeps the knot well-founded.
       t = [cheatsheetKey null null ["cheatsheet" 120]];
       body = cheatsheetBody;
     }
   ];
 
-  # Normal-mode layer: macOS Command chords zellij receives because WezTerm full-passes them (no default keybinds; weztermRows claims neither).
   normalRows = map (t: let
     r = row ["key" "action" "comment" "forgot"] t;
   in
@@ -183,16 +162,13 @@
     ["g" "ToggleGroupMarking;"]
   ];
 
-  # Layer-keyed bind vocabulary: every per-layer projection folds over this attrset, so a new leader layer is one `layers` row plus one entry here.
   bindRows = {
     hyper = hyperRows;
     super = superRows;
   };
 
-  # Which-key rows with no chord of their own: command vocabulary surfaced in the cheatsheet beside the chords.
   forgotExtras = map (row ["rank" "label" "display"]) [
     [230 "editor" "code <path> / code -g <file>:<line>"]
-    [260 "json explore" "jqi -> jnv"]
     [270 "loc report" "loc <path>"]
     [280 "folder map" "tree <path>"]
     [290 "deploy" "redeploy build / switch"]
@@ -200,9 +176,6 @@
   ];
 
   # --- [WEZTERM_OUTER_LAYER]
-  # Typed outer-terminal rows: native left-Command chords, the CMD|SHIFT overlay/deck layer, and pass-through-aware CTRL pane nav; the wezterm
-  # owner projects them into rows.lua and `id` doubles as the dispatch action. Tuple tail is [frank flabel fdisplay destructive]: forgot
-  # label/display default from the row, `destructive` rows confirm before acting, and every leader chord still passes to zellij untouched.
   weztermModGlyph = lib.listToAttrs (map (m: lib.nameValuePair m.wez m.glyph) modVocab);
   weztermDisplay = row: let
     glyphs = lib.concatMapStrings (m: weztermModGlyph.${m}) (lib.reverseList (lib.splitString "|" row.mods));
@@ -224,7 +197,6 @@
       };
     };
   weztermRows = map mkWez [
-    # Native macOS vocabulary (left Command).
     ["copy" "c" "CMD" "copy" "native"]
     ["paste" "v" "CMD" "paste" "native"]
     ["spawn-window" "n" "CMD" "new window" "native"]
@@ -235,17 +207,14 @@
     ["font-dec" "-" "CMD" "font size -" "native"]
     ["font-reset" "0" "CMD" "font size reset" "native"]
     ["reload" "r" "CMD" "reload config" "native"]
-    # Overlay layer: native pickers and diagnostics.
     ["palette" "p" "CMD|SHIFT" "wezterm palette" "overlay" 310]
     ["quick-select" "Space" "CMD|SHIFT" "wezterm quick select" "overlay" 320]
     ["launcher" "l" "CMD|SHIFT" "wezterm launcher" "overlay" 330]
     ["char-select" "u" "CMD|SHIFT" "wezterm unicode picker" "overlay" 340]
     ["debug-overlay" "d" "CMD|SHIFT" "wezterm debug overlay" "overlay" 350]
-    # Command deck: workspace router, guarded broadcast.
     ["workspace-switch" "o" "CMD|SHIFT" "wezterm workspace switch" "deck" 360]
     ["workspace-new" "n" "CMD|SHIFT" "wezterm workspace new" "deck" 365]
     ["sync-toggle" "e" "CMD|SHIFT" "wezterm sync panes" "deck" 370 null null true]
-    # Pass-through-aware pane nav: raw bytes into zellij panes, WezTerm pane motion in plain splits.
     ["nav-left" "h" "CTRL" "pane nav left" "nav" 380 "wezterm pane nav" "⌃H/J/K/L (plain splits)"]
     ["nav-down" "j" "CTRL" "pane nav down" "nav"]
     ["nav-up" "k" "CTRL" "pane nav up" "nav"]
@@ -263,7 +232,6 @@
     weztermRows;
 
   # --- [PROJECTIONS]
-  # Every table string emitted inside a KDL quoted string passes through this.
   kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
   cheatsheetKey = "/";
 
@@ -304,8 +272,6 @@
     (r: "            \"${kdlEsc r.label}\" \"${kdlEsc r.display}\"")
     forgotRows;
 
-  # KEY IDENTITY: a Shift-carrying layer receives shifted punctuation as the SHIFTED character, so its binds emit that glyph both with and without the
-  # Shift modifier listed; letter keys and Shift-free layers pass through. The map is total over the ANSI shifted row.
   shiftedGlyph = let
     plain = ["`" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "=" "[" "]" "\\" ";" "'" "," "." "/"];
     shifted = ["~" "!" "@" "#" "$" "%" "^" "&" "*" "(" ")" "_" "+" "{" "}" "|" ":" "\"" "<" ">" "?"];
@@ -358,7 +324,6 @@
     ])
   entryOrder;
 
-  # Hint-ribbon rows for normal mode: the two leader groups in curated order.
   ribbonHyperGroup =
     map (m: {
       k = modes.${m}.key;
@@ -378,16 +343,12 @@
     }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
       (builtins.filter (r: r ? ribbon) superRows));
 
-  # Ribbon hint chips for the layers that carry bind rows, rank-descending.
   hintsRight =
     lib.concatMapStringsSep " · " (l: "${l.chip} ${lib.toLower l.name}")
     (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
     + " ";
 
   # --- [REGISTER_PROJECTION]
-  # Typed chord rows for the register rail: every consumer's chords in one vocabulary — chord_id, consumer,
-  # physical_layer, mods, key, label, action, scope (the KDL mode block or OS/app plane the claim is active in),
-  # toggle (re-press exits the mode), projection_path, and rendered evidence.
   zjRegRow = layer: row: {
     chord_id = "zellij:${lib.toLower layer.name}:${builtins.head row.keys}";
     consumer = "zellij";
@@ -415,7 +376,6 @@
       rendered = "bind \"${layers.hyper.zellij} ${modes.${m}.key}\" { SwitchToMode \"${lib.strings.toSentenceCase m}\"; }";
     })
     entryOrder;
-  # The unlock chord lives only in the locked block (config.nix consumes modes.locked.exitKey); without this row the register misses a live bind.
   lockedExitRow = {
     chord_id = "zellij:hyper:${modes.locked.exitKey}";
     consumer = "zellij";

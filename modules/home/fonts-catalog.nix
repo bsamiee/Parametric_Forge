@@ -1,10 +1,3 @@
-# Title         : fonts-catalog.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/fonts-catalog.nix
-# ----------------------------------------------------------------------------
-# Font-package catalog for Home Manager installation and renderer roles. The attr name is the CoreText family.
 {pkgs}: let
   inherit (pkgs) lib;
   selectPaths = package: paths:
@@ -20,8 +13,6 @@
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
   geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
-  # Closed two-register alphabet for terminal-bound render surfaces, owned beside the symbols family the theme owner mints glyphs from — one
-  # row per class, no by-value mirror anywhere. Status rows: [role codepoint asciiTwin].
   statusAlphabet = [
     ["running" "ea71" "[>]"]
     ["idle" "eabc" "[ ]"]

@@ -1,12 +1,3 @@
--- Title         : events.lua
--- Author        : Bardia Samiee
--- Project       : Parametric Forge
--- License       : MIT
--- Path          : modules/home/programs/apps/wezterm/events.lua
--- ----------------------------------------------------------------------------
--- Event plane: one handler row per event, registered in a single fold. Status reads cheap pane/window state only; every probe writes elsewhere.
--- Bodies read deck state at fire time, so registration never races the deck build.
-
 local wezterm = require("wezterm")
 local rows = require("rows")
 local deck = require("deck")
@@ -15,7 +6,6 @@ local M = {}
 
 local roles = rows.theme.roles
 
--- Strip chips are alarm-class, so every cell carries the bold weight.
 local function cell(fg, text)
     return {
         { Attribute = { Intensity = "Bold" } },
@@ -24,12 +14,9 @@ local function cell(fg, text)
     }
 end
 
--- Pane id -> spawn size of each gated startup client; the first resize off that size releases it.
 local gated = {}
 
 local handlers = {
-    -- Session persistence is code-defined: GUI and auto-spawned mux servers land the default workspace's slug session at its name-policy cwd; an
-    -- explicit `wezterm start -- prog` keeps its own args untouched. The default client starts gated, window-resized releases it maximized.
     ["gui-startup"] = function(cmd)
         local spawn = cmd or {}
         local ws = wezterm.mux.get_active_workspace()
@@ -63,8 +50,6 @@ local handlers = {
         wezterm.mux.spawn_window({ cwd = wezterm.home_dir, args = deck.session_args(ws) })
     end,
 
-    -- Outer facts only: key table and sync state. Agent/quota cells and location live on the zellij zjstatus bar — the one top
-    -- bar; this strip surfaces only when a second WezTerm tab raises the tab bar.
     ["update-status"] = function(window)
         local items = {}
         local function push(fragments)
@@ -73,8 +58,6 @@ local handlers = {
             end
         end
 
-        -- The only key table is the sync-panes broadcast table (disable_default_key_bindings, no ActivateKeyTable rows), so an active
-        -- key table IS the broadcast concept — one role (danger) binds it, the [SYNC] chip, and the deck.lua border.
         local key_table = window:active_key_table()
         if key_table then
             push(cell(roles.state.danger, "[" .. key_table:upper() .. "]"))
@@ -95,13 +78,11 @@ local handlers = {
     end,
 
     ["format-window-title"] = function(tab, _, tabs)
-        -- Per-window truth: a window parked in a background workspace titles as its own workspace, never the globally active one.
         local ok, mux_window = pcall(wezterm.mux.get_window, tab.window_id)
         local workspace = ok and mux_window and mux_window:get_workspace() or wezterm.mux.get_active_workspace()
         return string.format("%s — %d/%d", workspace, tab.tab_index + 1, #tabs)
     end,
 
-    -- Command deck rows land in the native palette without replacing it; the deck builds the entry table once per generation and this replays it.
     ["augment-command-palette"] = function()
         return deck.palette
     end,

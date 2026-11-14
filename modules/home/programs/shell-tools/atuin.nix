@@ -1,55 +1,63 @@
-# Title         : atuin.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/shell-tools/atuin.nix
-# ----------------------------------------------------------------------------
-# Modern shell history with SQLite backend and full-text search UI
-{config, ...}: let
+{
+  config,
+  launchdAgent,
+  lib,
+  ...
+}: let
   inherit (config.forge.theme) roles;
 in {
+  # --- [DAEMON]
+  launchd.agents.atuin-daemon = launchdAgent {
+    name = "atuin-daemon";
+    argv = [(lib.getExe config.programs.atuin.package) "daemon" "start" "--force"];
+    RunAtLoad = true;
+    KeepAlive = true;
+    ProcessType = "Interactive";
+  };
+
+  # --- [STORE_SIZE]
+  home.activation.atuinStoreSize = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    store_bytes="$(/usr/bin/stat -f %z ${lib.escapeShellArgs (map (db: "${config.xdg.dataHome}/atuin/${db}.db") ["records" "threads"])} 2>/dev/null | /usr/bin/awk '{ sum += $1 } END { print sum + 0 }')"
+    echo "atuin-store: records.db and threads.db hold $((store_bytes / 1048576)) MiB"
+    if ((store_bytes > 10000000000)); then
+      echo "NOTICE: the Atuin store passed 10 GB and [threads] has no retention key: removing ai-session records is the owner's call" >&2
+    fi
+  '';
+
   programs.atuin = {
-    # HM evals `atuin init zsh` at order 1000: after fzf (910, whose ^R binding is off), so Atuin owns ^R and the up arrow.
     enable = true;
 
-    # Rows here differ from Atuin's documented defaults; the database and key sit at their XDG defaults under ~/.local/share/atuin.
     settings = {
-      # The shell client starts the daemon on demand and clears a socket no daemon listens on; `atuin daemon start` under launchd binds without
-      # that cleanup and crash-loops on a leftover socket while every history write and search waits on it.
       daemon = {
         enabled = true;
-        autostart = true;
+        autostart = false;
       };
-      # History remains local until a new sync owner is deliberately configured.
+      threads.capture = true;
       auto_sync = false;
       update_check = false;
-      # Unset, `atuin init zsh` binds `?` on an empty line to the Hub-backed `atuin ai inline`, whose first-run chooser writes this row into the
-      # read-only config on "Disable ? Keybind"; the declared row keeps `?` a self-insert.
       ai.enabled = false;
       search_mode = "daemon-fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "workspace";
-      filter_mode_shell_up_key_binding = "global"; # Up arrow shows all history, not just current session
+      filter_mode_shell_up_key_binding = "global";
       ctrl_n_shortcuts = true;
       workspaces = true;
       style = "full";
       inline_height = 50;
-      invert = true; # Search bar at top, matching fzf layout
-      preview.strategy = "fixed"; # Prevents UI jumping
+      invert = true;
+      preview.strategy = "fixed";
       max_preview_height = 6;
       keymap_mode = "auto";
       word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
       scroll_context_lines = 2;
       enter_accept = true;
-      # Secrets and destructive host commands only; short/common commands are retrieval material and stay recorded.
       history_filter = [
-        "^(rm|kill|pkill|killall|reboot|shutdown|passwd|sudo -i|su -)(\\s|$)"
         "(?i)(token|password|secret|api[_-]?key|bearer)[^\\n]*="
         "^export .*(_KEY|_TOKEN|_SECRET|PASSWORD)="
       ];
       cwd_filter = [
-        "/tmp/.*"
-        "/var/tmp/.*"
+        "^/tmp(/|$)"
+        "^/var/tmp(/|$)"
         ".*/\\.git/.*"
         ".*/node_modules/.*"
         ".*/target/debug/.*"
@@ -65,7 +73,6 @@ in {
       theme.name = "dracula";
     };
 
-    # Dracula theme through the HM theme owner; atuin ships only autumn and marine natively.
     themes.dracula = {
       theme.name = "dracula";
       colors = {

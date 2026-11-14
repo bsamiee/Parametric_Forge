@@ -1,10 +1,3 @@
-# Title         : nix.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/aliases/nix.nix
-# ----------------------------------------------------------------------------
-# Nix and Darwin register rows: deploy rail, nix ops, flake ops.
 {
   darwin = [
     ["drs" "redeploy switch"]

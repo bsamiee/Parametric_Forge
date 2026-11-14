@@ -1,11 +1,3 @@
-# Title         : default.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/programs/apps/wezterm/default.nix
-# ----------------------------------------------------------------------------
-# WezTerm outer-command-deck owner: typed rows (keys, deck commands, quick-select patterns, floats, workspaces, fonts, plugin
-# pins) project into generated Lua data + a colors TOML; deck.lua and events.lua are the only static interpreters.
 {
   config,
   lib,
@@ -24,14 +16,9 @@
   };
 
   # --- [FONT_ROW]
-  # The font owner's WezTerm projection: chain, per-family leading, shaping features, and the font override path all arrive
-  # from config.forge.fonts; deck.lua interprets them.
   fontRow = config.forge.fonts.projections.luaFont;
 
   # --- [WORKSPACE_ROWS]
-  # One row = picker entry + zellij session identity + cwd + float policy. The workspace name IS the inner zellij session name, so windows in
-  # different workspaces never mirror one shared session; the default workspace keeps the historical `main` session. The cwd seeds a
-  # brand-new session's first pane and the workspace scratch float only: a live or rebuilt session keeps its own pane directories.
   mkWorkspace = name: label: cwd: {
     inherit name label cwd;
     float = "utility";
@@ -42,8 +29,6 @@
   defaultWorkspace = "main";
 
   # --- [ACTION_BUS_ROWS_QUICK_SELECT_PATTERNS_HYPERLINK_RULES]
-  # `select` names a deck.lua action arm for the captured span (edit hands the span to Visual Studio Code's `code --goto`); rows without it
-  # keep the native clipboard default.
   quickSelectRows = [
     {
       id = "nix-store-path";
@@ -86,9 +71,6 @@
   };
 
   # --- [COMMAND_DECK_ROWS]
-  # One registry feeds the command palette, the launcher menu, and key rows. Each row spawns its command in a shaped float window, a
-  # singleton: a live float focuses instead of duplicating. `destructive` rows pass the deck confirm gate before acting;
-  # `scope = "workspace"` keys the float singleton per workspace and takes the active workspace row's float shape.
   commandRows = [
     {
       id = "redeploy-build";
@@ -119,12 +101,10 @@
   ];
 
   # --- [PURE_DATA_SETTINGS_RENDERED_VIA_LIB_GENERATORS_TOLUA]
-  # Constructor/env-dependent values live in deck.lua; the two sets stay disjoint so the single-writer merge never collides.
   settings = {
     color_scheme = "forge-dracula";
-    check_for_updates = false; # the cask pin owns updates; check_update state stays inert
+    check_for_updates = false;
 
-    # Window
     window_background_opacity = 0.85;
     macos_window_background_blur = 20;
     window_decorations = "RESIZE";
@@ -141,33 +121,26 @@
       brightness = 0.75;
     };
 
-    # Cursor
     default_cursor_style = "SteadyBar";
     cursor_thickness = 2;
     force_reverse_video_cursor = true;
 
-    # Behavior (rows differ from the documented defaults; the mux-process close list is unread under NeverPrompt)
     native_macos_fullscreen_mode = true;
     enable_kitty_keyboard = true;
     switch_to_last_active_tab_when_closing_tab = true;
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;
-    # Silent bell.
     audible_bell = "Disabled";
 
-    # Input seam: both Option keys send ESC-prefixed bytes (left is the default, right defaults to composed), so Alt-C reaches fzf.
     disable_default_key_bindings = true;
     send_composed_key_when_right_alt_is_pressed = false;
 
-    # Outer identity chrome: retro tab bar, theme-projected via the scheme TOML. Hidden at one tab — the zellij zjstatus bar is the ONE standing
-    # top bar; this bar exists only when a second WezTerm tab makes it informative.
     use_fancy_tab_bar = false;
     hide_tab_bar_if_only_one_tab = true;
     tab_max_width = 32;
     show_new_tab_button_in_tab_bar = false;
 
-    # Command palette + char-select chrome
     command_palette_bg_color = roles.surface.raised.hex;
     command_palette_fg_color = roles.accent.primary.hex;
     command_palette_rows = 10;
@@ -176,17 +149,13 @@
     char_select_fg_color = roles.accent.primary.hex;
     char_select_font_size = fontRow.size;
 
-    # Performance: the documented front_end default reverted to OpenGL (20240128); WebGpu is the Metal path on macOS.
     front_end = "WebGpu";
     max_fps = 120;
     scrollback_lines = 5000;
 
-    # Outer plane rows (pure data)
     default_workspace = defaultWorkspace;
     quick_select_patterns = map (r: r.regex) (lib.sort (a: b: a.priority < b.priority) quickSelectRows);
     quick_select_remove_styling = true;
-    # Mux auth-sock pin: every mux-spawned pane rides the 1Password agent, also when a login restores WezTerm before the gui-env
-    # replay (environments/shell.nix) points the launchd domain at it.
     default_ssh_auth_sock = config.forge.ssh.identityAgent;
   };
 
@@ -196,7 +165,6 @@
       zsh = config.forge.shell;
       zellij = "${pkgs.zellij}/bin/zellij";
       zellij_attach = lib.getExe config.forge.zellij.attach;
-      # The command the application row's bundle ships (mac-tools/default-applications.nix); WezTerm runs it outside any shell.
       code = "${config.forge.apps.vscode.path}/Contents/Resources/app/bin/code";
     };
     plugins.sync_panes = "${syncPanesSrc}";
@@ -211,7 +179,6 @@
     floats = floatRows;
     workspaces = workspaceRows;
     quick_select = quickSelectRows;
-    # WezTerm-host nerdfont identifiers for palette entries — data rows, so deck.lua carries no private literals.
     palette_icons = {
       command = "md_dock_window";
       quick_select = "md_select_search";
@@ -219,11 +186,9 @@
     theme.roles = projections.rolesHex;
   };
   rowsLua = pkgs.writeText "wezterm-rows.lua" ''
-    -- Generated register projection; interpreters are deck.lua and events.lua.
     return ${lib.generators.toLua {} rows}
   '';
   weztermLua = pkgs.writeText "wezterm-entry.lua" ''
-    -- Generated entry point: pure-data settings land first, interpreters own constructors, callbacks, and event handlers.
     local wezterm = require("wezterm")
     local config = wezterm.config_builder()
     local settings = ${lib.generators.toLua {} settings}

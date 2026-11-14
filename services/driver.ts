@@ -1,13 +1,3 @@
-// Title         : driver.ts
-// Author        : Bardia Samiee
-// Project       : Parametric Forge
-// License       : MIT
-// Path          : services/driver.ts
-// ----------------------------------------------------------------------------
-// Services-IaC boot module: Pulumi Automation API over a local file backend under XDG state, with 1Password brokering the
-// Pulumi passphrase, the Doppler IaC credential, and the GitHub credential. Zero YAML on disk: the project
-// manifest synthesizes into the workspace temp dir. Exports nothing; runMain terminates.
-
 import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { NodeRuntime, NodeServices } from '@effect/platform-node';
@@ -20,7 +10,6 @@ import { Topology } from './topology.ts';
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
 const PROJECT = 'services';
-// One stack per account the topology manages, named for its owner.
 const STACK = Topology.owner;
 
 // --- [TYPES] ---------------------------------------------------------------------------
@@ -63,7 +52,6 @@ class UsageFault extends Data.TaggedError('UsageFault')<{
 
 // --- [OPERATIONS] ----------------------------------------------------------------------
 
-// A scoped env extends the inherited one, so the child keeps PATH beside the brokered credential.
 const _run = (command: string, args: ReadonlyArray<string>, label: string, env?: Record<string, string>) =>
     Effect.gen(function* () {
         const spawned = yield* ChildProcess.make(command, args, env === undefined ? {} : { env, extendEnv: true });
@@ -79,7 +67,6 @@ const _run = (command: string, args: ReadonlyArray<string>, label: string, env?:
 
 const _shell = (command: string, ...args: ReadonlyArray<string>) => _run(command, args, `${command} ${args.join(' ')}`);
 
-// NonEmptyString: an empty exported override means unset, per XDG semantics. Ambient credentials short-circuit their broker.
 const _settings = Config.all({
     passphraseRef: Config.NonEmptyString('SERVICES_PASSPHRASE_REF').pipe(Config.withDefault('op://Tokens/PULUMI_CONFIG_PASSPHRASE/password')),
     tokenRef: Config.NonEmptyString('SERVICES_DOPPLER_TOKEN_REF').pipe(Config.withDefault('op://Tokens/DOPPLER_IAC_TOKEN/token')),
@@ -94,7 +81,6 @@ const _settings = Config.all({
     ghToken: Config.option(Config.Redacted('GH_TOKEN')),
 });
 
-// Ambient env short-circuits 1Password; otherwise the op reference resolves per run.
 const _brokered = (ambient: Option.Option<Redacted.Redacted<string>>, ref: string) =>
     Option.match(ambient, {
         onSome: (value) => Effect.succeed(value),
@@ -120,7 +106,6 @@ const _openStack = (flags: Flags) =>
         );
         const backendUrl = `file://${cfg.stateDir}`;
         return yield* Effect.tryPromise({
-            // BOUNDARY ADAPTER: Pulumi Automation API is promise-native; secrets unwrap only into the engine's child process environment.
             try: () =>
                 LocalWorkspace.createOrSelectStack(
                     {
@@ -155,7 +140,6 @@ const _stackAct = <A>(operation: string, flags: Flags, act: (stack: Stack) => Pr
         }),
     );
 
-// BOUNDARY ADAPTER: Pulumi onOutput sink — the engine hands raw chunks to a void callback outside the rail.
 const _echo = (chunk: string): void => {
     process.stdout.write(chunk);
 };
@@ -167,7 +151,6 @@ const USAGE =
     '  preview|up|refresh [--adopt] [--refresh] [--expect-no-changes] [--target=<project>/<config>/<token>]\n' +
     '  outputs [name] [--reveal]';
 
-// One flag anchor: `=`-suffixed flags match by prefix, the rest match whole.
 const _FLAGS = { adopt: '--adopt', reveal: '--reveal', refresh: '--refresh', expectNoChanges: '--expect-no-changes', target: '--target=' } as const;
 
 const _known = (arg: string): boolean =>
@@ -181,13 +164,11 @@ const _flags = (argv: ReadonlyArray<string>): Flags => ({
     targets: Arr.filterMap(argv, (arg) => (arg.startsWith(_FLAGS.target) ? Result.succeed(arg.slice(_FLAGS.target.length)) : Result.failVoid)),
 });
 
-// Remint rail: a token coordinate maps onto its ServiceToken URN so drop/restore applies touch nothing else even under unrelated drift.
 const _tokenUrn = (coordinate: string): string =>
     `urn:pulumi:${STACK}::${PROJECT}::doppler:index/serviceToken:ServiceToken::${coordinate.split('/').join('-')}`;
 
 const _targeted = (flags: Flags): { readonly target?: string[] } => (flags.targets.length === 0 ? {} : { target: flags.targets.map(_tokenUrn) });
 
-// Plan modes fold as engine options: --refresh diffs against refreshed live state (drift probe), --expect-no-changes turns steady state into a gate.
 const _modes = (flags: Flags): { readonly refresh?: true; readonly expectNoChanges?: true } => ({
     ...(flags.refresh ? { refresh: true as const } : {}),
     ...(flags.expectNoChanges ? { expectNoChanges: true as const } : {}),
@@ -242,7 +223,6 @@ const _program = Effect.gen(function* () {
     const flags = _flags(argv);
     const stray = Arr.findFirst(argv, (arg) => arg.startsWith('--') && !_known(arg));
     const malformed = Arr.findFirst(flags.targets, (coordinate) => coordinate.split('/').length !== 3);
-    // Ordered shape-elimination probe: usage faults first, every arm terminal.
     return yield* Option.isSome(stray)
         ? Effect.fail(new UsageFault({ wanted: `unknown flag ${stray.value}\n${USAGE}` }))
         : Option.isSome(malformed)

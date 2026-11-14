@@ -1,12 +1,3 @@
-# Title         : theme.nix
-# Author        : Bardia Samiee
-# Project       : Parametric Forge
-# License       : MIT
-# Path          : modules/home/theme.nix
-# ----------------------------------------------------------------------------
-# Forge palette owner: enriched Dracula-variant rows, semantic roles, ANSI-16 projection, the master syntax scope table the tmTheme
-# projects from, derived diff/search/git roles, and the shared icon vocabulary. Every color consumer interpolates these tokens; no consumer
-# carries a private hex.
 {
   config,
   lib,
@@ -16,7 +7,6 @@
   fonts = config.forge.fonts;
   byte = s: i: lib.fromHexString (builtins.substring i 2 s);
 
-  # Color record: uppercase hex plus every numeric rendering consumers need.
   mkColor = raw: let
     hex = lib.toUpper raw;
     r = byte hex 1;
@@ -30,42 +20,27 @@
   };
 
   # --- [ROW_GRAMMAR]
-  # Positional tuples zip against a field schema: a short tuple drops trailing fields and null skips a slot. byName keys a row list on its `name`.
   row = fields: t: lib.filterAttrs (_: v: v != null) (lib.listToAttrs (lib.zipListsWith lib.nameValuePair fields t));
   byName = rows: lib.listToAttrs (map (r: lib.nameValuePair r.name (removeAttrs r ["name"])) rows);
 
-  # Enriched palette: the canonical rows plus the design-language growth — crust/surface complete the elevation ladder, subtle is the third fg
-  # tier and the structural-UI hue, amber splits warning from string-yellow, blue ends the faked ANSI blue, brightBlue ends blue==cyan.
-  # current_line is retuned (chroma pulled to kill the muddy active line) and magenta is AA-lifted; every row is contrast-verified against the
-  # base. Rows spell as name=#HEX tokens folded through mkColor — one vector, one constructor.
   hexRows = s: lib.listToAttrs (map (t: let p = lib.splitString "=" t; in lib.nameValuePair (builtins.head p) (mkColor (builtins.elemAt p 1))) (lib.splitString " " s));
   palette = hexRows "crust=#0E0D16 background=#15131F surface=#201E30 current_line=#2A2A3A selection=#44475A foreground=#F8F8F2 subtle=#8E91A5 comment=#6272A4 purple=#A072C6 cyan=#94F2E8 green=#50FA7B yellow=#F1FA8C amber=#F3AE51 orange=#F97359 red=#FF5555 magenta=#EE55A8 pink=#E98FBE blue=#7AA2F7 brightBlue=#A9C7FF";
 
-  # Derived roles: computed fills, never palette rows. Diff and search tint the background and hold the code foreground neutral (fg clears 7.7+
-  # on every fill); emphasis is the same hue at +0.06 OKLCH L.
   derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
 
-  # Role families as [name color] pair rows folded per family.
   pairs = ps: lib.listToAttrs (map (p: lib.nameValuePair (builtins.elemAt p 0) (builtins.elemAt p 1)) ps);
   families = lib.mapAttrs (_: pairs) {
     surface = [["crust" palette.crust] ["base" palette.background] ["surface" palette.surface] ["raised" palette.current_line] ["overlay" derived.overlay] ["selected" palette.selection]];
     text = [["primary" palette.foreground] ["subtle" palette.subtle] ["muted" palette.comment] ["inverse" palette.background]];
     accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
     state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
-    # Focus pair: the one active/inactive derivation every chrome surface (tabs, pane frames, ribbons) reads instead of re-picking hues.
     focus = [["active" palette.cyan] ["inactive" palette.subtle]];
-    # Modal-UI hue ladder: one hue per mux/editor mode chip; search and entersearch share deliberately (one toggled surface), renames share
-    # (one input-editing state), and every other mode reads distinct at a glance — no two standing modes collapse onto one hue.
+    inbox = [["needs_you" palette.orange] ["failed" palette.red] ["done" palette.green] ["working" palette.blue] ["quiet" palette.subtle] ["new_output" palette.cyan]];
     mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
     diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };
 
-  # Git-state vocabulary rows: [state rolePath ascii]. The dotted role path resolves on the folded families (contextBadges grammar), so a hue
-  # rebind lands on every consumer and a new state is one row. The ascii marker serves persisted/piped output and prose-like readouts where
-  # marker+count reads as a text token (delta labels; the operator-ratified starship cluster); tools with fixed glyphs (eza NFv3) take .color
-  # only; the prompt alone bins color. typechange carries the modified marker (a mode flip is a modify) and stays a row so consumers dispatch
-  # by state.
   roles =
     families
     // {
@@ -90,9 +65,6 @@
         ]);
     };
 
-  # Canonical hex->ANSI-16 assignment; terminal palettes and ANSI-slot consumers agree with truecolor consumers. Slot 4 carries a real blue,
-  # slot 12 its bright companion, and both magenta slots ride the AA lift. Brights derive from the normal octet with the two real divergences
-  # (brightBlack -> selection, brightBlue -> the dedicated bright row) as override rows.
   ansi16 = let
     base = {
       inherit (palette) red green yellow blue magenta cyan;
@@ -108,10 +80,6 @@
         blue = palette.brightBlue;
       });
 
-  # Master scope table: the one scope-to-role-to-hue pivot. The tmTheme (bat, delta) derives from these rows, so a hue rebind lands in both
-  # with zero edits.
-  # Rebinds vs stock Dracula: keyword->pink (AA), operator/punctuation->subtle, escape->orange, variable/parameter->blue (ends type==variable),
-  # tag keeps magenta, warning splits to amber so a diagnostic is never a string. Row tuple: [name scope color style background].
   syntaxScopes = map (row ["name" "scope" "color" "style" "background"]) [
     ["Comment" "comment, punctuation.definition.comment" palette.comment "italic"]
     ["String" "string" palette.yellow]
@@ -136,7 +104,6 @@
     ["Invalid" "invalid" palette.foreground null palette.red]
   ];
 
-  # Shared icon vocabulary: one process glyph table projected into consumers (the prompt and its context badges) — never app-local maps.
   icons = {
     process = {
       zsh = "󰆍";
@@ -146,12 +113,8 @@
       git = "󰊢";
       nix = "󱄅";
       claude = "󰙴";
-      container = builtins.fromJSON ''"\uf4b7"''; # oct-container: in-container rootfs
+      container = builtins.fromJSON ''"\uf4b7"'';
     };
-    # Status alphabet: the CLOSED glyph vocabulary for terminal-bound render surfaces — single-codepoint codicons (Symbols Nerd Font Mono,
-    # 1-cell advance), each with the ASCII twin persisted surfaces use instead. Rows live on the symbols family (fonts catalog
-    # statusAlphabet) beside the font they mint from; codepoint minting is immune to harness glyph-stripping. Emoji and EAW-ambiguous glyphs never render on width-load-bearing surfaces; a new status class is
-    # one catalog row, never an app-local glyph.
     alphabet = byName (map (t: {
         name = builtins.elemAt t 0;
         glyph = builtins.fromJSON ''"\u${builtins.elemAt t 1}"'';
@@ -173,7 +136,6 @@
     ${lib.optionalString (background != null) "        <key>background</key><string>${background.hex}</string>\n"}${lib.optionalString (style != null) "        <key>fontStyle</key><string>${style}</string>\n"}      </dict>
         </dict>'';
 
-  # Global editor settings rows: [key role] pairs folded into the leading settings dict; scope rules follow from the master pivot.
   tmSetting = p: "        <key>${builtins.elemAt p 0}</key><string>${(builtins.elemAt p 1).hex}</string>";
   tmTheme = ''
     <?xml version="1.0" encoding="UTF-8"?>
@@ -207,18 +169,13 @@
 
   projections = {
     inherit tmThemeFile;
-    # Flat hex mirror of the role families the wezterm Lua rows index; focus and mode stay Nix-side deliberately — no hex consumer reads
-    # them. A new family lands here with its first consumer.
     rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
-    # Git-state vocabulary rows as hex and ascii marker; every consumer takes both from the same row.
     gitHex =
       lib.mapAttrs (_: g: {
         color = g.color.hex;
         inherit (g) ascii;
       })
       roles.git;
-    # Machine-context badges (remote host, in-container rootfs): the roles.git single-owner pattern applied to context — each row carries the
-    # glyph and the dotted role path the prompt styles it with. Row tuple: [processIcon rolePath].
     contextBadges =
       lib.mapAttrs (_: t: {
         glyph = icons.process.${builtins.elemAt t 0};
@@ -227,8 +184,6 @@
         remote = ["ssh" "state.warning"];
         container = ["container" "accent.structural"];
       };
-    # WezTerm color-scheme rows in the colors-TOML shape; the tab bar sits on the surface step and inactive chrome reads through the subtle tier.
-    # Label quads and tab rows fold from [bg fg] pairs; ANSI vectors derive from the slot-name order.
     weztermColorScheme = let
       labeled = lib.concatMapAttrs (n: p: {
         "${n}_bg" = {Color = (builtins.elemAt p 0).hex;};
@@ -259,18 +214,12 @@
         input_selector_label = [roles.surface.raised roles.accent.primary];
         launcher_label = [roles.surface.raised roles.accent.primary];
       };
-    # Display-time grammar: transient/human surfaces render these strftime rows (24h local, no seconds, no tz); stored data stays ISO-8601 UTC.
     timeDisplay = {
       sameDay = "%H:%M";
       dated = "%d/%m %H:%M";
     };
-    # fzf color vocabulary: the ONE role->slot mapping every fzf-embedding surface consumes (programs.fzf, fzf-tab).
-    # Selection rides the focus pair, structure rides accents — a picker's selected row reads identically to the active tab chip everywhere.
     inherit fzfColorRows;
-    # Per-command fzf argument vocabulary: colors plus the chrome every generated script carries per invocation (scripts never assume the
-    # interactive FZF_DEFAULT_OPTS reached them); the richer global interactive chrome stays fzf.nix-owned.
     fzfArgs = fzfColorRows ++ ["--border=sharp" "--layout=reverse" "--info=right" "--highlight-line" "--prompt=❯ " "--pointer=❯"];
-    # Four-step surface ramp for delta blame backgrounds.
     blameRamp = lib.concatMapStringsSep " " (c: c.hex) [
       roles.surface.base
       roles.surface.raised

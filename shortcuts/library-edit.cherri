@@ -1,0 +1,26 @@
+#define name Library Edit
+#define color gray
+#define glyph key
+#define inputs text
+#define outputs text
+#include 'actions/storage'
+#include 'actions/shortcuts'
+
+action 'com.apple.shortcuts.DeleteWorkflowAction' deleteShortcuts(variable shortcuts: 'entities')
+
+const edit = getDictionary(ShortcutInput)
+storeValue("NTFY_BUTTON_TOKEN", "{edit['token']}", true)
+const names = getValue(edit, "delete")
+const library = getShortcuts()
+@held: array
+for name in names {
+    for shortcut in library {
+        @title = "{@shortcut}"
+        if @title == "{@name}" {
+            @held += @shortcut
+        }
+    }
+}
+const total = count(@held)
+deleteShortcuts(@held)
+output("{total}")

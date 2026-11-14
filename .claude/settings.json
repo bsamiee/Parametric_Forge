@@ -11,9 +11,6 @@
     "permissions": {
         "deny": ["EnterWorktree", "Bash(git worktree *)"]
     },
-    "hooks": {
-        "SessionStart": [{ "hooks": [{ "type": "command", "command": "echo 'eval \"$(mise env -s bash)\"' >> \"$CLAUDE_ENV_FILE\"" }] }]
-    },
     "worktree": { "bgIsolation": "none" },
     "effortLevel": "high",
     "showClearContextOnPlanAccept": true,
