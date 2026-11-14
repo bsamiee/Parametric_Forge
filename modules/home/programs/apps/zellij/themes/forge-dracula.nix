@@ -30,10 +30,10 @@
     ${name} {
     ${lib.concatStrings (lib.zipListsWith (slot: role: "      ${slot} ${rgb role}\n") slots roleRows)}    }'';
 in {
-  programs.zellij.themes.dracula = ''
+  programs.zellij.themes.forge-dracula = ''
 
     themes {
-      "dracula" {
+      "forge-dracula" {
         ${lib.concatMapStringsSep "\n    " renderComponent components}
         multiplayer_user_colors {
     ${lib.concatStrings (lib.imap1 (i: role: "          player_${toString i} ${rgb role}\n") playerRoles)}        }

@@ -14,15 +14,14 @@ local function workspace_row(name)
     end
 end
 
-function M.session_args(name, gated)
+function M.session_args(name)
     local w = workspace_row(name)
     local launch = "unset __MISE_DIFF __MISE_SESSION __HM_SESS_VARS_SOURCED __HM_ZSH_SESS_VARS_SOURCED"
         .. ' WEZTERM_UNIX_SOCKET WEZTERM_PANE; cd -- "$1" && shift && exec "$@"'
-    local body = gated and "read -r _; " .. launch or launch
     return {
         rows.paths.zsh,
         "-lc",
-        body,
+        launch,
         "zsh",
         w and w.cwd or wezterm.home_dir,
         rows.paths.zellij_attach,

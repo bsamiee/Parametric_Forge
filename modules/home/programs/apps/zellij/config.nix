@@ -366,7 +366,7 @@ in {
   programs.zellij.extraConfig = ''
 
         // --- [CORE_CONFIGURATION]
-        theme                         "dracula"
+        theme                         "forge-dracula"
         default_shell                 "${config.forge.shell}"
         post_command_discovery_hook   "echo ${config.forge.shell}"
         show_startup_tips             false

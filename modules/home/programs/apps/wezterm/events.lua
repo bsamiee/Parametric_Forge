@@ -14,34 +14,12 @@ local function cell(fg, text)
     }
 end
 
-local gated = {}
-
 local handlers = {
     ["gui-startup"] = function(cmd)
-        local spawn = cmd or {}
-        local ws = wezterm.mux.get_active_workspace()
-        local gate = spawn.args == nil
-        if gate then
-            spawn.args = deck.session_args(ws, true)
-            spawn.cwd = wezterm.home_dir
-        end
-        local _, pane, window = wezterm.mux.spawn_window(spawn)
+        local _, _, window = wezterm.mux.spawn_window(cmd or {})
         local gui = window:gui_window()
-        if gate then
-            local size = pane:get_dimensions()
-            gated[pane:pane_id()] = { cols = size.cols, rows = size.viewport_rows }
-        end
         if gui then
             gui:maximize()
-        end
-    end,
-
-    ["window-resized"] = function(_, pane)
-        local spawned = gated[pane:pane_id()]
-        local size = pane:get_dimensions()
-        if spawned and (size.cols ~= spawned.cols or size.viewport_rows ~= spawned.rows) then
-            gated[pane:pane_id()] = nil
-            pane:send_text("\n")
         end
     end,
 

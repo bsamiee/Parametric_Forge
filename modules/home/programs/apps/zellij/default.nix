@@ -89,7 +89,7 @@
 in {
   imports = [
     ./config.nix
-    ./themes/dracula.nix
+    ./themes/forge-dracula.nix
     ./layouts/default.nix
   ];
 

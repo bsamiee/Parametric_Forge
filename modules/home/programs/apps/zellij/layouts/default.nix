@@ -30,12 +30,21 @@ _: {
             }
         }
 
-        swap_tiled_layout name="[TWO_COLUMNS]" {
-            ui min_panes=4 {
+        swap_tiled_layout name="[COLUMNS]" {
+            ui max_panes=4 {
                 pane split_direction="vertical" {
                     pane
+                    pane
+                }
+            }
+            ui min_panes=5 {
+                pane split_direction="vertical" {
                     pane stacked=true {
                         children
+                    }
+                    pane stacked=true {
+                        pane
+                        pane
                     }
                 }
             }
