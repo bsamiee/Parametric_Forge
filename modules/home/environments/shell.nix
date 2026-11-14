@@ -102,6 +102,10 @@ in {
         FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
         FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
         FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
+        FORGIT_FZF_DEFAULT_OPTS = ''
+          --height=80%
+          --preview-window=right:60%:border-bold
+        '';
       };
 
     # --- [GUI_SESSION_ENVIRONMENT]
