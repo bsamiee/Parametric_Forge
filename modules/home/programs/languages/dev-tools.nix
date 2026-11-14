@@ -20,4 +20,12 @@
       gam-current
     ];
   };
+
+  # --- [ANTIGRAVITY_REMOTE_CONTROL]
+  programs.zsh.initContent = ''
+    agy() {
+      (($#)) || set -- --remote-control
+      command agy "$@"
+    }
+  '';
 }
