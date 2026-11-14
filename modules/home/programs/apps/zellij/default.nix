@@ -4,7 +4,16 @@
   pkgs,
   ...
 }: let
-  pluginRows = (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows;
+  statusbar = pkgs.pkgsCross.wasm32-wasip1.callPackage ./statusbar/package.nix {};
+  plugins =
+    lib.mapAttrs (_: row: row // {source = pkgs.fetchurl {inherit (row) url hash;};})
+    (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows
+    // {
+      statusbar = {
+        source = "${statusbar}/bin/statusbar.wasm";
+        permissions = ["ReadApplicationState" "ChangeApplicationState" "RunActionsAsUser"];
+      };
+    };
 
   # --- [SESSION_ATTACH]
   sessionAttach = pkgs.writeShellApplication {
@@ -88,7 +97,7 @@ in {
           "${plugDir}/${name}.wasm" {
           ${lib.concatMapStrings (p: "    ${p}\n") row.permissions}}
         '')
-        pluginRows));
+        plugins));
       pruneAwk = pkgs.writeText "zellij-grant-prune.awk" ''
         /^"/ { drop = (index($0, q dir) == 1) }
         !drop { print }
@@ -111,13 +120,6 @@ in {
     '');
 
     # --- [PLUGIN_INSTALLATION]
-    xdg.configFile = lib.mapAttrs' (name: row:
-      lib.nameValuePair "zellij/plugins/${name}.wasm" {
-        source =
-          if row ? attr
-          then pkgs.zellijPlugins.${row.attr}
-          else pkgs.fetchurl {inherit (row) url hash;};
-      })
-    pluginRows;
+    xdg.configFile = lib.mapAttrs' (name: row: lib.nameValuePair "zellij/plugins/${name}.wasm" {inherit (row) source;}) plugins;
   };
 }

@@ -5,21 +5,21 @@ _: {
         // --- [TAB_TEMPLATES]
         tab_template name="ui" {
             pane size=1 borderless=true {
-                plugin location="zjstatus"
+                plugin location="statusbar-tabs"
             }
             children
             pane size=1 borderless=true {
-                plugin location="zjstatus-hints"
+                plugin location="statusbar-modes"
             }
         }
 
         default_tab_template {
             pane size=1 borderless=true {
-                plugin location="zjstatus"
+                plugin location="statusbar-tabs"
             }
             pane
             pane size=1 borderless=true {
-                plugin location="zjstatus-hints"
+                plugin location="statusbar-modes"
             }
         }
 

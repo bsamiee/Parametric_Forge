@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   toolchainEnvFor,
   ...
 }: let
@@ -18,23 +17,6 @@
     pathEntries
     ;
 
-  # --- [INBOX_COUNT]
-  inboxCount = pkgs.writeShellApplication {
-    name = "zellij-inbox-count";
-    runtimeInputs = [config.programs.zellij.package pkgs.jq];
-    text = ''
-      while read -r session; do
-        zellij --session "$session" action list-panes --json --all 2>/dev/null || true
-      done < <(zellij list-sessions --short --no-formatting) \
-        | jq -rs '
-          [.[][] | select(.is_plugin | not) | .attention | select(.muted != true) | .status] as $states
-          | [["NeedsYou", "need you"], ["Working", "running"]]
-          | map(. as [$state, $label] | ($states | map(select(. == $state)) | length) | select(. > 0) | "\(.) \($label)")
-          | select(length > 0)
-          | "◉ " + join(" · ")
-        '
-    '';
-  };
   chords = config.forge.chords;
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
@@ -386,14 +368,8 @@
         + chip "structural" layers.super.chip
         + plRows chords.zellij.ribbon.superGroup;
     };
-  zjModeName = {
-    entersearch = "enter_search";
-    renametab = "rename_tab";
-    renamepane = "rename_pane";
-    renamesession = "rename_session";
-  };
   modeHintLines = lib.concatMapStringsSep "\n" (m: let
-    n = "mode_${zjModeName.${m} or m}";
+    n = "mode_${m}";
   in "        ${n}${lib.strings.replicate (lib.max 1 (20 - lib.stringLength n)) " "}\"${ribbons.${m}}\"")
   hintOrder;
 in {
@@ -432,42 +408,44 @@ in {
         plugins {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
-          // --- [ZJSTATUS_TOP_BAR]
-          zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
+          // --- [STATUSBAR_TOP_BAR]
+          statusbar-tabs location="file:~/.config/zellij/plugins/statusbar.wasm" {
     ${colorRows}
-            format_left               "{tabs}"
-            format_center             "{swap_layout}"
-            format_right              "{command_inbox}#[bg=$accent2,fg=$inverse,bold] {session} "
+            format_left       "{tabs}"
+            format_center     "{swap_layout}"
+            format_right      "{attention}#[bg=$accent2,fg=$inverse,bold] {session} "
+            format_precedence "rlc"
 
-            command_inbox_command           "${lib.getExe inboxCount}"
-            command_inbox_format            "#[fg=$inbox_needs_you,bold]{stdout} "
-            command_inbox_interval          "10"
-            command_inbox_hideonemptystdout "true"
-
-            format_hide_on_overlength "true"
-            format_precedence         "rlc"
+            attention_format    "#[fg=$inbox_needs_you,bold]◉ {states} "
+            attention_separator " · "
+            attention_needs_you "{count} need you"
+            attention_failed    "#[fg=$inbox_failed]{count} failed"
+            attention_done      "#[fg=$inbox_done]{count} done"
+            attention_working   "{count} running"
 
             swap_layout_format        "#[fg=$structural,bold] {name} "
             swap_layout_hide_if_empty "true"
 
-            tab_active    "#[bg=$focus_active,fg=$inverse,bold] TAB [{index}] "
-            tab_normal    "#[fg=$focus_inactive] TAB [{index}] "
-            tab_separator " "
+            tab_active    "#[bg=$focus_active,fg=$inverse,bold] TAB [{index}] {attention}"
+            tab_normal    "#[fg=$focus_inactive] TAB [{index}] {attention}"
             tab_rename    "#[bg=$mode_renametab,fg=$inverse,bold] TAB [{index}] {name} "
+            tab_separator " "
+
+            tab_attention_needs_you "#[fg=$inbox_needs_you,bold]{symbol} "
+            tab_attention_failed    "#[fg=$inbox_failed,bold]{symbol} "
+            tab_attention_done      "#[fg=$inbox_done,bold]{symbol} "
+            tab_attention_working   "#[fg=$inbox_working,bold]{symbol} "
           }
 
-          // --- [ZJSTATUS_HINTS_BOTTOM_BAR_MODE_CHIP_ALWAYS_VISIBLE_KEY_RIBBON]
-          zjstatus-hints location="file:~/.config/zellij/plugins/zjstatus.wasm" {
+          // --- [STATUSBAR_BOTTOM_BAR_MODE_CHIP_AND_KEY_RIBBON]
+          statusbar-modes location="file:~/.config/zellij/plugins/statusbar.wasm" {
     ${colorRows}
-            format_left   "{mode}"
-            format_right  "#[bg=$surface,fg=$muted]${chords.zellij.hintsRight}"
-            format_space  "#[bg=$surface]"
-
-            format_hide_on_overlength "true"
-            format_precedence         "lrc"
+            format_left       "{mode}"
+            format_right      "#[bg=$surface,fg=$muted]${chords.zellij.hintsRight}"
+            format_space      "#[bg=$surface]"
+            format_precedence "lrc"
 
     ${modeHintLines}
-            mode_default_to_mode "normal"
           }
         }
 

@@ -452,13 +452,8 @@ in {
 
   extensions = {
     zellij-plugins = {
-      source = "nixpkgs:zellijPlugins | fetchurl";
+      source = "fetchurl";
       rows = {
-        zjstatus = {
-          attr = "zjstatus";
-          license = "MIT";
-          permissions = ["ReadApplicationState" "ChangeApplicationState" "RunCommands"];
-        };
         zellij_forgot = {
           url = "https://github.com/karimould/zellij-forgot/releases/download/0.4.2/zellij_forgot.wasm";
           hash = "sha256-MRlBRVGdvcEoaFtFb5cDdDePoZ/J2nQvvkoyG6zkSds=";
