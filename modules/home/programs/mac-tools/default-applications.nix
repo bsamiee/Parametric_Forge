@@ -156,7 +156,8 @@
       "webm"
     ] [];
     wezterm = app "com.github.wez.wezterm" "/Applications/WezTerm.app" ["command" "tool"] [];
-    arc = app "company.thebrowser.Browser" "/Applications/Arc.app" [] ["http" "ftp"];
+    arc = app "company.thebrowser.Browser" "/Applications/Arc.app" [] [];
+    chrome = app "com.google.Chrome" "/Applications/Google Chrome.app" [] ["http" "ftp"];
     superhuman = app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"];
   };
   bundledCli = lib.mapAttrsToList (name: path: pkgs.writeShellScriptBin name ''exec ${lib.escapeShellArg path} "$@"'') {

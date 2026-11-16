@@ -303,7 +303,7 @@ impl State {
         };
         match hit {
             Hit::Notice => self.asks.iter().filter_map(|id| self.ask(*id)).enumerate().for_each(|(index, (row, kind))| {
-                line.gap(if index == 0 { 0 } else { 3 }).push(bold(ink(P.need)), kind);
+                line.gap(if index == 0 { 0 } else { 3 }).push(bold(ink(P.need)), kind).push(ink(P.subtle), " ·");
                 at(&mut line, row.tab);
             }),
             Hit::Count(count) => {
@@ -426,7 +426,7 @@ impl State {
                 line.gap(2);
             });
             let name = shorten(&client.session.to_uppercase(), if short { 3 } else { SESSION_COLS });
-            line.push(ink(P.focus), '▐').hit(Hit::Session, |line| {
+            line.gap(2).push(ink(P.focus), '▐').hit(Hit::Session, |line| {
                 line.push(underline_if(bold(on(ink(P.inverse), P.focus)), hovered(Hit::Session)), format_args!(" {name} "));
             });
             line.push(ink(P.focus), '▌');
