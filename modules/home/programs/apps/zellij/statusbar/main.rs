@@ -399,45 +399,38 @@ impl State {
             }
             line
         };
-        let counts = |idle_zero: bool, short: bool| {
+        let counts = |short: bool| {
             let mut line = Line::default();
             COUNTS.into_iter().for_each(|count| {
                 let (glyph, _, tone) = face(count);
                 let n = self.census.of(count).count();
-                let shown = match count {
-                    Count::Failed => n > 0,
-                    Count::Idle => n > 0 || idle_zero,
-                    Count::Working | Count::Command => true,
-                };
-                if !shown {
+                if n == 0 {
                     return;
                 }
-                if count == Count::Command && n == 0 {
-                    line.gap(3).gap(2);
-                    return;
-                }
-                let lit = if n == 0 { P.muted } else { tone };
-                let glyph_ink = if count == Count::Working && n > 0 && (self.tick / 2) % 2 == 1 { P.muted } else { lit };
+                let glyph_ink = if count == Count::Working && (self.tick / 2) % 2 == 1 { P.muted } else { tone };
                 line.hit(Hit::Count(count), |line| {
                     let style = underline_if(ink(glyph_ink), hovered(Hit::Count(count)));
                     let style = if matches!(count, Count::Failed | Count::Command) { bold(style) } else { style };
-                    line.push(style, glyph).push(ink(lit), format_args!(" {n}"));
+                    line.push(style, glyph).push(ink(tone), format_args!(" {n}"));
                 });
                 line.gap(2);
             });
+            if line.width() > 0 {
+                line.gap(2);
+            }
             let name = shorten(&client.session.to_uppercase(), if short { 3 } else { SESSION_COLS });
-            line.gap(2).push(ink(P.focus), '▐').hit(Hit::Session, |line| {
+            line.push(ink(P.focus), '▐').hit(Hit::Session, |line| {
                 line.push(underline_if(bold(on(ink(P.inverse), P.focus)), hovered(Hit::Session)), format_args!(" {name} "));
             });
             line.push(ink(P.focus), '▌');
             line
         };
         let anchor = (cols / 2).saturating_sub(NOTICE_LEAD);
-        (0..=4)
-            .find_map(|level| compose(&tabs(level >= 4), &notice(level < 2), &counts(level < 1, level >= 3), cols, anchor))
+        (0..=3)
+            .find_map(|level| compose(&tabs(level >= 3), &notice(level < 1), &counts(level >= 2), cols, anchor))
             .unwrap_or_else(|| {
                 let mut line = tabs(true);
-                line.gap(1).append(&notice(false)).gap(1).append(&counts(false, true));
+                line.gap(1).append(&notice(false)).gap(1).append(&counts(true));
                 line
             })
             .clip(cols)
