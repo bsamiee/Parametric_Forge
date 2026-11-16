@@ -298,6 +298,14 @@
       sha256 = "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=";
     };
   };
+  gemini-api-aarch64-darwin = {
+    pname = "gemini-api-aarch64-darwin";
+    version = "0.4.6";
+    src = fetchurl {
+      url = "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.4.6/gemini-api_Darwin_arm64.tar.gz";
+      sha256 = "sha256-yAtewtCm/u4M8YlDQnz9r5qrcYO39i9QuVbNJDG5gBg=";
+    };
+  };
   gh-aarch64-darwin = {
     pname = "gh-aarch64-darwin";
     version = "2.104.0";

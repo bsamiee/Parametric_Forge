@@ -182,6 +182,10 @@ final: prev: let
       unpack = false;
     };
     tscli-current = cliRelease {binary = "tscli";};
+    gemini-api = cliRelease {
+      binary = "gemini-api";
+      completion = "completion";
+    };
     officecli-current = cliRelease {
       binary = ''"$src"'';
       unpack = false;

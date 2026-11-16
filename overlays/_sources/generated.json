@@ -522,6 +522,21 @@
         },
         "version": "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
     },
+    "gemini-api-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gemini-api-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-yAtewtCm/u4M8YlDQnz9r5qrcYO39i9QuVbNJDG5gBg=",
+            "type": "url",
+            "url": "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.4.6/gemini-api_Darwin_arm64.tar.gz"
+        },
+        "version": "0.4.6"
+    },
     "gh-aarch64-darwin": {
         "cargoLock": null,
         "date": null,

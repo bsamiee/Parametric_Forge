@@ -252,6 +252,12 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://extensions.duckdb.org/v$ver/osx_arm64/fts.duckdb_extension.gz"
 
+[gemini-api-aarch64-darwin]
+src.github = "google-gemini/gemini-api-cli"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://github.com/google-gemini/gemini-api-cli/releases/download/v$ver/gemini-api_Darwin_arm64.tar.gz"
+
 [tscli-aarch64-darwin]
 src.github = "jaxxstorm/tscli"
 src.prerelease = true

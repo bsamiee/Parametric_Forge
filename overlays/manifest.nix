@@ -267,6 +267,15 @@ in {
       mainProgram = "curl-impersonate";
     };
 
+    gemini-api = {
+      version = generatedPins.gemini-api-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "gemini-api-aarch64-darwin";
+      license = "asl20";
+      description = "Gemini Interactions API command-line client for generation, media analysis, files, and managed agents";
+      homepage = "https://github.com/google-gemini/gemini-api-cli";
+      mainProgram = "gemini-api";
+    };
+
     tscli-current = {
       version = generatedPins.tscli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "tscli-aarch64-darwin";

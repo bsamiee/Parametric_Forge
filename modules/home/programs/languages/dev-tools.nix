@@ -17,6 +17,7 @@
 
       # --- [GOOGLE_WORKSPACE]
       gogcli-current
+      gemini-api
       gam-current
 
       # --- [CONTAINER_REGISTRY]
