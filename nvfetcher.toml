@@ -299,6 +299,10 @@ fetch.url = "https://registry.npmjs.org/@tavily/cli/-/cli-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/ctx7/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/ctx7/-/ctx7-$ver.tgz"
 
+[mcp-remote]
+src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-$ver.tgz"
+
 [mcporter]
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcporter/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/mcporter/-/mcporter-$ver.tgz"

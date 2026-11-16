@@ -612,6 +612,21 @@
         },
         "version": "12.0.0"
     },
+    "mcp-remote": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mcp-remote",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-m3AbZSLTpRPbme63/E8EyyYfuwhIdkUglILu9ECKUp4=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/mcp-remote/-/mcp-remote-0.16.6.tgz"
+        },
+        "version": "0.16.6"
+    },
     "mcporter": {
         "cargoLock": null,
         "date": null,

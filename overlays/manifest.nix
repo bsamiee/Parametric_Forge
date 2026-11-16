@@ -491,6 +491,11 @@ in {
           commands = ["ctx7"];
           license = "MIT";
         };
+        mcp-remote = {
+          inherit (generatedPins.mcp-remote) version;
+          commands = ["mcp-remote"];
+          license = "MIT";
+        };
         mcporter = {
           inherit (generatedPins.mcporter) version;
           commands = ["mcporter"];

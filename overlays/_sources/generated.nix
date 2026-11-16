@@ -346,6 +346,14 @@
       sha256 = "sha256-j5bVytavBeuMD1vIW3+cQ6jN5aCRLxP0W2uafyH7iNQ=";
     };
   };
+  mcp-remote = {
+    pname = "mcp-remote";
+    version = "0.16.6";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-0.16.6.tgz";
+      sha256 = "sha256-m3AbZSLTpRPbme63/E8EyyYfuwhIdkUglILu9ECKUp4=";
+    };
+  };
   mcporter = {
     pname = "mcporter";
     version = "0.17.0";

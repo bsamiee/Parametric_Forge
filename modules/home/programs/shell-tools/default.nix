@@ -38,7 +38,7 @@ in {
       pkgs._7zz-rar
       pkgs.ast-grep
       pkgs.coderabbit
-      pkgs.coreutils-prefixed
+      (pkgs.runCommand "timeout" {meta.mainProgram = "timeout";} "mkdir -p $out/bin && ln -s ${lib.getExe' pkgs.coreutils "timeout"} $out/bin/timeout")
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.difftastic
