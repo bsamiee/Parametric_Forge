@@ -2,7 +2,7 @@
   latest = name: {latest = name;};
   rows = [
     # --- [SYSTEM_CORE_TOOLS]
-    (latest "1password@nightly")
+    "1password@nightly"
     "cleanshot"
     (latest "wezterm@nightly")
 

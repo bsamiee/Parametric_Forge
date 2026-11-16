@@ -11,13 +11,25 @@
   volume = "/System/Volumes/Data";
   exclusions =
     [userHome.xdg.cacheHome]
+    ++ map (path: "${userHome.xdg.dataHome}/${path}") ["mise" "pnpm"]
     ++ map (path: "${homeDirectory}/${path}") [
+      ".cargo"
+      ".claude"
+      ".nuget"
+      ".rustup"
       "Library/Caches"
       "Library/Logs"
       "Library/Developer/Xcode/DerivedData"
+      "Library/Application Support/Adobe/CEP/extensions"
+      "Library/Application Support/Adobe/UXP"
+      "Library/Application Support/Blender"
       "Library/Application Support/Code/CachedData"
-      "Library/Application Support/Epic/UnrealEngine/Common/Zen"
+      "Library/Application Support/Epic"
       "Library/Application Support/Firefox/Profiles"
+      "Library/Application Support/Google/DriveFS"
+      "Library/Application Support/McNeel"
+      "Library/Application Support/Rasm"
+      "Library/Application Support/dotnet"
       "Library/Application Support/Spotify/PersistentCache"
       "Library/Application Support/Superhuman/Cache"
       "Library/Application Support/Superhuman/Code Cache"
@@ -29,6 +41,7 @@
     ".cache"
     ".direnv"
     ".gradle"
+    ".mypy_cache"
     ".next"
     ".nuxt"
     ".nx"
@@ -53,6 +66,7 @@
     "node_modules"
     "obj"
     "out"
+    "research"
     "target"
   ];
 
