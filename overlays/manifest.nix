@@ -44,6 +44,16 @@ in {
       asset = pinAsset "resvg";
       inherit (generatedPins.resvg) version;
     };
+    yt-dlp-current = {
+      sourcePackage = "yt-dlp";
+      asset = pinAsset "yt-dlp";
+      inherit (generatedPins.yt-dlp) version;
+    };
+    gallery-dl-current = {
+      sourcePackage = "gallery-dl";
+      asset = pinAsset "gallery-dl";
+      inherit (generatedPins.gallery-dl) version;
+    };
     ocrmypdf-current = {
       pythonPackages =
         builtins.mapAttrs (_: pin: {
@@ -174,15 +184,6 @@ in {
       description = "Current veraPDF conformance inspection on the current Temurin Java runtime";
       homepage = "https://verapdf.org/";
       mainProgram = "verapdf";
-    };
-
-    biome-current = {
-      version = generatedPins.biome-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "biome-aarch64-darwin";
-      license = "mit";
-      description = "Biome formatter, linter, and LSP for the web toolchain";
-      homepage = "https://biomejs.dev/";
-      mainProgram = "biome";
     };
 
     mise-current = {
@@ -496,10 +497,17 @@ in {
           commands = ["mcp-remote"];
           license = "MIT";
         };
-        mcporter = {
-          inherit (generatedPins.mcporter) version;
-          commands = ["mcporter"];
+        greptile = {
+          inherit (generatedPins.greptile) version;
+          commands = ["greptile"];
           license = "MIT";
+        };
+        playwright = {
+          inherit (generatedPins.playwright-core) version;
+          commands = ["playwright"];
+          license = "Apache-2.0";
+          env.PLAYWRIGHT_CLI_SESSION = "\${CLAUDE_CODE_SESSION_ID:-\${CODEX_THREAD_ID:-\${ANTIGRAVITY_CONVERSATION_ID:-}}}";
+          inherit ((builtins.fromJSON (builtins.readFile (./_sources + "/${generatedPins.playwright-core.extract."browsers.json"}")))) browsers;
         };
       };
     };

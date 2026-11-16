@@ -23,7 +23,7 @@
     "explorer.fileNesting.patterns": {
         ".gitignore": ".gitattributes",
         "flake.nix": ".mcp.json, flake.lock, mise.toml, nvfetcher.toml",
-        "package.json": "biome.json, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json",
+        "package.json": ".oxfmtrc.json, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json",
         "README.md": "LICENSE"
     },
 
@@ -51,7 +51,7 @@
     // --- [TYPESCRIPT] ------------------------------------------------------------------
     "js/ts.experimental.useTsgo": true,
     "js/ts.tsdk.path": "./node_modules/typescript",
-    "[typescript][javascript][json][jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+    "[typescript][javascript][json][jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
 
     // --- [YAML] ------------------------------------------------------------------------
     "yaml.format.enable": false,

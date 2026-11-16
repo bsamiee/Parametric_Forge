@@ -1,21 +1,6 @@
 _: {
-  perSystem = {
-    pkgs,
-    lib,
-    ...
-  }: let
+  perSystem = _: let
     style = import ../modules/style.nix;
-    biomeLaw = builtins.fromJSON (builtins.readFile ../biome.json);
-    biomeExcludes = map (
-      row: let
-        path = lib.removePrefix "!" row;
-        base = baseNameOf path;
-        isFile = lib.hasInfix "*" base || (builtins.match "[^.].*[.].+" base != null);
-      in
-        if isFile
-        then path
-        else "${path}/**"
-    ) (builtins.filter (lib.hasPrefix "!") biomeLaw.files.includes);
   in {
     treefmt = {
       settings.excludes = ["overlays/_sources/**"];
@@ -32,14 +17,11 @@ _: {
             column_width = style.width;
           };
         };
-        biome = {
+        oxfmt = {
           enable = true;
-          package = pkgs.biome-current;
-          formatCommand = "format";
-          settings = biomeLaw;
+          includes = ["*.ts" "*.js" "*.json" "*.jsonc"];
         };
       };
-      settings.formatter.biome.excludes = biomeExcludes;
     };
   };
 }

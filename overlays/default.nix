@@ -301,14 +301,6 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/verapdf";
     };
-    biome-current = _: {
-      dontUnpack = true;
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 "$src" "$out/bin/biome"
-        runHook postInstall
-      '';
-    };
     mise-current = _: {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
@@ -399,6 +391,9 @@ final: prev: let
     };
     rsync-current = old: {
       buildInputs = old.buildInputs ++ [prev.libidn2];
+    };
+    yt-dlp-current = old: {
+      postPatch = old.postPatch + "rm -r README.txt yt-dlp.1 completions\n";
     };
   };
   mkSourceRelease = name: row: let

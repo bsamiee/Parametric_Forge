@@ -339,7 +339,6 @@
       l = r.ribbon.label;
     }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
       (builtins.filter (r: r ? ribbon) superRows));
-
 in {
   _module.args.chords = {
     inherit layers modes;

@@ -58,21 +58,6 @@
         },
         "version": "18.24.8"
     },
-    "biome-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "biome-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-XqLNfSErEBMu6WDOSA/DOqt2HQ1rZYoREsNsJlftCVc=",
-            "type": "url",
-            "url": "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.7/biome-darwin-arm64"
-        },
-        "version": "2.6.7"
-    },
     "cloudflare-cf": {
         "cargoLock": null,
         "date": null,
@@ -82,11 +67,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-/BqaiBv/pCN9Q/+DHnnJfBZFlXTHXs7gcycufP+2xck=",
+            "sha256": "sha256-AsdOW/HLxSigzyyZL4kSw5K8RMWoyRSMyJYQcSkDXWw=",
             "type": "url",
-            "url": "https://registry.npmjs.org/cf/-/cf-1.0.0-beta.32.tgz"
+            "url": "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.0.tgz"
         },
-        "version": "1.0.0-beta.32"
+        "version": "1.0.0-rc.0"
     },
     "coderabbit-aarch64-darwin": {
         "cargoLock": null,
@@ -112,11 +97,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-zrFI8piKYlNDkNP/WMP3O9M52NlH9lhs+esPeIYQAKc=",
+            "sha256": "sha256-ikvxTsmdaYqL24gmXbJE4dHdRVO+GwptbTwOeSJK/Yk=",
             "type": "url",
-            "url": "https://registry.npmjs.org/ctx7/-/ctx7-0.11.1.tgz"
+            "url": "https://registry.npmjs.org/ctx7/-/ctx7-0.12.1.tgz"
         },
-        "version": "0.11.1"
+        "version": "0.12.1"
     },
     "curl-impersonate-aarch64-darwin": {
         "cargoLock": null,
@@ -262,11 +247,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-LVGZDoP4dYJ52diD8RJcbGiI+R1KSnl9bjLBzGEVM38=",
+            "sha256": "sha256-IAr+PN606XXgxX2SplaaQDfnMlYf1z1uYGBBuOz3uCY=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.224/cli-1.31.224.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.226/cli-1.31.226.jar"
         },
-        "version": "1.31.224"
+        "version": "1.31.226"
     },
     "diffenator3-aarch64-darwin": {
         "cargoLock": null,
@@ -494,6 +479,20 @@
         },
         "version": "2.2.2"
     },
+    "gallery-dl": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gallery-dl",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-VX/+UaScOeE/+eKUwWi+jL+Hfg3BY5kh1/8u98tQz+M=",
+            "type": "tarball",
+            "url": "https://codeberg.org/mikf/gallery-dl/archive/v1.32.20.tar.gz"
+        },
+        "version": "1.32.20"
+    },
     "gam-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -561,11 +560,26 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-qMYUL8ufQfDv8C/+94KYy+SYEGHxScKzpC1aE7rZMb0=",
+            "sha256": "sha256-77VvJAD89qfyWuOKHhZftPn1/X97GOdrTAuCweNbgC8=",
             "type": "url",
-            "url": "https://github.com/openclaw/gogcli/releases/download/v0.48.0/gogcli_0.48.0_darwin_arm64.tar.gz"
+            "url": "https://github.com/openclaw/gogcli/releases/download/v0.48.1/gogcli_0.48.1_darwin_arm64.tar.gz"
         },
-        "version": "0.48.0"
+        "version": "0.48.1"
+    },
+    "greptile": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "greptile",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-alx3a24SD2IO38Iayxrq/f9gxQZJ6bOCfjQwIkdDIF8=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/greptile/-/greptile-3.8.0.tgz"
+        },
+        "version": "3.8.0"
     },
     "hostinger-aarch64-darwin": {
         "cargoLock": null,
@@ -576,11 +590,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-TFX+EaOxvi8OKh+7eLhkv2BLdoQgO+vmMop7iI1CMps=",
+            "sha256": "sha256-QdCy5maGUXCuj6wa3nyn5rX6sJCY/tNTozc5J0GBiBE=",
             "type": "url",
-            "url": "https://github.com/hostinger/api-cli/releases/download/v5.0.0/hostinger-5.0.0-darwin-arm64.tar.gz"
+            "url": "https://github.com/hostinger/api-cli/releases/download/v5.0.1/hostinger-5.0.1-darwin-arm64.tar.gz"
         },
-        "version": "5.0.0"
+        "version": "5.0.1"
     },
     "hyperglot": {
         "cargoLock": null,
@@ -627,21 +641,6 @@
         },
         "version": "0.16.6"
     },
-    "mcporter": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "mcporter",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-IZYj4JnxV4Ov2tJMwd5reFpwjlQFT9NGg50u/zxFChE=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/mcporter/-/mcporter-0.17.0.tgz"
-        },
-        "version": "0.17.0"
-    },
     "microsoft-teams-module": {
         "cargoLock": null,
         "date": null,
@@ -666,11 +665,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-en+TQlWcxMpnAFQzfs9JfmnYMqBfZuUxYoOB3JK4j0g=",
+            "sha256": "sha256-5FCfFZ4EkuiQZe3PUvKRjidR41dGIFhgWEaLoFY67Vk=",
             "type": "url",
-            "url": "https://github.com/jdx/mise/releases/download/v2026.11.8/mise-v2026.11.8-macos-arm64.tar.gz"
+            "url": "https://github.com/jdx/mise/releases/download/v2026.11.9/mise-v2026.11.9-macos-arm64.tar.gz"
         },
-        "version": "2026.11.8"
+        "version": "2026.11.9"
     },
     "mq-aarch64-darwin": {
         "cargoLock": null,
@@ -755,11 +754,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-JFbCeuMUZJ3lqc+lL0aA0XLIXmYF0QmqxVFT6ASY3ZI=",
+            "sha256": "sha256-n4uep0zwcb7j0ajN6EtHa8wE5Zs79yprqMiRqvWMOmI=",
             "type": "tarball",
-            "url": "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.1.tar.gz"
+            "url": "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.2.tar.gz"
         },
-        "version": "10.18.1"
+        "version": "10.18.2"
     },
     "ocr-pydantic": {
         "cargoLock": null,
@@ -818,11 +817,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-K2Ldbqk6QirybGwPzi0CcDTGzXp+pD3jqN3kAQ31NV0=",
+            "sha256": "sha256-keMAi7S5LfpLKOarJDyGpOQQL7wMfcAg4p0FApsJO9Q=",
             "type": "tarball",
-            "url": "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v17.14.1.tar.gz"
+            "url": "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v17.14.2.tar.gz"
         },
-        "version": "17.14.1"
+        "version": "17.14.2"
     },
     "officecli-aarch64-darwin": {
         "cargoLock": null,
@@ -833,11 +832,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-FMce1isE6JWw3EgYkIzNwU9gElEzUL5O4ZwMvvkfxxs=",
+            "sha256": "sha256-fFTAC/6p0oppKCZh8OOgjUVcj8oaHUhvTBRshntpN5c=",
             "type": "url",
-            "url": "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.161/officecli-mac-arm64"
+            "url": "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.162/officecli-mac-arm64"
         },
-        "version": "1.0.161"
+        "version": "1.0.162"
     },
     "oha-aarch64-darwin": {
         "cargoLock": null,
@@ -867,6 +866,22 @@
             "url": "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
         },
         "version": "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
+    },
+    "playwright-core": {
+        "cargoLock": null,
+        "date": null,
+        "extract": {
+            "browsers.json": "sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=/browsers.json"
+        },
+        "name": "playwright-core",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=",
+            "type": "tarball",
+            "url": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.66.0-alpha-2026-11-16.tgz"
+        },
+        "version": "1.66.0-alpha-2026-11-16"
     },
     "pnp-powershell": {
         "cargoLock": null,
@@ -907,11 +922,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-2OvQOVdRWZHCyrWsMKsp5U9q21bPmKBHuyi8SM0uMbQ=",
+            "sha256": "sha256-zLUqrCJ3wcRC/m+EYFc7+puMb94zoR4ww5bxOO9P3YE=",
             "type": "url",
-            "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.55.0.tar.gz"
+            "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.57.0.tar.gz"
         },
-        "version": "11.55.0"
+        "version": "11.57.0"
     },
     "resvg": {
         "cargoLock": {
@@ -1092,5 +1107,19 @@
             "url": "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64.tar.gz"
         },
         "version": "4.54.3"
+    },
+    "yt-dlp": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "yt-dlp",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-qIrKFdHSErS8JVLtMOKZvWrkqfDiv2b4OJSHUbXcK/M=",
+            "type": "tarball",
+            "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.15.232800/yt-dlp.tar.gz"
+        },
+        "version": "2026.11.15.232800"
     }
 }

@@ -1,11 +1,8 @@
 {
     "name": "parametric-forge",
     "private": true,
-    "type": "module",
     "description": "Workspace root: services/ is the services-IaC owner (Doppler + GitHub as typed Pulumi rows)",
-    "engines": {
-        "node": ">=26"
-    },
+    "type": "module",
     "scripts": {
         "preview": "node services/driver.ts preview",
         "up": "node services/driver.ts up",
@@ -19,5 +16,8 @@
         "@types/node": "catalog:",
         "effect": "catalog:",
         "typescript": "catalog:"
+    },
+    "engines": {
+        "node": ">=26"
     }
 }

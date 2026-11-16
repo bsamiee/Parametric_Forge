@@ -73,12 +73,6 @@ src.github = "jgm/pandoc"
 src.prerelease = true
 fetch.tarball = "https://github.com/jgm/pandoc/releases/download/$ver/pandoc-$ver-arm64-macOS.zip"
 
-[biome-aarch64-darwin]
-src.github = "biomejs/biome"
-src.prerelease = true
-src.prefix = "@biomejs/biome@"
-fetch.url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%40$ver/biome-darwin-arm64"
-
 [mise-aarch64-darwin]
 src.github = "jdx/mise"
 src.prerelease = true
@@ -172,6 +166,15 @@ src.github = "linebender/resvg"
 src.prefix = "v"
 fetch.tarball = "https://github.com/linebender/resvg/archive/refs/tags/v$ver.tar.gz"
 cargo_lock = ["Cargo.lock"]
+
+[yt-dlp]
+src.github = "yt-dlp/yt-dlp-nightly-builds"
+fetch.tarball = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/$ver/yt-dlp.tar.gz"
+
+[gallery-dl]
+src.github = "mikf/gallery-dl"
+src.prefix = "v"
+fetch.tarball = "https://codeberg.org/mikf/gallery-dl/archive/v$ver.tar.gz"
 
 [notebooklm-py]
 src.pypi = "notebooklm-py"
@@ -303,9 +306,14 @@ fetch.url = "https://registry.npmjs.org/ctx7/-/ctx7-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-$ver.tgz"
 
-[mcporter]
-src.cmd = "curl -fsSL https://registry.npmjs.org/mcporter/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/mcporter/-/mcporter-$ver.tgz"
+[greptile]
+src.cmd = "curl -fsSL https://registry.npmjs.org/greptile/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/greptile/-/greptile-$ver.tgz"
+
+[playwright-core]
+src.cmd = "curl -fsSL https://registry.npmjs.org/-/package/playwright-core/dist-tags | jq -r .next"
+fetch.tarball = "https://registry.npmjs.org/playwright-core/-/playwright-core-$ver.tgz"
+extract = ["browsers.json"]
 
 [cloudflare-cf]
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"

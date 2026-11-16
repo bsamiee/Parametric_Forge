@@ -38,20 +38,12 @@
       sha256 = "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=";
     };
   };
-  biome-aarch64-darwin = {
-    pname = "biome-aarch64-darwin";
-    version = "2.6.7";
-    src = fetchurl {
-      url = "https://github.com/biomejs/biome/releases/download/%40biomejs%2Fbiome%402.6.7/biome-darwin-arm64";
-      sha256 = "sha256-XqLNfSErEBMu6WDOSA/DOqt2HQ1rZYoREsNsJlftCVc=";
-    };
-  };
   cloudflare-cf = {
     pname = "cloudflare-cf";
-    version = "1.0.0-beta.32";
+    version = "1.0.0-rc.0";
     src = fetchurl {
-      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-beta.32.tgz";
-      sha256 = "sha256-/BqaiBv/pCN9Q/+DHnnJfBZFlXTHXs7gcycufP+2xck=";
+      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.0.tgz";
+      sha256 = "sha256-AsdOW/HLxSigzyyZL4kSw5K8RMWoyRSMyJYQcSkDXWw=";
     };
   };
   coderabbit-aarch64-darwin = {
@@ -64,10 +56,10 @@
   };
   ctx7 = {
     pname = "ctx7";
-    version = "0.11.1";
+    version = "0.12.1";
     src = fetchurl {
-      url = "https://registry.npmjs.org/ctx7/-/ctx7-0.11.1.tgz";
-      sha256 = "sha256-zrFI8piKYlNDkNP/WMP3O9M52NlH9lhs+esPeIYQAKc=";
+      url = "https://registry.npmjs.org/ctx7/-/ctx7-0.12.1.tgz";
+      sha256 = "sha256-ikvxTsmdaYqL24gmXbJE4dHdRVO+GwptbTwOeSJK/Yk=";
     };
   };
   curl-impersonate-aarch64-darwin = {
@@ -150,10 +142,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.224";
+    version = "1.31.226";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.224/cli-1.31.224.jar";
-      sha256 = "sha256-LVGZDoP4dYJ52diD8RJcbGiI+R1KSnl9bjLBzGEVM38=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.226/cli-1.31.226.jar";
+      sha256 = "sha256-IAr+PN606XXgxX2SplaaQDfnMlYf1z1uYGBBuOz3uCY=";
     };
   };
   diffenator3-aarch64-darwin = {
@@ -282,6 +274,14 @@
       sha256 = "sha256-xjV+7L1aKV1kzJQ1A3W06OJcXnkxXQWKJjYSxtFx718=";
     };
   };
+  gallery-dl = {
+    pname = "gallery-dl";
+    version = "1.32.20";
+    src = fetchTarball {
+      url = "https://codeberg.org/mikf/gallery-dl/archive/v1.32.20.tar.gz";
+      sha256 = "sha256-VX/+UaScOeE/+eKUwWi+jL+Hfg3BY5kh1/8u98tQz+M=";
+    };
+  };
   gam-aarch64-darwin = {
     pname = "gam-aarch64-darwin";
     version = "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz";
@@ -316,18 +316,26 @@
   };
   gogcli-aarch64-darwin = {
     pname = "gogcli-aarch64-darwin";
-    version = "0.48.0";
+    version = "0.48.1";
     src = fetchurl {
-      url = "https://github.com/openclaw/gogcli/releases/download/v0.48.0/gogcli_0.48.0_darwin_arm64.tar.gz";
-      sha256 = "sha256-qMYUL8ufQfDv8C/+94KYy+SYEGHxScKzpC1aE7rZMb0=";
+      url = "https://github.com/openclaw/gogcli/releases/download/v0.48.1/gogcli_0.48.1_darwin_arm64.tar.gz";
+      sha256 = "sha256-77VvJAD89qfyWuOKHhZftPn1/X97GOdrTAuCweNbgC8=";
+    };
+  };
+  greptile = {
+    pname = "greptile";
+    version = "3.8.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/greptile/-/greptile-3.8.0.tgz";
+      sha256 = "sha256-alx3a24SD2IO38Iayxrq/f9gxQZJ6bOCfjQwIkdDIF8=";
     };
   };
   hostinger-aarch64-darwin = {
     pname = "hostinger-aarch64-darwin";
-    version = "5.0.0";
+    version = "5.0.1";
     src = fetchurl {
-      url = "https://github.com/hostinger/api-cli/releases/download/v5.0.0/hostinger-5.0.0-darwin-arm64.tar.gz";
-      sha256 = "sha256-TFX+EaOxvi8OKh+7eLhkv2BLdoQgO+vmMop7iI1CMps=";
+      url = "https://github.com/hostinger/api-cli/releases/download/v5.0.1/hostinger-5.0.1-darwin-arm64.tar.gz";
+      sha256 = "sha256-QdCy5maGUXCuj6wa3nyn5rX6sJCY/tNTozc5J0GBiBE=";
     };
   };
   hyperglot = {
@@ -354,14 +362,6 @@
       sha256 = "sha256-m3AbZSLTpRPbme63/E8EyyYfuwhIdkUglILu9ECKUp4=";
     };
   };
-  mcporter = {
-    pname = "mcporter";
-    version = "0.17.0";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/mcporter/-/mcporter-0.17.0.tgz";
-      sha256 = "sha256-IZYj4JnxV4Ov2tJMwd5reFpwjlQFT9NGg50u/zxFChE=";
-    };
-  };
   microsoft-teams-module = {
     pname = "microsoft-teams-module";
     version = "8.0.0";
@@ -372,10 +372,10 @@
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.11.8";
+    version = "2026.11.9";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.11.8/mise-v2026.11.8-macos-arm64.tar.gz";
-      sha256 = "sha256-en+TQlWcxMpnAFQzfs9JfmnYMqBfZuUxYoOB3JK4j0g=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.11.9/mise-v2026.11.9-macos-arm64.tar.gz";
+      sha256 = "sha256-5FCfFZ4EkuiQZe3PUvKRjidR41dGIFhgWEaLoFY67Vk=";
     };
   };
   mq-aarch64-darwin = {
@@ -420,10 +420,10 @@
   };
   ocr-pikepdf = {
     pname = "ocr-pikepdf";
-    version = "10.18.1";
+    version = "10.18.2";
     src = fetchTarball {
-      url = "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.1.tar.gz";
-      sha256 = "sha256-JFbCeuMUZJ3lqc+lL0aA0XLIXmYF0QmqxVFT6ASY3ZI=";
+      url = "https://github.com/pikepdf/pikepdf/archive/refs/tags/v10.18.2.tar.gz";
+      sha256 = "sha256-n4uep0zwcb7j0ajN6EtHa8wE5Zs79yprqMiRqvWMOmI=";
     };
   };
   ocr-pydantic = {
@@ -461,18 +461,18 @@
   };
   ocrmypdf = {
     pname = "ocrmypdf";
-    version = "17.14.1";
+    version = "17.14.2";
     src = fetchTarball {
-      url = "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v17.14.1.tar.gz";
-      sha256 = "sha256-K2Ldbqk6QirybGwPzi0CcDTGzXp+pD3jqN3kAQ31NV0=";
+      url = "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v17.14.2.tar.gz";
+      sha256 = "sha256-keMAi7S5LfpLKOarJDyGpOQQL7wMfcAg4p0FApsJO9Q=";
     };
   };
   officecli-aarch64-darwin = {
     pname = "officecli-aarch64-darwin";
-    version = "1.0.161";
+    version = "1.0.162";
     src = fetchurl {
-      url = "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.161/officecli-mac-arm64";
-      sha256 = "sha256-FMce1isE6JWw3EgYkIzNwU9gElEzUL5O4ZwMvvkfxxs=";
+      url = "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.162/officecli-mac-arm64";
+      sha256 = "sha256-fFTAC/6p0oppKCZh8OOgjUVcj8oaHUhvTBRshntpN5c=";
     };
   };
   oha-aarch64-darwin = {
@@ -489,6 +489,17 @@
     src = fetchTarball {
       url = "https://github.com/NatLabRockies/OpenStudio/releases/download/v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz";
       sha256 = "sha256-sJ5taPGagEibJxkgrMZWD0k3RJl74V63hwUV9kc1orw=";
+    };
+  };
+  playwright-core = {
+    pname = "playwright-core";
+    version = "1.66.0-alpha-2026-11-16";
+    src = fetchTarball {
+      url = "https://registry.npmjs.org/playwright-core/-/playwright-core-1.66.0-alpha-2026-11-16.tgz";
+      sha256 = "sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=";
+    };
+    extract = {
+      "browsers.json" = ./. + "/sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=/browsers.json";
     };
   };
   pnp-powershell = {
@@ -509,10 +520,10 @@
   };
   pymobiledevice3 = {
     pname = "pymobiledevice3";
-    version = "11.55.0";
+    version = "11.57.0";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.55.0.tar.gz";
-      sha256 = "sha256-2OvQOVdRWZHCyrWsMKsp5U9q21bPmKBHuyi8SM0uMbQ=";
+      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.57.0.tar.gz";
+      sha256 = "sha256-zLUqrCJ3wcRC/m+EYFc7+puMb94zoR4ww5bxOO9P3YE=";
     };
   };
   resvg = {
@@ -615,6 +626,14 @@
     src = fetchurl {
       url = "https://github.com/mikefarah/yq/releases/download/v4.54.3/yq_darwin_arm64.tar.gz";
       sha256 = "sha256-FTBpkzygfWo6IhJkGkOT8ZiuoMe/x0GKSp0RRFeSzW0=";
+    };
+  };
+  yt-dlp = {
+    pname = "yt-dlp";
+    version = "2026.11.15.232800";
+    src = fetchTarball {
+      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.15.232800/yt-dlp.tar.gz";
+      sha256 = "sha256-qIrKFdHSErS8JVLtMOKZvWrkqfDiv2b4OJSHUbXcK/M=";
     };
   };
 }

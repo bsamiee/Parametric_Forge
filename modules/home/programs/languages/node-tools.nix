@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -7,9 +8,13 @@
   commands = lib.concatMapAttrs (package: row:
     lib.genAttrs row.commands (command:
       pkgs.writeShellScriptBin command ''
-        PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
+        ${lib.concatStrings (lib.mapAttrsToList (name: value: ''
+            export ${name}="''${${name}-${value}}"
+          '')
+          row.env or {})}PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
       ''))
   toolRows;
+  chromiumMajor = lib.versions.major (lib.findFirst (browser: browser.name == "chromium") null toolRows.playwright.browsers).browserVersion;
   headlessShell = pkgs.playwright-driver.browsers.override {
     withChromium = false;
     withChromiumHeadlessShell = true;
@@ -33,6 +38,20 @@
   };
 in {
   home.packages = [mermaidCli] ++ lib.attrValues commands;
+
+  # --- [PLAYWRIGHT_CLI]
+  home.file.".playwright/cli.config.json".text = builtins.toJSON {
+    allowUnrestrictedFileAccess = true;
+    background = true;
+    browser = {
+      browserName = "chromium";
+      contextOptions.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromiumMajor}.0.0.0 Safari/537.36";
+    };
+    filePaths = "absolute";
+    outputDir = "${config.xdg.stateHome}/playwright/cli";
+    outputMaxSize = 268435456;
+    timeouts.idle = 3600000;
+  };
 
   # --- [M365_CLI]
   xdg.configFile."configstore/cli-m365-config.json".text = builtins.toJSON {
