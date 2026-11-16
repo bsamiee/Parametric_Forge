@@ -65,7 +65,6 @@
           # --- [SERVICE_CLIENTS]
           GOG_KEYRING_BACKEND = "file";
           GAMCFGDIR = "${xdgConfigHome}/gam";
-          CUA_DRIVER_RS_HOME = "${xdgDataHome}/cua-driver";
           DOPPLER_ENABLE_VERSION_CHECK = "false";
           GH_NO_UPDATE_NOTIFIER = "1";
           GH_NO_EXTENSION_UPDATE_NOTIFIER = "1";

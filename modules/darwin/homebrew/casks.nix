@@ -66,7 +66,6 @@
     "inkscape"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
-    "cuadriver"
     "karabiner-elements"
   ];
 in {
