@@ -306,9 +306,9 @@ fetch.url = "https://registry.npmjs.org/ctx7/-/ctx7-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-$ver.tgz"
 
-[greptile]
-src.cmd = "curl -fsSL https://registry.npmjs.org/greptile/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/greptile/-/greptile-$ver.tgz"
+[cubic-cli]
+src.cmd = "curl -fsSL https://registry.npmjs.org/@cubic-dev-ai/cli/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/@cubic-dev-ai/cli/-/cli-$ver.tgz"
 
 [playwright-core]
 src.cmd = "curl -fsSL https://registry.npmjs.org/-/package/playwright-core/dist-tags | jq -r .next"

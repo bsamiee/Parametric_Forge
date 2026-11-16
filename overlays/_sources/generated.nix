@@ -62,6 +62,14 @@
       sha256 = "sha256-ikvxTsmdaYqL24gmXbJE4dHdRVO+GwptbTwOeSJK/Yk=";
     };
   };
+  cubic-cli = {
+    pname = "cubic-cli";
+    version = "1.14.2";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@cubic-dev-ai/cli/-/cli-1.14.2.tgz";
+      sha256 = "sha256-wNh8PLdu+92Vjgz+CwMAGMH1gcYcoq04wtK4BBW2OCk=";
+    };
+  };
   curl-impersonate-aarch64-darwin = {
     pname = "curl-impersonate-aarch64-darwin";
     version = "2.3.2";
@@ -142,10 +150,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.226";
+    version = "1.31.227";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.226/cli-1.31.226.jar";
-      sha256 = "sha256-IAr+PN606XXgxX2SplaaQDfnMlYf1z1uYGBBuOz3uCY=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.227/cli-1.31.227.jar";
+      sha256 = "sha256-SAElW5H+XPfWnGIj09Ef3PWoJxS/qdYhuFha0DHvb4g=";
     };
   };
   diffenator3-aarch64-darwin = {
@@ -320,14 +328,6 @@
     src = fetchurl {
       url = "https://github.com/openclaw/gogcli/releases/download/v0.48.1/gogcli_0.48.1_darwin_arm64.tar.gz";
       sha256 = "sha256-77VvJAD89qfyWuOKHhZftPn1/X97GOdrTAuCweNbgC8=";
-    };
-  };
-  greptile = {
-    pname = "greptile";
-    version = "3.8.0";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/greptile/-/greptile-3.8.0.tgz";
-      sha256 = "sha256-alx3a24SD2IO38Iayxrq/f9gxQZJ6bOCfjQwIkdDIF8=";
     };
   };
   hostinger-aarch64-darwin = {

@@ -74,7 +74,6 @@
           OFFICECLI_NO_AUTO_INSTALL = "1";
           CF_SEND_TELEMETRY = "false";
           CTX7_TELEMETRY_DISABLED = "1";
-          GREPTILE_TELEMETRY_DISABLED = "1";
           NPM_CONFIG_CACHE = "${xdgCacheHome}/npm";
           POWERSHELL_UPDATECHECK = "Off";
           POWERSHELL_TELEMETRY_OPTOUT = "1";

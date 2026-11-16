@@ -472,6 +472,11 @@ in {
           commands = ["arena"];
           license = "MIT";
         };
+        "@cubic-dev-ai/cli" = {
+          inherit (generatedPins.cubic-cli) version;
+          commands = ["cubic"];
+          license = "unfree";
+        };
         "@pnp/cli-microsoft365" = {
           inherit (generatedPins.m365-cli) version;
           commands = ["m365"];
@@ -495,11 +500,6 @@ in {
         mcp-remote = {
           inherit (generatedPins.mcp-remote) version;
           commands = ["mcp-remote"];
-          license = "MIT";
-        };
-        greptile = {
-          inherit (generatedPins.greptile) version;
-          commands = ["greptile"];
           license = "MIT";
         };
         playwright = {
