@@ -3,16 +3,17 @@
   lib,
   pkgs,
   host,
+  statusbarData,
   ...
 }: let
-  statusbar = pkgs.pkgsCross.wasm32-wasip1.callPackage ./statusbar/package.nix {};
+  statusbar = pkgs.pkgsCross.wasm32-wasip1.callPackage ./statusbar/package.nix {data = statusbarData;};
   plugins =
     lib.mapAttrs (_: row: row // {source = pkgs.fetchurl {inherit (row) url hash;};})
     (import ../../../../../overlays/manifest.nix).extensions.zellij-plugins.rows
     // {
       statusbar = {
         source = "${statusbar}/bin/statusbar.wasm";
-        permissions = ["ReadApplicationState" "ChangeApplicationState" "RunActionsAsUser"];
+        permissions = ["ReadApplicationState" "ChangeApplicationState" "RunActionsAsUser" "ReadPaneContents" "Reconfigure"];
       };
     };
 

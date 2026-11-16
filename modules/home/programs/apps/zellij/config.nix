@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   toolchainEnvFor,
   theme,
   chords,
@@ -22,36 +23,6 @@
 
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
-
-  zjVars =
-    {
-      base = roles.surface.base;
-      surface = roles.surface.surface;
-      raised = roles.surface.raised;
-      selected = roles.surface.selected;
-      text = roles.text.primary;
-      subtle = roles.text.subtle;
-      muted = roles.text.muted;
-      inverse = roles.text.inverse;
-      accent = roles.accent.primary;
-      accent2 = roles.accent.secondary;
-      structural = roles.accent.structural;
-      focus_active = roles.focus.active;
-      focus_inactive = roles.focus.inactive;
-    }
-    // lib.mapAttrs' (n: c: lib.nameValuePair "state_${n}" c) roles.state
-    // lib.mapAttrs' (n: c: lib.nameValuePair "inbox_${n}" c) roles.inbox
-    // lib.mapAttrs' (n: c: lib.nameValuePair "mode_${n}" c) roles.mode;
-  colorRows = lib.concatStrings (lib.mapAttrsToList (n: c: "        color_${n}    \"${c.hex}\"\n") zjVars);
-
-  seg = c: t: "#[bg=$surface,fg=$" + c + "]" + t;
-  segB = c: t: "#[bg=$surface,fg=$" + c + ",bold]" + t;
-  chipOn = bgc: fgc: t: "#[bg=$" + bgc + ",fg=$" + fgc + ",bold] " + t + " " + seg "muted" " ";
-  chip = c: chipOn c "inverse";
-  pl = k: l: segB "accent" k + seg "muted" (" " + l + "  ");
-  plRows = rows: lib.concatStrings (map (x: pl x.k x.l) rows);
-  sep = seg "selected" "│ ";
-  done = pl "⏎" "done";
 
   # --- [MODE_INTERIOR_ROW_TABLE]
   bind = keys: kdl: {inherit keys kdl;};
@@ -100,13 +71,13 @@
   modeTable = {
     locked = {
       header = "Locked Mode";
-      chip = ["mode_locked" "text" "LOCKED"];
+      chip = "LOCKED";
       tail = "none";
       rows = [(bindH ["${pH} ${modes.locked.exitKey}"] ''SwitchToMode "Normal";'' ["${layers.hyper.chip}${modes.locked.exitKey}" "unlock" 10])];
     };
     tab = {
       header = "Tab Mode";
-      chip = ["mode_tab" "TAB"];
+      chip = "TAB";
       rows =
         [
           (mkExit modes.tab.key)
@@ -127,7 +98,7 @@
     };
     pane = {
       header = "Pane Mode";
-      chip = ["mode_pane" "PANE"];
+      chip = "PANE";
       rows = [
         (mkExit modes.pane.key)
         (bindH ["h" "Left"] ''MoveFocus "Left";'' ["hjkl" "focus" 10])
@@ -155,13 +126,12 @@
         (bind [";"] "FocusLastPane;")
         (bindH ["a"] ''NewFloatingPane; SwitchToMode "Normal";'' ["new float" 85])
         (bind ["Shift f"] ''ToggleFocusNoUiFullscreen; SwitchToMode "Normal";'')
-        (bind ["Shift s"] ''ToggleStackListOrientation; SwitchToMode "Normal";'')
         (bind ["Shift z"] ''ToggleBars; SwitchToMode "Normal";'')
       ];
     };
     move = {
       header = "Move Mode";
-      chip = ["mode_move" "MOVE"];
+      chip = "MOVE";
       rows = [
         (mkExit modes.move.key)
         (bindH ["m" "Tab"] "MovePane;" ["next" 20])
@@ -174,7 +144,7 @@
     };
     resize = {
       header = "Resize Mode";
-      chip = ["mode_resize" "RESIZE"];
+      chip = "RESIZE";
       rows = [
         (mkExit modes.resize.key)
         (bindH ["h" "Left"] ''Resize "Increase Left";'' ["hjkl" "grow" 10])
@@ -191,7 +161,7 @@
     };
     scroll = {
       header = "Scroll Mode";
-      chip = ["mode_scroll" "SCROLL"];
+      chip = "SCROLL";
       rows =
         [
           (mkExit modes.scroll.key)
@@ -209,7 +179,7 @@
     };
     search = {
       header = "Search Mode";
-      chip = ["mode_search" "SEARCH"];
+      chip = "SEARCH";
       rows =
         [
           (mkExit modes.scroll.key)
@@ -225,12 +195,12 @@
     };
     session = {
       header = "Session Mode";
-      chip = ["mode_session" "SESSION"];
+      chip = "SESSION";
       rows = [
         (mkExit modes.session.key)
         (bindH ["d"] "Detach;" ["detach" 20])
         (bindH ["i"] ''ToggleSessionCard; SwitchToMode "Normal";'' ["inbox" 3])
-        (bindH ["n"] ''GoToNextAttention; SwitchToMode "Normal";'' ["next" 5])
+        (bindH [chords.zellij.next.key] "${chords.zellij.next.kdl} SwitchToMode \"Normal\";" ["next" 5])
         (bindH ["u"] ''MuteSession; SwitchToMode "Normal";'' ["mute" 7])
         (bindH ["Tab"] ''ToggleSession; SwitchToMode "Normal";'' ["⇥" "last" 8])
         (bindH ["Left"] ''GoToPreviousSession; SwitchToMode "Normal";'' ["← →" "history" 9])
@@ -245,7 +215,7 @@
     };
     entersearch = {
       header = "Find Mode";
-      chip = ["mode_entersearch" "FIND"];
+      chip = "FIND";
       note = "type query";
       tail = "none";
       rows = [
@@ -254,7 +224,7 @@
       ];
     };
     renametab = {
-      chip = ["mode_renametab" "RENAME TAB"];
+      chip = "RENAME TAB";
       note = "type name";
       tail = "none";
       rows = [
@@ -264,7 +234,7 @@
       ];
     };
     renamepane = {
-      chip = ["mode_renamepane" "RENAME PANE"];
+      chip = "RENAME PANE";
       note = "type name";
       tail = "none";
       rows = [
@@ -274,13 +244,13 @@
       ];
     };
     prompt = {
-      chip = ["mode_prompt" "PROMPT"];
+      chip = "PROMPT";
       tail = "none";
       rows = [];
     };
     tmux = {
       header = "Tmux Mode";
-      chip = ["mode_tmux" "TMUX"];
+      chip = "TMUX";
       rows = [
         ((bind ["${pH} ${modes.tmux.key}"] ''Write 2; SwitchToMode "Normal";'') // {tag = true;})
         (bind ["["] ''SwitchToMode "Scroll";'')
@@ -301,7 +271,6 @@
         (bind ["k"] ''MoveFocus "Up"; SwitchToMode "Normal";'')
         (bind ["o"] "FocusNextPane;")
         (bindH ["d"] "Detach;" ["detach" 60])
-        (bind ["Space"] "NextSwapLayout;")
         (bind ["x"] ''CloseFocus; SwitchToMode "Normal";'')
       ];
     };
@@ -333,37 +302,116 @@
       ++ ["      }"]
     );
   blockOrder = ["locked" "tab" "pane" "move" "resize" "scroll" "search" "session" "entersearch" "renametab" "renamepane"];
-  hintOrder = ["normal" "locked" "pane" "tab" "resize" "move" "scroll" "search" "entersearch" "session" "renametab" "renamepane" "prompt" "tmux"];
   modeBlocksKdl = lib.concatMapStringsSep "\n\n" modeBlock blockOrder;
 
-  chipOf = c:
-    if builtins.length c == 3
-    then chipOn (builtins.elemAt c 0) (builtins.elemAt c 1) (builtins.elemAt c 2)
-    else if builtins.length c == 2
-    then chip (builtins.elemAt c 0) (builtins.elemAt c 1)
-    else throw "zellij mode chip wants [c label] or [c fg label]: ${builtins.toJSON c}";
-  ribbonOf = m:
-    chipOf m.chip
-    + lib.optionalString (m ? note) (seg "muted" (m.note + "  "))
-    + lib.concatStrings (map (x: pl (x.hint.k or (builtins.head x.keys)) x.hint.l)
-      (lib.sort (a: b: a.hint.rank < b.hint.rank) (lib.filter (x: x ? hint) m.rows)))
-    + lib.optionalString ((m.tail or "done") == "done") (sep + done);
-  ribbons =
-    lib.mapAttrs (_: ribbonOf) modeTable
+  # --- [STATUSBAR_DATA]
+  rsStr = builtins.toJSON;
+  rsHex = color: "0x${lib.removePrefix "#" color.hex}";
+  variants = {
+    normal = "Normal";
+    locked = "Locked";
+    resize = "Resize";
+    pane = "Pane";
+    tab = "Tab";
+    scroll = "Scroll";
+    entersearch = "EnterSearch";
+    search = "Search";
+    renametab = "RenameTab";
+    renamepane = "RenamePane";
+    renamesession = "RenameSession";
+    session = "Session";
+    move = "Move";
+    prompt = "Prompt";
+    tmux = "Tmux";
+  };
+  barLayers = {
+    hyper = roles.accent.secondary;
+    super = roles.accent.structural;
+  };
+  layerRs = n: "pub const ${lib.toUpper n}: Layer = Layer { mark: ${rsStr layers.${n}.chip}, color: ${rsHex barLayers.${n}}, name: ${rsStr (lib.toLower layers.${n}.name)} };";
+  hintRs = h: "(${rsStr h.k}, ${rsStr h.l}, ${lib.boolToString (h.k == chords.zellij.sheetKey)})";
+  groupRs = g: "Group { layer: ${g.layer or "None"}, joined: ${lib.boolToString (g.joined or false)}, hints: &[${lib.concatMapStringsSep ", " hintRs g.hints}] }";
+  groupsOf = name: m:
+    if name == "normal"
+    then [
+      {
+        layer = "Some(&HYPER)";
+        hints = chords.zellij.ribbon.hyperGroup;
+      }
+      {
+        layer = "Some(&SUPER)";
+        hints = chords.zellij.ribbon.superGroup;
+      }
+    ]
+    else if name == "locked"
+    then [
+      {
+        layer = "Some(&HYPER)";
+        joined = true;
+        hints = [
+          {
+            k = modes.locked.exitKey;
+            l = "unlock";
+          }
+        ];
+      }
+    ]
+    else [
+      {
+        hints = map (x: {
+          k = lib.replaceStrings ["\\\""] ["\""] (x.hint.k or (builtins.head x.keys));
+          inherit (x.hint) l;
+        }) (lib.sort (a: b: a.hint.rank < b.hint.rank) (lib.filter (x: x ? hint) (m.rows or [])));
+      }
+    ];
+  ribbonRs = name: m: let
+    fill = roles.mode.${name};
+    label =
+      if fill.hex == roles.surface.selected.hex
+      then roles.text.primary
+      else roles.text.inverse;
+  in "        InputMode::${variants.${name}} => Ribbon { chip: ${rsStr m.chip}, fill: ${rsHex fill}, label: ${rsHex label}, note: ${rsStr (m.note or "")}, groups: &[${lib.concatMapStringsSep ", " groupRs (groupsOf name m)}], done: ${lib.boolToString ((m.tail or "done") == "done")} },";
+  ribbonModes =
+    modeTable
     // {
-      normal =
-        chip "mode_normal" "NORMAL"
-        + chip "accent2" layers.hyper.chip
-        + plRows chords.zellij.ribbon.hyperGroup
-        + chip "structural" layers.super.chip
-        + plRows chords.zellij.ribbon.superGroup;
+      normal = {
+        chip = "NORMAL";
+        tail = "none";
+      };
+      renamesession = {
+        chip = "RENAME SESSION";
+        note = "type name";
+        tail = "none";
+      };
     };
-  modeHintLines = lib.concatMapStringsSep "\n" (m: let
-    n = "mode_${m}";
-  in "        ${n}${lib.strings.replicate (lib.max 1 (20 - lib.stringLength n)) " "}\"${ribbons.${m}}\"")
-  hintOrder;
+  statusbarData = pkgs.writeText "statusbar-data.rs" ''
+    pub const PALETTE: Palette = Palette {
+        surface: ${rsHex roles.surface.surface},
+        fg: ${rsHex roles.text.primary},
+        muted: ${rsHex roles.text.muted},
+        subtle: ${rsHex roles.text.subtle},
+        selected: ${rsHex roles.surface.selected},
+        inverse: ${rsHex roles.text.inverse},
+        focus: ${rsHex roles.accent.primary},
+        run: ${rsHex roles.inbox.working},
+        idle: ${rsHex roles.state.info},
+        need: ${rsHex roles.inbox.needs_you},
+        fail: ${rsHex roles.inbox.failed},
+    };
+    ${layerRs "hyper"}
+    ${layerRs "super"}
+    pub const NEXT_KEY: &str = ${rsStr chords.zellij.next.key};
+    pub const NEXT_CHORD: &str = ${rsStr "${pH} ${chords.zellij.next.key}"};
+    pub const NEXT_MODES: &[InputMode] = &[${lib.concatMapStringsSep ", " (v: "InputMode::${v}") (lib.attrValues (removeAttrs variants ["locked"]))}];
+    pub const fn ribbon(mode: InputMode) -> Ribbon {
+        match mode {
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList ribbonRs ribbonModes)}
+        }
+    }
+  '';
 in {
   imports = [../chords.nix];
+  _module.args.statusbarData = statusbarData;
 
   programs.zellij.extraConfig = ''
 
@@ -374,6 +422,9 @@ in {
         show_startup_tips             false
         show_release_notes            false
         simplified_ui                 true
+        auto_layout                   false
+        visual_bell                   false
+        mouse_hover_tips              false
         pane_frame_style              "full"
         stacked_pane_list             false
         serialize_pane_viewport       true
@@ -398,44 +449,12 @@ in {
         plugins {
           zellij-forgot location="file:~/.config/zellij/plugins/zellij_forgot.wasm"
 
-          // --- [STATUSBAR_TOP_BAR]
-          statusbar-tabs location="file:~/.config/zellij/plugins/statusbar.wasm" {
-    ${colorRows}
-            format_left       "{tabs}"
-            format_center     "{swap_layout}"
-            format_right      "{attention}#[bg=$accent2,fg=$inverse,bold] {session} "
-            format_precedence "rlc"
-
-            attention_format    "#[fg=$inbox_needs_you,bold]◉ {states} "
-            attention_separator " · "
-            attention_needs_you "{count} need you"
-            attention_failed    "#[fg=$inbox_failed]{count} failed"
-            attention_done      "#[fg=$inbox_done]{count} done"
-            attention_working   "{count} running"
-
-            swap_layout_format        "#[fg=$structural,bold] {name} "
-            swap_layout_hide_if_empty "true"
-
-            tab_active    "#[bg=$focus_active,fg=$inverse,bold] TAB [{index}] {attention}"
-            tab_normal    "#[fg=$focus_inactive] TAB [{index}] {attention}"
-            tab_rename    "#[bg=$mode_renametab,fg=$inverse,bold] TAB [{index}] {name} "
-            tab_separator " "
-
-            tab_attention_needs_you "#[fg=$inbox_needs_you,bold]{symbol} "
-            tab_attention_failed    "#[fg=$inbox_failed,bold]{symbol} "
-            tab_attention_done      "#[fg=$inbox_done,bold]{symbol} "
-            tab_attention_working   "#[fg=$inbox_working,bold]{symbol} "
+          // --- [STATUSBAR]
+          statusbar-top location="file:~/.config/zellij/plugins/statusbar.wasm" {
+            role "top"
           }
-
-          // --- [STATUSBAR_BOTTOM_BAR_MODE_CHIP_AND_KEY_RIBBON]
-          statusbar-modes location="file:~/.config/zellij/plugins/statusbar.wasm" {
-    ${colorRows}
-            format_left       "{mode}"
-            format_right      "#[bg=$surface,fg=$muted]${chords.zellij.hintsRight}"
-            format_space      "#[bg=$surface]"
-            format_precedence "lrc"
-
-    ${modeHintLines}
+          statusbar-bottom location="file:~/.config/zellij/plugins/statusbar.wasm" {
+            role "bottom"
           }
         }
 

@@ -24,7 +24,8 @@
   byName = rows: lib.listToAttrs (map (r: lib.nameValuePair r.name (removeAttrs r ["name"])) rows);
 
   hexRows = s: lib.listToAttrs (map (t: let p = lib.splitString "=" t; in lib.nameValuePair (builtins.head p) (mkColor (builtins.elemAt p 1))) (lib.splitString " " s));
-  palette = hexRows "crust=#0E0D16 background=#15131F surface=#201E30 current_line=#2A2A3A selection=#44475A foreground=#F8F8F2 subtle=#8E91A5 comment=#6272A4 purple=#A072C6 cyan=#94F2E8 green=#50FA7B yellow=#F1FA8C amber=#F3AE51 orange=#F97359 red=#FF5555 magenta=#EE55A8 pink=#E98FBE blue=#7AA2F7 brightBlue=#A9C7FF";
+  palette = hexRows "crust=#0E0D16 background=#15131F surface=#1F1D2E current_line=#2A2839 selection=#45425E foreground=#F8F8F2 subtle=#9EA0BC comment=#857DB6 purple=#9580FF cyan=#80FFEA green=#8AFF80 yellow=#F0F05A amber=#F3AE51 orange=#FF9E4A red=#FF5C72 magenta=#FF79C6 pink=#E98FBE blue=#5AB4FF";
+  brights = {black = palette.comment;} // hexRows "red=#FF7D89 green=#A4FF9B yellow=#FFFF80 blue=#7EC3FF magenta=#FF93CE cyan=#9FFFEE white=#FFFFFF";
 
   derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
 
@@ -35,8 +36,8 @@
     accent = [["primary" palette.cyan] ["secondary" palette.magenta] ["tertiary" palette.pink] ["structural" palette.purple]];
     state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
     focus = [["active" palette.cyan] ["inactive" palette.subtle]];
-    inbox = [["needs_you" palette.orange] ["failed" palette.red] ["done" palette.green] ["working" palette.blue] ["quiet" palette.subtle] ["new_output" palette.cyan]];
-    mode = [["normal" palette.green] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.orange] ["move" palette.cyan] ["resize" palette.purple] ["scroll" palette.yellow] ["search" palette.pink] ["entersearch" palette.pink] ["session" palette.blue] ["renametab" palette.red] ["renamepane" palette.red] ["prompt" palette.foreground] ["tmux" palette.amber]];
+    inbox = [["needs_you" palette.orange] ["failed" palette.red] ["done" palette.purple] ["working" palette.green] ["quiet" palette.subtle] ["new_output" palette.blue]];
+    mode = [["normal" palette.cyan] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.purple] ["move" palette.purple] ["resize" palette.purple] ["scroll" palette.foreground] ["search" palette.foreground] ["entersearch" palette.foreground] ["session" palette.magenta] ["renametab" palette.magenta] ["renamepane" palette.purple] ["renamesession" palette.magenta] ["prompt" palette.foreground] ["tmux" palette.selection]];
     diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };
@@ -72,13 +73,7 @@
       white = palette.foreground;
     };
   in
-    base
-    // lib.mapAttrs' (n: v: lib.nameValuePair "bright${lib.toUpper (builtins.substring 0 1 n)}${builtins.substring 1 99 n}" v)
-    (base
-      // {
-        black = palette.selection;
-        blue = palette.brightBlue;
-      });
+    base // lib.mapAttrs' (n: v: lib.nameValuePair "bright${lib.toUpper (builtins.substring 0 1 n)}${builtins.substring 1 99 n}" v) brights;
 
   syntaxScopes = map (row ["name" "scope" "color" "style" "background"]) [
     ["Comment" "comment, punctuation.definition.comment" palette.comment "italic"]
@@ -169,7 +164,6 @@
 
   projections = {
     inherit tmThemeFile;
-    rolesHex = lib.mapAttrs (_: lib.mapAttrs (_: c: c.hex)) {inherit (roles) surface text accent state diff ui;};
     gitHex =
       lib.mapAttrs (_: g: {
         color = g.color.hex;
@@ -189,27 +183,15 @@
         "${n}_bg" = {Color = (builtins.elemAt p 0).hex;};
         "${n}_fg" = {Color = (builtins.elemAt p 1).hex;};
       });
-      tab = bg: fg: {
-        bg_color = bg.hex;
-        fg_color = fg.hex;
-      };
       slots = map (k: ansi16.${k}.hex);
     in
       lib.mapAttrs (_: c: c.hex) (pairs [["foreground" palette.foreground] ["background" palette.background] ["cursor_bg" palette.foreground] ["cursor_fg" palette.background] ["cursor_border" palette.foreground] ["selection_fg" palette.foreground] ["selection_bg" palette.selection] ["split" palette.subtle]])
       // {
         ansi = slots ["black" "red" "green" "yellow" "blue" "magenta" "cyan" "white"];
         brights = slots ["brightBlack" "brightRed" "brightGreen" "brightYellow" "brightBlue" "brightMagenta" "brightCyan" "brightWhite"];
-        tab_bar = {
-          background = roles.surface.surface.hex;
-          active_tab = tab roles.accent.primary roles.text.inverse;
-          inactive_tab = tab roles.surface.surface roles.text.subtle;
-          inactive_tab_hover = tab roles.surface.raised roles.text.primary;
-          new_tab = tab roles.surface.surface roles.text.subtle;
-          new_tab_hover = tab roles.surface.raised roles.text.primary;
-        };
       }
       // labeled {
-        quick_select_label = [roles.state.attention roles.text.inverse];
+        quick_select_label = [roles.accent.structural roles.text.inverse];
         quick_select_match = [roles.surface.selected roles.text.primary];
         input_selector_label = [roles.surface.raised roles.accent.primary];
         launcher_label = [roles.surface.raised roles.accent.primary];

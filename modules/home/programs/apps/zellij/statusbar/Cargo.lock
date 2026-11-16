@@ -1898,7 +1898,6 @@ name = "statusbar"
 version = "0.1.0"
 dependencies = [
  "anstyle",
- "thiserror 2.0.21",
  "unicode-width 0.2.3",
  "zellij-tile",
 ]

@@ -1,18 +1,7 @@
 local wezterm = require("wezterm")
-local rows = require("rows")
 local deck = require("deck")
 
 local M = {}
-
-local roles = rows.theme.roles
-
-local function cell(fg, text)
-    return {
-        { Attribute = { Intensity = "Bold" } },
-        { Foreground = { Color = fg } },
-        { Text = " " .. text .. " " },
-    }
-end
 
 local handlers = {
     ["gui-startup"] = function(cmd)
@@ -21,30 +10,6 @@ local handlers = {
         if gui then
             gui:maximize()
         end
-    end,
-
-    ["update-status"] = function(window)
-        local items = {}
-        local function push(fragments)
-            for _, fragment in ipairs(fragments) do
-                items[#items + 1] = fragment
-            end
-        end
-
-        local key_table = window:active_key_table()
-        if key_table then
-            push(cell(roles.state.danger, "[" .. key_table:upper() .. "]"))
-        end
-
-        window:set_right_status(wezterm.format(items))
-        window:set_left_status("")
-    end,
-
-    ["format-tab-title"] = function(tab)
-        local pane = tab.active_pane
-        local title = pane.title or ""
-        title = title ~= "" and title or "wezterm"
-        return string.format(" %d:%s ", tab.tab_index + 1, title)
     end,
 
     ["format-window-title"] = function(tab, _, tabs)

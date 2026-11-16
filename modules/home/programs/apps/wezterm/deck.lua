@@ -71,7 +71,6 @@ local function spawn_float(cmd)
         gui:set_config_overrides({
             window_background_opacity = float.opacity,
             window_decorations = float.decorations,
-            enable_tab_bar = false,
         })
         gui:perform_action(act.SetWindowLevel(float.level), pane)
     end
@@ -197,13 +196,6 @@ function M.apply(config)
 
     config.default_prog = M.session_args(config.default_workspace)
 
-    config.launch_menu = {}
-    for _, cmd in ipairs(rows.commands) do
-        if not cmd.destructive then
-            table.insert(config.launch_menu, { label = cmd.label, args = cmd.args })
-        end
-    end
-
     M.palette = {}
     for _, cmd in ipairs(rows.commands) do
         M.palette[#M.palette + 1] = { brief = cmd.label, icon = rows.palette_icons.command, action = command_action(cmd) }
@@ -222,7 +214,7 @@ function M.apply(config)
 
     local quick_select = act.QuickSelectArgs({ skip_action_on_paste = true })
     local launcher = {
-        flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES|LAUNCH_MENU_ITEMS",
+        flags = "FUZZY|COMMANDS|KEY_ASSIGNMENTS|WORKSPACES",
         title = "deck launcher",
         help_text = "Enter=run  Esc=cancel  /=filter",
         fuzzy_help_text = "Launcher: ",

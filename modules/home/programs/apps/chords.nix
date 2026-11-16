@@ -124,9 +124,7 @@
   hyperRows = map mkBind [
     [modes.locked.key ''SwitchToMode "Locked";'' "locked mode" ["lock" 10]]
     ["i" "ToggleSessionCard;" null ["attention inbox" 104]]
-    ["n" "GoToNextAttention;" null ["next pane that needs you" 106]]
-    ["[" "PreviousSwapLayout;" null ["swap layout prev/next" "Hyper [ / Hyper ]" 100]]
-    ["]" "NextSwapLayout;"]
+    [next.key next.kdl null ["next pane that needs you" 106]]
     {
       t = [cheatsheetKey null null ["cheatsheet" 120]];
       body = cheatsheetBody;
@@ -229,6 +227,10 @@
   # --- [PROJECTIONS]
   kdlEsc = lib.replaceStrings ["\\" "\""] ["\\\\" "\\\""];
   cheatsheetKey = "/";
+  next = {
+    key = "n";
+    kdl = ''MessagePlugin "statusbar-top" { name "next"; };'';
+  };
 
   forgotOf = prefix: rows:
     lib.concatMap (
@@ -338,10 +340,6 @@
     }) (lib.sort (a: b: a.ribbon.rank < b.ribbon.rank)
       (builtins.filter (r: r ? ribbon) superRows));
 
-  hintsRight =
-    lib.concatMapStringsSep " · " (l: "${l.chip} ${lib.toLower l.name}")
-    (lib.sort (a: b: a.rank > b.rank) (map (n: layers.${n}) (lib.attrNames bindRows)))
-    + " ";
 in {
   _module.args.chords = {
     inherit layers modes;
@@ -354,7 +352,8 @@ in {
           inherit (l) from to;
         }) (layersByRank (a: b: a < b));
     zellij = {
-      inherit headerComment normalBindsKdl entryBindsKdl hintsRight;
+      inherit headerComment normalBindsKdl entryBindsKdl next;
+      sheetKey = cheatsheetKey;
       hyperBindsKdl = bindsKdl.hyper;
       superBindsKdl = bindsKdl.super;
       prefix = lib.mapAttrs (_: l: l.zellij) layers;

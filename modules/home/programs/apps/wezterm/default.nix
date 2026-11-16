@@ -119,7 +119,6 @@
 
     native_macos_fullscreen_mode = true;
     enable_kitty_keyboard = true;
-    switch_to_last_active_tab_when_closing_tab = true;
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;
@@ -129,10 +128,14 @@
     disable_default_key_bindings = true;
     send_composed_key_when_right_alt_is_pressed = false;
 
-    use_fancy_tab_bar = false;
-    hide_tab_bar_if_only_one_tab = true;
-    tab_max_width = 32;
-    show_new_tab_button_in_tab_bar = false;
+    enable_tab_bar = false;
+    window_content_alignment = {
+      horizontal = "Center";
+      vertical = "Center";
+    };
+    allow_square_glyphs_to_overflow_width = "Never";
+    cursor_blink_ease_in = "Constant";
+    cursor_blink_ease_out = "Constant";
 
     command_palette_bg_color = roles.surface.raised.hex;
     command_palette_fg_color = roles.accent.primary.hex;
@@ -142,9 +145,8 @@
     char_select_fg_color = roles.accent.primary.hex;
     char_select_font_size = fontRow.size;
 
-    front_end = "WebGpu";
+    front_end = "OpenGL";
     max_fps = 120;
-    scrollback_lines = 5000;
 
     default_workspace = defaultWorkspace;
     quick_select_patterns = map (r: r.regex) quickSelectRows;
@@ -173,7 +175,6 @@
       command = "md_dock_window";
       quick_select = "md_select_search";
     };
-    theme.roles = projections.rolesHex;
   };
   rowsLua = pkgs.writeText "wezterm-rows.lua" ''
     return ${lib.generators.toLua {} rows}
