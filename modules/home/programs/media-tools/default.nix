@@ -29,6 +29,29 @@
       done
     '';
   };
+  videoSheets = pkgs.writeShellApplication {
+    name = "video-sheets";
+    runtimeInputs = [pkgs.ffmpeg-full pkgs.gawk pkgs.imagemagickBig];
+    text = ''
+      video="$(realpath "''${1:?usage: video-sheets <video> <dir> [threshold] [gap] [floor]}")"
+      out="''${2:?usage: video-sheets <video> <dir> [threshold] [gap] [floor]}"
+      mkdir -p "$out/all" "$out/keep" "$out/sheets"
+      cd "$out"
+      ffmpeg -nostdin -v error -i "$video" -an -vf "fps=1,select='gte(scene,0)',metadata=print:key=lavfi.scene_score:file=scores.txt" \
+        -fps_mode passthrough -start_number 0 -q:v 2 all/%05d.jpg
+      awk -v T="''${3:-0.01}" -v G="''${4:-3}" -v F="''${5:-15}" -F= '
+        /^frame:/ { n++ }
+        /scene_score/ { score[n - 1] = $2 }
+        END { last = -1e9; for (i = 0; i < n; i++) if ((score[i + 1] > T && i - last >= G) || i - last >= F || i == n - 1) { print i; last = i } }
+      ' scores.txt | while read -r second; do
+        printf -v name '%02d_%02d_%02d' $((second / 3600)) $((second % 3600 / 60)) $((second % 60))
+        printf -v frame '%05d' "$second"
+        cp "all/$frame.jpg" "keep/$name.jpg"
+      done
+      magick montage -label '%t' -pointsize 22 keep/*.jpg -tile 2x2 -geometry 960x+4+4 sheets/sheet_%03d.jpg
+      find keep sheets -name '*.jpg' | awk -F/ '{ count[$1]++ } END { printf "%d frames kept, %d sheets\n", count["keep"], count["sheets"] }'
+    '';
+  };
 in {
   imports = [
     ./gallery-dl.nix
@@ -54,6 +77,7 @@ in {
 
     # --- [MEDIA_DOCUMENTS]
     pkgs.ab-av1
+    videoSheets
     czkawkaCli
     pkgs.exiftool
     pkgs.ffmpeg-full
