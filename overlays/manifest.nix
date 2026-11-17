@@ -481,11 +481,6 @@ in {
           commands = ["arena"];
           license = "MIT";
         };
-        "@cubic-dev-ai/cli" = {
-          inherit (generatedPins.cubic-cli) version;
-          commands = ["cubic"];
-          license = "unfree";
-        };
         "@pnp/cli-microsoft365" = {
           inherit (generatedPins.m365-cli) version;
           commands = ["m365"];

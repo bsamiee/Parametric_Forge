@@ -103,21 +103,6 @@
         },
         "version": "0.12.1"
     },
-    "cubic-cli": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "cubic-cli",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-wNh8PLdu+92Vjgz+CwMAGMH1gcYcoq04wtK4BBW2OCk=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/@cubic-dev-ai/cli/-/cli-1.14.2.tgz"
-        },
-        "version": "1.14.2"
-    },
     "curl-impersonate-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -1131,10 +1116,10 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-qIrKFdHSErS8JVLtMOKZvWrkqfDiv2b4OJSHUbXcK/M=",
+            "sha256": "sha256-/oSCemQkabe/u90MeRjTVBMZHsw97UBMJsml8onOONg=",
             "type": "tarball",
-            "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.15.232800/yt-dlp.tar.gz"
+            "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.16.232655/yt-dlp.tar.gz"
         },
-        "version": "2026.11.15.232800"
+        "version": "2026.11.16.232655"
     }
 }

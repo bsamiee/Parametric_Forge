@@ -62,14 +62,6 @@
       sha256 = "sha256-ikvxTsmdaYqL24gmXbJE4dHdRVO+GwptbTwOeSJK/Yk=";
     };
   };
-  cubic-cli = {
-    pname = "cubic-cli";
-    version = "1.14.2";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/@cubic-dev-ai/cli/-/cli-1.14.2.tgz";
-      sha256 = "sha256-wNh8PLdu+92Vjgz+CwMAGMH1gcYcoq04wtK4BBW2OCk=";
-    };
-  };
   curl-impersonate-aarch64-darwin = {
     pname = "curl-impersonate-aarch64-darwin";
     version = "2.3.2";
@@ -638,10 +630,10 @@
   };
   yt-dlp = {
     pname = "yt-dlp";
-    version = "2026.11.15.232800";
+    version = "2026.11.16.232655";
     src = fetchTarball {
-      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.15.232800/yt-dlp.tar.gz";
-      sha256 = "sha256-qIrKFdHSErS8JVLtMOKZvWrkqfDiv2b4OJSHUbXcK/M=";
+      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.16.232655/yt-dlp.tar.gz";
+      sha256 = "sha256-/oSCemQkabe/u90MeRjTVBMZHsw97UBMJsml8onOONg=";
     };
   };
 }
