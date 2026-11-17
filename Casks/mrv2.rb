@@ -16,7 +16,8 @@ cask "mrv2" do
   depends_on :macos
 
   app "mrv2.app"
-  binary "#{appdir}/mrv2.app/Contents/MacOS/mrv2"
+  # The bundle's MacOS launcher resolves its folder without following symlinks; mrv2.sh follows them.
+  binary "#{appdir}/mrv2.app/Contents/Resources/bin/mrv2.sh", target: "mrv2"
 
   zap trash: [
     "~/.filmaura",
