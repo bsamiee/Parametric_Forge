@@ -36,6 +36,7 @@ in {
         clone_target = host.flakeRoot;
         trusted = true;
       }
+      "rive-app/tap"
     ];
 
     # --- [ACTIVATION_BEHAVIOR]

@@ -551,6 +551,21 @@
         },
         "version": "2.56.1"
     },
+    "gltf-transform-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gltf-transform-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Fj6UTR6GVqkrggqxtZYpntMTdP2UDESeW6AdaDoOIOI=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@gltf-transform/cli/-/cli-4.5.1.tgz"
+        },
+        "version": "4.5.1"
+    },
     "glyphslib": {
         "cargoLock": null,
         "date": null,
@@ -595,6 +610,21 @@
             "url": "https://github.com/hostinger/api-cli/releases/download/v5.0.1/hostinger-5.0.1-darwin-arm64.tar.gz"
         },
         "version": "5.0.1"
+    },
+    "hyperframes": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "hyperframes",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-MwoAoLhZONnagH257kMR1wwY0EbkeUHE6ITRsqPM/L0=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.61.tgz"
+        },
+        "version": "0.9.61"
     },
     "hyperglot": {
         "cargoLock": null,
@@ -867,6 +897,66 @@
         },
         "version": "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz"
     },
+    "opentimelineio": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "opentimelineio",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-pOUIbirM1MqYU6tIv1MeDBSO/0eIk2Om2joD9mL79eg=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/o/opentimelineio/opentimelineio-0.18.1.tar.gz"
+        },
+        "version": "0.18.1"
+    },
+    "otio-aaf-adapter": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "otio-aaf-adapter",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-53EhYeCPz4kep6p15dhu+5bu5adnJT9zvIFlxCNkQ8o=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/o/otio-aaf-adapter/otio_aaf_adapter-2.0.0.tar.gz"
+        },
+        "version": "2.0.0"
+    },
+    "otio-fcp-adapter": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "otio-fcp-adapter",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-OFRMEGTMheFpQoyMNDa9fDa5C62ZolOFHbEw2dcpjOY=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/o/otio-fcp-adapter/otio_fcp_adapter-1.0.0.tar.gz"
+        },
+        "version": "1.0.0"
+    },
+    "otio-fcpx-xml-adapter": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "otio-fcpx-xml-adapter",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-eJGcGU8Hj1fOmmRkwcYHpJRJmqqz2MNRWc5ecdX80jU=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/o/otio-fcpx-xml-adapter/otio_fcpx_xml_adapter-1.0.0.tar.gz"
+        },
+        "version": "1.0.0"
+    },
     "playwright-core": {
         "cargoLock": null,
         "date": null,
@@ -912,6 +1002,21 @@
             "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.7.0/powershell-7.7.0-osx-arm64.tar.gz"
         },
         "version": "7.7.0"
+    },
+    "py-aep": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "py-aep",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-WyDuCJdPSm2xH0lJJO2PVYpffXcsa6PISiREmp/Tw/4=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.19.0.tar.gz"
+        },
+        "version": "0.19.0"
     },
     "pymobiledevice3": {
         "cargoLock": null,

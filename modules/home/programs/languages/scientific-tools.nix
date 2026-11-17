@@ -16,10 +16,17 @@
     postBuild = ''wrapProgram "$out/bin/pango-view" --set-default PANGOCAIRO_BACKEND fc'';
   };
 
+  # nixpkgs builds GDAL without muparser, the default `gdal raster calc` dialect; scoped here so pdal keeps the cached GDAL.
+  gdalMuparser = pkgs.gdal.overrideAttrs (old: {
+    buildInputs = old.buildInputs ++ [pkgs.muparser];
+    cmakeFlags = old.cmakeFlags ++ ["-DGDAL_USE_MUPARSER=ON"];
+    doInstallCheck = false;
+  });
+
   artifactTools = with pkgs; [
     file
     fontconfig
-    gdal
+    gdalMuparser
     ghostscript
     libjpeg_turbo
     librsvg-current

@@ -481,6 +481,11 @@ in {
           commands = ["arena"];
           license = "MIT";
         };
+        "@gltf-transform/cli" = {
+          inherit (generatedPins.gltf-transform-cli) version;
+          commands = ["gltf-transform"];
+          license = "MIT";
+        };
         "@pnp/cli-microsoft365" = {
           inherit (generatedPins.m365-cli) version;
           commands = ["m365"];
@@ -500,6 +505,12 @@ in {
           inherit (generatedPins.ctx7) version;
           commands = ["ctx7"];
           license = "MIT";
+        };
+        hyperframes = {
+          inherit (generatedPins.hyperframes) version;
+          commands = ["hyperframes"];
+          license = "Apache-2.0";
+          env.HYPERFRAMES_NO_TELEMETRY = "1";
         };
         mcp-remote = {
           inherit (generatedPins.mcp-remote) version;
@@ -565,6 +576,19 @@ in {
           inherit (generatedPins.notebooklm-py) version;
           extras = ["browser" "cookies" "headless" "mcp"];
           commands = ["notebooklm" "notebooklm-mcp"];
+          license = "MIT";
+        };
+        opentimelineio = {
+          inherit (generatedPins.opentimelineio) version;
+          extras = [];
+          withPackages = map (pin: "${pin}==${generatedPins.${pin}.version}") ["otio-fcp-adapter" "otio-fcpx-xml-adapter" "otio-aaf-adapter"];
+          commands = ["otiotool" "otioconvert" "otiocat" "otiostat" "otiopluginfo"];
+          license = "Apache-2.0";
+        };
+        py-aep = {
+          inherit (generatedPins.py-aep) version;
+          extras = [];
+          commands = ["aep-inspect" "aep-compare" "aep-validate" "aep-visualize"];
           license = "MIT";
         };
         pymobiledevice3 = {

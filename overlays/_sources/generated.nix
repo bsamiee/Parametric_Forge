@@ -314,6 +314,14 @@
       sha256 = "sha256-8LC/iSZLm9LhxkA2PnUpZDmJ2nYoFgBHPFB0XNNKYH8=";
     };
   };
+  gltf-transform-cli = {
+    pname = "gltf-transform-cli";
+    version = "4.5.1";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@gltf-transform/cli/-/cli-4.5.1.tgz";
+      sha256 = "sha256-Fj6UTR6GVqkrggqxtZYpntMTdP2UDESeW6AdaDoOIOI=";
+    };
+  };
   glyphslib = {
     pname = "glyphslib";
     version = "6.17.2";
@@ -336,6 +344,14 @@
     src = fetchurl {
       url = "https://github.com/hostinger/api-cli/releases/download/v5.0.1/hostinger-5.0.1-darwin-arm64.tar.gz";
       sha256 = "sha256-QdCy5maGUXCuj6wa3nyn5rX6sJCY/tNTozc5J0GBiBE=";
+    };
+  };
+  hyperframes = {
+    pname = "hyperframes";
+    version = "0.9.61";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.61.tgz";
+      sha256 = "sha256-MwoAoLhZONnagH257kMR1wwY0EbkeUHE6ITRsqPM/L0=";
     };
   };
   hyperglot = {
@@ -491,6 +507,38 @@
       sha256 = "sha256-sJ5taPGagEibJxkgrMZWD0k3RJl74V63hwUV9kc1orw=";
     };
   };
+  opentimelineio = {
+    pname = "opentimelineio";
+    version = "0.18.1";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/o/opentimelineio/opentimelineio-0.18.1.tar.gz";
+      sha256 = "sha256-pOUIbirM1MqYU6tIv1MeDBSO/0eIk2Om2joD9mL79eg=";
+    };
+  };
+  otio-aaf-adapter = {
+    pname = "otio-aaf-adapter";
+    version = "2.0.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/o/otio-aaf-adapter/otio_aaf_adapter-2.0.0.tar.gz";
+      sha256 = "sha256-53EhYeCPz4kep6p15dhu+5bu5adnJT9zvIFlxCNkQ8o=";
+    };
+  };
+  otio-fcp-adapter = {
+    pname = "otio-fcp-adapter";
+    version = "1.0.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/o/otio-fcp-adapter/otio_fcp_adapter-1.0.0.tar.gz";
+      sha256 = "sha256-OFRMEGTMheFpQoyMNDa9fDa5C62ZolOFHbEw2dcpjOY=";
+    };
+  };
+  otio-fcpx-xml-adapter = {
+    pname = "otio-fcpx-xml-adapter";
+    version = "1.0.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/o/otio-fcpx-xml-adapter/otio_fcpx_xml_adapter-1.0.0.tar.gz";
+      sha256 = "sha256-eJGcGU8Hj1fOmmRkwcYHpJRJmqqz2MNRWc5ecdX80jU=";
+    };
+  };
   playwright-core = {
     pname = "playwright-core";
     version = "1.66.0-alpha-2026-11-16";
@@ -516,6 +564,14 @@
     src = fetchurl {
       url = "https://github.com/PowerShell/PowerShell/releases/download/v7.7.0/powershell-7.7.0-osx-arm64.tar.gz";
       sha256 = "sha256-dkSfB48wGT/OnN9mELd/2hT0Ikyvy98jAkXsDaue8Q0=";
+    };
+  };
+  py-aep = {
+    pname = "py-aep";
+    version = "0.19.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.19.0.tar.gz";
+      sha256 = "sha256-WyDuCJdPSm2xH0lJJO2PVYpffXcsa6PISiREmp/Tw/4=";
     };
   };
   pymobiledevice3 = {

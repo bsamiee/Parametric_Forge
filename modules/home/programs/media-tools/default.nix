@@ -101,6 +101,21 @@ in {
     pkgs.typst
     pkgs.vl-convert
     pkgs.verapdf-current
+
+    # --- [MOTION_AND_DELIVERY]
+    pkgs.asciinema
+    pkgs.asciinema-agg
+    pkgs.aubio
+    pkgs.audiowaveform
+    pkgs.auto-editor
+    pkgs.charm-freeze
+    pkgs.gifsicle
+    pkgs.manim
+    pkgs.meshoptimizer.bin
+    pkgs.opencolorio
+    pkgs.openexr.bin
+    pkgs.openimageio.bin
+    pkgs.vhs
   ];
 
   programs = {

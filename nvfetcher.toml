@@ -374,3 +374,31 @@ fetch.url = "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoj
 [youseedee]
 src.pypi = "youseedee"
 fetch.url = "https://files.pythonhosted.org/packages/source/y/youseedee/youseedee-$ver.tar.gz"
+
+[hyperframes]
+src.cmd = "curl -fsSL https://registry.npmjs.org/hyperframes/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/hyperframes/-/hyperframes-$ver.tgz"
+
+[gltf-transform-cli]
+src.cmd = "curl -fsSL https://registry.npmjs.org/@gltf-transform/cli/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/@gltf-transform/cli/-/cli-$ver.tgz"
+
+[opentimelineio]
+src.pypi = "opentimelineio"
+fetch.url = "https://files.pythonhosted.org/packages/source/o/opentimelineio/opentimelineio-$ver.tar.gz"
+
+[otio-fcp-adapter]
+src.pypi = "otio-fcp-adapter"
+fetch.url = "https://files.pythonhosted.org/packages/source/o/otio-fcp-adapter/otio_fcp_adapter-$ver.tar.gz"
+
+[otio-fcpx-xml-adapter]
+src.pypi = "otio-fcpx-xml-adapter"
+fetch.url = "https://files.pythonhosted.org/packages/source/o/otio-fcpx-xml-adapter/otio_fcpx_xml_adapter-$ver.tar.gz"
+
+[otio-aaf-adapter]
+src.pypi = "otio-aaf-adapter"
+fetch.url = "https://files.pythonhosted.org/packages/source/o/otio-aaf-adapter/otio_aaf_adapter-$ver.tar.gz"
+
+[py-aep]
+src.pypi = "py-aep"
+fetch.url = "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-$ver.tar.gz"
