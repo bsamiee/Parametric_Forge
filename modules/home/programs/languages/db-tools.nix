@@ -3,7 +3,7 @@
 
   postgresClientTools = pkgs.linkFarm "postgres-client-tools" (map (bin: {
       name = "bin/${bin}";
-      path = "${pkgs.postgresql_18}/bin/${bin}";
+      path = "${pkgs.postgresql_19}/bin/${bin}";
     }) [
       "psql"
       "pg_dump"
