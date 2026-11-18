@@ -19,6 +19,7 @@
     "Premiere Pro (Beta)" = {
       "dvaappsupport.feature.PPro.MCP.EnableMCPServer" = ["1" ""];
       "FE.TestBetaMenu" = ["true" "false"];
+      "ThirdPartyUseStage" = ["true" "false"];
       "UIF.ForceEnableDebugMenu" = ["true" "false"];
     };
     "Adobe Media Encoder (Beta)" = {
