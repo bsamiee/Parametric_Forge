@@ -1,7 +1,6 @@
 {...}: {
   imports = [
     ./blender
-    ./cavalry
     ./karabiner
     ./linearmouse
     ./unreal

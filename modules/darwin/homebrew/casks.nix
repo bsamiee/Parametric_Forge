@@ -72,7 +72,6 @@
     (latest "orcaslicer@nightly")
 
     # --- [MOTION_AND_REVIEW]
-    "cavalry"
     "bsamiee/parametric-forge/mrv2"
     "rive-app/tap/rive-cli"
 
