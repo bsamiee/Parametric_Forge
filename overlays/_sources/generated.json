@@ -1258,21 +1258,6 @@
         },
         "version": "0.15.0"
     },
-    "puppeteer-browsers": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "puppeteer-browsers",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Ibov6d5PLMPESxakf9HqzQ/LcXUmXBBhon5muZO6cZ0=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-3.2.7.tgz"
-        },
-        "version": "3.2.7"
-    },
     "py-aep": {
         "cargoLock": null,
         "date": null,

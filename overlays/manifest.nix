@@ -553,11 +553,6 @@ in {
           commands = ["m365"];
           license = "MIT";
         };
-        "@puppeteer/browsers" = {
-          inherit (generatedPins.puppeteer-browsers) version;
-          commands = ["browsers"];
-          license = "Apache-2.0";
-        };
         "@tavily/cli" = {
           inherit (generatedPins.tavily-cli) version;
           commands = ["tvly"];

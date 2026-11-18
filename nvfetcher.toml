@@ -401,10 +401,6 @@ fetch.url = "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profile
 src.cmd = "curl -fsSL https://registry.npmjs.org/@nexrender/cli/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@nexrender/cli/-/cli-$ver.tgz"
 
-[puppeteer-browsers]
-src.cmd = "curl -fsSL https://registry.npmjs.org/@puppeteer/browsers/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-$ver.tgz"
-
 [electron-asar]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@electron/asar/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@electron/asar/-/asar-$ver.tgz"

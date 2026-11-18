@@ -702,14 +702,6 @@
       sha256 = "sha256-QdGFty6bUR/GtTC9KnT4anslNOWNfel9kg9X1E3zrk4=";
     };
   };
-  puppeteer-browsers = {
-    pname = "puppeteer-browsers";
-    version = "3.2.7";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-3.2.7.tgz";
-      sha256 = "sha256-Ibov6d5PLMPESxakf9HqzQ/LcXUmXBBhon5muZO6cZ0=";
-    };
-  };
   py-aep = {
     pname = "py-aep";
     version = "0.19.0";
