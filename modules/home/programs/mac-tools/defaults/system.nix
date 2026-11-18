@@ -69,6 +69,7 @@
     # --- [APPLICATION_SPECIFIC_SETTINGS]
     "com.apple.Terminal".SecureKeyboardEntry = false;
     "com.apple.dt.Xcode".DVTTextEditorTrimTrailingWhitespace = true;
+    "com.google.Chrome".RestoreOnStartup = 1;
     "com.lujjjh.LinearMouse" = {
       showInDock = false;
       menuBarBatteryDisplayMode = "\"below20\"";
