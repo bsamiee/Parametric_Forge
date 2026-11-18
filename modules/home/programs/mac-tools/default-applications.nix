@@ -164,6 +164,7 @@
     UnifiedPluginInstallerAgent = "${apps.pluginInstaller.path}/Contents/MacOS/UnifiedPluginInstallerAgent";
     bambu-studio = "${apps.bambuStudio.path}/Contents/MacOS/BambuStudio";
     orca-slicer = "${apps.orcaSlicer.path}/Contents/MacOS/OrcaSlicer";
+    watch-app = "/Applications/watch-app.app/Contents/MacOS/watch-app";
     UnrealPak = "${unrealBinaries}/UnrealPak";
     UnrealEditor-Cmd = "${unrealBinaries}/UnrealEditor-Cmd";
     zen = "${unrealBinaries}/zen";
