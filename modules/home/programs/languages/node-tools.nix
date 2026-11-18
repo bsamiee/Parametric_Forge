@@ -5,13 +5,25 @@
   ...
 }: let
   toolRows = (import ../../../../overlays/manifest.nix).extensions.npm-tools.rows;
+  packaged = row: command:
+    pkgs.runCommand "${command}-${row.version}" {
+      src = pkgs.fetchzip {inherit (row.asset) url hash;};
+      nativeBuildInputs = [pkgs.jq];
+    } ''
+      mkdir -p $out/bin
+      ln -s "$src/$(jq -r --arg command ${lib.escapeShellArg command} '.bin | strings, (objects | .[$command] // first(.[]))' "$src/package.json")" $out/bin/${command}
+    '';
   commands = lib.concatMapAttrs (package: row:
     lib.genAttrs row.commands (command:
       pkgs.writeShellScriptBin command ''
         ${lib.concatStrings (lib.mapAttrsToList (name: value: ''
             export ${name}="''${${name}-${value}}"
           '')
-          row.env or {})}PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
+          row.env or {})}PATH=${pkgs.nodejs}/bin:$PATH exec ${
+          if row ? asset
+          then "node ${packaged row command}/bin/${command}"
+          else "npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command}"
+        } "$@"
       ''))
   toolRows;
   chromiumMajor = lib.versions.major (lib.findFirst (browser: browser.name == "chromium") null toolRows.playwright.browsers).browserVersion;
