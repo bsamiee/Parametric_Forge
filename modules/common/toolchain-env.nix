@@ -101,7 +101,6 @@
           PSQL_HISTORY = "${xdgStateHome}/psql/history";
           PGSERVICEFILE = "${xdgConfigHome}/pg/pg_service.conf";
           PGPASSFILE = "${xdgConfigHome}/pg/pgpass";
-          PYTHONPYCACHEPREFIX = "${xdgCacheHome}/pycache";
 
           # --- [FONTS_MEDIA]
           FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
