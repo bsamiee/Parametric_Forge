@@ -15,7 +15,6 @@
 
     # --- [SERVICE_APIS]
     gddy
-    openai-cli
 
     # --- [DEVICES_AND_VMS]
     bambu

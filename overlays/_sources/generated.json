@@ -1121,20 +1121,6 @@
         },
         "version": "1.17.0"
     },
-    "openai-cli-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "openai-cli-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-+pcSpLuXdrs8vRy75xgmhYMPukuvKQkPf9VOFTWldFI=",
-            "type": "tarball",
-            "url": "https://github.com/openai/openai-cli/releases/download/v1.55.0/openai_1.55.0_macos_arm64.zip"
-        },
-        "version": "1.55.0"
-    },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,
         "date": null,

@@ -43,6 +43,8 @@
     suspiciousPackage = app "com.mothersruin.SuspiciousPackageApp" "/Applications/Suspicious Package.app" [] [];
     spotify = app "com.spotify.client" "/Applications/Spotify.app" [] [];
     afterEffects = app "com.adobe.AfterEffects${lib.optionalString adobeBeta "Beta"}.application" "/Applications/Adobe After Effects ${adobeLine}/Adobe After Effects ${adobeLine}.app" [] [];
+    bambuStudio = app "com.bambulab.bambu-studio" "/Applications/BambuStudio.app" [] [];
+    orcaSlicer = app "com.orcaslicer.OrcaSlicer" "/Applications/OrcaSlicer.app" [] [];
     pluginInstaller = app "Adobe.UnifiedPluginInstallerAgent" "/Library/Application Support/Adobe/Adobe Desktop Common/RemoteComponents/UPI/UnifiedPluginInstallerAgent/UnifiedPluginInstallerAgent.app" [] [];
     # --- [HANDLERS]
     indesign = app "com.adobe.InDesign" "/Applications/Adobe InDesign ${adobeDatedLine}/Adobe InDesign ${adobeDatedLine}.app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [];
@@ -170,6 +172,8 @@
     save-to-spotify = "${apps.spotify.path}/Contents/MacOS/save-to-spotify";
     aerender = "${dirOf apps.afterEffects.path}/aerender";
     UnifiedPluginInstallerAgent = "${apps.pluginInstaller.path}/Contents/MacOS/UnifiedPluginInstallerAgent";
+    bambu-studio = "${apps.bambuStudio.path}/Contents/MacOS/BambuStudio";
+    orca-slicer = "${apps.orcaSlicer.path}/Contents/MacOS/OrcaSlicer";
     UnrealPak = "${unrealBinaries}/UnrealPak";
     UnrealEditor-Cmd = "${unrealBinaries}/UnrealEditor-Cmd";
     zen = "${unrealBinaries}/zen";

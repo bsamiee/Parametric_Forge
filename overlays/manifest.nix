@@ -357,15 +357,6 @@ in {
       mainProgram = "bambu";
     };
 
-    openai-cli = {
-      version = generatedPins.openai-cli-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "openai-cli-aarch64-darwin" // {stripRoot = false;};
-      license = "asl20";
-      description = "OpenAI API command-line client for responses, images, audio, files, batches, and administration";
-      homepage = "https://github.com/openai/openai-cli";
-      mainProgram = "openai";
-    };
-
     tscli-current = {
       version = generatedPins.tscli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "tscli-aarch64-darwin";

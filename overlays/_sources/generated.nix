@@ -627,14 +627,6 @@
       sha256 = "sha256-LFjyusEa4joS9hiKZyP9GIL6gvc9mHTCFB63jCInUsc=";
     };
   };
-  openai-cli-aarch64-darwin = {
-    pname = "openai-cli-aarch64-darwin";
-    version = "1.55.0";
-    src = fetchTarball {
-      url = "https://github.com/openai/openai-cli/releases/download/v1.55.0/openai_1.55.0_macos_arm64.zip";
-      sha256 = "sha256-+pcSpLuXdrs8vRy75xgmhYMPukuvKQkPf9VOFTWldFI=";
-    };
-  };
   openstudio-aarch64-darwin = {
     pname = "openstudio-aarch64-darwin";
     version = "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz";
