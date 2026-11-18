@@ -36,6 +36,7 @@
     # --- [DEVELOPMENT]
     "visual-studio-code"
     "sf-symbols"
+    "apparency"
 
     # --- [MEDIA_ENTERTAINMENT]
     "bsamiee/parametric-forge/voicebox"
@@ -63,6 +64,7 @@
     # --- [3D_CREATION]
     (latest "bsamiee/parametric-forge/blender@daily")
     "epic-games"
+    "bsamiee/parametric-forge/f3d"
     "inkscape"
 
     # --- [MOTION_AND_REVIEW]
