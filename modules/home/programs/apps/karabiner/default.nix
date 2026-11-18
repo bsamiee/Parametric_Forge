@@ -1,5 +1,4 @@
 {
-  applications,
   config,
   lib,
   pkgs,
@@ -8,38 +7,7 @@
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  inChrome = [
-    {
-      type = "frontmost_application_if";
-      bundle_identifiers = ["^${lib.escapeRegex applications.chrome.id}$"];
-    }
-  ];
-  bound = description: key: modifiers: command: conditions: {
-    inherit description;
-    manipulators = [
-      {
-        type = "basic";
-        from = {
-          key_code = key;
-          modifiers.mandatory = modifiers;
-        };
-        to = [{shell_command = command;}];
-        inherit conditions;
-      }
-    ];
-  };
-  raycast = command: "/usr/bin/open 'raycast://extensions/${command}'";
-
-  chordRules =
-    chords.karabiner.rules
-    ++ [
-      (bound "Chrome: Cmd+Shift+U copies the page URL" "u" ["command" "shift"]
-        ''/usr/bin/osascript -e 'tell application id "${applications.chrome.id}" to set the clipboard to (URL of active tab of front window as text)' ''
-        inChrome)
-      (bound "Chrome: Cmd+T opens the Raycast Chrome command bar" "t" ["command"] (raycast "Codely/google-chrome/new-tab") inChrome)
-      (bound "Chrome: Cmd+Shift+A searches tabs, history, and bookmarks in Raycast" "a" ["command" "shift"] (raycast "Codely/google-chrome/search-all") inChrome)
-      (bound "Opt+Cmd+N opens a Little Chrome window" "n" ["command" "option"] (raycast "tompenguin/little-chrome/open-little-chrome") [])
-    ];
+  chordRules = chords.karabiner.rules;
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [
