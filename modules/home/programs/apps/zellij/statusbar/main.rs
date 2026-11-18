@@ -86,7 +86,6 @@ struct Row {
     tab: usize,
     label: String,
     class: Class,
-    focused: bool,
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -111,6 +110,7 @@ struct State {
     clients: BTreeMap<ClientId, Client>,
     census: Census,
     asks: Vec<u32>,
+    focus: BTreeMap<ClientId, u32>,
     lit: BTreeSet<u32>,
     reconciled: bool,
     tick: u32,
@@ -176,7 +176,7 @@ impl Census {
         let terminals = manifest.panes.iter().flat_map(|(tab, panes)| panes.iter().filter(|pane| !pane.is_plugin).map(move |pane| (*tab, pane)));
         let mut rows: Vec<Row> = terminals
             .clone()
-            .filter_map(|(tab, pane)| classify(pane).map(|class| Row { id: pane.id, tab, label: label(pane), class, focused: pane.is_focused }))
+            .filter_map(|(tab, pane)| classify(pane).map(|class| Row { id: pane.id, tab, label: label(pane), class }))
             .collect();
         rows.sort_by_key(|row| (row.tab, row.id));
         Self { rows, terminals: terminals.map(|(_, pane)| pane.id).collect() }
@@ -254,7 +254,7 @@ impl State {
     }
 
     fn light(&mut self, heal: bool) {
-        let want: BTreeSet<u32> = self.census.rows.iter().filter(|row| matches!(row.class, Class::Ask(_)) && !row.focused).map(|row| row.id).collect();
+        let want: BTreeSet<u32> = self.asks.iter().copied().filter(|id| !self.focus.values().any(|focused| focused == id)).collect();
         let stale: Vec<u32> = if self.reconciled {
             self.lit.difference(&want).copied().collect()
         } else {
@@ -518,8 +518,8 @@ impl State {
                 Vec::new()
             },
         };
-        let here = self.clients.get(&client_id).and_then(|client| client.tabs.iter().find(|tab| tab.active)).map(|tab| tab.position);
-        let away: Vec<u32> = targets.iter().copied().filter(|id| !self.census.rows.iter().any(|row| row.id == *id && row.focused && Some(row.tab) == here)).collect();
+        let here = self.focus.get(&client_id);
+        let away: Vec<u32> = targets.iter().copied().filter(|id| Some(id) != here).collect();
         let targets = if away.is_empty() { targets } else { away };
         if targets.is_empty() {
             return;
@@ -569,6 +569,7 @@ impl ZellijSharedPlugin for State {
             EventType::ModeUpdate,
             EventType::TabUpdate,
             EventType::PaneUpdate,
+            EventType::ListClients,
             EventType::Mouse,
             EventType::Timer,
             EventType::PermissionRequestResult,
@@ -631,7 +632,22 @@ impl ZellijSharedPlugin for State {
                 if changed { RenderResponse::All } else { RenderResponse::Nothing }
             },
             Event::PaneUpdate(manifest) => {
+                list_clients();
                 if self.panes(&manifest) { RenderResponse::All } else { RenderResponse::Nothing }
+            },
+            Event::ListClients(clients) => {
+                let focus: BTreeMap<ClientId, u32> = clients
+                    .iter()
+                    .filter_map(|client| match client.pane_id {
+                        PaneId::Terminal(id) => Some((client.client_id, id)),
+                        PaneId::Plugin(_) => None,
+                    })
+                    .collect();
+                if focus != self.focus {
+                    self.focus = focus;
+                    self.light(false);
+                }
+                RenderResponse::Nothing
             },
             Event::Mouse(mouse) => {
                 if self.mouse(&mouse, context) { RenderResponse::All } else { RenderResponse::Nothing }
