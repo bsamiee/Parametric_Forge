@@ -19,10 +19,6 @@ cask "blender@daily" do
     set_permissions "*.app/**/__pycache__", "u+w", recursive: false
   end
 
-  postflight_steps do
-    run "/usr/bin/xattr", args: ["-d", "com.apple.quarantine", "{{appdir}}/Blender.app"]
-  end
-
   zap trash: [
     "~/Library/Application Support/Blender",
     "~/Library/Caches/Blender",

@@ -17,6 +17,7 @@ in {
         HOMEBREW_BUNDLE_FILE=/etc/${brewfile}
         HOMEBREW_XDG_CONFIG_HOME=${config.home-manager.users.${config.system.primaryUser}.xdg.configHome}
         HOMEBREW_UPDATE_TO_TAG=1
+        HOMEBREW_FORCE_API_AUTO_UPDATE=1
         HOMEBREW_NO_ANALYTICS=1
         HOMEBREW_NO_ENV_HINTS=1
         HOMEBREW_NO_EMOJI=1
@@ -39,10 +40,14 @@ in {
       "rive-app/tap"
     ];
 
+    # --- [COMMAND_BEHAVIOR]
+    global.autoUpdate = false;
+
     # --- [ACTIVATION_BEHAVIOR]
     onActivation = {
       autoUpdate = true;
       upgrade = true;
+      extraEnv.HOMEBREW_AUTO_UPDATE_SECS = "0";
     };
   };
 }

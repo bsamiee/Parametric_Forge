@@ -14,9 +14,9 @@
 
     # --- [BROWSERS_INTERNET]
     "arc"
-    "firefox"
+    "firefox@beta"
     "google-chrome"
-    "tor-browser"
+    "tor-browser@alpha"
 
     # --- [NETWORK]
     "tailscale-app"
@@ -26,7 +26,7 @@
     "microsoft-auto-update"
     "microsoft-teams"
     "superhuman"
-    "whatsapp"
+    "whatsapp@beta"
 
     # --- [CLOUD_STORAGE]
     "google-drive"
@@ -64,7 +64,7 @@
     # --- [3D_CREATION]
     (latest "bsamiee/parametric-forge/blender@daily")
     "epic-games"
-    "bsamiee/parametric-forge/f3d"
+    "bsamiee/parametric-forge/f3d-app"
     "inkscape"
 
     # --- [MOTION_AND_REVIEW]
