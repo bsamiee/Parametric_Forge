@@ -26,7 +26,7 @@
     "microsoft-auto-update"
     "microsoft-teams"
     "superhuman"
-    "whatsapp@beta"
+    "whatsapp"
 
     # --- [CLOUD_STORAGE]
     "google-drive"
