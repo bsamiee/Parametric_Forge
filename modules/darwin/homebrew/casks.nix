@@ -44,7 +44,6 @@
 
     # --- [NOTES_READING]
     "calibre"
-    "heptabase"
     "libreoffice"
     "scrivener"
 

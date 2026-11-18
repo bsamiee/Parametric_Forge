@@ -15,6 +15,7 @@
     rhinoBin
     ;
   rhinoMajor = "9";
+  unrealBinaries = "/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac";
   adobeYear = "2027";
   adobeBeta = true;
   adobeLine =
@@ -29,7 +30,6 @@
   app = id: path: extensions: schemes: {inherit id path extensions schemes;};
   apps = {
     # --- [DOCK_ONLY]
-    heptabase = app "app.projectmeta.projectmeta" "/Applications/Heptabase.app" [] [];
     drafts = app "com.agiletortoise.Drafts-OSX" "/Applications/Drafts.app" [] [];
     chatgpt = app "com.openai.codex" "/Applications/ChatGPT.app" [] [];
     claude = app "com.anthropic.claudefordesktop" "/Applications/Claude.app" [] [];
@@ -41,6 +41,9 @@
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
     sfSymbols = app "com.apple.SFSymbols" "/Applications/SF Symbols.app" [] [];
     suspiciousPackage = app "com.mothersruin.SuspiciousPackageApp" "/Applications/Suspicious Package.app" [] [];
+    spotify = app "com.spotify.client" "/Applications/Spotify.app" [] [];
+    afterEffects = app "com.adobe.AfterEffects${lib.optionalString adobeBeta "Beta"}.application" "/Applications/Adobe After Effects ${adobeLine}/Adobe After Effects ${adobeLine}.app" [] [];
+    pluginInstaller = app "Adobe.UnifiedPluginInstallerAgent" "/Library/Application Support/Adobe/Adobe Desktop Common/RemoteComponents/UPI/UnifiedPluginInstallerAgent/UnifiedPluginInstallerAgent.app" [] [];
     # --- [HANDLERS]
     indesign = app "com.adobe.InDesign" "/Applications/Adobe InDesign ${adobeDatedLine}/Adobe InDesign ${adobeDatedLine}.app" ["indd" "indt" "indb" "idml" "idms" "indl" "icml" "icma" "idap"] [];
     illustrator = app "com.adobe.illustrator${lib.optionalString adobeBeta "Beta"}" "/Applications/Adobe Illustrator ${adobeLine}/Adobe Illustrator.app" ["ai" "ait" "aia" "svg" "svgz" "eps" "ase"] [];
@@ -163,6 +166,13 @@
   bundledCli = lib.mapAttrsToList (name: path: pkgs.writeShellScriptBin name ''exec ${lib.escapeShellArg path} "$@"'') {
     sfsymbols = "${apps.sfSymbols.path}/Contents/Executables/sfsymbols";
     spkg = "${apps.suspiciousPackage.path}/Contents/SharedSupport/spkg";
+    spotify_cli = "${apps.spotify.path}/Contents/MacOS/spotify_cli";
+    save-to-spotify = "${apps.spotify.path}/Contents/MacOS/save-to-spotify";
+    aerender = "${dirOf apps.afterEffects.path}/aerender";
+    UnifiedPluginInstallerAgent = "${apps.pluginInstaller.path}/Contents/MacOS/UnifiedPluginInstallerAgent";
+    UnrealPak = "${unrealBinaries}/UnrealPak";
+    UnrealEditor-Cmd = "${unrealBinaries}/UnrealEditor-Cmd";
+    zen = "${unrealBinaries}/zen";
   };
   rows = lib.attrValues apps;
   roster = pkgs.writeText "default-applications.json" (builtins.toJSON rows);

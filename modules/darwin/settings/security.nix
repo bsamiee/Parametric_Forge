@@ -8,7 +8,35 @@
 in {
   system.activationScripts.postActivation.text = ''
     /usr/sbin/DevToolsSecurity -enable >/dev/null
+    /bin/mkdir -p '/Library/Application Support/Adobe/UXP/Developer'
+    printf '%s\n' '{"developer": true}' > '/Library/Application Support/Adobe/UXP/Developer/settings.json'
+    if [ -d '/Applications/Adobe Illustrator (Beta)' ]; then
+      printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<Features>' '<Feature name="EnableThirdPartyUXP" enabled="1" configurableInRelease="1"/>' '<Feature name="UXPPluginRuntimeGroupFor3P" enabled="1" configurableInRelease="1"/>' '</Features>' > '/Applications/Adobe Illustrator (Beta)/AIFeatures.cfg'
+    fi
+    xcode_uid="$(/usr/bin/id -u ${primaryUser})"
+    xcode_gid="$(/usr/bin/id -g ${primaryUser})"
+    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server enable >/dev/null
+    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server allow-folder '${config.users.users.${primaryUser}.home}/Developer' --always >/dev/null
   '';
+
+  # --- [UNIFIED_LOG_PRIVATE_DATA]
+  environment.etc."mobileconfig/unified-log-private-data.mobileconfig".text = lib.generators.toPlist {escape = true;} {
+    PayloadType = "Configuration";
+    PayloadVersion = 1;
+    PayloadIdentifier = "dev.bsamiee.logging.private-data";
+    PayloadUUID = "6F0D3C1E-5B7A-4E2C-9A41-3D8E2F7B9C10";
+    PayloadDisplayName = "Unified log private data";
+    PayloadScope = "System";
+    PayloadContent = [
+      {
+        PayloadType = "com.apple.system.logging";
+        PayloadVersion = 1;
+        PayloadIdentifier = "dev.bsamiee.logging.private-data.system";
+        PayloadUUID = "A2B4C6D8-1E3F-4A5B-8C7D-9E0F1A2B3C4D";
+        System."Enable-Private-Data" = true;
+      }
+    ];
+  };
 
   # --- [GATEKEEPER]
   system.defaults.CustomSystemPreferences."/Library/Preferences/com.apple.security".GKAutoRearm = false;

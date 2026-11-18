@@ -35,7 +35,7 @@
       wvous-br-corner = 1;
       no-bouncing = false;
       enable-spring-load-actions-on-all-items = true;
-      persistent-apps = [{spacer = {};}] ++ map (name: applications.${name}.path) ["heptabase" "drafts" "vscode" "arc" "chrome" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat" "epic"];
+      persistent-apps = [{spacer = {};}] ++ map (name: applications.${name}.path) ["drafts" "vscode" "arc" "chrome" "wezterm" "chatgpt" "claude" "superhuman" "messages" "creativeCloud" "indesign" "photoshop" "illustrator" "acrobat" "epic"];
       persistent-others = [];
     };
     # --- [FINDER_CONFIGURATION]
