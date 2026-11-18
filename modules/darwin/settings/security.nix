@@ -13,10 +13,6 @@ in {
     if [ -d '/Applications/Adobe Illustrator (Beta)' ]; then
       printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<Features>' '<Feature name="EnableThirdPartyUXP" enabled="1" configurableInRelease="1"/>' '<Feature name="UXPPluginRuntimeGroupFor3P" enabled="1" configurableInRelease="1"/>' '</Features>' > '/Applications/Adobe Illustrator (Beta)/AIFeatures.cfg'
     fi
-    xcode_uid="$(/usr/bin/id -u ${primaryUser})"
-    xcode_gid="$(/usr/bin/id -g ${primaryUser})"
-    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server enable --unsafe-always-allow-all-agents >/dev/null
-    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server allow-folder '${config.users.users.${primaryUser}.home}/Developer' --always >/dev/null
   '';
 
   # --- [UNIFIED_LOG_PRIVATE_DATA]
