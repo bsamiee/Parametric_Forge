@@ -637,7 +637,6 @@ in {
         };
         playwright = {
           inherit (generatedPins.playwright-core) version;
-          asset = pinAsset "playwright-core";
           commands = ["playwright"];
           license = "Apache-2.0";
           env.PLAYWRIGHT_CLI_SESSION = "\${CLAUDE_CODE_SESSION_ID:-\${CODEX_THREAD_ID:-\${ANTIGRAVITY_CONVERSATION_ID:-}}}";
