@@ -51,20 +51,11 @@ in {
       };
     };
   home.activation = {
-    setSafariAutomation = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
-      run /usr/bin/defaults write ${lib.escapeShellArg "${home}/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari"} AllowRemoteAutomation -bool true
-      run /usr/bin/defaults write ${lib.escapeShellArg "${home}/Library/Containers/com.apple.Safari/Data/Library/Preferences/com.apple.Safari"} IncludeDevelopMenu -bool true
-    '';
     setElectronDevTools = lib.hm.dag.entryAfter ["writeBoundary"] (
       jsonMerge "${home}/.vscode/argv.json" {"remote-debugging-port" = "9223";}
       + jsonMerge "${support}/Claude/developer_settings.json" {allowDevTools = true;}
       + jsonMerge "${support}/discord/settings.json" {DANGEROUS_ENABLE_DEVTOOLS_ONLY_ENABLE_IF_YOU_KNOW_WHAT_YOURE_DOING = true;}
     );
-    setOfficeAddinInspector = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
-      for app in Word Excel; do
-        run /usr/bin/defaults write "${home}/Library/Containers/com.microsoft.$app/Data/Library/Preferences/com.microsoft.$app" OfficeWebAddinDeveloperExtras -bool true
-      done
-    '';
     setCreativeDeveloperPrefs = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
       if /usr/bin/pgrep -qf '\.app/Contents/MacOS/After Effects'; then
         noteEcho "After Effects is running: its scripting preferences wait for the next switch"
@@ -211,6 +202,8 @@ in {
     "com.apple.Safari" = {
       SuppressSearchSuggestions = true;
       UniversalSearchEnabled = false;
+      AllowRemoteAutomation = true;
+      IncludeDevelopMenu = true;
     };
     # --- [APPLICATION_SPECIFIC_SETTINGS]
     "com.apple.Terminal".SecureKeyboardEntry = false;
@@ -225,7 +218,12 @@ in {
       IDEChatAllowAgents = true;
       IDEChatInternalAllowUntrustedAgentsWithoutUserInteraction = true;
     };
-    "com.apple.CrashReporter".UseUNC = true;
+    "com.apple.CrashReporter" = {
+      DialogType = "none";
+      UseUNC = true;
+    };
+    "com.microsoft.Word".OfficeWebAddinDeveloperExtras = true;
+    "com.microsoft.Excel".OfficeWebAddinDeveloperExtras = true;
     "com.google.Chrome" = {
       AutofillAddressEnabled = false;
       AutofillCreditCardEnabled = false;

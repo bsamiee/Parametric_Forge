@@ -46,11 +46,13 @@ in {
         if [ -f "$approvals" ]; then
           changed=0
           while IFS= read -r client; do
-            keypath="$(printf '%s' "$client" | /usr/bin/sed 's/\./\\./g').kScreenCapturePrivacyHintDate"
-            if [ "$(/usr/bin/plutil -extract "$keypath" raw -o - "$approvals")" != 4000-01-01T00:00:00Z ]; then
-              run /usr/bin/plutil -replace "$keypath" -date 4000-01-01T00:00:00Z "$approvals"
-              changed=1
-            fi
+            for key in kScreenCapturePrivacyHintDate kScreenCaptureApprovalLastAlerted; do
+              keypath="$(printf '%s' "$client" | /usr/bin/sed 's/\./\\./g').$key"
+              if [ "$(/usr/bin/plutil -extract "$keypath" raw -o - "$approvals")" != 4000-01-01T00:00:00Z ]; then
+                run /usr/bin/plutil -replace "$keypath" -date 4000-01-01T00:00:00Z "$approvals"
+                changed=1
+              fi
+            done
           done < <(/usr/bin/plutil -convert xml1 -o - "$approvals" | /usr/bin/xmllint --xpath '/plist/dict/key/text()' -)
           if [ "$changed" = 1 ] && /usr/bin/pgrep -qx replayd; then
             run /usr/bin/killall -9 replayd

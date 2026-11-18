@@ -67,10 +67,7 @@
       FXArrangeGroupViewBy = "Name";
       FXPreferredGroupBy = "None";
     };
-    "com.apple.desktopservices" = {
-      DSDontWriteNetworkStores = true;
-      DSDontWriteUSBStores = true;
-    };
+    "com.apple.desktopservices".DSDontWriteNetworkStores = true;
     # --- [WINDOW_MANAGEMENT]
     "com.apple.WindowManager" = {
       GloballyEnabled = false;

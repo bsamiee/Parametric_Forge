@@ -15,7 +15,7 @@ in {
     fi
     xcode_uid="$(/usr/bin/id -u ${primaryUser})"
     xcode_gid="$(/usr/bin/id -g ${primaryUser})"
-    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server enable >/dev/null
+    SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server enable --unsafe-always-allow-all-agents >/dev/null
     SUDO_USER=${primaryUser} SUDO_UID="$xcode_uid" SUDO_GID="$xcode_gid" /usr/bin/xcrun mcp-server allow-folder '${config.users.users.${primaryUser}.home}/Developer' --always >/dev/null
   '';
 
