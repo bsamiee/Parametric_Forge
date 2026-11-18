@@ -11,7 +11,7 @@
         ${lib.concatStrings (lib.mapAttrsToList (name: value: ''
             export ${name}="''${${name}-${value}}"
           '')
-          row.env or {})}PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
+          row.env or {})}NPM_CONFIG_CACHE=${config.xdg.cacheHome}/npm PATH=${pkgs.nodejs}/bin:$PATH exec npx --prefix=${pkgs.emptyDirectory} --yes --package=${lib.escapeShellArg "${package}@${row.version}"} ${command} "$@"
       ''))
   toolRows;
   chromiumMajor = lib.versions.major (lib.findFirst (browser: browser.name == "chromium") null toolRows.playwright.browsers).browserVersion;
