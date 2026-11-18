@@ -3,15 +3,13 @@ cacheDir: .cache/pnpm/cache
 storeDir: .cache/pnpm/store
 
 allowBuilds:
-    "@parcel/watcher": false
-    msgpackr-extract: false
     protobufjs: false
 
 catalog:
-    effect: 4.1.1
-    "@effect/platform-node": 4.1.1
-    "@pulumi/pulumi": 3.273.0
-    "@pulumi/github": 6.15.0
+    effect: 4.1.4
+    "@effect/platform-node": 4.1.4
+    "@pulumi/pulumi": 3.276.0
+    "@pulumi/github": 6.15.1
     "@pulumiverse/doppler": 0.9.0
-    typescript: 7.0.2
+    typescript: 7.1.0-beta
     "@types/node": 26.6.6

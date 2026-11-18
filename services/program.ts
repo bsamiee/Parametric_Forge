@@ -28,17 +28,14 @@ const _mergeHygiene = {
 } as const;
 
 const program = (f: program.Flags) => async (): Promise<void> => {
-    const _registered = <Row extends { readonly origin: Topology.Origin }>(
-        rows: ReadonlyArray<Row>,
-        registration: program.Registration<Row>,
-    ): ReadonlyMap<string, Resource> =>
+    const _registered = <Row>(rows: ReadonlyArray<Row>, registration: program.Registration<Row>): ReadonlyMap<string, Resource> =>
         new Map(
             rows.map((row) => {
                 const anchor = registration.anchor?.(row);
                 return [
                     registration.key(row),
                     registration.make(row, {
-                        ...(f.adopt && row.origin === 'adopt' ? { import: registration.importId(row) } : {}),
+                        ...(f.adopt ? { import: registration.importId(row) } : {}),
                         ...(anchor ? { dependsOn: anchor } : {}),
                     }),
                 ] as const;
