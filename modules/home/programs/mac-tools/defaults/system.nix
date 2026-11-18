@@ -275,6 +275,11 @@ in {
       SUAutomaticallyUpdate = true;
       SUSendProfileInfo = false;
     };
+    # --- [VIRTUALIZATION]
+    "com.parallels.Parallels Desktop" = {
+      "ProductPromo.ForcePromoOff" = 1;
+      "WelcomeScreenPromo.PromoOff" = 1;
+    };
     # --- [AGENT_HOSTS]
     "com.github.wez.wezterm".NSAppSleepDisabled = true;
     "com.openai.codex".NSAppSleepDisabled = true;
