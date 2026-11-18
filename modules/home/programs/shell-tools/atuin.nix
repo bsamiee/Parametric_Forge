@@ -7,51 +7,70 @@
   ...
 }: let
   inherit (theme) roles;
+  atuin = lib.getExe config.programs.atuin.package;
 in {
   # --- [DAEMON]
   launchd.agents.atuin-daemon = launchdAgent {
     name = "atuin-daemon";
-    argv = [(lib.getExe config.programs.atuin.package) "daemon" "start" "--force"];
+    argv = [atuin "daemon" "start" "--force"];
     RunAtLoad = true;
     KeepAlive = true;
     ProcessType = "Interactive";
   };
 
+  # --- [PTY_PROXY]
+  programs.zsh.initContent = lib.mkOrder 0 ''
+    eval "$(${atuin} pty-proxy init zsh)"
+  '';
+
   programs.atuin = {
     enable = true;
     package = pkgs.atuin-current;
+    flags = ["--bind-ai-resume"];
 
     settings = {
-      daemon = {
-        enabled = true;
-        autostart = false;
+      daemon.enabled = true;
+      output.enabled = true;
+      threads = {
+        capture = true;
+        filter_mode = "workspace";
+        resume.codex = "codex resume --no-daemon {id}";
       };
-      threads.capture = true;
-      auto_sync = false;
       update_check = false;
       ai.enabled = false;
       search_mode = "daemon-fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "workspace";
       filter_mode_shell_up_key_binding = "global";
+      search.filters = ["workspace" "directory" "session" "global"];
+      command_chaining = true;
       ctrl_n_shortcuts = true;
-      workspaces = true;
       style = "full";
       inline_height = 50;
+      inline_height_shell_up_key_binding = 15;
       invert = true;
       preview.strategy = "fixed";
       max_preview_height = 6;
       keymap_mode = "auto";
       word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
       scroll_context_lines = 2;
-      enter_accept = true;
+      ui.columns = [
+        "exit"
+        "duration"
+        "time"
+        {
+          type = "directory";
+          width = 24;
+        }
+        "command"
+      ];
       history_filter = [
         "(?i)(token|password|secret|api[_-]?key|bearer)[^\\n]*="
         "^export .*(_KEY|_TOKEN|_SECRET|PASSWORD)="
       ];
       cwd_filter = [
-        "^/tmp(/|$)"
-        "^/var/tmp(/|$)"
+        "^(/private)?/tmp(/|$)"
+        "^(/private)?/var/tmp(/|$)"
         ".*/\\.git/.*"
         ".*/node_modules/.*"
         ".*/target/debug/.*"
