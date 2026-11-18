@@ -364,6 +364,10 @@ fetch.url = "https://registry.npmjs.org/ctx7/-/ctx7-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/bambu-printer-mcp/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-$ver.tgz"
 
+[n8n-cli]
+src.cmd = "curl -fsSL https://registry.npmjs.org/-/package/@n8n/cli/dist-tags | jq -r '[.latest, .beta] | max_by(split(\".\") | map(tonumber))'"
+fetch.url = "https://registry.npmjs.org/@n8n/cli/-/cli-$ver.tgz"
+
 [mcp-remote]
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-$ver.tgz"

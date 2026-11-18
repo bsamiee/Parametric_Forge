@@ -31,6 +31,7 @@
     # --- [CLOUD_STORAGE]
     "google-drive"
     "megasync"
+    "megacmd-app"
     "onedrive"
 
     # --- [DEVELOPMENT]

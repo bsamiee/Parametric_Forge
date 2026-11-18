@@ -896,6 +896,21 @@
         },
         "version": "0.10.1"
     },
+    "n8n-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "n8n-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-B4SgARiMuA4oxUwjLsAEcTEFxAy78Xi4tIyCzyek9Bo=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@n8n/cli/-/cli-0.28.0.tgz"
+        },
+        "version": "0.28.0"
+    },
     "nanoemoji": {
         "cargoLock": null,
         "date": null,

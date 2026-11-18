@@ -543,6 +543,11 @@ in {
           commands = ["nexrender-cli"];
           license = "MIT";
         };
+        "@n8n/cli" = {
+          inherit (generatedPins.n8n-cli) version;
+          commands = ["n8n-cli"];
+          license = "SUL-1.0";
+        };
         "@pnp/cli-microsoft365" = {
           inherit (generatedPins.m365-cli) version;
           commands = ["m365"];

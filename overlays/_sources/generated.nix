@@ -498,6 +498,14 @@
       sha256 = "sha256-IjUW79yPPBT3k0s7wHkchsw/LIS/oRWbsWTe48zN4IM=";
     };
   };
+  n8n-cli = {
+    pname = "n8n-cli";
+    version = "0.28.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@n8n/cli/-/cli-0.28.0.tgz";
+      sha256 = "sha256-B4SgARiMuA4oxUwjLsAEcTEFxAy78Xi4tIyCzyek9Bo=";
+    };
+  };
   nanoemoji = {
     pname = "nanoemoji";
     version = "0.16.0";
