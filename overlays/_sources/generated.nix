@@ -46,6 +46,22 @@
       sha256 = "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=";
     };
   };
+  bambu-aarch64-darwin = {
+    pname = "bambu-aarch64-darwin";
+    version = "0.3.0";
+    src = fetchurl {
+      url = "https://github.com/voska/bambu/releases/download/v0.3.0/bambu_0.3.0_darwin_arm64.tar.gz";
+      sha256 = "sha256-hFqp/jFKkA64lEtgMywdABV9X4RW9IaIQnwe11WFpMc=";
+    };
+  };
+  bambu-printer-mcp = {
+    pname = "bambu-printer-mcp";
+    version = "1.1.98";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.98.tgz";
+      sha256 = "sha256-UBVqKMr6g6ome9pwOx/wanTmiZlfGQUwf5HeWjYPs98=";
+    };
+  };
   blender-asset-tracer = {
     pname = "blender-asset-tracer";
     version = "2.2.1";
@@ -330,6 +346,14 @@
       sha256 = "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=";
     };
   };
+  gddy-aarch64-darwin = {
+    pname = "gddy-aarch64-darwin";
+    version = "0.2.38";
+    src = fetchurl {
+      url = "https://github.com/godaddy/cli/releases/download/v0.2.38/gddy-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-Zjli+9CO/ha6hD5g1pmjaDwnQi558COKm7m/fsGTTcc=";
+    };
+  };
   gemini-api-aarch64-darwin = {
     pname = "gemini-api-aarch64-darwin";
     version = "0.4.6";
@@ -603,6 +627,14 @@
       sha256 = "sha256-LFjyusEa4joS9hiKZyP9GIL6gvc9mHTCFB63jCInUsc=";
     };
   };
+  openai-cli-aarch64-darwin = {
+    pname = "openai-cli-aarch64-darwin";
+    version = "1.55.0";
+    src = fetchTarball {
+      url = "https://github.com/openai/openai-cli/releases/download/v1.55.0/openai_1.55.0_macos_arm64.zip";
+      sha256 = "sha256-+pcSpLuXdrs8vRy75xgmhYMPukuvKQkPf9VOFTWldFI=";
+    };
+  };
   openstudio-aarch64-darwin = {
     pname = "openstudio-aarch64-darwin";
     version = "v4.0.0-alpha/OpenStudio-4.0.0-alpha%2Bdf819fb918-Darwin-arm64.tar.gz";
@@ -641,6 +673,14 @@
     src = fetchurl {
       url = "https://files.pythonhosted.org/packages/source/o/otio-fcpx-xml-adapter/otio_fcpx_xml_adapter-1.0.0.tar.gz";
       sha256 = "sha256-eJGcGU8Hj1fOmmRkwcYHpJRJmqqz2MNRWc5ecdX80jU=";
+    };
+  };
+  pdfm-mcp-aarch64-darwin = {
+    pname = "pdfm-mcp-aarch64-darwin";
+    version = "0.1.4";
+    src = fetchurl {
+      url = "https://github.com/Parallels/pdfm-mcp/releases/download/v0.1.4/pdfm-mcp_0.1.4_darwin_universal.tar.gz";
+      sha256 = "sha256-l1qOxVo1Pcieh6xqjVgbkQhW7l3O9CdBOV05zt5vHn8=";
     };
   };
   playwright-core = {

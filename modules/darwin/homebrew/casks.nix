@@ -66,10 +66,17 @@
     "bsamiee/parametric-forge/f3d-app"
     "inkscape"
 
+    # --- [3D_PRINTING]
+    "bambu-studio"
+    (latest "orcaslicer@nightly")
+
     # --- [MOTION_AND_REVIEW]
     "cavalry"
     "bsamiee/parametric-forge/mrv2"
     "rive-app/tap/rive-cli"
+
+    # --- [VIRTUALIZATION]
+    "parallels"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
     "karabiner-elements"

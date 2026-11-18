@@ -321,6 +321,29 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/jaxxstorm/tscli/releases/download/v$ver/tscli_$ver_darwin_arm64.tar.gz"
 
+[gddy-aarch64-darwin]
+src.github = "godaddy/cli"
+src.prefix = "v"
+fetch.url = "https://github.com/godaddy/cli/releases/download/v$ver/gddy-aarch64-apple-darwin.tar.gz"
+
+[openai-cli-aarch64-darwin]
+src.github = "openai/openai-cli"
+src.prerelease = true
+src.prefix = "v"
+fetch.tarball = "https://github.com/openai/openai-cli/releases/download/v$ver/openai_$ver_macos_arm64.zip"
+
+[pdfm-mcp-aarch64-darwin]
+src.github = "Parallels/pdfm-mcp"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://github.com/Parallels/pdfm-mcp/releases/download/v$ver/pdfm-mcp_$ver_darwin_universal.tar.gz"
+
+[bambu-aarch64-darwin]
+src.github = "voska/bambu"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://github.com/voska/bambu/releases/download/v$ver/bambu_$ver_darwin_arm64.tar.gz"
+
 [aredotna-cli]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@aredotna/cli/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@aredotna/cli/-/cli-$ver.tgz"
@@ -364,6 +387,10 @@ fetch.url = "https://registry.npmjs.org/@tavily/cli/-/cli-$ver.tgz"
 [ctx7]
 src.cmd = "curl -fsSL https://registry.npmjs.org/ctx7/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/ctx7/-/ctx7-$ver.tgz"
+
+[bambu-printer-mcp]
+src.cmd = "curl -fsSL https://registry.npmjs.org/bambu-printer-mcp/latest | jq -r .version"
+fetch.url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-$ver.tgz"
 
 [mcp-remote]
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"

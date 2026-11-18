@@ -13,6 +13,14 @@
     gemini-api
     gam-current
 
+    # --- [SERVICE_APIS]
+    gddy
+    openai-cli
+
+    # --- [DEVICES_AND_VMS]
+    bambu
+    pdfm-mcp
+
     # --- [CONTAINER_REGISTRY]
     crane
   ];

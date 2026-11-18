@@ -73,6 +73,36 @@
         },
         "version": "18.24.8"
     },
+    "bambu-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "bambu-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-hFqp/jFKkA64lEtgMywdABV9X4RW9IaIQnwe11WFpMc=",
+            "type": "url",
+            "url": "https://github.com/voska/bambu/releases/download/v0.3.0/bambu_0.3.0_darwin_arm64.tar.gz"
+        },
+        "version": "0.3.0"
+    },
+    "bambu-printer-mcp": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "bambu-printer-mcp",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-UBVqKMr6g6ome9pwOx/wanTmiZlfGQUwf5HeWjYPs98=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.98.tgz"
+        },
+        "version": "1.1.98"
+    },
     "blender-asset-tracer": {
         "cargoLock": null,
         "date": null,
@@ -582,6 +612,21 @@
         },
         "version": "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
     },
+    "gddy-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "gddy-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Zjli+9CO/ha6hD5g1pmjaDwnQi558COKm7m/fsGTTcc=",
+            "type": "url",
+            "url": "https://github.com/godaddy/cli/releases/download/v0.2.38/gddy-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "0.2.38"
+    },
     "gemini-api-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -1076,6 +1121,20 @@
         },
         "version": "1.17.0"
     },
+    "openai-cli-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "openai-cli-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-+pcSpLuXdrs8vRy75xgmhYMPukuvKQkPf9VOFTWldFI=",
+            "type": "tarball",
+            "url": "https://github.com/openai/openai-cli/releases/download/v1.55.0/openai_1.55.0_macos_arm64.zip"
+        },
+        "version": "1.55.0"
+    },
     "openstudio-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -1149,6 +1208,21 @@
             "url": "https://files.pythonhosted.org/packages/source/o/otio-fcpx-xml-adapter/otio_fcpx_xml_adapter-1.0.0.tar.gz"
         },
         "version": "1.0.0"
+    },
+    "pdfm-mcp-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "pdfm-mcp-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-l1qOxVo1Pcieh6xqjVgbkQhW7l3O9CdBOV05zt5vHn8=",
+            "type": "url",
+            "url": "https://github.com/Parallels/pdfm-mcp/releases/download/v0.1.4/pdfm-mcp_0.1.4_darwin_universal.tar.gz"
+        },
+        "version": "0.1.4"
     },
     "playwright-core": {
         "cargoLock": null,

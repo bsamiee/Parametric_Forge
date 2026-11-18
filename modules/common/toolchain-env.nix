@@ -79,6 +79,8 @@
           POWERSHELL_TELEMETRY_OPTOUT = "1";
           CLIMICROSOFT365_NOUPDATE = "1";
           CODERABBIT_CLI_DISABLE_AUTO_UPDATE = "true";
+          OPENAI_CLI_NO_UPDATE_CHECK = "1";
+          PDFM_MCP_TELEMETRY_DISABLED = "true";
           NOTEBOOKLM_MCP_ALLOWED_ROOTS = "/Users:/Volumes:/private";
           TLRC_CONFIG = "${xdgConfigHome}/tlrc/config.toml";
           RCLONE_ASK_PASSWORD = "false";

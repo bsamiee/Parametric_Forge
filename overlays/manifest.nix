@@ -330,6 +330,42 @@ in {
       mainProgram = "gemini-api";
     };
 
+    gddy = {
+      version = generatedPins.gddy-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "gddy-aarch64-darwin";
+      license = "mit";
+      description = "GoDaddy API command-line client for domains, DNS, mail, hosting, and API calls";
+      homepage = "https://github.com/godaddy/cli";
+      mainProgram = "gddy";
+    };
+
+    pdfm-mcp = {
+      version = generatedPins.pdfm-mcp-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "pdfm-mcp-aarch64-darwin";
+      license = "mit";
+      description = "Parallels Desktop MCP server for VM power, guest exec, input, screen capture, snapshots, and settings";
+      homepage = "https://github.com/Parallels/pdfm-mcp";
+      mainProgram = "pdfm-mcp";
+    };
+
+    bambu = {
+      version = generatedPins.bambu-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "bambu-aarch64-darwin";
+      license = "mit";
+      description = "Bambu Lab printer command-line client over LAN for slicing, preflight, print control, and monitoring";
+      homepage = "https://github.com/voska/bambu";
+      mainProgram = "bambu";
+    };
+
+    openai-cli = {
+      version = generatedPins.openai-cli-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "openai-cli-aarch64-darwin" // {stripRoot = false;};
+      license = "asl20";
+      description = "OpenAI API command-line client for responses, images, audio, files, batches, and administration";
+      homepage = "https://github.com/openai/openai-cli";
+      mainProgram = "openai";
+    };
+
     tscli-current = {
       version = generatedPins.tscli-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "tscli-aarch64-darwin";
@@ -574,6 +610,12 @@ in {
           inherit (generatedPins.tavily-cli) version;
           commands = ["tvly"];
           license = "MIT";
+        };
+        bambu-printer-mcp = {
+          inherit (generatedPins.bambu-printer-mcp) version;
+          commands = ["bambu-printer-mcp"];
+          license = "GPL-2.0";
+          env.BAMBU_MODEL = "h2d";
         };
         cf = {
           inherit (generatedPins.cloudflare-cf) version;

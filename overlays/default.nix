@@ -88,6 +88,7 @@ final: prev: let
   cliRelease = {
     binary,
     completion ? null,
+    completionFiles ? null,
     man ? null,
     versionArg ? "--version",
     unpack ? true,
@@ -98,6 +99,7 @@ final: prev: let
         runHook preInstall
         install -Dm755 ${binary} "$out/bin/${row.mainProgram}"
         ${lib.optionalString (man != null) "installManPage ${man}"}
+        ${lib.optionalString (completionFiles != null) "installShellCompletion ${completionFiles}"}
         ${lib.optionalString (completion != null) ''
           export HOME="$TMPDIR"
           installShellCompletion --cmd ${row.mainProgram} \
@@ -189,6 +191,21 @@ final: prev: let
       unpack = false;
     };
     tscli-current = cliRelease {binary = "tscli";};
+    gddy = cliRelease {
+      binary = "gddy";
+      completion = "completion";
+    };
+    pdfm-mcp = cliRelease {binary = "pdfm-mcp";};
+    bambu = cliRelease {
+      binary = "bambu";
+      versionArg = "version";
+    };
+    openai-cli = cliRelease {
+      binary = ''"$src/openai"'';
+      completionFiles = ''"$src"/completions/openai.{bash,fish,zsh}'';
+      man = ''"$src"/man/man1/openai.1.gz'';
+      unpack = false;
+    };
     gemini-api = cliRelease {
       binary = "gemini-api";
       completion = "completion";
