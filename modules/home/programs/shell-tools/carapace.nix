@@ -1,6 +1,7 @@
 _: {
   programs.carapace = {
     enable = true;
-    environment.CARAPACE_MATCH = true;
   };
+
+  home.sessionVariables.CARAPACE_MATCH = "1";
 }
