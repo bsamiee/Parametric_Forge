@@ -8,7 +8,7 @@
 }: let
   inherit (theme) roles;
   atuin = lib.getExe config.programs.atuin.package;
-  storeLimit = "5GiB";
+  storeLimit = "10GiB";
 in {
   # --- [DAEMON]
   launchd.agents.atuin-daemon = launchdAgent {
