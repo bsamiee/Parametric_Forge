@@ -72,7 +72,6 @@
   ];
   shell = [
     ["envs" "env | sort"]
-    ["ezsh" "$EDITOR \${ZDOTDIR:-$HOME}/.zshrc"]
     ["rzsh" "source \${ZDOTDIR:-$HOME}/.zshrc"]
     ["reload" "exec $SHELL"]
   ];

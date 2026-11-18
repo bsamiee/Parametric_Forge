@@ -5,8 +5,9 @@
   ...
 }: let
   inherit (theme) projections;
-  fd = "fd";
-  fdFiles = "${fd} --type f --hidden --follow --exclude .git";
+  fd = "fd --hidden --follow";
+  fdFiles = "${fd} --type f";
+  fdDirs = "${fd} --type d";
   share = "${config.programs.fzf.package}/share/fzf";
 in {
   # --- [ZSH_WIDGETS]
@@ -15,6 +16,14 @@ in {
       source ${share}/key-bindings.zsh
       source ${share}/completion.zsh
     fi
+
+    _fzf_compgen_path() {
+      ${fd} . "$1"
+    }
+
+    _fzf_compgen_dir() {
+      ${fdDirs} . "$1"
+    }
   '';
 
   programs.fzf = {
@@ -52,7 +61,7 @@ in {
 
     # --- [ALT_C_DIRECTORY_NAVIGATION]
     changeDirWidget = {
-      command = "${fd} --type d --hidden --follow --exclude .git";
+      command = fdDirs;
       options = [
         "--border-label='[DIRECTORIES]'"
         "--preview='eza --tree --level=2 --all --git-ignore --group-directories-first --color=always --icons=always {}'"

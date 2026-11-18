@@ -1,22 +1,10 @@
 {
   config,
   lib,
-  pkgs,
   theme,
   ...
 }: {
   programs.zsh.initContent = lib.mkMerge [
-    (lib.mkBefore ''
-      # --- [FZF_COMPGEN_PATH_DIR]
-      _fzf_compgen_path() {
-        ${lib.getExe pkgs.fd} --hidden --follow --exclude .git . "$1"
-      }
-
-      _fzf_compgen_dir() {
-        ${lib.getExe pkgs.fd} --type d --hidden --follow --exclude .git . "$1"
-      }
-    '')
-
     (lib.mkOrder 1010 ''
       # --- [SUGGESTION_SOURCE]
       ZSH_AUTOSUGGEST_STRATEGY=(history)
