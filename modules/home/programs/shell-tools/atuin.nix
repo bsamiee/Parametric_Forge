@@ -110,7 +110,7 @@ in {
         ".*/target/release/.*"
       ];
       history_format = "{time} {directory} ❯ {command}";
-      keys.scroll_exits = false;
+      keymap.emacs.down = "select-next";
       stats = {
         common_prefix = ["sudo" "time" "nohup"];
         common_subcommands = ["git" "cargo" "pnpm" "docker"];
