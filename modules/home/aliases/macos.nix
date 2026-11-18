@@ -1,10 +1,4 @@
 {
-  dev = [
-    ["rhproject" "dotnet new rhino -sample"]
-    ["ghproject" "dotnet new gh2 -sample"]
-    ["yakb" "yak build"]
-    ["rhcode" "rhinocode"]
-  ];
   macos = [
     ["awake" "caffeinate -dims"]
     ["reveal" "open -R"]

@@ -60,7 +60,6 @@ in {
       pkgs.magika-cli
       pkgs.monolith
       pkgs.mq
-      pkgs.netcoredbg
       pkgs.oha-current
       pkgs.openssl_4_1
       pkgs.ouch

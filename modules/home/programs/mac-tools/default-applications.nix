@@ -2,18 +2,8 @@
   config,
   lib,
   pkgs,
-  toolchainEnvFor,
   ...
 }: let
-  inherit
-    (toolchainEnvFor {
-      home = config.home.homeDirectory;
-      inherit (config.home) username;
-      xdgCacheHome = config.xdg.cacheHome;
-      xdgDataHome = config.xdg.dataHome;
-    })
-    rhinoBin
-    ;
   rhinoMajor = "9";
   unrealBinaries = "/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac";
   adobeYear = "2027";
@@ -207,7 +197,6 @@ in {
     _module.args.applications = apps;
     home = {
       packages = [command] ++ bundledCli;
-      file.${rhinoBin}.source = config.lib.file.mkOutOfStoreSymlink "${apps.rhino.path}/Contents/Resources/bin";
       activation.setDefaultApplications = lib.hm.dag.entryAfter ["writeBoundary" "copyApps"] ''
         run ${command}/bin/default-applications
       '';

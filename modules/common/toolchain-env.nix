@@ -12,14 +12,12 @@
     xdgDataHome ? "${home}/.local/share",
     xdgStateHome ? "${home}/.local/state",
   }: let
-    rhinoBin = "${xdgDataHome}/rhino/bin";
     userPathEntries = [
       "${home}/.local/bin"
       "/etc/profiles/per-user/${username}/bin"
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"
       "/opt/homebrew/bin"
-      rhinoBin
     ];
     fallbackPathEntries = [
       "/usr/local/bin"
@@ -137,7 +135,6 @@
       editor
       designFontDirectory
       fontDirectories
-      rhinoBin
       runtimeEnv
       ;
 
