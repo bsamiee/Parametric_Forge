@@ -26,6 +26,7 @@
     messages = app "com.apple.MobileSMS" "/System/Applications/Messages.app" [] [];
     epic = app "com.epicgames.EpicGamesLauncher" "/Applications/Epic Games Launcher.app" [] [];
     creativeCloud = app "com.adobe.acc.AdobeCreativeCloud" "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" [] [];
+    # --- [POINTER_SCHEMES]
     blender = app "org.blenderfoundation.blender" null [] [];
     # --- [BUNDLED_CLI]
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
@@ -156,6 +157,7 @@
     superhuman = app "com.superhuman.electron" "/Applications/Superhuman.app" [] ["mailto"];
   };
   bundledCli = lib.mapAttrsToList (name: path: pkgs.writeShellScriptBin name ''exec ${lib.escapeShellArg path} "$@"'') {
+    tailscale = "${apps.tailscale.path}/Contents/MacOS/Tailscale";
     sfsymbols = "${apps.sfSymbols.path}/Contents/Executables/sfsymbols";
     spkg = "${apps.suspiciousPackage.path}/Contents/SharedSupport/spkg";
     spotify_cli = "${apps.spotify.path}/Contents/MacOS/spotify_cli";

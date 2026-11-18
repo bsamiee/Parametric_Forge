@@ -125,7 +125,7 @@ in {
           : >"$tmp"
         fi
         ${pkgs.coreutils}/bin/cat ${grantBlocks} >>"$tmp"
-        ${pkgs.coreutils}/bin/mv "$tmp" "$permsFile"
+        if ${pkgs.diffutils}/bin/cmp -s "$tmp" "$permsFile"; then ${pkgs.coreutils}/bin/rm "$tmp"; else ${pkgs.coreutils}/bin/mv "$tmp" "$permsFile"; fi
       ''}
     '');
 

@@ -25,7 +25,6 @@ in {
     ./serpl.nix
     ./ssh.nix
     ./starship.nix
-    ./tailscale.nix
     ./tlrc.nix
     ./tmux.nix
     ./trippy.nix

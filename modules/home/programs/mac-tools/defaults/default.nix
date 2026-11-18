@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
   readers = {
@@ -12,7 +11,6 @@
   };
   rendered = domain: lib.removePrefix "${config.home.homeDirectory}/" "${config.xdg.stateHome}/macos-defaults/${domain}.plist";
   plist = lib.generators.toPlist {escape = true;};
-  groupDefaults."8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
 in {
   imports = [
     ./input.nix
@@ -34,11 +32,6 @@ in {
           fi
         '')
         readers));
-
-      setGroupDefaults = lib.hm.dag.entryAfter ["writeBoundary"] (lib.concatStrings (lib.mapAttrsToList (suite: keys: ''
-          run /usr/bin/defaults import ${lib.escapeShellArg "${config.home.homeDirectory}/Library/Group Containers/${suite}/Library/Preferences/${suite}"} ${pkgs.writeText "${suite}.plist" (plist keys)}
-        '')
-        groupDefaults));
 
       # --- [SCREEN_CAPTURE_HINTS]
       screenCaptureHints = lib.hm.dag.entryAfter ["writeBoundary"] ''

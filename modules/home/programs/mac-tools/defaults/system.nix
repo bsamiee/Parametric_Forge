@@ -1,4 +1,5 @@
 {
+  applications,
   config,
   lib,
   pkgs,
@@ -9,7 +10,6 @@
   preferences = "${home}/Library/Preferences";
   support = "${home}/Library/Application Support";
   sd = lib.getExe pkgs.sd;
-  dvaPreferenceLine = "27.0";
   dvaDebugRows = {
     "After Effects (Beta)" = {
       "dvaappsupport.feature.AE.MCPServer" = ["1" ""];
@@ -75,19 +75,21 @@ in {
       if /usr/bin/pgrep -qf '\.app/Contents/MacOS/(After Effects|Adobe Premiere Pro|Adobe Media Encoder) \(Beta\)'; then
         noteEcho "A DVA beta app is running: its Debug Database rows and Premiere MCP preferences wait for the next switch"
       else
-        ${lib.concatStrings (lib.mapAttrsToList (app: rows: let
-        file = lib.escapeShellArg "${preferences}/Adobe/${app}/${dvaPreferenceLine}/Debug Database.txt";
-      in
-        lib.concatStrings (lib.mapAttrsToList (key: values: let
-            row = lib.escapeShellArg (lib.concatStringsSep "\t" ([key] ++ values));
-          in ''
-            if [ -f ${file} ] && ! /usr/bin/grep -qxF ${row} ${file}; then
-              run ${sd} -A ${lib.escapeShellArg "(?m)^${lib.escapeRegex key}\\t[^\\n]*\\n"} "" ${file}
-              [ -n "''${DRY_RUN:-}" ] || printf '%s\n' ${row} >> ${file}
-            fi
-          '')
-          rows))
-      dvaDebugRows)}
+        ${lib.concatStrings (lib.mapAttrsToList (app: rows: ''
+          for f in ${lib.escapeShellArg "${preferences}/Adobe/${app}"}/*/Debug\ Database.txt; do
+            [ -f "$f" ] || continue
+            ${lib.concatStrings (lib.mapAttrsToList (key: values: let
+              row = lib.escapeShellArg (lib.concatStringsSep "\t" ([key] ++ values));
+            in ''
+              if ! /usr/bin/grep -qxF ${row} "$f"; then
+                run ${sd} -A ${lib.escapeShellArg "(?m)^${lib.escapeRegex key}\\t[^\\n]*\\n"} "" "$f"
+                [ -n "''${DRY_RUN:-}" ] || printf '%s\n' ${row} >> "$f"
+              fi
+            '')
+            rows)}
+          done
+        '')
+        dvaDebugRows)}
         for f in ${lib.escapeShellArg "${home}/Documents/Adobe"}/Premiere\ Pro\ \(Beta\)/*/Profile-*/Adobe\ Premiere\ Pro\ \(Beta\)\ Prefs; do
           [ -f "$f" ] || continue
           if /usr/bin/grep -qF '<HSL.Prefs.McpEnabled>false<' "$f"; then
@@ -138,21 +140,6 @@ in {
         /usr/bin/cmp -s "$updated" "$xcu" || run /bin/cp "$updated" "$xcu"
         rm -f "$updated"
       fi
-    '';
-    setSyntaxHighlightDefaults = lib.hm.dag.entryAfter ["setDarwinDefaults"] ''
-      run /usr/bin/defaults import ${lib.escapeShellArg "${preferences}/org.sbarex.SourceCodeSyntaxHighlight"} ${pkgs.writeText "syntax-highlight-renderer.plist" (lib.generators.toPlist {escape = true;} {
-        format = "html";
-        "theme-dark" = "base16/dracula";
-        "font-family" = typography.roles.${typography.surfaces.quicklook.family};
-        "font-size" = typography.surfaces.quicklook.size;
-        "word-wrap" = 2;
-        "word-wrap-hard" = false;
-        "line-numbers" = true;
-        "line-fill-zero" = false;
-        "indent-guides" = true;
-        interactive = true;
-        about = false;
-      })}
     '';
   };
   targets.darwin.defaults = {
@@ -238,6 +225,8 @@ in {
       PasswordManagerEnabled = false;
       ShowFullUrlsInAddressBar = true;
     };
+    "${home}/Library/Group Containers/8C7439RJLG.group.codes.rambo.AirBuddy/Library/Preferences/8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
+    ${applications.tailscale.id}.TailscaleStartOnLogin = true;
     "com.lujjjh.LinearMouse" = {
       showInDock = false;
       menuBarBatteryDisplayMode = "\"below20\"";
@@ -274,6 +263,19 @@ in {
       SUEnableAutomaticChecks = true;
       SUAutomaticallyUpdate = true;
       SUSendProfileInfo = false;
+    };
+    "${preferences}/org.sbarex.SourceCodeSyntaxHighlight" = {
+      format = "html";
+      "theme-dark" = "base16/dracula";
+      "font-family" = typography.roles.${typography.surfaces.quicklook.family};
+      "font-size" = typography.surfaces.quicklook.size;
+      "word-wrap" = 2;
+      "word-wrap-hard" = false;
+      "line-numbers" = true;
+      "line-fill-zero" = false;
+      "indent-guides" = true;
+      interactive = true;
+      about = false;
     };
     # --- [VIRTUALIZATION]
     "com.parallels.Parallels Desktop" = {
