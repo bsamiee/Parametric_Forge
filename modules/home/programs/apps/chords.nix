@@ -125,6 +125,7 @@
     [modes.locked.key ''SwitchToMode "Locked";'' "locked mode" ["lock" 10]]
     ["i" "ToggleSessionCard;" null ["attention inbox" 104]]
     [next.key next.kdl null ["next pane that needs you" 106]]
+    ["a" ''Run "atuin" "resume" { floating true; close_on_exit true; }; SwitchToMode "Normal";'' null ["resume agent thread" 108]]
     {
       t = [cheatsheetKey null null ["cheatsheet" 120]];
       body = cheatsheetBody;
