@@ -45,13 +45,42 @@ in {
     background = true;
     browser = {
       browserName = "chromium";
-      contextOptions.userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromiumMajor}.0.0.0 Safari/537.36";
+      contextOptions = {
+        bypassCSP = true;
+        ignoreHTTPSErrors = true;
+        permissions = [
+          "accelerometer"
+          "ambient-light-sensor"
+          "background-sync"
+          "camera"
+          "clipboard-read"
+          "clipboard-write"
+          "geolocation"
+          "gyroscope"
+          "local-fonts"
+          "local-network-access"
+          "magnetometer"
+          "microphone"
+          "midi"
+          "midi-sysex"
+          "notifications"
+          "payment-handler"
+          "screen-wake-lock"
+          "storage-access"
+        ];
+        userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromiumMajor}.0.0.0 Safari/537.36";
+      };
     };
+    console.level = "debug";
     filePaths = "absolute";
     outputDir = "${config.xdg.stateHome}/playwright/cli";
     outputMaxSize = 268435456;
     timeouts.idle = 3600000;
   };
+  home.activation.installPlaywrightBrowsers = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    run --silence ${lib.getExe commands.playwright} install \
+      || echo "playwright: browser builds of ${toolRows.playwright.version} are not installed (the download failed), the next switch retries" >&2
+  '';
 
   # --- [M365_CLI]
   xdg.configFile."configstore/cli-m365-config.json".text = builtins.toJSON {
