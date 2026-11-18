@@ -13,6 +13,7 @@ cask "mrv2" do
   end
 
   depends_on arch: :arm64
+  depends_on formula: "libidn2"
   depends_on :macos
 
   app "mrv2.app"
