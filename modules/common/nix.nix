@@ -14,6 +14,7 @@ in {
     customSettings = {
       trusted-users = ["root" "@admin"];
       nix-path = ["nixpkgs=flake:nixpkgs"];
+      extra-experimental-features = ["pipe-operators" "provenance"];
 
       # --- [USER_DIRECTORIES]
       use-xdg-base-directories = true;

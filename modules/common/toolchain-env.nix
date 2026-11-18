@@ -117,6 +117,11 @@
           PDFCPU_CONFIG_ROOT = xdgConfigHome;
           AB_AV1_TEMP_DIR = "${xdgCacheHome}/ab-av1";
           PROJ_NETWORK = "ON";
+          BLENDER_SYSTEM_SCRIPTS = "${xdgDataHome}/blender/scripts";
+
+          # --- [DIAGNOSTICS]
+          RUST_BACKTRACE = "1";
+          RUST_LIB_BACKTRACE = "0";
         };
       session = {
         BAT_PAGER = "less -RFXK";

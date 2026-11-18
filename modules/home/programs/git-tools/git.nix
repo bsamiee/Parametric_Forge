@@ -58,7 +58,11 @@ in {
 
     settings = {
       user = {inherit (identity) name email;};
-      init.defaultBranch = "main";
+      init = {
+        defaultBranch = "main";
+        defaultRefFormat = "files";
+      };
+      feature.experimental = true;
 
       pull.rebase = true;
 
