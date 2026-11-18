@@ -77,8 +77,7 @@
         "Bookmark All Tabs…" = "@~$d";
         "Bookmark This Tab…" = "@$d";
         "Close Other Tabs" = "@$k";
-        "Collapse Vertical Tabs" = "@s";
-        "Pin Tab" = "@d";
+        "New Tab" = "@~t";
         "Save Page As…" = "@~$s";
       };
       PasswordManagerEnabled = false;
