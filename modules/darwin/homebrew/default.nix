@@ -23,6 +23,7 @@ in {
         HOMEBREW_NO_EMOJI=1
         HOMEBREW_NO_ASK=1
         HOMEBREW_CLEANUP_MAX_AGE_DAYS=3
+        HOMEBREW_CLEANUP_PERIODIC_FULL_DAYS=1
         HOMEBREW_UPGRADE_GREEDY_CASKS=${toString (map (cask: lib.last (lib.splitString "/" cask.name)) (lib.filter (cask: cask.greedy == true) config.homebrew.casks))}
       '';
     };
