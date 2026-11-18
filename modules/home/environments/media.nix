@@ -1,18 +1,9 @@
 {
   config,
   pkgs,
-  toolchainEnvFor,
+  toolchainEnv,
   ...
-}: let
-  inherit
-    (toolchainEnvFor {
-      home = config.home.homeDirectory;
-      username = config.home.username;
-      xdgCacheHome = config.xdg.cacheHome;
-    })
-    fontDirectories
-    ;
-in {
+}: {
   xdg.configFile."fontconfig/fonts.conf".source = (pkgs.formats.xml {}).generate "fonts.conf" {
     fontconfig = {
       include =
@@ -23,7 +14,7 @@ in {
           "${pkgs.fontconfig.out}/etc/fonts/fonts.conf"
           "${pkgs.fontconfig.out}/etc/fonts/conf.d"
         ];
-      dir = fontDirectories;
+      dir = toolchainEnv.fontDirectories;
       cachedir = "${config.xdg.cacheHome}/fontconfig";
       selectfont.rejectfont.glob = "${config.home.homeDirectory}/Library/Fonts/HomeManager/*";
     };

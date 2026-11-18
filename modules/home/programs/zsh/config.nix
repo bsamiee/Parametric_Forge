@@ -1,18 +1,10 @@
 {
   config,
-  toolchainEnvFor,
+  toolchainEnv,
   lib,
   opSessionCache,
   ...
 }: let
-  toolchainEnv = toolchainEnvFor {
-    home = config.home.homeDirectory;
-    username = config.home.username;
-    xdgCacheHome = config.xdg.cacheHome;
-    xdgConfigHome = config.xdg.configHome;
-    xdgDataHome = config.xdg.dataHome;
-    xdgStateHome = config.xdg.stateHome;
-  };
   sessionRows = removeAttrs (toolchainEnv.sessionEnv // toolchainEnv.sharedEnv) (builtins.attrNames toolchainEnv.runtimeEnv);
   envStamp = builtins.substring 0 16 (builtins.hashString "sha256" (builtins.toJSON sessionRows));
   mise = lib.getExe config.programs.mise.package;

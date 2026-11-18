@@ -18,7 +18,7 @@ in {
           inputs.home-manager.darwinModules.home-manager
           ../modules/common
           ../modules/darwin
-          ({toolchainEnvFor, ...}: {
+          ({toolchainEnv, ...}: {
             nixpkgs.pkgs = pkgs;
             documentation.enable = false;
 
@@ -44,7 +44,7 @@ in {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = {inherit inputs host toolchainEnvFor;};
+              extraSpecialArgs = {inherit host toolchainEnv;};
               users.${host.user.name} = {
                 imports = [
                   inputs.nix-index-database.homeModules.nix-index

@@ -1,20 +1,12 @@
 {
   config,
   launchdAgent,
-  toolchainEnvFor,
+  toolchainEnv,
   lib,
   pkgs,
   sshAgentSocket,
   ...
 }: let
-  toolchainEnv = toolchainEnvFor {
-    home = config.home.homeDirectory;
-    username = config.home.username;
-    xdgCacheHome = config.xdg.cacheHome;
-    xdgConfigHome = config.xdg.configHome;
-    xdgDataHome = config.xdg.dataHome;
-    xdgStateHome = config.xdg.stateHome;
-  };
   guiEnvRows =
     toolchainEnv.sharedEnv
     // {
@@ -76,33 +68,7 @@ in {
 
     home.packages = [toolchainEnv.editor];
 
-    home.sessionVariables =
-      toolchainEnv.sessionEnv
-      // {
-        # --- [TOOL_CONFIGURATIONS]
-        STARSHIP_LOG = "error";
-        EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
-        ATUIN_LOG = "error";
-        CARAPACE_MATCH = "1";
-        _ZO_DATA_DIR = "${config.xdg.dataHome}/zoxide";
-        _ZO_RESOLVE_SYMLINKS = "1";
-        _ZO_EXCLUDE_DIRS = "${config.home.homeDirectory}:/private/tmp:/private/tmp/*:/private/var/tmp/*:/private/var/folders/*:/usr/bin/*:/usr/sbin/*:/sbin/*:/bin/*";
-
-        # --- [FZF_FORGIT_CONFIGURATION]
-        FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
-        FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
-        FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
-        FORGIT_RESET_HEAD_FZF_OPTS = "--border-label='[GIT RESET]'";
-        FORGIT_CHECKOUT_FILE_FZF_OPTS = "--border-label='[GIT CHECKOUT]'";
-        FORGIT_STASH_FZF_OPTS = "--border-label='[GIT STASH]'";
-        FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
-        FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
-        FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
-        FORGIT_FZF_DEFAULT_OPTS = ''
-          --height=80%
-          --preview-window=right:60%:border-bold
-        '';
-      };
+    home.sessionVariables = toolchainEnv.sessionEnv;
 
     # --- [GUI_SESSION_ENVIRONMENT]
     _module.args.guiSetenv = guiSetenv;

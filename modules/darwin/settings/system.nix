@@ -1,20 +1,12 @@
 {
   config,
   lib,
-  toolchainEnvFor,
+  toolchainEnv,
   host,
   ...
 }: let
   inherit (config.system) primaryUser;
   userHome = config.home-manager.users.${primaryUser};
-  toolchainEnv = toolchainEnvFor {
-    home = userHome.home.homeDirectory;
-    username = primaryUser;
-    xdgCacheHome = userHome.xdg.cacheHome;
-    xdgConfigHome = userHome.xdg.configHome;
-    xdgDataHome = userHome.xdg.dataHome;
-    xdgStateHome = userHome.xdg.stateHome;
-  };
 in {
   system = {
     defaults = {

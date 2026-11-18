@@ -9,6 +9,23 @@
 in {
   home.packages = [pkgs.zsh-forgit];
 
+  # --- [FORGIT]
+  home.sessionVariables = {
+    FORGIT_ADD_FZF_OPTS = "--border-label='[GIT ADD]'";
+    FORGIT_DIFF_FZF_OPTS = "--border-label='[GIT DIFF]'";
+    FORGIT_LOG_FZF_OPTS = "--border-label='[GIT LOG]'";
+    FORGIT_RESET_HEAD_FZF_OPTS = "--border-label='[GIT RESET]'";
+    FORGIT_CHECKOUT_FILE_FZF_OPTS = "--border-label='[GIT CHECKOUT]'";
+    FORGIT_STASH_FZF_OPTS = "--border-label='[GIT STASH]'";
+    FORGIT_CHERRY_PICK_FZF_OPTS = "--border-label='[GIT CHERRY-PICK]'";
+    FORGIT_REBASE_FZF_OPTS = "--border-label='[GIT REBASE]'";
+    FORGIT_FIXUP_FZF_OPTS = "--border-label='[GIT FIXUP]'";
+    FORGIT_FZF_DEFAULT_OPTS = ''
+      --height=80%
+      --preview-window=right:60%:border-bold
+    '';
+  };
+
   programs.zsh = {
     siteFunctions = {
       gwt = ''

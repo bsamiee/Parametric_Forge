@@ -1,4 +1,8 @@
-{theme, ...}: let
+{
+  config,
+  theme,
+  ...
+}: let
   inherit (theme) roles palette;
 
   ezaTheme = {
@@ -140,4 +144,6 @@ in {
     ];
     theme = ezaTheme;
   };
+
+  home.sessionVariables.EZA_CONFIG_DIR = "${config.xdg.configHome}/eza";
 }

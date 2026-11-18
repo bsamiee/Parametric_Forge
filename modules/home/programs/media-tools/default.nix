@@ -1,18 +1,9 @@
 {
-  config,
   lib,
   pkgs,
-  toolchainEnvFor,
+  toolchainEnv,
   ...
 }: let
-  inherit
-    (toolchainEnvFor {
-      home = config.home.homeDirectory;
-      username = config.home.username;
-      xdgCacheHome = config.xdg.cacheHome;
-    })
-    designFontDirectory
-    ;
   czkawkaCli = pkgs.czkawka.overrideAttrs {
     cargoBuildFlags = ["--package" "czkawka_cli"];
     buildInputs = [];
@@ -25,7 +16,7 @@
     nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
       for command in resvg usvg; do
-        wrapProgram "$out/bin/$command" --add-flags ${lib.escapeShellArg "--use-fonts-dir ${lib.escapeShellArg designFontDirectory}"}
+        wrapProgram "$out/bin/$command" --add-flags ${lib.escapeShellArg "--use-fonts-dir ${lib.escapeShellArg toolchainEnv.designFontDirectory}"}
       done
     '';
   };

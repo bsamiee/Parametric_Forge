@@ -1,25 +1,14 @@
 {
-  config,
   lib,
   pkgs,
-  toolchainEnvFor,
+  toolchainEnv,
   theme,
   chords,
   host,
   ...
 }: let
   inherit (theme) roles;
-  inherit
-    (toolchainEnvFor {
-      home = config.home.homeDirectory;
-      inherit (config.home) username;
-      xdgCacheHome = config.xdg.cacheHome;
-      xdgConfigHome = config.xdg.configHome;
-      xdgDataHome = config.xdg.dataHome;
-      xdgStateHome = config.xdg.stateHome;
-    })
-    pathEntries
-    ;
+  inherit (toolchainEnv) pathEntries;
 
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;

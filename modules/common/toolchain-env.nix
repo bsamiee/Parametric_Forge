@@ -1,20 +1,16 @@
 {
+  config,
   host,
   lib,
   pkgs,
   ...
 }: {
-  _module.args.toolchainEnvFor = {
-    home,
-    username,
-    xdgCacheHome,
-    xdgConfigHome ? "${home}/.config",
-    xdgDataHome ? "${home}/.local/share",
-    xdgStateHome ? "${home}/.local/state",
-  }: let
+  _module.args.toolchainEnv = let
+    inherit (host.user) home;
+    inherit (config.home-manager.users.${host.user.name}) xdg;
     userPathEntries = [
       "${home}/.local/bin"
-      "/etc/profiles/per-user/${username}/bin"
+      "/etc/profiles/per-user/${host.user.name}/bin"
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"
       "/opt/homebrew/bin"
@@ -27,9 +23,8 @@
       "/usr/sbin"
       "/sbin"
     ];
-    shimPath = "${xdgDataHome}/mise/shims";
-    pathEntries = userPathEntries ++ [shimPath] ++ fallbackPathEntries;
-    runtimeEnv = lib.concatMapAttrs (_: package: package.runtimeEnvAt "/etc/profiles/per-user/${username}") {inherit (pkgs) energyplus openstudio;};
+    pathEntries = userPathEntries ++ ["${xdg.dataHome}/mise/shims"] ++ fallbackPathEntries;
+    runtimeEnv = lib.concatMapAttrs (_: package: package.runtimeEnvAt "/etc/profiles/per-user/${host.user.name}") {inherit (pkgs) energyplus openstudio;};
     designFontDirectory = "${home}/Library/Application Support/design-tools/fonts";
     fontDirectories = [
       "/System/Library/Fonts"
@@ -49,10 +44,10 @@
         // {
           # --- [LOCALE_XDG]
           LANG = "en_US.UTF-8";
-          XDG_CONFIG_HOME = xdgConfigHome;
-          XDG_CACHE_HOME = xdgCacheHome;
-          XDG_DATA_HOME = xdgDataHome;
-          XDG_STATE_HOME = xdgStateHome;
+          XDG_CONFIG_HOME = xdg.configHome;
+          XDG_CACHE_HOME = xdg.cacheHome;
+          XDG_DATA_HOME = xdg.dataHome;
+          XDG_STATE_HOME = xdg.stateHome;
 
           # --- [EDITOR_PAGER]
           EDITOR = editor.name;
@@ -62,26 +57,27 @@
 
           # --- [SERVICE_CLIENTS]
           GOG_KEYRING_BACKEND = "file";
-          GAMCFGDIR = "${xdgConfigHome}/gam";
+          GAMCFGDIR = "${xdg.configHome}/gam";
           DOPPLER_ENABLE_VERSION_CHECK = "false";
           GH_NO_UPDATE_NOTIFIER = "1";
           GH_NO_EXTENSION_UPDATE_NOTIFIER = "1";
+          HOMEBREW_NO_AUTO_UPDATE = "1";
           HOSTINGER_FORMAT = "json";
           HOSTINGER_NO_INPUT = "true";
           OFFICECLI_SKIP_UPDATE = "1";
           OFFICECLI_NO_AUTO_INSTALL = "1";
           CF_SEND_TELEMETRY = "false";
           CTX7_TELEMETRY_DISABLED = "1";
-          NPM_CONFIG_CACHE = "${xdgCacheHome}/npm";
+          NPM_CONFIG_CACHE = "${xdg.cacheHome}/npm";
           POWERSHELL_UPDATECHECK = "Off";
           POWERSHELL_TELEMETRY_OPTOUT = "1";
           CLIMICROSOFT365_NOUPDATE = "1";
           CODERABBIT_CLI_DISABLE_AUTO_UPDATE = "true";
           PDFM_MCP_TELEMETRY_DISABLED = "true";
           NOTEBOOKLM_MCP_ALLOWED_ROOTS = "/Users:/Volumes:/private";
-          TLRC_CONFIG = "${xdgConfigHome}/tlrc/config.toml";
+          TLRC_CONFIG = "${xdg.configHome}/tlrc/config.toml";
           RCLONE_ASK_PASSWORD = "false";
-          RCLONE_CACHE_DIR = "${xdgCacheHome}/rclone";
+          RCLONE_CACHE_DIR = "${xdg.cacheHome}/rclone";
           RCLONE_CONFIG_B2_TYPE = "b2";
           RCLONE_CONFIG_R2_TYPE = "s3";
           RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
@@ -91,31 +87,31 @@
           __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = host.tailnet.node;
 
           # --- [SEARCH_DATA]
-          RIPGREP_CONFIG_PATH = "${xdgConfigHome}/ripgrep/config";
+          RIPGREP_CONFIG_PATH = "${xdg.configHome}/ripgrep/config";
           DFT_UNSTABLE = "yes";
           DFT_DISPLAY = "inline";
-          QSV_CACHE_DIR = "${xdgCacheHome}/qsv";
+          QSV_CACHE_DIR = "${xdg.cacheHome}/qsv";
           QSV_DOTENV_PATH = "<NONE>";
           QSV_ERROR_FORMAT = "json";
-          PSQLRC = "${xdgConfigHome}/psql/psqlrc";
-          PSQL_HISTORY = "${xdgStateHome}/psql/history";
-          PGSERVICEFILE = "${xdgConfigHome}/pg/pg_service.conf";
-          PGPASSFILE = "${xdgConfigHome}/pg/pgpass";
+          PSQLRC = "${xdg.configHome}/psql/psqlrc";
+          PSQL_HISTORY = "${xdg.stateHome}/psql/history";
+          PGSERVICEFILE = "${xdg.configHome}/pg/pg_service.conf";
+          PGPASSFILE = "${xdg.configHome}/pg/pgpass";
 
           # --- [FONTS_MEDIA]
-          FONTCONFIG_FILE = "${xdgConfigHome}/fontconfig/fonts.conf";
+          FONTCONFIG_FILE = "${xdg.configHome}/fontconfig/fonts.conf";
           TYPST_FONT_PATHS = designFontDirectory;
-          TYPST_PACKAGE_PATH = "${xdgDataHome}/typst/packages";
-          TYPST_PACKAGE_CACHE_PATH = "${xdgCacheHome}/typst/packages";
+          TYPST_PACKAGE_PATH = "${xdg.dataHome}/typst/packages";
+          TYPST_PACKAGE_CACHE_PATH = "${xdg.cacheHome}/typst/packages";
           VLC_FONT_DIR = designFontDirectory;
           VLC_MISSING_FONTS = "error";
-          EXIFTOOL_HOME = "${xdgConfigHome}/exiftool";
-          CZKAWKA_CONFIG_PATH = "${xdgConfigHome}/czkawka";
-          CZKAWKA_CACHE_PATH = "${xdgCacheHome}/czkawka";
-          PDFCPU_CONFIG_ROOT = xdgConfigHome;
-          AB_AV1_TEMP_DIR = "${xdgCacheHome}/ab-av1";
+          EXIFTOOL_HOME = "${xdg.configHome}/exiftool";
+          CZKAWKA_CONFIG_PATH = "${xdg.configHome}/czkawka";
+          CZKAWKA_CACHE_PATH = "${xdg.cacheHome}/czkawka";
+          PDFCPU_CONFIG_ROOT = xdg.configHome;
+          AB_AV1_TEMP_DIR = "${xdg.cacheHome}/ab-av1";
           PROJ_NETWORK = "ON";
-          BLENDER_SYSTEM_SCRIPTS = "${xdgDataHome}/blender/scripts";
+          BLENDER_SYSTEM_SCRIPTS = "${xdg.dataHome}/blender/scripts";
 
           # --- [DIAGNOSTICS]
           RUST_BACKTRACE = "1";
@@ -124,8 +120,8 @@
       session = {
         BAT_PAGER = "less -RFXK";
         MANPAGER = "sh -c 'col -bx | bat -plman'";
-        SQLITE_HISTORY = "${xdgStateHome}/sqlite/history";
-        NODE_REPL_HISTORY = "${xdgStateHome}/node_repl_history";
+        SQLITE_HISTORY = "${xdg.stateHome}/sqlite/history";
+        NODE_REPL_HISTORY = "${xdg.stateHome}/node_repl_history";
         INFOPATH = "/opt/homebrew/share/info:";
       };
     };
@@ -135,9 +131,9 @@
       designFontDirectory
       fontDirectories
       runtimeEnv
+      pathEntries
       ;
 
-    inherit pathEntries shimPath;
     sharedEnv = runtimeEnv // envByClass.all;
     sessionEnv = envByClass.session;
   };

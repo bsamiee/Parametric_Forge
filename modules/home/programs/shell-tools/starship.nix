@@ -14,6 +14,8 @@
   badges = projections.contextBadges;
   badgeRole = b: lib.last (lib.splitString "." b.role);
 in {
+  home.sessionVariables.STARSHIP_LOG = "error";
+
   programs.starship = {
     enable = true;
     validateFiles.config = true;

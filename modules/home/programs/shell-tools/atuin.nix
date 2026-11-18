@@ -48,6 +48,8 @@ in {
     ];
   };
 
+  home.sessionVariables.ATUIN_LOG = "error";
+
   # --- [PTY_PROXY]
   programs.zsh.initContent = lib.mkOrder 0 ''
     eval "$(${atuin} pty-proxy init zsh)"

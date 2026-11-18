@@ -41,9 +41,6 @@ in {
       "rive-app/tap"
     ];
 
-    # --- [COMMAND_BEHAVIOR]
-    global.autoUpdate = false;
-
     # --- [ACTIVATION_BEHAVIOR]
     onActivation = {
       autoUpdate = true;
