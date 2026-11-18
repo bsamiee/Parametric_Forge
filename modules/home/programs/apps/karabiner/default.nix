@@ -3,11 +3,34 @@
   lib,
   pkgs,
   chords,
+  applications,
   ...
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  chordRules = chords.karabiner.rules;
+  chordRules =
+    chords.karabiner.rules
+    ++ [
+      {
+        description = "Chrome: Cmd+T opens the Raycast Chrome new-tab command";
+        manipulators = [
+          {
+            type = "basic";
+            from = {
+              key_code = "t";
+              modifiers.mandatory = ["command"];
+            };
+            to = [{shell_command = "/usr/bin/open 'raycast://extensions/Codely/google-chrome/new-tab'";}];
+            conditions = [
+              {
+                type = "frontmost_application_if";
+                bundle_identifiers = ["^${lib.escapeRegex applications.chrome.id}$"];
+              }
+            ];
+          }
+        ];
+      }
+    ];
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [
