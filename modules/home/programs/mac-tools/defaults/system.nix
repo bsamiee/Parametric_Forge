@@ -142,6 +142,15 @@ in {
         rm -f "$updated"
       fi
     '';
+    setParallelsServer = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      prlsrvctl="/Applications/Parallels Desktop.app/Contents/MacOS/prlsrvctl"
+      if server=$("$prlsrvctl" info --json 2>/dev/null) && user=$("$prlsrvctl" user list --json 2>/dev/null); then
+        vmHome=${lib.escapeShellArg "${home}/Parallels"}
+        [ "$(${lib.getExe pkgs.jq} -r '.[0].DEF_VM_HOME' <<<"$user")" = "$vmHome" ] || run "$prlsrvctl" user set --def-vm-home "$vmHome"
+        [ "$(${lib.getExe pkgs.jq} -r '."Verbose log"' <<<"$server")" = on ] || run "$prlsrvctl" set --verbose-log on
+        [ "$(${lib.getExe pkgs.jq} -r '."CEP mechanism"' <<<"$server")" = off ] || run "$prlsrvctl" set --cep off
+      fi
+    '';
   };
   targets.darwin.defaults = {
     # --- [ACTIVITY_MONITOR]
@@ -280,6 +289,8 @@ in {
     };
     # --- [VIRTUALIZATION]
     "com.parallels.Parallels Desktop" = {
+      "Application preferences.Check for updates" = 2;
+      "Application preferences.Download updates automatically" = 1;
       "ProductPromo.ForcePromoOff" = 1;
       "WelcomeScreenPromo.PromoOff" = 1;
     };
