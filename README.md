@@ -184,6 +184,6 @@ Day-2 rebuilds: `redeploy switch`.
 ## [14]-[MAINTENANCE]
 
 - Format: `nix fmt -- --ci` — full proof: `nix flake check`.
-- Inputs, in one pass on a clean tree: `sudo determinate-nixd upgrade`, then `nix flake update` and `nix shell .#nvfetcher-current -c nvfetcher -o overlays/_sources -k =(printf '[keys]\ngithub = "%s"\n' "$(gh auth token)")` together (zsh `=()` hands nvchecker a keyfile every check reads), prune each overlay row nixpkgs caught up to and advance the rest (after a failed build, `determinate-nixd fix hashes --auto-apply` rewrites the dependency hash nvfetcher cannot compute, `ctypesgenHash`), one `redeploy switch`, the Homebrew pass, then `nh clean all --keep 1`.
+- Inputs, in one pass on a clean tree: `sudo determinate-nixd upgrade`, then `nix flake update` and `nix shell .#nvfetcher-current -c nvfetcher -o overlays/_sources -k =(printf '[keys]\ngithub = "%s"\n' "$(gh auth token)")` together (zsh `=()` hands nvchecker a keyfile every check reads), prune each overlay row nixpkgs caught up to and advance the rest (after a failed build, `determinate-nixd fix hashes --auto-apply` rewrites the dependency hash nvfetcher cannot compute, `ctypesgenHash`), one `redeploy switch`, `npm cache npx rm --force` so each `npm-tools` launcher fetches only its moved pin again, the Homebrew pass, then `nh clean all --keep 1`.
 
 Every family moves through the ordered update sequence on demand; Homebrew currency runs `brew update && brew upgrade && brew cleanup`.
