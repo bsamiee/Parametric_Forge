@@ -122,6 +122,7 @@ final: prev: let
   binaryInstall = {
     binaries,
     reportsVersion ? true,
+    checkArg ? "--version",
   }: {row, ...}:
     {
       dontUnpack = true;
@@ -144,7 +145,7 @@ final: prev: let
       else {
         installCheckPhase = ''
           runHook preInstallCheck
-          "$out/bin/${row.mainProgram}" --version
+          "$out/bin/${row.mainProgram}" ${checkArg}
           runHook postInstallCheck
         '';
       }
@@ -159,6 +160,12 @@ final: prev: let
       binary = "hostinger";
       completion = "completion";
       man = "manpages/*.1";
+      versionArg = "version";
+    };
+    ipsw-current = cliRelease {
+      binary = "ipsw";
+      completion = "completion";
+      man = "manpages/*.1.gz";
       versionArg = "version";
     };
     gh-current = cliRelease {
@@ -364,6 +371,27 @@ final: prev: let
     };
     shaperglot-current = binaryInstall {binaries = ["shaperglot"];};
     diffenator3 = binaryInstall {binaries = ["diffenator3" "diff3proof"];};
+    retoc = binaryInstall {binaries = ["retoc"];};
+    macmon-current = binaryInstall {binaries = ["macmon"];};
+    rh-transfer = binaryInstall {
+      binaries = ["rh-transfer"];
+      reportsVersion = false;
+      checkArg = "--help";
+    };
+    ifcconvert = {row, ...}: {
+      dontUnpack = true;
+      installPhase = ''
+        runHook preInstall
+        mkdir -p "$out/bin" "$out/libexec"
+        cp -R "$src" "$out/libexec/ifcconvert"
+        ln -s "$out/libexec/ifcconvert/${row.mainProgram}" "$out/bin/${row.mainProgram}"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/${row.mainProgram}";
+    };
+    swift-section = args: cliRelease {binary = "swift-section";} args // {nativeBuildInputs = [prev.installShellFiles prev.unzip];};
     fontc-current = cliRelease {binary = "fontc";};
     energyplus = optRuntime;
     openstudio = optRuntime;

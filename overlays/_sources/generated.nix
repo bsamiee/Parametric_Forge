@@ -22,6 +22,14 @@
       sha256 = "sha256-CDtQShzYZei/u0ITSjQxjOQu9RMNrr/FsOLy+0RDJsU=";
     };
   };
+  aio-cli = {
+    pname = "aio-cli";
+    version = "11.2.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@adobe/aio-cli/-/aio-cli-11.2.0.tgz";
+      sha256 = "sha256-FqGDbKdL90KE8mbG8WS9KqAOFSBssjHYwC+9hCIZccg=";
+    };
+  };
   aredotna-cli = {
     pname = "aredotna-cli";
     version = "0.12.0";
@@ -36,6 +44,22 @@
     src = fetchTarball {
       url = "https://github.com/atuinsh/atuin/releases/download/v18.24.8/atuin-aarch64-apple-darwin.tar.gz";
       sha256 = "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=";
+    };
+  };
+  blender-asset-tracer = {
+    pname = "blender-asset-tracer";
+    version = "2.2.1";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/b/blender-asset-tracer/blender_asset_tracer-2.2.1.tar.gz";
+      sha256 = "sha256-tPH6ul05EoqZdfsps0ruas9nI8/sDwc7vj026G25QjA=";
+    };
+  };
+  chrome-devtools-mcp = {
+    pname = "chrome-devtools-mcp";
+    version = "1.13.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-1.13.0.tgz";
+      sha256 = "sha256-kVjEtKh5LLUirkb3buqpSRzgRhajrpcimhYnfgKkrqQ=";
     };
   };
   cloudflare-cf = {
@@ -212,6 +236,14 @@
       sha256 = "sha256-DFs5IdM2dSVlklHCmJOY3yxGPwU4m7o1eEp6RcF9V6c=";
     };
   };
+  electron-asar = {
+    pname = "electron-asar";
+    version = "4.3.2";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@electron/asar/-/asar-4.3.2.tgz";
+      sha256 = "sha256-BAgIfDJ4eo2lcXfH94Vl0Wm4CJ8N8ellgPOjPnHYrLg=";
+    };
+  };
   energyplus-aarch64-darwin = {
     pname = "energyplus-aarch64-darwin";
     version = "v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Darwin-macOS14.0-arm64.tar.gz";
@@ -226,6 +258,14 @@
     src = fetchurl {
       url = "https://www.powershellgallery.com/api/v2/package/ExchangeOnlineManagement/3.11.1";
       sha256 = "sha256-C0EmVrdY2OpXl4rz6mzSjbhEMxjIbPUjdVRdQ0HpdZE=";
+    };
+  };
+  firefox-profiler-cli = {
+    pname = "firefox-profiler-cli";
+    version = "0.14.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-0.14.0.tgz";
+      sha256 = "sha256-GdvicgXt7GQ7ghB5ufiIIbiYd+OtPWQxPGy0iDYCLx0=";
     };
   };
   fontc-aarch64-darwin = {
@@ -362,12 +402,60 @@
       sha256 = "sha256-HUa/mxFmiXoVN/A7mV04lHXCNapXisZTTXCCsyKIshE=";
     };
   };
+  ifcconvert-aarch64-darwin = {
+    pname = "ifcconvert-aarch64-darwin";
+    version = "0.9.0post1";
+    src = fetchTarball {
+      url = "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/ifcconvert-0.9.0post1/ifcconvert-0.9.0post1-macosm164.zip";
+      sha256 = "sha256-eLvLrLpN4NWzCBupWAPMNAMN8N5j6f7ppn4L8vQu+Us=";
+    };
+  };
+  ifcquery = {
+    pname = "ifcquery";
+    version = "0.9.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/py3/i/ifcquery/ifcquery-0.9.0-py3-none-any.whl";
+      sha256 = "sha256-2LPFkIwqVk4yffEwY5g7vDMn3KDaNVtCvB98FfzHspE=";
+    };
+  };
+  ifctester = {
+    pname = "ifctester";
+    version = "0.9.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/py3/i/ifctester/ifctester-0.9.0-py3-none-any.whl";
+      sha256 = "sha256-9+V2FdnAe2FlEOVdit88sF34cpVs4ODUapBxAamWgAQ=";
+    };
+  };
+  ipsw-aarch64-darwin = {
+    pname = "ipsw-aarch64-darwin";
+    version = "3.1.749";
+    src = fetchurl {
+      url = "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_arm64.tar.gz";
+      sha256 = "sha256-WSZ/GKV5yvQ192S2+mRlJgLyGqB8jLfIlPwzStCeyuQ=";
+    };
+  };
+  jc = {
+    pname = "jc";
+    version = "1.26.2";
+    src = fetchurl {
+      url = "https://pypi.org/packages/source/j/jc/jc-1.26.2.tar.gz";
+      sha256 = "sha256-blfDAs5V1YYsH3vhwrorqmML6humkPa7gqjH5zS3D8E=";
+    };
+  };
   m365-cli = {
     pname = "m365-cli";
     version = "12.0.0";
     src = fetchurl {
       url = "https://registry.npmjs.org/@pnp/cli-microsoft365/-/cli-microsoft365-12.0.0.tgz";
       sha256 = "sha256-j5bVytavBeuMD1vIW3+cQ6jN5aCRLxP0W2uafyH7iNQ=";
+    };
+  };
+  macmon-aarch64-darwin = {
+    pname = "macmon-aarch64-darwin";
+    version = "0.12.0";
+    src = fetchTarball {
+      url = "https://github.com/vladkens/macmon/releases/download/v0.12.0/macmon-v0.12.0-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-T2QilV4EjxfB0gGdXaBlfQuqpWySNQo1qQTMAMjggqw=";
     };
   };
   mcp-remote = {
@@ -394,6 +482,14 @@
       sha256 = "sha256-5FCfFZ4EkuiQZe3PUvKRjidR41dGIFhgWEaLoFY67Vk=";
     };
   };
+  mozregression = {
+    pname = "mozregression";
+    version = "7.7.0";
+    src = fetchurl {
+      url = "https://pypi.org/packages/source/m/mozregression/mozregression-7.7.0.tar.gz";
+      sha256 = "sha256-5jdIf328nV5HeInkxzufGQoM9vj0Uw56f1Czo2O7eIQ=";
+    };
+  };
   mq-aarch64-darwin = {
     pname = "mq-aarch64-darwin";
     version = "0.10.1";
@@ -408,6 +504,14 @@
     src = fetchurl {
       url = "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoji-0.16.0.tar.gz";
       sha256 = "sha256-VCoyzYfdEuVcXKKboujxCLb2JxcPGcPwUBkDl2IG4bc=";
+    };
+  };
+  nexrender-cli = {
+    pname = "nexrender-cli";
+    version = "1.63.3";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@nexrender/cli/-/cli-1.63.3.tgz";
+      sha256 = "sha256-B6FMqWW+Rxr/Wo/fWYFZZpBP0LQjHZsgA30jy/584dI=";
     };
   };
   nh-aarch64-darwin = {
@@ -566,6 +670,30 @@
       sha256 = "sha256-dkSfB48wGT/OnN9mELd/2hT0Ikyvy98jAkXsDaue8Q0=";
     };
   };
+  psd-tools = {
+    pname = "psd-tools";
+    version = "1.26.1";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/cp313/p/psd-tools/psd_tools-1.26.1-cp313-abi3-macosx_11_0_arm64.whl";
+      sha256 = "sha256-xckzdnLT4xux3b5EAxl/bo2DHx8Qpe0OITjlGdFHdWw=";
+    };
+  };
+  psd2svg = {
+    pname = "psd2svg";
+    version = "0.15.0";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/py3/p/psd2svg/psd2svg-0.15.0-py3-none-any.whl";
+      sha256 = "sha256-QdGFty6bUR/GtTC9KnT4anslNOWNfel9kg9X1E3zrk4=";
+    };
+  };
+  puppeteer-browsers = {
+    pname = "puppeteer-browsers";
+    version = "3.2.7";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-3.2.7.tgz";
+      sha256 = "sha256-Ibov6d5PLMPESxakf9HqzQ/LcXUmXBBhon5muZO6cZ0=";
+    };
+  };
   py-aep = {
     pname = "py-aep";
     version = "0.19.0";
@@ -582,6 +710,14 @@
       sha256 = "sha256-zLUqrCJ3wcRC/m+EYFc7+puMb94zoR4ww5bxOO9P3YE=";
     };
   };
+  rea-agents = {
+    pname = "rea-agents";
+    version = "6.9.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/rea-agents/-/rea-agents-6.9.0.tgz";
+      sha256 = "sha256-MiM4oVBeJVdwKhYBLn1Gq9tXKWQdmJOGYnYt+/t5Jio=";
+    };
+  };
   resvg = {
     pname = "resvg";
     version = "0.50.0";
@@ -594,6 +730,30 @@
       outputHashes = {
         
       };
+    };
+  };
+  retoc-aarch64-darwin = {
+    pname = "retoc-aarch64-darwin";
+    version = "0.1.5";
+    src = fetchTarball {
+      url = "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-aarch64-apple-darwin.tar.xz";
+      sha256 = "sha256-/EVfcSSCBxddfQESg71mI0DUEfxx7KuNLH1tqGOdFas=";
+    };
+  };
+  rh-transfer-aarch64-darwin = {
+    pname = "rh-transfer-aarch64-darwin";
+    version = "0.1.5";
+    src = fetchTarball {
+      url = "https://github.com/mcneel/rhino-transfer/releases/download/v0.1.5/rh-transfer-cli-0.1.5-osx-arm64.zip";
+      sha256 = "sha256-k/4PoVI3jyVK4oAeDMYl+ynSI6e1mIZHJ0F8urnTfEw=";
+    };
+  };
+  rhino-templates = {
+    pname = "rhino-templates";
+    version = "9.0.1";
+    src = fetchurl {
+      url = "https://api.nuget.org/v3-flatcontainer/rhino.templates/9.0.1/rhino.templates.9.0.1.nupkg";
+      sha256 = "sha256-Rz+CzcwpEXTOYUSZ0UI42LPmur/vqUR063A0KTG7qtA=";
     };
   };
   rsync = {
@@ -626,6 +786,14 @@
     src = fetchurl {
       url = "https://github.com/quarylabs/sqruff/releases/download/v0.44.0/sqruff-darwin-aarch64.tar.gz";
       sha256 = "sha256-pCRqGSCAudnW7zp0f848uk2u1C2jyAoJdnDNTtTE+kE=";
+    };
+  };
+  swift-section-aarch64-darwin = {
+    pname = "swift-section-aarch64-darwin";
+    version = "0.24.0";
+    src = fetchurl {
+      url = "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection/releases/download/0.24.0/swift-section-macos-universal.zip";
+      sha256 = "sha256-FB7RXbrf72in8JgX6Yp59ISlr6NNKuB9PlGVbxuasnI=";
     };
   };
   tavily-cli = {

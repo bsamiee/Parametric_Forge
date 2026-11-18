@@ -29,6 +29,11 @@
       done
     '';
   };
+  pins = builtins.fromJSON (builtins.readFile ../../../../overlays/_sources/generated.json);
+  uvRun = name: package: command:
+    pkgs.writeShellScriptBin name ''
+      exec ${pkgs.uv}/bin/uv run -q --no-project --with ${package}==${pins.${package}.version} ${command} "$@"
+    '';
   videoSheets = pkgs.writeShellApplication {
     name = "video-sheets";
     runtimeInputs = [pkgs.ffmpeg-full pkgs.gawk pkgs.imagemagickBig];
@@ -111,11 +116,19 @@ in {
     pkgs.charm-freeze
     pkgs.gifsicle
     pkgs.manim
-    pkgs.meshoptimizer.bin
     pkgs.opencolorio
     pkgs.openexr.bin
     pkgs.openimageio.bin
     pkgs.vhs
+
+    # --- [3D_FILES]
+    pkgs.assimp
+    pkgs.ifcconvert
+    pkgs.repak
+    pkgs.retoc
+    pkgs.rh-transfer
+    (uvRun "blender-asset-tracer" "blender-asset-tracer" "bat")
+    (uvRun "ifctester" "ifctester" "python -I -m ifctester")
   ];
 
   programs = {

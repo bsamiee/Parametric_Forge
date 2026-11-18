@@ -45,27 +45,34 @@ in {
       pkgs.dua-current
       pkgs.duckdb-current
       pkgs.dysk
+      pkgs.firefox-devtools-mcp
       pkgs.flock
       pkgs.fq
       pkgs.gawk
+      pkgs.geckodriver
       pkgs.hexyl
       pkgs.hostinger
       pkgs.hyperfine
+      pkgs.ipsw-current
       pkgs.jq
       pkgs.lychee
-      pkgs.macmon
+      pkgs.macmon-current
+      pkgs.magika-cli
       pkgs.monolith
       pkgs.mq
-      pkgs.oha-current
       pkgs.netcoredbg
+      pkgs.oha-current
+      pkgs.openssl_4_1
       pkgs.ouch
       pkgs.parallel
       pkgs.powershell-current
+      pkgs.radare2
       pkgs.rclone
       pkgs.ripgrep
       pkgs.rsync-current
       pkgs.sd
       pkgs.sshs
+      pkgs.swift-section
       pkgs.tree
       pkgs.tscli-current
       pkgs.uv

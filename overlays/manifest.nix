@@ -222,6 +222,60 @@ in {
       mainProgram = "hostinger";
     };
 
+    swift-section = {
+      version = generatedPins.swift-section-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "swift-section-aarch64-darwin";
+      license = "mit";
+      description = "Swift interface, type metadata, and Objective-C declarations of a Mach-O file or dyld shared cache";
+      homepage = "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection";
+      mainProgram = "swift-section";
+    };
+
+    ifcconvert = {
+      version = generatedPins.ifcconvert-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "ifcconvert-aarch64-darwin" // {stripRoot = false;};
+      license = "lgpl3Plus";
+      description = "IFC geometry to glTF, OBJ, SVG, and STEP";
+      homepage = "https://ifcopenshell.org";
+      mainProgram = "IfcConvert";
+    };
+
+    rh-transfer = {
+      version = generatedPins.rh-transfer-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "rh-transfer-aarch64-darwin";
+      license = "mit";
+      description = "Rhino settings export, import, and restore between versions";
+      homepage = "https://github.com/mcneel/rhino-transfer";
+      mainProgram = "rh-transfer";
+    };
+
+    retoc = {
+      version = generatedPins.retoc-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "retoc-aarch64-darwin";
+      license = "mit";
+      description = "Unreal IoStore container listing, verification, and unpacking";
+      homepage = "https://github.com/trumank/retoc";
+      mainProgram = "retoc";
+    };
+
+    ipsw-current = {
+      version = generatedPins.ipsw-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "ipsw-aarch64-darwin";
+      license = "mit";
+      description = "Mach-O, dyld shared cache, code signature, asset catalog, plist, and crash log reader";
+      homepage = "https://github.com/blacktop/ipsw";
+      mainProgram = "ipsw";
+    };
+
+    macmon-current = {
+      version = generatedPins.macmon-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "macmon-aarch64-darwin" // {stripRoot = false;};
+      license = "mit";
+      description = "Apple Silicon CPU, GPU, ANE, power, disk, network, and battery monitor without sudo";
+      homepage = "https://github.com/vladkens/macmon";
+      mainProgram = "macmon";
+    };
+
     gh-current = {
       version = generatedPins.gh-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "gh-aarch64-darwin";
@@ -476,20 +530,45 @@ in {
     npm-tools = {
       source = "npx";
       rows = {
+        "@adobe/aio-cli" = {
+          inherit (generatedPins.aio-cli) version;
+          commands = ["aio"];
+          license = "Apache-2.0";
+        };
         "@aredotna/cli" = {
           inherit (generatedPins.aredotna-cli) version;
           commands = ["arena"];
           license = "MIT";
+        };
+        "@electron/asar" = {
+          inherit (generatedPins.electron-asar) version;
+          commands = ["asar"];
+          license = "MIT";
+        };
+        "@firefox-devtools/profiler-cli" = {
+          inherit (generatedPins.firefox-profiler-cli) version;
+          commands = ["profiler-cli" "pq"];
+          license = "MPL-2.0";
         };
         "@gltf-transform/cli" = {
           inherit (generatedPins.gltf-transform-cli) version;
           commands = ["gltf-transform"];
           license = "MIT";
         };
+        "@nexrender/cli" = {
+          inherit (generatedPins.nexrender-cli) version;
+          commands = ["nexrender-cli"];
+          license = "MIT";
+        };
         "@pnp/cli-microsoft365" = {
           inherit (generatedPins.m365-cli) version;
           commands = ["m365"];
           license = "MIT";
+        };
+        "@puppeteer/browsers" = {
+          inherit (generatedPins.puppeteer-browsers) version;
+          commands = ["browsers"];
+          license = "Apache-2.0";
         };
         "@tavily/cli" = {
           inherit (generatedPins.tavily-cli) version;
@@ -500,6 +579,12 @@ in {
           inherit (generatedPins.cloudflare-cf) version;
           commands = ["cf"];
           license = "Apache-2.0";
+        };
+        chrome-devtools-mcp = {
+          inherit (generatedPins.chrome-devtools-mcp) version;
+          commands = ["chrome-devtools-mcp" "chrome-devtools"];
+          license = "Apache-2.0";
+          env.CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS = "1";
         };
         ctx7 = {
           inherit (generatedPins.ctx7) version;
@@ -523,6 +608,11 @@ in {
           license = "Apache-2.0";
           env.PLAYWRIGHT_CLI_SESSION = "\${CLAUDE_CODE_SESSION_ID:-\${CODEX_THREAD_ID:-\${ANTIGRAVITY_CONVERSATION_ID:-}}}";
           inherit ((builtins.fromJSON (builtins.readFile (./_sources + "/${generatedPins.playwright-core.extract."browsers.json"}")))) browsers;
+        };
+        rea-agents = {
+          inherit (generatedPins.rea-agents) version;
+          commands = ["rea"];
+          license = "MIT";
         };
       };
     };
@@ -589,6 +679,36 @@ in {
           inherit (generatedPins.py-aep) version;
           extras = [];
           commands = ["aep-inspect" "aep-compare" "aep-validate" "aep-visualize"];
+          license = "MIT";
+        };
+        ifcquery = {
+          inherit (generatedPins.ifcquery) version;
+          extras = [];
+          commands = ["ifcquery"];
+          license = "LGPL-3.0-or-later";
+        };
+        jc = {
+          inherit (generatedPins.jc) version;
+          extras = [];
+          commands = ["jc"];
+          license = "MIT";
+        };
+        mozregression = {
+          inherit (generatedPins.mozregression) version;
+          extras = [];
+          commands = ["mozregression"];
+          license = "MPL-2.0";
+        };
+        psd-tools = {
+          inherit (generatedPins.psd-tools) version;
+          extras = [];
+          commands = ["psd-tools"];
+          license = "MIT";
+        };
+        psd2svg = {
+          inherit (generatedPins.psd2svg) version;
+          extras = [];
+          commands = ["psd2svg"];
           license = "MIT";
         };
         pymobiledevice3 = {

@@ -29,6 +29,21 @@
         },
         "version": "5.0.1"
     },
+    "aio-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "aio-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FqGDbKdL90KE8mbG8WS9KqAOFSBssjHYwC+9hCIZccg=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@adobe/aio-cli/-/aio-cli-11.2.0.tgz"
+        },
+        "version": "11.2.0"
+    },
     "aredotna-cli": {
         "cargoLock": null,
         "date": null,
@@ -57,6 +72,36 @@
             "url": "https://github.com/atuinsh/atuin/releases/download/v18.24.8/atuin-aarch64-apple-darwin.tar.gz"
         },
         "version": "18.24.8"
+    },
+    "blender-asset-tracer": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "blender-asset-tracer",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-tPH6ul05EoqZdfsps0ruas9nI8/sDwc7vj026G25QjA=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/source/b/blender-asset-tracer/blender_asset_tracer-2.2.1.tar.gz"
+        },
+        "version": "2.2.1"
+    },
+    "chrome-devtools-mcp": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "chrome-devtools-mcp",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-kVjEtKh5LLUirkb3buqpSRzgRhajrpcimhYnfgKkrqQ=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-1.13.0.tgz"
+        },
+        "version": "1.13.0"
     },
     "cloudflare-cf": {
         "cargoLock": null,
@@ -372,6 +417,21 @@
         },
         "version": "2.0.0"
     },
+    "electron-asar": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "electron-asar",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-BAgIfDJ4eo2lcXfH94Vl0Wm4CJ8N8ellgPOjPnHYrLg=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@electron/asar/-/asar-4.3.2.tgz"
+        },
+        "version": "4.3.2"
+    },
     "energyplus-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -400,6 +460,21 @@
             "url": "https://www.powershellgallery.com/api/v2/package/ExchangeOnlineManagement/3.11.1"
         },
         "version": "3.11.1"
+    },
+    "firefox-profiler-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "firefox-profiler-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-GdvicgXt7GQ7ghB5ufiIIbiYd+OtPWQxPGy0iDYCLx0=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-0.14.0.tgz"
+        },
+        "version": "0.14.0"
     },
     "fontc-aarch64-darwin": {
         "cargoLock": null,
@@ -641,6 +716,80 @@
         },
         "version": "0.8.2"
     },
+    "ifcconvert-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ifcconvert-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-eLvLrLpN4NWzCBupWAPMNAMN8N5j6f7ppn4L8vQu+Us=",
+            "type": "tarball",
+            "url": "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/ifcconvert-0.9.0post1/ifcconvert-0.9.0post1-macosm164.zip"
+        },
+        "version": "0.9.0post1"
+    },
+    "ifcquery": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ifcquery",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-2LPFkIwqVk4yffEwY5g7vDMn3KDaNVtCvB98FfzHspE=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/py3/i/ifcquery/ifcquery-0.9.0-py3-none-any.whl"
+        },
+        "version": "0.9.0"
+    },
+    "ifctester": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ifctester",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-9+V2FdnAe2FlEOVdit88sF34cpVs4ODUapBxAamWgAQ=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/py3/i/ifctester/ifctester-0.9.0-py3-none-any.whl"
+        },
+        "version": "0.9.0"
+    },
+    "ipsw-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "ipsw-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-WSZ/GKV5yvQ192S2+mRlJgLyGqB8jLfIlPwzStCeyuQ=",
+            "type": "url",
+            "url": "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_arm64.tar.gz"
+        },
+        "version": "3.1.749"
+    },
+    "jc": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "jc",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-blfDAs5V1YYsH3vhwrorqmML6humkPa7gqjH5zS3D8E=",
+            "type": "url",
+            "url": "https://pypi.org/packages/source/j/jc/jc-1.26.2.tar.gz"
+        },
+        "version": "1.26.2"
+    },
     "m365-cli": {
         "cargoLock": null,
         "date": null,
@@ -655,6 +804,20 @@
             "url": "https://registry.npmjs.org/@pnp/cli-microsoft365/-/cli-microsoft365-12.0.0.tgz"
         },
         "version": "12.0.0"
+    },
+    "macmon-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "macmon-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-T2QilV4EjxfB0gGdXaBlfQuqpWySNQo1qQTMAMjggqw=",
+            "type": "tarball",
+            "url": "https://github.com/vladkens/macmon/releases/download/v0.12.0/macmon-v0.12.0-aarch64-apple-darwin.tar.gz"
+        },
+        "version": "0.12.0"
     },
     "mcp-remote": {
         "cargoLock": null,
@@ -701,6 +864,21 @@
         },
         "version": "2026.11.9"
     },
+    "mozregression": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "mozregression",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-5jdIf328nV5HeInkxzufGQoM9vj0Uw56f1Czo2O7eIQ=",
+            "type": "url",
+            "url": "https://pypi.org/packages/source/m/mozregression/mozregression-7.7.0.tar.gz"
+        },
+        "version": "7.7.0"
+    },
     "mq-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -730,6 +908,21 @@
             "url": "https://files.pythonhosted.org/packages/source/n/nanoemoji/nanoemoji-0.16.0.tar.gz"
         },
         "version": "0.16.0"
+    },
+    "nexrender-cli": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "nexrender-cli",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-B6FMqWW+Rxr/Wo/fWYFZZpBP0LQjHZsgA30jy/584dI=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@nexrender/cli/-/cli-1.63.3.tgz"
+        },
+        "version": "1.63.3"
     },
     "nh-aarch64-darwin": {
         "cargoLock": null,
@@ -1003,6 +1196,51 @@
         },
         "version": "7.7.0"
     },
+    "psd-tools": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "psd-tools",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-xckzdnLT4xux3b5EAxl/bo2DHx8Qpe0OITjlGdFHdWw=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/cp313/p/psd-tools/psd_tools-1.26.1-cp313-abi3-macosx_11_0_arm64.whl"
+        },
+        "version": "1.26.1"
+    },
+    "psd2svg": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "psd2svg",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-QdGFty6bUR/GtTC9KnT4anslNOWNfel9kg9X1E3zrk4=",
+            "type": "url",
+            "url": "https://files.pythonhosted.org/packages/py3/p/psd2svg/psd2svg-0.15.0-py3-none-any.whl"
+        },
+        "version": "0.15.0"
+    },
+    "puppeteer-browsers": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "puppeteer-browsers",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Ibov6d5PLMPESxakf9HqzQ/LcXUmXBBhon5muZO6cZ0=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-3.2.7.tgz"
+        },
+        "version": "3.2.7"
+    },
     "py-aep": {
         "cargoLock": null,
         "date": null,
@@ -1033,6 +1271,21 @@
         },
         "version": "11.57.0"
     },
+    "rea-agents": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "rea-agents",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-MiM4oVBeJVdwKhYBLn1Gq9tXKWQdmJOGYnYt+/t5Jio=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/rea-agents/-/rea-agents-6.9.0.tgz"
+        },
+        "version": "6.9.0"
+    },
     "resvg": {
         "cargoLock": {
             "Cargo.lock": [
@@ -1051,6 +1304,49 @@
             "url": "https://github.com/linebender/resvg/archive/refs/tags/v0.50.0.tar.gz"
         },
         "version": "0.50.0"
+    },
+    "retoc-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "retoc-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-/EVfcSSCBxddfQESg71mI0DUEfxx7KuNLH1tqGOdFas=",
+            "type": "tarball",
+            "url": "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-aarch64-apple-darwin.tar.xz"
+        },
+        "version": "0.1.5"
+    },
+    "rh-transfer-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "rh-transfer-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-k/4PoVI3jyVK4oAeDMYl+ynSI6e1mIZHJ0F8urnTfEw=",
+            "type": "tarball",
+            "url": "https://github.com/mcneel/rhino-transfer/releases/download/v0.1.5/rh-transfer-cli-0.1.5-osx-arm64.zip"
+        },
+        "version": "0.1.5"
+    },
+    "rhino-templates": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "rhino-templates",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-Rz+CzcwpEXTOYUSZ0UI42LPmur/vqUR063A0KTG7qtA=",
+            "type": "url",
+            "url": "https://api.nuget.org/v3-flatcontainer/rhino.templates/9.0.1/rhino.templates.9.0.1.nupkg"
+        },
+        "version": "9.0.1"
     },
     "rsync": {
         "cargoLock": null,
@@ -1109,6 +1405,21 @@
             "url": "https://github.com/quarylabs/sqruff/releases/download/v0.44.0/sqruff-darwin-aarch64.tar.gz"
         },
         "version": "0.44.0"
+    },
+    "swift-section-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "swift-section-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-FB7RXbrf72in8JgX6Yp59ISlr6NNKuB9PlGVbxuasnI=",
+            "type": "url",
+            "url": "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection/releases/download/0.24.0/swift-section-macos-universal.zip"
+        },
+        "version": "0.24.0"
     },
     "tavily-cli": {
         "cargoLock": null,
