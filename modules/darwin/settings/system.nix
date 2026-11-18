@@ -32,7 +32,7 @@ in {
     # --- [LAUNCHD_USER_PATH_AND_STACK_BUFFER]
     activationScripts.postActivation.text = ''
       /bin/launchctl config user path ${lib.escapeShellArg config.environment.systemPath} >/dev/null
-      if /usr/bin/tailspin info 2>&1 | /usr/bin/grep -q disabled; then
+      if /usr/bin/tailspin info 2>&1 | /usr/bin/grep -q '^tailspin has been disabled'; then
         /usr/bin/tailspin enable >/dev/null
       fi
     '';
