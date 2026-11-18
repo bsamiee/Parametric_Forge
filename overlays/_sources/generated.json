@@ -1364,35 +1364,6 @@
         },
         "version": "0.1.5"
     },
-    "rh-transfer-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "rh-transfer-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-k/4PoVI3jyVK4oAeDMYl+ynSI6e1mIZHJ0F8urnTfEw=",
-            "type": "tarball",
-            "url": "https://github.com/mcneel/rhino-transfer/releases/download/v0.1.5/rh-transfer-cli-0.1.5-osx-arm64.zip"
-        },
-        "version": "0.1.5"
-    },
-    "rhino-templates": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "rhino-templates",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Rz+CzcwpEXTOYUSZ0UI42LPmur/vqUR063A0KTG7qtA=",
-            "type": "url",
-            "url": "https://api.nuget.org/v3-flatcontainer/rhino.templates/9.0.1/rhino.templates.9.0.1.nupkg"
-        },
-        "version": "9.0.1"
-    },
     "rsync": {
         "cargoLock": null,
         "date": null,

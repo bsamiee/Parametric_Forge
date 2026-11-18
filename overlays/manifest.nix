@@ -240,15 +240,6 @@ in {
       mainProgram = "IfcConvert";
     };
 
-    rh-transfer = {
-      version = generatedPins.rh-transfer-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "rh-transfer-aarch64-darwin";
-      license = "mit";
-      description = "Rhino settings export, import, and restore between versions";
-      homepage = "https://github.com/mcneel/rhino-transfer";
-      mainProgram = "rh-transfer";
-    };
-
     retoc = {
       version = generatedPins.retoc-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "retoc-aarch64-darwin";

@@ -378,11 +378,6 @@ final: prev: let
     diffenator3 = binaryInstall {binaries = ["diffenator3" "diff3proof"];};
     retoc = binaryInstall {binaries = ["retoc"];};
     macmon-current = binaryInstall {binaries = ["macmon"];};
-    rh-transfer = binaryInstall {
-      binaries = ["rh-transfer"];
-      reportsVersion = false;
-      checkArg = "--help";
-    };
     ifcconvert = {row, ...}: {
       dontUnpack = true;
       installPhase = ''

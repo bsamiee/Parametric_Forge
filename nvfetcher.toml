@@ -135,11 +135,6 @@ src.cmd = '''gh api repos/IfcOpenShell/IfcOpenShell/releases --jq '[.[] | select
 src.prefix = "ifcconvert-"
 fetch.tarball = "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/ifcconvert-$ver/ifcconvert-$ver-macosm164.zip"
 
-[rh-transfer-aarch64-darwin]
-src.github = "mcneel/rhino-transfer"
-src.prefix = "v"
-fetch.tarball = "https://github.com/mcneel/rhino-transfer/releases/download/v$ver/rh-transfer-cli-$ver-osx-arm64.zip"
-
 [retoc-aarch64-darwin]
 src.github = "trumank/retoc"
 src.prefix = "v"
@@ -421,10 +416,6 @@ fetch.url = "https://registry.npmjs.org/@puppeteer/browsers/-/browsers-$ver.tgz"
 [electron-asar]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@electron/asar/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@electron/asar/-/asar-$ver.tgz"
-
-[rhino-templates]
-src.cmd = "curl -fsSL https://api.nuget.org/v3-flatcontainer/rhino.templates/index.json | jq -r '.versions[-1]'"
-fetch.url = "https://api.nuget.org/v3-flatcontainer/rhino.templates/$ver/rhino.templates.$ver.nupkg"
 
 
 [fontspector-aarch64-darwin]

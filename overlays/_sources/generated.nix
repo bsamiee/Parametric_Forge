@@ -764,22 +764,6 @@
       sha256 = "sha256-/EVfcSSCBxddfQESg71mI0DUEfxx7KuNLH1tqGOdFas=";
     };
   };
-  rh-transfer-aarch64-darwin = {
-    pname = "rh-transfer-aarch64-darwin";
-    version = "0.1.5";
-    src = fetchTarball {
-      url = "https://github.com/mcneel/rhino-transfer/releases/download/v0.1.5/rh-transfer-cli-0.1.5-osx-arm64.zip";
-      sha256 = "sha256-k/4PoVI3jyVK4oAeDMYl+ynSI6e1mIZHJ0F8urnTfEw=";
-    };
-  };
-  rhino-templates = {
-    pname = "rhino-templates";
-    version = "9.0.1";
-    src = fetchurl {
-      url = "https://api.nuget.org/v3-flatcontainer/rhino.templates/9.0.1/rhino.templates.9.0.1.nupkg";
-      sha256 = "sha256-Rz+CzcwpEXTOYUSZ0UI42LPmur/vqUR063A0KTG7qtA=";
-    };
-  };
   rsync = {
     pname = "rsync";
     version = "3.5.2";

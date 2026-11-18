@@ -126,7 +126,6 @@ in {
     pkgs.ifcconvert
     pkgs.repak
     pkgs.retoc
-    pkgs.rh-transfer
     (uvRun "blender-asset-tracer" "blender-asset-tracer" "bat")
     (uvRun "ifctester" "ifctester" "python -I -m ifctester")
   ];
