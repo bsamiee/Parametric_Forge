@@ -13,9 +13,6 @@
     gemini-api
     gam-current
 
-    # --- [SERVICE_APIS]
-    gddy
-
     # --- [DEVICES_AND_VMS]
     bambu
     pdfm-mcp

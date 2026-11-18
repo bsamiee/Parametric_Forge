@@ -346,14 +346,6 @@
       sha256 = "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=";
     };
   };
-  gddy-aarch64-darwin = {
-    pname = "gddy-aarch64-darwin";
-    version = "0.2.38";
-    src = fetchurl {
-      url = "https://github.com/godaddy/cli/releases/download/v0.2.38/gddy-aarch64-apple-darwin.tar.gz";
-      sha256 = "sha256-Zjli+9CO/ha6hD5g1pmjaDwnQi558COKm7m/fsGTTcc=";
-    };
-  };
   gemini-api-aarch64-darwin = {
     pname = "gemini-api-aarch64-darwin";
     version = "0.4.6";

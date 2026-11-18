@@ -612,21 +612,6 @@
         },
         "version": "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
     },
-    "gddy-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "gddy-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-Zjli+9CO/ha6hD5g1pmjaDwnQi558COKm7m/fsGTTcc=",
-            "type": "url",
-            "url": "https://github.com/godaddy/cli/releases/download/v0.2.38/gddy-aarch64-apple-darwin.tar.gz"
-        },
-        "version": "0.2.38"
-    },
     "gemini-api-aarch64-darwin": {
         "cargoLock": null,
         "date": null,

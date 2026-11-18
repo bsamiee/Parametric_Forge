@@ -330,15 +330,6 @@ in {
       mainProgram = "gemini-api";
     };
 
-    gddy = {
-      version = generatedPins.gddy-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "gddy-aarch64-darwin";
-      license = "mit";
-      description = "GoDaddy API command-line client for domains, DNS, mail, hosting, and API calls";
-      homepage = "https://github.com/godaddy/cli";
-      mainProgram = "gddy";
-    };
-
     pdfm-mcp = {
       version = generatedPins.pdfm-mcp-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "pdfm-mcp-aarch64-darwin";

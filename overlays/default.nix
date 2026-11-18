@@ -189,10 +189,6 @@ final: prev: let
       unpack = false;
     };
     tscli-current = cliRelease {binary = "tscli";};
-    gddy = cliRelease {
-      binary = "gddy";
-      completion = "completion";
-    };
     pdfm-mcp = cliRelease {binary = "pdfm-mcp";};
     bambu = cliRelease {
       binary = "bambu";

@@ -321,11 +321,6 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/jaxxstorm/tscli/releases/download/v$ver/tscli_$ver_darwin_arm64.tar.gz"
 
-[gddy-aarch64-darwin]
-src.github = "godaddy/cli"
-src.prefix = "v"
-fetch.url = "https://github.com/godaddy/cli/releases/download/v$ver/gddy-aarch64-apple-darwin.tar.gz"
-
 [pdfm-mcp-aarch64-darwin]
 src.github = "Parallels/pdfm-mcp"
 src.prerelease = true
