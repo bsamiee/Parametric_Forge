@@ -21,5 +21,3 @@ default_tools_approval_mode = "approve"
 command                     = "mise"
 args                        = ["exec", "--", "mcp-nixos"]
 
-[mcp_servers.node_repl.env]
-NODE_REPL_WORKER_WRAPPER = '["/bin/sh", "-c", "shift; exec mise exec -- \"$@\"", "node_repl"]'
