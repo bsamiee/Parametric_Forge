@@ -59,20 +59,6 @@
         },
         "version": "0.12.0"
     },
-    "atuin-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "atuin-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=",
-            "type": "tarball",
-            "url": "https://github.com/atuinsh/atuin/releases/download/v18.24.8/atuin-aarch64-apple-darwin.tar.gz"
-        },
-        "version": "18.24.8"
-    },
     "bambu-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -626,20 +612,6 @@
             "url": "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.4.6/gemini-api_Darwin_arm64.tar.gz"
         },
         "version": "0.4.6"
-    },
-    "gh-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "gh-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-KyX46Gln1mOyEa/Ll5Hbwaw8DAcMNIp1n3+HM9UYdvs=",
-            "type": "tarball",
-            "url": "https://github.com/cli/cli/releases/download/v2.104.0/gh_2.104.0_macOS_arm64.zip"
-        },
-        "version": "2.104.0"
     },
     "git": {
         "cargoLock": null,
@@ -1378,20 +1350,6 @@
             "url": "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz"
         },
         "version": "3.5.2"
-    },
-    "shaperglot-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "shaperglot-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-vlERGP3eibev87gemJY2Ez4GdPOK3tVEcHnPar93/yM=",
-            "type": "tarball",
-            "url": "https://github.com/googlefonts/shaperglot/releases/download/v1.2.2/shaperglot-1.2.2-aarch64-apple-darwin.tar.gz"
-        },
-        "version": "1.2.2"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,

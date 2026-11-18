@@ -38,14 +38,6 @@
       sha256 = "sha256-e3NUjgGQxm2gXbQS9DofH8d0rxaArGfpRLvTtKmtyjg=";
     };
   };
-  atuin-aarch64-darwin = {
-    pname = "atuin-aarch64-darwin";
-    version = "18.24.8";
-    src = fetchTarball {
-      url = "https://github.com/atuinsh/atuin/releases/download/v18.24.8/atuin-aarch64-apple-darwin.tar.gz";
-      sha256 = "sha256-b5RQoqqTFX+/WZMco/Am6PCW8u725h0K85/Tqe5msas=";
-    };
-  };
   bambu-aarch64-darwin = {
     pname = "bambu-aarch64-darwin";
     version = "0.3.0";
@@ -352,14 +344,6 @@
     src = fetchurl {
       url = "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.4.6/gemini-api_Darwin_arm64.tar.gz";
       sha256 = "sha256-yAtewtCm/u4M8YlDQnz9r5qrcYO39i9QuVbNJDG5gBg=";
-    };
-  };
-  gh-aarch64-darwin = {
-    pname = "gh-aarch64-darwin";
-    version = "2.104.0";
-    src = fetchTarball {
-      url = "https://github.com/cli/cli/releases/download/v2.104.0/gh_2.104.0_macOS_arm64.zip";
-      sha256 = "sha256-KyX46Gln1mOyEa/Ll5Hbwaw8DAcMNIp1n3+HM9UYdvs=";
     };
   };
   git = {
@@ -770,14 +754,6 @@
     src = fetchurl {
       url = "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz";
       sha256 = "sha256-oQ1ZGCUlHgcPdMmN89qtGV3vTtgbSi3hYWkCauoz9sg=";
-    };
-  };
-  shaperglot-aarch64-darwin = {
-    pname = "shaperglot-aarch64-darwin";
-    version = "1.2.2";
-    src = fetchTarball {
-      url = "https://github.com/googlefonts/shaperglot/releases/download/v1.2.2/shaperglot-1.2.2-aarch64-apple-darwin.tar.gz";
-      sha256 = "sha256-vlERGP3eibev87gemJY2Ez4GdPOK3tVEcHnPar93/yM=";
     };
   };
   sqlean-aarch64-darwin = {

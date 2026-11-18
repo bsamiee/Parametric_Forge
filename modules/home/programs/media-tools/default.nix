@@ -77,7 +77,7 @@ in {
     pkgs.gftools
     pkgs.harfbuzz-current.dev
     pkgs.opentype-sanitizer
-    pkgs.shaperglot-current
+    pkgs.shaperglot-cli
     pkgs.ttfautohint
 
     # --- [MEDIA_DOCUMENTS]

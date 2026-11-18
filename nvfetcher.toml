@@ -208,12 +208,6 @@ fetch.url = "https://files.pythonhosted.org/packages/source/n/notebooklm-py/note
 src.pypi = "pymobiledevice3"
 fetch.url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-$ver.tar.gz"
 
-[gh-aarch64-darwin]
-src.github = "cli/cli"
-src.prerelease = true
-src.prefix = "v"
-fetch.tarball = "https://github.com/cli/cli/releases/download/v$ver/gh_$ver_macOS_arm64.zip"
-
 [mq-aarch64-darwin]
 src.github = "harehare/mq"
 src.prerelease = true
@@ -267,12 +261,6 @@ src.github = "nix-community/nh"
 src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/nix-community/nh/releases/download/v$ver/nh-aarch64-darwin"
-
-[atuin-aarch64-darwin]
-src.github = "atuinsh/atuin"
-src.prerelease = true
-src.prefix = "v"
-fetch.tarball = "https://github.com/atuinsh/atuin/releases/download/v$ver/atuin-aarch64-apple-darwin.tar.gz"
 
 [duckdb-spatial-aarch64-darwin]
 src.github = "duckdb/duckdb"
@@ -422,11 +410,6 @@ fetch.url = "https://registry.npmjs.org/@electron/asar/-/asar-$ver.tgz"
 src.cmd = '''gh api repos/fonttools/fontspector/releases --jq '[.[] | select(.tag_name | startswith("fontspector-v"))][0].tag_name' '''
 src.prefix = "fontspector-v"
 fetch.tarball = "https://github.com/fonttools/fontspector/releases/download/fontspector-v$ver/fontspector-$ver-aarch64-apple-darwin.tar.gz"
-
-[shaperglot-aarch64-darwin]
-src.github = "googlefonts/shaperglot"
-src.prefix = "v"
-fetch.tarball = "https://github.com/googlefonts/shaperglot/releases/download/v$ver/shaperglot-$ver-aarch64-apple-darwin.tar.gz"
 
 [diffenator3-aarch64-darwin]
 src.github = "googlefonts/diffenator3"

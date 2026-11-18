@@ -12,11 +12,8 @@ final: prev: let
       prev.fetchzip {
         inherit (a) url hash;
         stripRoot = a.stripRoot or true;
-        extension = a.extension or null;
       }
-    else if a ? pin
-    then generatedSources.${a.pin}.src
-    else prev.fetchurl {inherit (a) url hash;};
+    else generatedSources.${a.pin}.src;
 
   linkTree = src: dst: ''lndir -silent ${src} ${dst}'';
 
@@ -26,13 +23,11 @@ final: prev: let
 
   mkBinaryRelease = name: recipe: let
     row = manifest.packages.${name};
-    a = row.assets.${system};
   in
-    prev.stdenvNoCC.mkDerivation (finalAttrs:
-      {
+    prev.stdenvNoCC.mkDerivation ({
         pname = name;
         inherit (row) version;
-        src = srcOf a;
+        src = srcOf row.assets.${system};
         dontConfigure = true;
         dontBuild = true;
         meta =
@@ -43,9 +38,9 @@ final: prev: let
           }
           // lib.optionalAttrs (row ? mainProgram) {inherit (row) mainProgram;};
       }
-      // recipe {inherit row a finalAttrs;});
+      // recipe row);
 
-  optRuntime = {row, ...}: let
+  optRuntime = row: let
     root = "${placeholder "out"}/${row.runtime.root}";
     installWrapper = name: target: ''
       makeWrapper ${lib.escapeShellArg "${root}/${target}"} "$out/bin/${name}" ${
@@ -91,7 +86,7 @@ final: prev: let
     man ? null,
     versionArg ? "--version",
     unpack ? true,
-  }: {row, ...}:
+  }: row:
     {
       nativeBuildInputs = [prev.installShellFiles];
       installPhase = ''
@@ -122,8 +117,7 @@ final: prev: let
   binaryInstall = {
     binaries,
     reportsVersion ? true,
-    checkArg ? "--version",
-  }: {row, ...}:
+  }: row:
     {
       dontUnpack = true;
       installPhase = ''
@@ -145,7 +139,7 @@ final: prev: let
       else {
         installCheckPhase = ''
           runHook preInstallCheck
-          "$out/bin/${row.mainProgram}" ${checkArg}
+          "$out/bin/${row.mainProgram}" --version
           runHook postInstallCheck
         '';
       }
@@ -168,19 +162,8 @@ final: prev: let
       man = "manpages/*.1.gz";
       versionArg = "version";
     };
-    gh-current = cliRelease {
-      binary = ''"$src/bin/gh"'';
-      completion = "completion -s";
-      man = ''"$src"/share/man/man1/*.1'';
-      unpack = false;
-    };
     nh-current = cliRelease {
       binary = ''"$src"'';
-      unpack = false;
-    };
-    atuin-current = cliRelease {
-      binary = ''"$src/atuin"'';
-      completion = "gen-completions --shell";
       unpack = false;
     };
     mq = cliRelease {
@@ -374,11 +357,10 @@ final: prev: let
       binaries = ["fontspector"];
       reportsVersion = false;
     };
-    shaperglot-current = binaryInstall {binaries = ["shaperglot"];};
     diffenator3 = binaryInstall {binaries = ["diffenator3" "diff3proof"];};
     retoc = binaryInstall {binaries = ["retoc"];};
     macmon-current = binaryInstall {binaries = ["macmon"];};
-    ifcconvert = {row, ...}: {
+    ifcconvert = row: {
       dontUnpack = true;
       installPhase = ''
         runHook preInstall
@@ -391,7 +373,7 @@ final: prev: let
       nativeInstallCheckInputs = [prev.versionCheckHook];
       versionCheckProgram = "${placeholder "out"}/bin/${row.mainProgram}";
     };
-    swift-section = args: cliRelease {binary = "swift-section";} args // {nativeBuildInputs = [prev.installShellFiles prev.unzip];};
+    swift-section = row: cliRelease {binary = "swift-section";} row // {nativeBuildInputs = [prev.installShellFiles prev.unzip];};
     fontc-current = cliRelease {binary = "fontc";};
     energyplus = optRuntime;
     openstudio = optRuntime;

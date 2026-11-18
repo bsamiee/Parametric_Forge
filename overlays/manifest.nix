@@ -84,14 +84,6 @@ in {
       homepage = "https://github.com/fonttools/fontspector";
       mainProgram = "fontspector";
     };
-    shaperglot-current = {
-      version = generatedPins.shaperglot-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "shaperglot-aarch64-darwin";
-      license = "asl20";
-      description = "Language support checks of a font by shaping, with JSON output";
-      homepage = "https://github.com/googlefonts/shaperglot";
-      mainProgram = "shaperglot";
-    };
     diffenator3 = {
       version = generatedPins.diffenator3-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "diffenator3-aarch64-darwin";
@@ -267,15 +259,6 @@ in {
       mainProgram = "macmon";
     };
 
-    gh-current = {
-      version = generatedPins.gh-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "gh-aarch64-darwin";
-      license = "mit";
-      description = "GitHub command-line client";
-      homepage = "https://cli.github.com/";
-      mainProgram = "gh";
-    };
-
     nh-current = {
       version = generatedPins.nh-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "nh-aarch64-darwin";
@@ -283,15 +266,6 @@ in {
       description = "Nix helper that builds, diffs, and activates system configurations";
       homepage = "https://github.com/nix-community/nh";
       mainProgram = "nh";
-    };
-
-    atuin-current = {
-      version = generatedPins.atuin-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "atuin-aarch64-darwin";
-      license = "mit";
-      description = "Shell history database with command output capture and agent thread search";
-      homepage = "https://atuin.sh/";
-      mainProgram = "atuin";
     };
 
     mq = {
@@ -636,8 +610,6 @@ in {
       rows = {
         afdko = {
           inherit (generatedPins.afdko) version;
-          extras = [];
-          python = "3.13";
           commands = ["spot" "tx" "otfautohint" "makeotf" "ttxn" "sfntdiff"];
           license = "Apache-2.0";
         };
@@ -649,31 +621,26 @@ in {
         };
         foundrytools-cli = {
           inherit (generatedPins.foundrytools-cli) version;
-          extras = [];
           commands = ["ftcli"];
           license = "MIT";
         };
         glyphsLib = {
           inherit (generatedPins.glyphslib) version;
-          extras = [];
           commands = ["glyphs2ufo" "ufo2glyphs"];
           license = "Apache-2.0";
         };
         hyperglot = {
           inherit (generatedPins.hyperglot) version;
-          extras = [];
           commands = ["hyperglot" "hyperglot-data" "hyperglot-report"];
           license = "Apache-2.0";
         };
         nanoemoji = {
           inherit (generatedPins.nanoemoji) version;
-          extras = [];
           commands = ["nanoemoji"];
           license = "Apache-2.0";
         };
         youseedee = {
           inherit (generatedPins.youseedee) version;
-          extras = [];
           commands = ["youseedee"];
           license = "Apache-2.0";
         };
@@ -685,56 +652,47 @@ in {
         };
         opentimelineio = {
           inherit (generatedPins.opentimelineio) version;
-          extras = [];
           withPackages = map (pin: "${pin}==${generatedPins.${pin}.version}") ["otio-fcp-adapter" "otio-fcpx-xml-adapter" "otio-aaf-adapter"];
           commands = ["otiotool" "otioconvert" "otiocat" "otiostat" "otiopluginfo"];
           license = "Apache-2.0";
         };
         py-aep = {
           inherit (generatedPins.py-aep) version;
-          extras = [];
           commands = ["aep-inspect" "aep-compare" "aep-validate" "aep-visualize"];
           license = "MIT";
         };
         ifcquery = {
           inherit (generatedPins.ifcquery) version;
-          extras = [];
           commands = ["ifcquery"];
           license = "LGPL-3.0-or-later";
         };
         jc = {
           inherit (generatedPins.jc) version;
-          extras = [];
           commands = ["jc"];
           license = "MIT";
         };
         mozregression = {
           inherit (generatedPins.mozregression) version;
-          extras = [];
           commands = ["mozregression"];
           license = "MPL-2.0";
         };
         psd-tools = {
           inherit (generatedPins.psd-tools) version;
-          extras = [];
           commands = ["psd-tools"];
           license = "MIT";
         };
         psd2svg = {
           inherit (generatedPins.psd2svg) version;
-          extras = [];
           commands = ["psd2svg"];
           license = "MIT";
         };
         pymobiledevice3 = {
           inherit (generatedPins.pymobiledevice3) version;
-          extras = [];
           commands = ["pymobiledevice3"];
           license = "GPL-3.0-or-later";
         };
         trafilatura = {
           inherit (generatedPins.trafilatura) version;
-          extras = [];
           commands = ["trafilatura"];
           license = "Apache-2.0";
         };

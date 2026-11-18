@@ -55,7 +55,7 @@ in {
 
   programs.atuin = {
     enable = true;
-    package = pkgs.atuin-current;
+    package = pkgs.atuin;
     flags = ["--bind-ai-resume"];
 
     settings = {
