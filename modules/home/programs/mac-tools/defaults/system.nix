@@ -69,7 +69,14 @@
     # --- [APPLICATION_SPECIFIC_SETTINGS]
     "com.apple.Terminal".SecureKeyboardEntry = false;
     "com.apple.dt.Xcode".DVTTextEditorTrimTrailingWhitespace = true;
-    "com.google.Chrome".RestoreOnStartup = 1;
+    "com.google.Chrome" = {
+      AutofillAddressEnabled = false;
+      AutofillCreditCardEnabled = false;
+      MetricsReportingEnabled = false;
+      PasswordManagerEnabled = false;
+      RestoreOnStartup = 1;
+      ShowFullUrlsInAddressBar = true;
+    };
     "com.lujjjh.LinearMouse" = {
       showInDock = false;
       menuBarBatteryDisplayMode = "\"below20\"";
