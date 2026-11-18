@@ -48,6 +48,9 @@
     CLIMICROSOFT365_ENTRAAPPID = null;
     CLIMICROSOFT365_TENANT = null;
     MICROSOFT_AGENT_CERTIFICATE = null;
+    NODE_AUTH_TOKEN = null;
+    UV_PUBLISH_TOKEN = null;
+    CARGO_REGISTRY_TOKEN = null;
   };
   fileRows = lib.mapAttrs' (file: lib.nameValuePair "${config.xdg.configHome}/gam/${file}") {
     "oauth2.txt" = "GOOGLE_WORKSPACE_GAM_OAUTH2";
@@ -157,6 +160,9 @@ in {
         item = "3mtwmcjq3ywwglpkrdqt25enhe"
         vault = "Personal"
       '';
+
+      # --- [REGISTRY_AUTH]
+      "pnpm/auth.ini".text = "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}\n";
 
       # --- [SECRET_TEMPLATE]
       "op/env.template".text =
