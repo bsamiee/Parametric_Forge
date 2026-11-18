@@ -4,6 +4,7 @@
     "files.exclude": {
         "**/.artifacts": true,
         "**/.cache": true,
+        "**/__pycache__": true,
         "**/node_modules": true,
         "result": true,
         "result-*": true
@@ -13,6 +14,7 @@
     "files.watcherExclude": {
         "**/.artifacts/**": true,
         "**/.cache/**": true,
+        "**/__pycache__/**": true,
         "**/node_modules/**": true,
         "**/result/**": true,
         "**/result-*/**": true
