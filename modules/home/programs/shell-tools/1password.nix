@@ -61,6 +61,22 @@
   stampName = "SESSION_CACHE_STAMP";
   namesName = "SESSION_CACHE_NAMES";
   cacheNames = tokenNames ++ [stampName namesName];
+  tokenEnv = pkgs.writeText "session-tokens.env" (lib.concatLines (lib.mapAttrsToList (name: ref: "${name}=op://Tokens/${
+      if ref == null
+      then "${name}/token"
+      else ref
+    }")
+    tokenRows));
+  cacheHeader = pkgs.writeText "session-cache-header.sh" ''
+    [ "''${${stampName}:-}" = "@stamp@" ] || eval "unset ''${${namesName}:-} ${toString tokenNames}"
+    export ${stampName}="@stamp@"
+    export ${namesName}="${toString tokenNames}"
+  '';
+  cacheRows = pkgs.writeShellScript "session-cache-rows" ''
+    for name in ${toString tokenNames}; do
+      printf '[ -n "''${%s:-}" ] || export %s=%q\n' "$name" "$name" "''${!name}"
+    done
+  '';
   guiOpSecrets = pkgs.writeShellApplication {
     name = "gui-op-secrets";
     excludeShellChecks = ["SC1091"];
@@ -86,22 +102,21 @@ in {
         injectSecretsFromVault = lib.hm.dag.entryAfter ["linkGeneration" "setupLaunchAgents"] ''
           cache_file="${opCache}"
           account_file="${opServiceAccount.file}"
-          template_file="${config.xdg.configHome}/op/env.template"
 
           if [[ -v DRY_RUN ]]; then
-            echo "op inject -i $template_file > $cache_file"
+            echo "op run --env-file ${tokenEnv} -- ${cacheRows} > $cache_file"
           else
             verboseEcho "Injecting secrets from 1Password vault"
             tmp_file="$(mktemp "$cache_file.XXXXXX")"
             if { [[ -s "$account_file" ]] || ${op} read --force --out-file "$account_file" ${lib.escapeShellArg opServiceAccount.reference} >/dev/null; } \
-              && OP_SERVICE_ACCOUNT_TOKEN="$(<"$account_file")" ${op} inject -i "$template_file" >"$tmp_file"; then
+              && { /bin/cat ${cacheHeader} && /usr/bin/env -i HOME="$HOME" OP_SERVICE_ACCOUNT_TOKEN="$(<"$account_file")" ${op} run --no-masking --env-file ${tokenEnv} -- ${cacheRows}; } >"$tmp_file"; then
               stamp="$(/usr/bin/shasum -a 256 <"$tmp_file")"
               /usr/bin/sed -i "" "s/@stamp@/''${stamp:0:16}/g" "$tmp_file"
               chmod 600 "$tmp_file"
               mv -f "$tmp_file" "$cache_file"
               verboseEcho "Tokens cached"
             else
-              echo "WARNING: op inject failed; $cache_file keeps its previous tokens. After rotating the service-account token, remove $account_file, then switch again." >&2
+              echo "WARNING: op run failed; $cache_file keeps its previous tokens. After rotating the service-account token, remove $account_file, then switch again." >&2
               rm -f "$tmp_file"
             fi
           fi
@@ -163,19 +178,6 @@ in {
 
       # --- [REGISTRY_AUTH]
       "pnpm/auth.ini".text = "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}\n";
-
-      # --- [SECRET_TEMPLATE]
-      "op/env.template".text =
-        ''
-          [ "''${${stampName}:-}" = "@stamp@" ] || eval "unset ''${${namesName}:-} ${toString tokenNames}"
-          export ${stampName}="@stamp@"
-          export ${namesName}="${toString tokenNames}"
-        ''
-        + lib.concatLines (lib.mapAttrsToList (name: ref: ''export ${name}="''${${name}:-{{ op://Tokens/${
-            if ref == null
-            then "${name}/token"
-            else ref
-          } }}}"'') tokenRows);
     };
 
     # --- [GUI_SESSION_SECRETS]
