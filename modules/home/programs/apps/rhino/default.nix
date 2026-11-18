@@ -14,7 +14,7 @@ in {
       if [[ -f ${kernel} ]]; then
         updated="$(mktemp)"
         ${lib.getExe pkgs.yq-go-current} -p xml -o xml '(.Fragment.items.item[] | select(.+@name == "ObjectServer:TrackPluginLoading" or .+@name == "Widget.Profiler.Show" or .+@name == "Ribbon:ShowObscure")).+content = "true"' ${kernel} > "$updated"
-        /usr/bin/cmp -s "$updated" ${kernel} || run cp "$updated" ${kernel}
+        /usr/bin/cmp -s "$updated" ${kernel} || if /usr/bin/pgrep -qx Rhinoceros; then noteEcho "Rhino is running: Grasshopper developer settings wait for the next switch"; else run cp "$updated" ${kernel}; fi
         rm -f "$updated"
       fi
     '';

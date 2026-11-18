@@ -10,7 +10,7 @@ in {
     if [[ -f ${preferences} ]]; then
       updated="$(mktemp)"
       ${lib.getExe pkgs.jq} '.developerMode = {"value": true, "varType": "bool"} | .betaFeatures = {"value": true, "varType": "bool"}' ${preferences} > "$updated"
-      /usr/bin/cmp -s "$updated" ${preferences} || run cp "$updated" ${preferences}
+      /usr/bin/cmp -s "$updated" ${preferences} || if /usr/bin/pgrep -qx Cavalry; then noteEcho "Cavalry is running: developerMode and betaFeatures wait for the next switch"; else run cp "$updated" ${preferences}; fi
       rm -f "$updated"
     fi
   '';
