@@ -1,29 +1,21 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
-  home = {
-    file.".local/bin/codex".source = config.lib.file.mkOutOfStoreSymlink "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex";
+{pkgs, ...}: {
+  home.packages = with pkgs; [
+    # --- [SHELL_TOOLING]
+    bash
+    shellcheck
+    shfmt
 
-    packages = with pkgs; [
-      # --- [SHELL_TOOLING]
-      bash
-      shellcheck
-      shfmt
+    # --- [GENERAL_DATA_TOOLS]
+    qsv
 
-      # --- [GENERAL_DATA_TOOLS]
-      qsv
+    # --- [GOOGLE_WORKSPACE]
+    gogcli-current
+    gemini-api
+    gam-current
 
-      # --- [GOOGLE_WORKSPACE]
-      gogcli-current
-      gemini-api
-      gam-current
-
-      # --- [CONTAINER_REGISTRY]
-      crane
-    ];
-  };
+    # --- [CONTAINER_REGISTRY]
+    crane
+  ];
 
   # --- [ANTIGRAVITY_REMOTE_CONTROL]
   programs.zsh.initContent = ''
