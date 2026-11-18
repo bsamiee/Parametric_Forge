@@ -72,9 +72,16 @@
     "com.google.Chrome" = {
       AutofillAddressEnabled = false;
       AutofillCreditCardEnabled = false;
-      MetricsReportingEnabled = false;
+      NSUserKeyEquivalents = {
+        "Add Tab to New Split View" = "^$=";
+        "Bookmark All Tabs…" = "@~$d";
+        "Bookmark This Tab…" = "@$d";
+        "Close Other Tabs" = "@$k";
+        "Collapse Vertical Tabs" = "@s";
+        "Pin Tab" = "@d";
+        "Save Page As…" = "@~$s";
+      };
       PasswordManagerEnabled = false;
-      RestoreOnStartup = 1;
       ShowFullUrlsInAddressBar = true;
     };
     "com.lujjjh.LinearMouse" = {

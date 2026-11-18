@@ -1,4 +1,5 @@
 {
+  applications,
   config,
   lib,
   pkgs,
@@ -7,7 +8,29 @@
 }: let
   cfgDir = "${config.xdg.configHome}/karabiner";
 
-  chordRules = chords.karabiner.rules;
+  chordRules =
+    chords.karabiner.rules
+    ++ [
+      {
+        description = "Chrome: Cmd+Shift+U copies the page URL";
+        manipulators = [
+          {
+            type = "basic";
+            from = {
+              key_code = "u";
+              modifiers.mandatory = ["command" "shift"];
+            };
+            to = [{shell_command = ''/usr/bin/osascript -e 'tell application id "${applications.chrome.id}" to set the clipboard to (URL of active tab of front window as text)' '';}];
+            conditions = [
+              {
+                type = "frontmost_application_if";
+                bundle_identifiers = ["^${lib.escapeRegex applications.chrome.id}$"];
+              }
+            ];
+          }
+        ];
+      }
+    ];
 
   karabinerJson = pkgs.writeText "karabiner.json" (builtins.toJSON {
     profiles = [
