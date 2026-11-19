@@ -196,6 +196,8 @@ in {
     # --- [SEARCH_SUGGESTIONS]
     "com.apple.Spotlight".EnabledPreferenceRules = ["Custom.relatedContents"];
     "com.apple.assistant.support"."Search Queries Data Sharing Status" = 2;
+    "com.apple.suggestions".SiriCanLearnFromAppBlacklist = ["com.apple.python3" "com.apple.MobileSMS"];
+    "com.apple.SocialLayer".SharedWithYouEnabled = false;
     "com.apple.Safari" = {
       SuppressSearchSuggestions = true;
       UniversalSearchEnabled = false;
@@ -210,10 +212,6 @@ in {
       IDEBuildingContinueBuildingAfterErrors = true;
       IDESkipMacroFingerprintValidation = true;
       IDESkipPackagePluginFingerprintValidatation = true;
-    };
-    "com.apple.dt.mcp-server" = {
-      IDEChatAllowAgents = true;
-      IDEChatInternalAllowUntrustedAgentsWithoutUserInteraction = true;
     };
     "com.apple.CrashReporter" = {
       DialogType = "none";

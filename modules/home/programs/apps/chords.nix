@@ -168,8 +168,6 @@
 
   forgotExtras = map (row ["rank" "label" "display"]) [
     [230 "editor" "code <path> / code -g <file>:<line>"]
-    [270 "loc report" "loc <path>"]
-    [280 "folder map" "tree <path>"]
     [290 "deploy" "redeploy build / switch"]
     [300 "http" "GET/POST/PUT -> xh"]
   ];

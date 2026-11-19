@@ -18,7 +18,6 @@ in {
     ./fastfetch.nix
     ./fd.nix
     ./fzf.nix
-    ./loc.nix
     ./mise.nix
     ./procs.nix
     ./redeploy.nix
@@ -40,11 +39,9 @@ in {
       (pkgs.runCommand "timeout" {meta.mainProgram = "timeout";} "mkdir -p $out/bin && ln -s ${lib.getExe' pkgs.coreutils "timeout"} $out/bin/timeout")
       pkgs.curl-impersonate-current
       pkgs.defuddle
-      pkgs.difftastic
       pkgs.dua-current
       pkgs.duckdb-current
       pkgs.dysk
-      pkgs.firefox-devtools-mcp
       pkgs.flock
       pkgs.fq
       pkgs.gawk
@@ -71,7 +68,6 @@ in {
       pkgs.sd
       pkgs.sshs
       pkgs.swift-section
-      pkgs.tree
       pkgs.tscli-current
       pkgs.uv
       pkgs.watchexec-current

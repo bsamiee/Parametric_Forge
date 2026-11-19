@@ -118,12 +118,6 @@ in {
 
       commit.verbose = true;
       rerere.enabled = true;
-
-      alias = {
-        dft = "-c diff.external=difft diff";
-        dlog = "-c diff.external=difft log -p --ext-diff";
-        dshow = "-c diff.external=difft show --ext-diff";
-      };
     };
   };
 

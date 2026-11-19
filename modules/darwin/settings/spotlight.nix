@@ -9,32 +9,29 @@
   userHome = config.home-manager.users.${primaryUser};
   inherit (userHome.home) homeDirectory;
   volume = "/System/Volumes/Data";
-  exclusions =
-    [userHome.xdg.cacheHome]
-    ++ map (path: "${userHome.xdg.dataHome}/${path}") ["mise" "pnpm"]
-    ++ map (path: "${homeDirectory}/${path}") [
-      ".cargo"
-      ".claude"
-      ".nuget"
-      ".rustup"
-      "Library/Caches"
-      "Library/Logs"
-      "Library/Developer/Xcode/DerivedData"
-      "Library/Application Support/Adobe/CEP/extensions"
-      "Library/Application Support/Adobe/UXP"
-      "Library/Application Support/Blender"
-      "Library/Application Support/Code/CachedData"
-      "Library/Application Support/Epic"
-      "Library/Application Support/Firefox/Profiles"
-      "Library/Application Support/Google/DriveFS"
-      "Library/Application Support/McNeel"
-      "Library/Application Support/Rasm"
-      "Library/Application Support/dotnet"
-      "Library/Application Support/Spotify/PersistentCache"
-      "Library/Application Support/Superhuman/Cache"
-      "Library/Application Support/Superhuman/Code Cache"
-      "Library/Application Support/Superhuman/Service Worker"
-    ];
+  exclusions = map (path: "${homeDirectory}/${path}") [
+    "Library/Caches"
+    "Library/Logs"
+    "Library/Developer/Xcode/DerivedData"
+    "Library/Application Support/Adobe/CEP/extensions"
+    "Library/Application Support/Adobe/UXP"
+    "Library/Application Support/Arc/User Data"
+    "Library/Application Support/Blender"
+    "Library/Application Support/Code"
+    "Library/Application Support/Epic"
+    "Library/Application Support/FileProvider"
+    "Library/Application Support/Firefox/Profiles"
+    "Library/Application Support/Google/Chrome"
+    "Library/Application Support/Google/DriveFS"
+    "Library/Application Support/McNeel"
+    "Library/Application Support/Rasm"
+    "Library/Application Support/dotnet"
+    "Library/Application Support/Spotify/PersistentCache"
+    "Library/Application Support/Superhuman/Cache"
+    "Library/Application Support/Superhuman/Code Cache"
+    "Library/Application Support/Superhuman/Service Worker"
+    "Library/Group Containers/UBF8T346G9.OneDriveStandaloneSuite"
+  ];
   generatedDirectories = [
     ".artifacts"
     ".build"
@@ -153,6 +150,9 @@
       touch "$work/desired" "$work/repositories"
       for directory in ${lib.escapeShellArgs exclusions}; do
         [[ ! -d $directory ]] || printf '%s\0' "$directory" >> "$work/desired"
+      done
+      for directory in ${lib.escapeShellArg homeDirectory}/.*/ ${lib.escapeShellArg "${homeDirectory}/Developer"}/*/{.*,node_modules}/; do
+        [[ -L ''${directory%/} ]] || printf '%s\0' "$directory" >> "$work/desired"
       done
       for directory in ${lib.escapeShellArg "${homeDirectory}/Developer"}/*/; do
         fd --hidden --no-ignore --prune --glob .git --type directory --type file --print0 \

@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -13,8 +12,6 @@
   };
   rootSetup.Xcode = app: [
     ["/usr/bin/xcode-select" "--switch" "${app}/Contents/Developer"]
-    ["/usr/bin/xcrun" "mcp-server" "enable" "--unsafe-always-allow-all-agents"]
-    ["/usr/bin/xcrun" "mcp-server" "allow-folder" "${config.home.homeDirectory}/Developer" "--always"]
   ];
   minutes = 60;
 in {

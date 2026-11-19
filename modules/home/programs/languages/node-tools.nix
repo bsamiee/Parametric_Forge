@@ -3,6 +3,7 @@
   lib,
   pkgs,
   toolchainEnv,
+  applications,
   ...
 }: let
   toolRows = (import ../../../../overlays/manifest.nix).extensions.npm-tools.rows;
@@ -24,6 +25,9 @@
     withWebkit = false;
   };
   headlessShellRevision = pkgs.playwright-driver.browsersJSON."chromium-headless-shell".revision;
+  chromeLaunch = pkgs.writeShellScript "chrome-launch" ''
+    exec /usr/bin/open -g -n -b ${applications.chrome.id} --args "$@"
+  '';
   mermaidConfig = (pkgs.formats.json {}).generate "mermaid.json" {
     htmlLabels = false;
     flowchart.htmlLabels = false;
@@ -77,6 +81,9 @@ in {
     outputDir = "${config.xdg.stateHome}/playwright/cli";
     outputMaxSize = 268435456;
     timeouts.idle = 3600000;
+  };
+  home.file.".playwright/extension.config.json".text = builtins.toJSON {
+    browser.launchOptions.executablePath = chromeLaunch;
   };
   home.activation.installPlaywrightBrowsers = lib.hm.dag.entryAfter ["writeBoundary"] ''
     run --silence ${lib.getExe commands.playwright} install \

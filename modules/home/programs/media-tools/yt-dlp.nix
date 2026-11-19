@@ -12,7 +12,7 @@
       trap 'rm -f "$state"' EXIT
       umask 077
       mkdir -p ${dirOf cookies}
-      playwright cli -s=yt-dlp-signin attach --extension=chrome >/dev/null
+      playwright cli -s=yt-dlp-signin attach --extension=chrome --config ${config.home.file.".playwright/extension.config.json".source} >/dev/null
       playwright cli -s=yt-dlp-signin state-save "$state" >/dev/null
       playwright cli -s=yt-dlp-signin detach --close-tabs >/dev/null
       {

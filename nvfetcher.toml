@@ -389,10 +389,6 @@ fetch.url = "https://registry.npmjs.org/rea-agents/-/rea-agents-$ver.tgz"
 src.cmd = "curl -fsSL https://registry.npmjs.org/@adobe/aio-cli/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@adobe/aio-cli/-/aio-cli-$ver.tgz"
 
-[chrome-devtools-mcp]
-src.cmd = "curl -fsSL https://registry.npmjs.org/chrome-devtools-mcp/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-$ver.tgz"
-
 [firefox-profiler-cli]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@firefox-devtools/profiler-cli/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-$ver.tgz"

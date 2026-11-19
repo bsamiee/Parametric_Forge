@@ -25,7 +25,6 @@
     claude = app "com.anthropic.claudefordesktop" "/Applications/Claude.app" [] [];
     messages = app "com.apple.MobileSMS" "/System/Applications/Messages.app" [] [];
     epic = app "com.epicgames.EpicGamesLauncher" "/Applications/Epic Games Launcher.app" [] [];
-    creativeCloud = app "com.adobe.acc.AdobeCreativeCloud" "/Applications/Utilities/Adobe Creative Cloud/ACC/Creative Cloud.app" [] [];
     # --- [POINTER_SCHEMES]
     blender = app "org.blenderfoundation.blender" null [] [];
     # --- [BUNDLED_CLI]

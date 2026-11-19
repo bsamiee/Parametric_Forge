@@ -65,12 +65,18 @@ in {
       output = {
         enabled = true;
         max_disk_usage = storeLimit;
+        command_filter = [
+          "(^|&&|;)\\s*(cat|bat|head|tail|nl|less)(\\s|$)"
+          "(^|&&|;)\\s*sed\\s+-[a-zA-Z]*n[a-zA-Z]*\\s"
+        ];
       };
       threads = {
         capture = true;
+        capture_tools = true;
         filter_mode = "workspace";
         resume.codex = "codex resume --no-daemon {id}";
       };
+      auto_sync = false;
       update_check = false;
       ai.enabled = false;
       search_mode = "daemon-fuzzy";
@@ -102,6 +108,7 @@ in {
       history_filter = [
         "(?i)(token|password|secret|api[_-]?key|bearer)[^\\n]*="
         "^export .*(_KEY|_TOKEN|_SECRET|PASSWORD)="
+        "^echo wait(ing)?$"
       ];
       cwd_filter = [
         "^(/private)?/tmp(/|$)"
