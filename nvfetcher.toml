@@ -224,10 +224,6 @@ fetch.tarball = "https://github.com/lexiforest/curl-impersonate/releases/downloa
 src.cmd = "gh api repos/GAM-team/GAM/releases --jq '[.[] | select(.draft or .prerelease | not)][0] | . as $r | [.assets[].name | select(test(\"-macos[0-9.]+-arm64\\\\.tar\\\\.xz$\"))] | max_by(capture(\"-macos(?<os>[0-9.]+)-\").os | split(\".\") | map(tonumber)) | $r.tag_name + \"/\" + .'"
 fetch.tarball = "https://github.com/GAM-team/GAM/releases/download/$ver"
 
-[jc]
-src.pypi = "jc"
-fetch.pypi = "jc"
-
 [mozregression]
 src.pypi = "mozregression"
 fetch.pypi = "mozregression"
@@ -380,10 +376,6 @@ extract = ["browsers.json"]
 [cloudflare-cf]
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/cf/-/cf-$ver.tgz"
-
-[rea-agents]
-src.cmd = "curl -fsSL https://registry.npmjs.org/rea-agents/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/rea-agents/-/rea-agents-$ver.tgz"
 
 [aio-cli]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@adobe/aio-cli/latest | jq -r .version"

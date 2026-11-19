@@ -37,7 +37,6 @@
     # --- [DEVELOPMENT]
     "visual-studio-code"
     "sf-symbols"
-    "apparency"
 
     # --- [MEDIA_ENTERTAINMENT]
     "bsamiee/parametric-forge/voicebox"

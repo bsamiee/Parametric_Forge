@@ -762,21 +762,6 @@
         },
         "version": "3.1.749"
     },
-    "jc": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "jc",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-blfDAs5V1YYsH3vhwrorqmML6humkPa7gqjH5zS3D8E=",
-            "type": "url",
-            "url": "https://pypi.org/packages/source/j/jc/jc-1.26.2.tar.gz"
-        },
-        "version": "1.26.2"
-    },
     "m365-cli": {
         "cargoLock": null,
         "date": null,
@@ -1272,21 +1257,6 @@
             "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.57.0.tar.gz"
         },
         "version": "11.57.0"
-    },
-    "rea-agents": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "rea-agents",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-MiM4oVBeJVdwKhYBLn1Gq9tXKWQdmJOGYnYt+/t5Jio=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/rea-agents/-/rea-agents-6.9.0.tgz"
-        },
-        "version": "6.9.0"
     },
     "resvg": {
         "cargoLock": {

@@ -592,11 +592,6 @@ in {
           env.PLAYWRIGHT_CLI_SESSION = "\${CLAUDE_CODE_SESSION_ID:-\${CODEX_THREAD_ID:-\${ANTIGRAVITY_CONVERSATION_ID:-}}}";
           inherit ((builtins.fromJSON (builtins.readFile (./_sources + "/${generatedPins.playwright-core.extract."browsers.json"}")))) browsers;
         };
-        rea-agents = {
-          inherit (generatedPins.rea-agents) version;
-          commands = ["rea"];
-          license = "MIT";
-        };
       };
     };
     uv-tools = {
@@ -659,11 +654,6 @@ in {
           inherit (generatedPins.ifcquery) version;
           commands = ["ifcquery"];
           license = "LGPL-3.0-or-later";
-        };
-        jc = {
-          inherit (generatedPins.jc) version;
-          commands = ["jc"];
-          license = "MIT";
         };
         mozregression = {
           inherit (generatedPins.mozregression) version;

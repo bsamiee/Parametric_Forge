@@ -53,7 +53,6 @@ in {
       pkgs.jq
       pkgs.lychee
       pkgs.macmon-current
-      pkgs.magika-cli
       pkgs.monolith
       pkgs.mq
       pkgs.oha-current
@@ -61,7 +60,6 @@ in {
       pkgs.ouch
       pkgs.parallel
       pkgs.powershell-current
-      pkgs.radare2
       pkgs.rclone
       pkgs.ripgrep
       pkgs.rsync-current

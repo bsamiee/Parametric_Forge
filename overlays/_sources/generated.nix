@@ -426,14 +426,6 @@
       sha256 = "sha256-WSZ/GKV5yvQ192S2+mRlJgLyGqB8jLfIlPwzStCeyuQ=";
     };
   };
-  jc = {
-    pname = "jc";
-    version = "1.26.2";
-    src = fetchurl {
-      url = "https://pypi.org/packages/source/j/jc/jc-1.26.2.tar.gz";
-      sha256 = "sha256-blfDAs5V1YYsH3vhwrorqmML6humkPa7gqjH5zS3D8E=";
-    };
-  };
   m365-cli = {
     pname = "m365-cli";
     version = "12.0.0";
@@ -708,14 +700,6 @@
     src = fetchurl {
       url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.57.0.tar.gz";
       sha256 = "sha256-zLUqrCJ3wcRC/m+EYFc7+puMb94zoR4ww5bxOO9P3YE=";
-    };
-  };
-  rea-agents = {
-    pname = "rea-agents";
-    version = "6.9.0";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/rea-agents/-/rea-agents-6.9.0.tgz";
-      sha256 = "sha256-MiM4oVBeJVdwKhYBLn1Gq9tXKWQdmJOGYnYt+/t5Jio=";
     };
   };
   resvg = {

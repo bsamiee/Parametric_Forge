@@ -37,8 +37,30 @@ in {
   # --- [GATEKEEPER]
   system.defaults.CustomSystemPreferences."/Library/Preferences/com.apple.security".GKAutoRearm = false;
 
-  # --- [SSH_KNOWN_HOSTS]
+  # --- [SSH_CLIENT]
   programs.ssh.knownHosts."github.com".publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
+  environment.etc."ssh/ssh_config.d/000-forge.conf".text = ''
+    Host ${lib.concatStringsSep " " host.tailnet.servers}
+      User root
+
+    Host github.com
+      User git
+      IdentitiesOnly yes
+      IdentityFile ~/.config/ssh/id_ed25519.pub
+      BatchMode yes
+
+    Host *
+      IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+      KexAlgorithms ^mlkem768x25519-sha256,sntrup761x25519-sha512
+      StrictHostKeyChecking accept-new
+      ConnectTimeout 10
+      TCPKeepAlive yes
+      ControlMaster auto
+      ControlPath ~/.ssh/sockets/%C
+      ControlPersist 10m
+      ServerAliveInterval 60
+      HashKnownHosts yes
+  '';
 
   # --- [REMOTE_LOGIN]
   services.openssh = {
