@@ -577,11 +577,11 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=",
+            "sha256": "sha256-hyH/3hq0wllLW8ElAK4w5jbjTu1aMxczNkpIwuuZp0E=",
             "type": "tarball",
-            "url": "https://github.com/GAM-team/GAM/releases/download/v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
+            "url": "https://github.com/GAM-team/GAM/releases/download/v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz"
         },
-        "version": "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz"
+        "version": "v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz"
     },
     "gemini-api-aarch64-darwin": {
         "cargoLock": null,

@@ -324,10 +324,10 @@
   };
   gam-aarch64-darwin = {
     pname = "gam-aarch64-darwin";
-    version = "v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz";
+    version = "v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz";
     src = fetchTarball {
-      url = "https://github.com/GAM-team/GAM/releases/download/v7.52.03/gam-7.52.03-macos27.0-arm64.tar.xz";
-      sha256 = "sha256-3TbsExoSAIIYcpLk4NIVFE8XTAWS6+pvWtIuQpLRgaQ=";
+      url = "https://github.com/GAM-team/GAM/releases/download/v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz";
+      sha256 = "sha256-hyH/3hq0wllLW8ElAK4w5jbjTu1aMxczNkpIwuuZp0E=";
     };
   };
   gemini-api-aarch64-darwin = {

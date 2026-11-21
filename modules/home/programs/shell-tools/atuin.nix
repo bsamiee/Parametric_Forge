@@ -48,6 +48,10 @@ in {
     ];
   };
 
+  xdg.configFile."atuin/config.toml".onChange = ''
+    run /bin/launchctl kickstart -k "gui/$UID/${config.launchd.agents.atuin-daemon.config.Label}"
+  '';
+
   home.sessionVariables.ATUIN_LOG = "error";
 
   # --- [PTY_PROXY]
@@ -72,11 +76,9 @@ in {
       };
       threads = {
         capture = true;
-        capture_tools = true;
         filter_mode = "workspace";
         resume.codex = "codex resume --no-daemon {id}";
       };
-      auto_sync = false;
       update_check = false;
       ai.enabled = false;
       search_mode = "daemon-fuzzy";
@@ -105,11 +107,7 @@ in {
         }
         "command"
       ];
-      history_filter = [
-        "(?i)(token|password|secret|api[_-]?key|bearer)[^\\n]*="
-        "^export .*(_KEY|_TOKEN|_SECRET|PASSWORD)="
-        "^echo wait(ing)?$"
-      ];
+      history_filter = ["^echo wait(ing)?$"];
       cwd_filter = [
         "^(/private)?/tmp(/|$)"
         "^(/private)?/var/tmp(/|$)"
