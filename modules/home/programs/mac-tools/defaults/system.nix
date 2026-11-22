@@ -181,7 +181,7 @@ in {
     "com.apple.universalaccess" = {
       closeViewScrollWheelToggle = false;
       closeViewZoomFollowsFocus = false;
-      reduceMotion = true;
+      reduceMotion = false;
       reduceTransparency = false;
       mouseDriverCursorSize = 1.0;
     };
