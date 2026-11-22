@@ -552,11 +552,6 @@ in {
           commands = ["mcp-remote"];
           license = "MIT";
         };
-        playwright = {
-          inherit (generatedPins.playwright) version;
-          commands = ["playwright"];
-          license = "Apache-2.0";
-        };
       };
     };
     uv-tools = {

@@ -21,10 +21,6 @@ in {
         jobs = 16;
         dotnet.dotnet_root = dotnetRoot;
       };
-      env = {
-        PLAYWRIGHT_CLI_SESSION = "{{ env.CLAUDE_CODE_SESSION_ID | default(value=env.CODEX_THREAD_ID | default(value=env.ANTIGRAVITY_CONVERSATION_ID | default(value=''))) }}";
-        PLAYWRIGHT_MCP_OUTPUT_DIR = "${config.xdg.stateHome}/playwright";
-      };
       hooks.preinstall = ''
         if [ -f "${dotnetRoot}/dotnet" ]; then
           cp -p "${dotnetRoot}/dotnet" "${dotnetRoot}/dotnet.next"

@@ -59,7 +59,6 @@ _tmp/
 .claude/agent-memory-local/
 .claude/settings.local.json
 .claude/worktrees/
-.playwright-mcp/
 
 # --- [SECRETS] ---------------------------------------------------------------
 
