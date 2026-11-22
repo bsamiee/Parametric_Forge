@@ -26,6 +26,9 @@
     GH_TOKEN = "GH_PROJECTS_TOKEN/token";
     GITHUB_TOKEN = null;
     GH_PROJECTS_TOKEN = null;
+    GITHUB_APP_ID = null;
+    GITHUB_APP_INSTALLATION_ID = null;
+    GITHUB_APP_PRIVATE_KEY = null;
     HOSTINGER_API_TOKEN = null;
     ARENA_TOKEN = null;
     OPENALEX_API_KEY = null;
