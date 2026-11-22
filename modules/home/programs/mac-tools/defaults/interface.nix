@@ -90,8 +90,6 @@
       AppleInterfaceStyle = "Dark";
       AppleInterfaceStyleSwitchesAutomatically = false;
       AppleIconAppearanceTheme = "RegularDark";
-      AppleAccentColor = 5;
-      AppleHighlightColor = "0.270588 0.258824 0.368627 Other";
       _HIHideMenuBar = false;
       AppleShowScrollBars = "WhenScrolling";
       AppleScrollerPagingBehavior = false;
