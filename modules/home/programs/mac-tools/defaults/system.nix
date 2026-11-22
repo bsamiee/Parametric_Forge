@@ -230,11 +230,6 @@ in {
       SUAutomaticallyUpdate = true;
       SUSendProfileInfo = false;
     };
-    # --- [ADOBE_CEP]
-    "com.adobe.CSXS.12" = {
-      PlayerDebugMode = "1";
-      LogLevel = "6";
-    };
     # --- [ARCHIVES]
     "com.macitbetter.betterzip" = {
       SUEnableAutomaticChecks = true;
