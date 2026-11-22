@@ -12,7 +12,7 @@
         '';
     });
   notoArabic = pkgs.noto-fonts.override {variants = ["NotoSansArabic" "NotoNaskhArabic"];};
-  geist = selectPaths pkgs.geist-font-current (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
+  geist = selectPaths pkgs.geist-font (map (name: "share/fonts/truetype/${name}[wght].ttf") ["Geist" "Geist-Italic" "GeistMono" "GeistMono-Italic"]);
   statusAlphabet = [
     ["running" "ea71" "[>]"]
     ["idle" "eabc" "[ ]"]

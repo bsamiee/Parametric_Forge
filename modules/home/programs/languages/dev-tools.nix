@@ -9,7 +9,7 @@
     qsv
 
     # --- [GOOGLE_WORKSPACE]
-    gogcli-current
+    gogcli
     gemini-api
     gam-current
 

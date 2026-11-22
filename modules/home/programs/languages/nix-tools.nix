@@ -6,7 +6,7 @@
   programs = {
     nh = {
       enable = true;
-      package = pkgs.nh-current;
+      package = pkgs.nh;
       flake = host.flakeRoot;
     };
     nix-index.enable = true;

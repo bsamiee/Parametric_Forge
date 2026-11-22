@@ -55,7 +55,7 @@ in {
       pkgs.macmon-current
       pkgs.monolith
       pkgs.mq
-      pkgs.oha-current
+      pkgs.oha
       pkgs.openssl_4_1
       pkgs.ouch
       pkgs.parallel

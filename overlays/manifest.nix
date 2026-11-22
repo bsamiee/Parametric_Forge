@@ -39,11 +39,6 @@ in {
       asset = pinAsset "rsync";
       inherit (generatedPins.rsync) version;
     };
-    resvg-current = {
-      sourcePackage = "resvg";
-      asset = pinAsset "resvg";
-      inherit (generatedPins.resvg) version;
-    };
     yt-dlp-current = {
       sourcePackage = "yt-dlp";
       asset = pinAsset "yt-dlp";
@@ -118,7 +113,6 @@ in {
       homepage = "https://github.com/googlefonts/fontheight";
       mainProgram = "fontheight";
     };
-    geist-font-current = designSource "geist-font";
     scheherazade-new-current = designSource "scheherazade-new";
     harfbuzz-current =
       designSource "harfbuzz"
@@ -196,15 +190,6 @@ in {
       mainProgram = "watchexec";
     };
 
-    gogcli-current = {
-      version = generatedPins.gogcli-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "gogcli-aarch64-darwin";
-      license = "mit";
-      description = "Google Workspace command-line client for Gmail, Calendar, Drive, Docs, Sheets, and Slides";
-      homepage = "https://gogcli.sh/";
-      mainProgram = "gog";
-    };
-
     hostinger = {
       version = generatedPins.hostinger-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "hostinger-aarch64-darwin";
@@ -257,15 +242,6 @@ in {
       description = "Apple Silicon CPU, GPU, ANE, power, disk, network, and battery monitor without sudo";
       homepage = "https://github.com/vladkens/macmon";
       mainProgram = "macmon";
-    };
-
-    nh-current = {
-      version = generatedPins.nh-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "nh-aarch64-darwin";
-      license = "eupl12";
-      description = "Nix helper that builds, diffs, and activates system configurations";
-      homepage = "https://github.com/nix-community/nh";
-      mainProgram = "nh";
     };
 
     mq = {
@@ -356,15 +332,6 @@ in {
       description = "SQL linter and formatter";
       homepage = "https://github.com/quarylabs/sqruff";
       mainProgram = "sqruff";
-    };
-
-    oha-current = {
-      version = generatedPins.oha-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "oha-aarch64-darwin";
-      license = "mit";
-      description = "HTTP load generator";
-      homepage = "https://github.com/hatoo/oha";
-      mainProgram = "oha";
     };
 
     dua-current = {
@@ -584,13 +551,6 @@ in {
           inherit (generatedPins.mcp-remote) version;
           commands = ["mcp-remote"];
           license = "MIT";
-        };
-        playwright = {
-          inherit (generatedPins.playwright-core) version;
-          commands = ["playwright"];
-          license = "Apache-2.0";
-          env.PLAYWRIGHT_CLI_SESSION = "\${CLAUDE_CODE_SESSION_ID:-\${CODEX_THREAD_ID:-\${ANTIGRAVITY_CONVERSATION_ID:-}}}";
-          inherit ((builtins.fromJSON (builtins.readFile (./_sources + "/${generatedPins.playwright-core.extract."browsers.json"}")))) browsers;
         };
       };
     };

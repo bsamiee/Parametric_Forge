@@ -56,12 +56,6 @@ src.cmd = '''curl -fsSL https://download.gnome.org/sources/librsvg/cache.json | 
 fetch.tarball = "https://gitlab.gnome.org/GNOME/librsvg/-/archive/$ver/librsvg-$ver.tar.gz"
 cargo_lock = ["Cargo.lock"]
 
-[design-geist-font]
-src.github = "vercel/geist-font"
-src.prerelease = true
-src.prefix = "v"
-fetch.tarball = "https://github.com/vercel/geist-font/releases/download/v$ver/geist-font-v$ver.zip"
-
 [design-scheherazade-new]
 src.github = "silnrsi/font-scheherazade"
 src.prerelease = true
@@ -114,12 +108,6 @@ fetch.tarball = "https://github.com/NatLabRockies/EnergyPlus/releases/download/$
 src.cmd = "gh api repos/NatLabRockies/OpenStudio/releases --jq '[.[] | select(.draft | not) | . as $r | .assets[].name | select(endswith(\"-Darwin-arm64.tar.gz\")) | $r.tag_name + \"/\" + @uri][0]'"
 fetch.tarball = "https://github.com/NatLabRockies/OpenStudio/releases/download/$ver"
 
-[gogcli-aarch64-darwin]
-src.github = "openclaw/gogcli"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/openclaw/gogcli/releases/download/v$ver/gogcli_$ver_darwin_arm64.tar.gz"
-
 [hostinger-aarch64-darwin]
 src.github = "hostinger/api-cli"
 src.prerelease = true
@@ -162,12 +150,6 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/quarylabs/sqruff/releases/download/v$ver/sqruff-darwin-aarch64.tar.gz"
 
-[oha-aarch64-darwin]
-src.github = "hatoo/oha"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/hatoo/oha/releases/download/v$ver/oha-macos-arm64"
-
 [dua-aarch64-darwin]
 src.github = "Byron/dua-cli"
 src.prerelease = true
@@ -184,12 +166,6 @@ fetch.url = "https://www.kernel.org/pub/software/scm/git/git-$ver.tar.xz"
 src.github = "RsyncProject/rsync"
 src.prefix = "v"
 fetch.url = "https://download.samba.org/pub/rsync/src/rsync-$ver.tar.gz"
-
-[resvg]
-src.github = "linebender/resvg"
-src.prefix = "v"
-fetch.tarball = "https://github.com/linebender/resvg/archive/refs/tags/v$ver.tar.gz"
-cargo_lock = ["Cargo.lock"]
 
 [yt-dlp]
 src.github = "yt-dlp/yt-dlp-nightly-builds"
@@ -251,12 +227,6 @@ fetch.url = "https://files.pythonhosted.org/packages/py3/i/ifcquery/ifcquery-$ve
 [trafilatura]
 src.pypi = "trafilatura"
 fetch.url = "https://files.pythonhosted.org/packages/source/t/trafilatura/trafilatura-$ver.tar.gz"
-
-[nh-aarch64-darwin]
-src.github = "nix-community/nh"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/nix-community/nh/releases/download/v$ver/nh-aarch64-darwin"
 
 [duckdb-spatial-aarch64-darwin]
 src.github = "duckdb/duckdb"
@@ -367,11 +337,6 @@ fetch.url = "https://registry.npmjs.org/@n8n/cli/-/cli-$ver.tgz"
 [mcp-remote]
 src.cmd = "curl -fsSL https://registry.npmjs.org/mcp-remote/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-$ver.tgz"
-
-[playwright-core]
-src.cmd = "curl -fsSL https://registry.npmjs.org/-/package/playwright-core/dist-tags | jq -r .next"
-fetch.tarball = "https://registry.npmjs.org/playwright-core/-/playwright-core-$ver.tgz"
-extract = ["browsers.json"]
 
 [cloudflare-cf]
 src.cmd = "curl -fsSL https://registry.npmjs.org/cf/latest | jq -r .version"

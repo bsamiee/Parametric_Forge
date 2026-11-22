@@ -48,10 +48,10 @@
   };
   bambu-printer-mcp = {
     pname = "bambu-printer-mcp";
-    version = "1.1.98";
+    version = "1.1.99";
     src = fetchurl {
-      url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.98.tgz";
-      sha256 = "sha256-UBVqKMr6g6ome9pwOx/wanTmiZlfGQUwf5HeWjYPs98=";
+      url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.99.tgz";
+      sha256 = "sha256-OgcA9OU+iLia9viz7ZMQKNvI8sjboT3eLRnJz1NfyQ8=";
     };
   };
   blender-asset-tracer = {
@@ -64,26 +64,26 @@
   };
   cloudflare-cf = {
     pname = "cloudflare-cf";
-    version = "1.0.0-rc.0";
+    version = "1.0.0-rc.2";
     src = fetchurl {
-      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.0.tgz";
-      sha256 = "sha256-AsdOW/HLxSigzyyZL4kSw5K8RMWoyRSMyJYQcSkDXWw=";
+      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.2.tgz";
+      sha256 = "sha256-c4OCQdD2M84FVifHJXG5P6ENjl/DBGtyxw8W3nknzfk=";
     };
   };
   coderabbit-aarch64-darwin = {
     pname = "coderabbit-aarch64-darwin";
-    version = "0.9.5";
+    version = "0.9.6";
     src = fetchurl {
-      url = "https://cli.coderabbit.ai/releases/0.9.5/coderabbit-darwin-arm64.zip";
-      sha256 = "sha256-iylrxAdfsqVzm36aX1TNKlQvobrhKV3jBYuD+NL/pzg=";
+      url = "https://cli.coderabbit.ai/releases/0.9.6/coderabbit-darwin-arm64.zip";
+      sha256 = "sha256-XmRgk7iWhTI0G+SRjjRGdbT6deAbojAsx9rSJS7tGOA=";
     };
   };
   ctx7 = {
     pname = "ctx7";
-    version = "0.12.1";
+    version = "0.12.2";
     src = fetchurl {
-      url = "https://registry.npmjs.org/ctx7/-/ctx7-0.12.1.tgz";
-      sha256 = "sha256-ikvxTsmdaYqL24gmXbJE4dHdRVO+GwptbTwOeSJK/Yk=";
+      url = "https://registry.npmjs.org/ctx7/-/ctx7-0.12.2.tgz";
+      sha256 = "sha256-BMXLYJnRQGqAwez7fvHFa4+YTbRC9JiyREHl5yKx+Yo=";
     };
   };
   curl-impersonate-aarch64-darwin = {
@@ -102,20 +102,12 @@
       sha256 = "sha256-cylOIzBw9x4rNlO2vYVkr2dtV/JtB1dh+wbRqy5Kel0=";
     };
   };
-  design-geist-font = {
-    pname = "design-geist-font";
-    version = "1.9.2";
-    src = fetchTarball {
-      url = "https://github.com/vercel/geist-font/releases/download/v1.9.2/geist-font-v1.9.2.zip";
-      sha256 = "sha256-BRx+tfFs9lurWWRBeyxe2voO8hnzJUOrLweqb4o4cM8=";
-    };
-  };
   design-harfbuzz = {
     pname = "design-harfbuzz";
-    version = "15.1.0";
+    version = "15.2.0";
     src = fetchurl {
-      url = "https://github.com/harfbuzz/harfbuzz/releases/download/15.1.0/harfbuzz-15.1.0.tar.xz";
-      sha256 = "sha256-D8fFZUQ6X0vn2mWsXuW9c32bFY3JCHCLdomgpXlrDI0=";
+      url = "https://github.com/harfbuzz/harfbuzz/releases/download/15.2.0/harfbuzz-15.2.0.tar.xz";
+      sha256 = "sha256-4uxJCQdEODzb59+AjBztqvugape+jcQhH+VGulhfEss=";
     };
   };
   design-librsvg = {
@@ -166,10 +158,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.227";
+    version = "1.31.233";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.227/cli-1.31.227.jar";
-      sha256 = "sha256-SAElW5H+XPfWnGIj09Ef3PWoJxS/qdYhuFha0DHvb4g=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.233/cli-1.31.233.jar";
+      sha256 = "sha256-+oPvBN+bQdiJdrXAwN44rx6rEdbLSJCvpLMeZ9fCAGs=";
     };
   };
   diffenator3-aarch64-darwin = {
@@ -190,50 +182,50 @@
   };
   duckdb-aarch64-darwin = {
     pname = "duckdb-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://github.com/duckdb/duckdb/releases/download/v2.0.0/duckdb-cli-osx-arm64.tar.gz";
-      sha256 = "sha256-GIo2/oiD71LmkWWgy7YDHvZ5yObESKHOIpUZZBSbf5Y=";
+      url = "https://github.com/duckdb/duckdb/releases/download/v2.0.1/duckdb-cli-osx-arm64.tar.gz";
+      sha256 = "sha256-eAncHqkhXbU/dr3VOeOBhsIxC2o7WABYG/ZYdgSFVqo=";
     };
   };
   duckdb-excel-aarch64-darwin = {
     pname = "duckdb-excel-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/excel.duckdb_extension.gz";
-      sha256 = "sha256-qeOMS/Vb1IIHPy1Aw6DBM0+t+oGcobeg61maOJNsT9E=";
+      url = "https://extensions.duckdb.org/v2.0.1/osx_arm64/excel.duckdb_extension.gz";
+      sha256 = "sha256-Bjyu5ltOQ0foTesfcByzM0k1YQ7twso+UxoGu6GC5fQ=";
     };
   };
   duckdb-fts-aarch64-darwin = {
     pname = "duckdb-fts-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/fts.duckdb_extension.gz";
-      sha256 = "sha256-+l7vNi4fAE0ZwI127U7EfRgdj+sHyjtSjzBY7olFNis=";
+      url = "https://extensions.duckdb.org/v2.0.1/osx_arm64/fts.duckdb_extension.gz";
+      sha256 = "sha256-McenXkwgu0GAbFm9VE0gxSM/X3KGeXQVckEogjiUcCk=";
     };
   };
   duckdb-httpfs-aarch64-darwin = {
     pname = "duckdb-httpfs-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/httpfs.duckdb_extension.gz";
-      sha256 = "sha256-auotcoy37tuXjKJkzhkOMShCcenqT2iyQkvyCAa0Zjg=";
+      url = "https://extensions.duckdb.org/v2.0.1/osx_arm64/httpfs.duckdb_extension.gz";
+      sha256 = "sha256-YtJ8e6clmBUfiWKNkP+TID21lLubIuhT0nYOrMjHK0M=";
     };
   };
   duckdb-spatial-aarch64-darwin = {
     pname = "duckdb-spatial-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/spatial.duckdb_extension.gz";
-      sha256 = "sha256-FtrcZebrWiEhYAcAY7V8wN7W68JMyMIMQBoXqeADLO4=";
+      url = "https://extensions.duckdb.org/v2.0.1/osx_arm64/spatial.duckdb_extension.gz";
+      sha256 = "sha256-ZJMCXykU5MTb8S3Yu15IiAijlSbxQoC1pbdretlhgPc=";
     };
   };
   duckdb-sqlite-scanner-aarch64-darwin = {
     pname = "duckdb-sqlite-scanner-aarch64-darwin";
-    version = "2.0.0";
+    version = "2.0.1";
     src = fetchurl {
-      url = "https://extensions.duckdb.org/v2.0.0/osx_arm64/sqlite_scanner.duckdb_extension.gz";
-      sha256 = "sha256-DFs5IdM2dSVlklHCmJOY3yxGPwU4m7o1eEp6RcF9V6c=";
+      url = "https://extensions.duckdb.org/v2.0.1/osx_arm64/sqlite_scanner.duckdb_extension.gz";
+      sha256 = "sha256-bNbmlxdVvV89zXKw5rQzT01UiVxMD4iPe5LHXAaiPgc=";
     };
   };
   electron-asar = {
@@ -316,26 +308,26 @@
   };
   gallery-dl = {
     pname = "gallery-dl";
-    version = "1.32.20";
+    version = "1.32.21";
     src = fetchTarball {
-      url = "https://codeberg.org/mikf/gallery-dl/archive/v1.32.20.tar.gz";
-      sha256 = "sha256-VX/+UaScOeE/+eKUwWi+jL+Hfg3BY5kh1/8u98tQz+M=";
+      url = "https://codeberg.org/mikf/gallery-dl/archive/v1.32.21.tar.gz";
+      sha256 = "sha256-xyNbp6LbH0V8FOyas+8DHSE3cYxFTCuSKoMQIDhumbI=";
     };
   };
   gam-aarch64-darwin = {
     pname = "gam-aarch64-darwin";
-    version = "v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz";
+    version = "v7.52.05/gam-7.52.05-macos27.0-arm64.tar.xz";
     src = fetchTarball {
-      url = "https://github.com/GAM-team/GAM/releases/download/v7.52.04/gam-7.52.04-macos27.0-arm64.tar.xz";
-      sha256 = "sha256-hyH/3hq0wllLW8ElAK4w5jbjTu1aMxczNkpIwuuZp0E=";
+      url = "https://github.com/GAM-team/GAM/releases/download/v7.52.05/gam-7.52.05-macos27.0-arm64.tar.xz";
+      sha256 = "sha256-2PILetMQWiK8MriY81m0iDdg01ZkCVmZGg/VdmHvQjI=";
     };
   };
   gemini-api-aarch64-darwin = {
     pname = "gemini-api-aarch64-darwin";
-    version = "0.4.6";
+    version = "0.5.0";
     src = fetchurl {
-      url = "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.4.6/gemini-api_Darwin_arm64.tar.gz";
-      sha256 = "sha256-yAtewtCm/u4M8YlDQnz9r5qrcYO39i9QuVbNJDG5gBg=";
+      url = "https://github.com/google-gemini/gemini-api-cli/releases/download/v0.5.0/gemini-api_Darwin_arm64.tar.gz";
+      sha256 = "sha256-rjGv1gFI7cS4VQgR1Aa4dcS3QWTKlqV4L/R79gBXrvc=";
     };
   };
   git = {
@@ -362,28 +354,20 @@
       sha256 = "sha256-MNHrJq6Nq0FvUq3bz+YKRxhv59dLBwJox5FwdhugkH4=";
     };
   };
-  gogcli-aarch64-darwin = {
-    pname = "gogcli-aarch64-darwin";
-    version = "0.48.1";
-    src = fetchurl {
-      url = "https://github.com/openclaw/gogcli/releases/download/v0.48.1/gogcli_0.48.1_darwin_arm64.tar.gz";
-      sha256 = "sha256-77VvJAD89qfyWuOKHhZftPn1/X97GOdrTAuCweNbgC8=";
-    };
-  };
   hostinger-aarch64-darwin = {
     pname = "hostinger-aarch64-darwin";
-    version = "5.0.1";
+    version = "5.7.2";
     src = fetchurl {
-      url = "https://github.com/hostinger/api-cli/releases/download/v5.0.1/hostinger-5.0.1-darwin-arm64.tar.gz";
-      sha256 = "sha256-QdCy5maGUXCuj6wa3nyn5rX6sJCY/tNTozc5J0GBiBE=";
+      url = "https://github.com/hostinger/api-cli/releases/download/v5.7.2/hostinger-5.7.2-darwin-arm64.tar.gz";
+      sha256 = "sha256-6GsNySu4SwTj9heMT6D2/hZo1soEBKkctcZgzn/s+Nk=";
     };
   };
   hyperframes = {
     pname = "hyperframes";
-    version = "0.9.61";
+    version = "0.9.79";
     src = fetchurl {
-      url = "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.61.tgz";
-      sha256 = "sha256-MwoAoLhZONnagH257kMR1wwY0EbkeUHE6ITRsqPM/L0=";
+      url = "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.79.tgz";
+      sha256 = "sha256-r9FlELD+d/y5to/i96G6/4xSMNnfRyEox9CxutOvAE4=";
     };
   };
   hyperglot = {
@@ -444,26 +428,26 @@
   };
   mcp-remote = {
     pname = "mcp-remote";
-    version = "0.16.6";
+    version = "0.16.7";
     src = fetchurl {
-      url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-0.16.6.tgz";
-      sha256 = "sha256-m3AbZSLTpRPbme63/E8EyyYfuwhIdkUglILu9ECKUp4=";
+      url = "https://registry.npmjs.org/mcp-remote/-/mcp-remote-0.16.7.tgz";
+      sha256 = "sha256-WIbHyr+SGZ5N/pqg98xVGNFueQfcSzv814godPmTRYI=";
     };
   };
   microsoft-teams-module = {
     pname = "microsoft-teams-module";
-    version = "8.0.0";
+    version = "8.1.0";
     src = fetchurl {
-      url = "https://www.powershellgallery.com/api/v2/package/MicrosoftTeams/8.0.0";
-      sha256 = "sha256-aqQm03kT3ueGKK0238JuQBYXAgGEefEQ85ZxLolvKII=";
+      url = "https://www.powershellgallery.com/api/v2/package/MicrosoftTeams/8.1.0";
+      sha256 = "sha256-eMX3M0epey5IECIucC95sP5tXI7E87UrSyiRxwtEWrc=";
     };
   };
   mise-aarch64-darwin = {
     pname = "mise-aarch64-darwin";
-    version = "2026.11.9";
+    version = "2026.11.12";
     src = fetchurl {
-      url = "https://github.com/jdx/mise/releases/download/v2026.11.9/mise-v2026.11.9-macos-arm64.tar.gz";
-      sha256 = "sha256-5FCfFZ4EkuiQZe3PUvKRjidR41dGIFhgWEaLoFY67Vk=";
+      url = "https://github.com/jdx/mise/releases/download/v2026.11.12/mise-v2026.11.12-macos-arm64.tar.gz";
+      sha256 = "sha256-970Zqk5reljXKW+Y4savaLLiZD39YIsLxGwrX9vIdJs=";
     };
   };
   mozregression = {
@@ -476,10 +460,10 @@
   };
   mq-aarch64-darwin = {
     pname = "mq-aarch64-darwin";
-    version = "0.10.1";
+    version = "0.10.2";
     src = fetchurl {
-      url = "https://github.com/harehare/mq/releases/download/v0.10.1/mq-aarch64-apple-darwin";
-      sha256 = "sha256-IjUW79yPPBT3k0s7wHkchsw/LIS/oRWbsWTe48zN4IM=";
+      url = "https://github.com/harehare/mq/releases/download/v0.10.2/mq-aarch64-apple-darwin";
+      sha256 = "sha256-KB1Gf9We4IKXwxZOT0UJSQpqlf0WjoI3cuQhBGQEXbs=";
     };
   };
   n8n-cli = {
@@ -504,14 +488,6 @@
     src = fetchurl {
       url = "https://registry.npmjs.org/@nexrender/cli/-/cli-1.63.3.tgz";
       sha256 = "sha256-B6FMqWW+Rxr/Wo/fWYFZZpBP0LQjHZsgA30jy/584dI=";
-    };
-  };
-  nh-aarch64-darwin = {
-    pname = "nh-aarch64-darwin";
-    version = "4.5.0";
-    src = fetchurl {
-      url = "https://github.com/nix-community/nh/releases/download/v4.5.0/nh-aarch64-darwin";
-      sha256 = "sha256-/6YOLgy3sC7q528KFzCyE0FiwTJmBW3ymcTeP5Xuunk=";
     };
   };
   notebooklm-py = {
@@ -540,21 +516,21 @@
   };
   ocr-pydantic = {
     pname = "ocr-pydantic";
-    version = "2.14.3";
+    version = "2.14.4";
     src = fetchTarball {
-      url = "https://github.com/pydantic/pydantic/archive/refs/tags/v2.14.3.tar.gz";
-      sha256 = "sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=";
+      url = "https://github.com/pydantic/pydantic/archive/refs/tags/v2.14.4.tar.gz";
+      sha256 = "sha256-RZ70cbRbA+fNAgzZdEQbklTICmvvtz0oD53ZqUCQPzg=";
     };
   };
   ocr-pydantic-core = {
     pname = "ocr-pydantic-core";
-    version = "2.50.4";
+    version = "2.50.5";
     src = fetchTarball {
-      url = "https://github.com/pydantic/pydantic/archive/refs/tags/core-v2.50.4.tar.gz";
-      sha256 = "sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=";
+      url = "https://github.com/pydantic/pydantic/archive/refs/tags/core-v2.50.5.tar.gz";
+      sha256 = "sha256-RZ70cbRbA+fNAgzZdEQbklTICmvvtz0oD53ZqUCQPzg=";
     };
     cargoLock."pydantic-core/Cargo.lock" = {
-      lockFile = ./. + "/sha256-Q5dvfgbbYw3QeB1nY+eUIBoVsUpxgLKE8jTX6CJV+Zs=/pydantic-core/Cargo.lock";
+      lockFile = ./. + "/sha256-RZ70cbRbA+fNAgzZdEQbklTICmvvtz0oD53ZqUCQPzg=/pydantic-core/Cargo.lock";
       outputHashes = {
         
       };
@@ -581,18 +557,10 @@
   };
   officecli-aarch64-darwin = {
     pname = "officecli-aarch64-darwin";
-    version = "1.0.162";
+    version = "1.0.163";
     src = fetchurl {
-      url = "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.162/officecli-mac-arm64";
-      sha256 = "sha256-fFTAC/6p0oppKCZh8OOgjUVcj8oaHUhvTBRshntpN5c=";
-    };
-  };
-  oha-aarch64-darwin = {
-    pname = "oha-aarch64-darwin";
-    version = "1.17.0";
-    src = fetchurl {
-      url = "https://github.com/hatoo/oha/releases/download/v1.17.0/oha-macos-arm64";
-      sha256 = "sha256-LFjyusEa4joS9hiKZyP9GIL6gvc9mHTCFB63jCInUsc=";
+      url = "https://github.com/iOfficeAI/OfficeCLI/releases/download/v1.0.163/officecli-mac-arm64";
+      sha256 = "sha256-ErvnwyKkEUUzvMEV6P9iVZF6Nd4EMshREb5TTIKpy+E=";
     };
   };
   openstudio-aarch64-darwin = {
@@ -643,17 +611,6 @@
       sha256 = "sha256-l1qOxVo1Pcieh6xqjVgbkQhW7l3O9CdBOV05zt5vHn8=";
     };
   };
-  playwright-core = {
-    pname = "playwright-core";
-    version = "1.66.0-alpha-2026-11-16";
-    src = fetchTarball {
-      url = "https://registry.npmjs.org/playwright-core/-/playwright-core-1.66.0-alpha-2026-11-16.tgz";
-      sha256 = "sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=";
-    };
-    extract = {
-      "browsers.json" = ./. + "/sha256-kkCkB6zxXDLkxnZom4EeUruSMqDLspS60BgGt8AsoPE=/browsers.json";
-    };
-  };
   pnp-powershell = {
     pname = "pnp-powershell";
     version = "3.5.0";
@@ -672,10 +629,10 @@
   };
   psd-tools = {
     pname = "psd-tools";
-    version = "1.26.1";
+    version = "1.27.0";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/cp313/p/psd-tools/psd_tools-1.26.1-cp313-abi3-macosx_11_0_arm64.whl";
-      sha256 = "sha256-xckzdnLT4xux3b5EAxl/bo2DHx8Qpe0OITjlGdFHdWw=";
+      url = "https://files.pythonhosted.org/packages/cp313/p/psd-tools/psd_tools-1.27.0-cp313-abi3-macosx_11_0_arm64.whl";
+      sha256 = "sha256-V2AAj4mnmRXwIBm7svyV/9tjbh5uZGHZKuUTfEaVKQE=";
     };
   };
   psd2svg = {
@@ -696,24 +653,10 @@
   };
   pymobiledevice3 = {
     pname = "pymobiledevice3";
-    version = "11.57.0";
+    version = "11.61.1";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.57.0.tar.gz";
-      sha256 = "sha256-zLUqrCJ3wcRC/m+EYFc7+puMb94zoR4ww5bxOO9P3YE=";
-    };
-  };
-  resvg = {
-    pname = "resvg";
-    version = "0.50.0";
-    src = fetchTarball {
-      url = "https://github.com/linebender/resvg/archive/refs/tags/v0.50.0.tar.gz";
-      sha256 = "sha256-lsJktYzwkWRzetU+rNLZrZSRT5jSNVPTtbwE3gnT5wk=";
-    };
-    cargoLock."Cargo.lock" = {
-      lockFile = ./. + "/sha256-lsJktYzwkWRzetU+rNLZrZSRT5jSNVPTtbwE3gnT5wk=/Cargo.lock";
-      outputHashes = {
-        
-      };
+      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.61.1.tar.gz";
+      sha256 = "sha256-YH8DWqKbTLmPi5OXgKR+pGcSEBbDS73uATv0DiQ9NtY=";
     };
   };
   retoc-aarch64-darwin = {
@@ -750,10 +693,10 @@
   };
   swift-section-aarch64-darwin = {
     pname = "swift-section-aarch64-darwin";
-    version = "0.24.0";
+    version = "0.25.0";
     src = fetchurl {
-      url = "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection/releases/download/0.24.0/swift-section-macos-universal.zip";
-      sha256 = "sha256-FB7RXbrf72in8JgX6Yp59ISlr6NNKuB9PlGVbxuasnI=";
+      url = "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection/releases/download/0.25.0/swift-section-macos-universal.zip";
+      sha256 = "sha256-5Mw/AG2dtVQggUbIScseDJtbzyI4UczpqRSLqTKChG4=";
     };
   };
   tavily-cli = {
@@ -814,10 +757,10 @@
   };
   yt-dlp = {
     pname = "yt-dlp";
-    version = "2026.11.16.232655";
+    version = "2026.11.20.232656";
     src = fetchTarball {
-      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.16.232655/yt-dlp.tar.gz";
-      sha256 = "sha256-/oSCemQkabe/u90MeRjTVBMZHsw97UBMJsml8onOONg=";
+      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.20.232656/yt-dlp.tar.gz";
+      sha256 = "sha256-gG9LXfn2WtYPUCVASMy+TqwsqZakcseBtZ3BD0BzDl4=";
     };
   };
 }

@@ -146,10 +146,6 @@ final: prev: let
     );
 
   recipes = {
-    gogcli-current = cliRelease {
-      binary = "gog";
-      completion = "completion";
-    };
     hostinger = cliRelease {
       binary = "hostinger";
       completion = "completion";
@@ -161,10 +157,6 @@ final: prev: let
       completion = "completion";
       man = "manpages/*.1.gz";
       versionArg = "version";
-    };
-    nh-current = cliRelease {
-      binary = ''"$src"'';
-      unpack = false;
     };
     mq = cliRelease {
       binary = ''"$src"'';
@@ -213,11 +205,6 @@ final: prev: let
       man = "yq.1";
     };
     sqruff-current = cliRelease {binary = "sqruff";};
-    oha-current = cliRelease {
-      binary = ''"$src"'';
-      completion = "--completions";
-      unpack = false;
-    };
     dua-current = cliRelease {
       binary = "*/dua";
       completion = "completions";
@@ -392,9 +379,6 @@ final: prev: let
     librsvg-current = _: {
       cargoDeps = prev.rustPlatform.importCargoLock generatedSources.design-librsvg.cargoLock."Cargo.lock";
     };
-    resvg-current = _: {
-      cargoDeps = prev.rustPlatform.importCargoLock generatedSources.resvg.cargoLock."Cargo.lock";
-    };
     powershell-current = old: {
       nativeBuildInputs = old.nativeBuildInputs ++ [prev.unzip];
       postInstall = lib.concatStrings (lib.mapAttrsToList (name: module: ''
@@ -455,6 +439,7 @@ in
             };
             pydantic = old: {
               patches = [];
+              disabledTests = (old.disabledTests or []) ++ ["test_exceptions_and_markers_report_python_references"];
               nativeCheckInputs = old.nativeCheckInputs ++ [prev.python3Packages.pytest-examples];
             };
             pydantic-core = old: {

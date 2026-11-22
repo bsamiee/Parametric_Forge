@@ -11,8 +11,8 @@
     postFixup = "";
   };
   resvg = pkgs.symlinkJoin {
-    inherit (pkgs.resvg-current) pname version meta;
-    paths = [pkgs.resvg-current];
+    inherit (pkgs.resvg) pname version meta;
+    paths = [pkgs.resvg];
     nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
       for command in resvg usvg; do
