@@ -39,7 +39,7 @@ in {
 
   # --- [SSH_CLIENT]
   programs.ssh.knownHosts."github.com".publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
-  environment.etc."ssh/ssh_config.d/000-forge.conf".text = ''
+  environment.etc."ssh/ssh_config.d/000-client.conf".text = ''
     Host ${lib.concatStringsSep " " host.tailnet.servers}
       User root
 
