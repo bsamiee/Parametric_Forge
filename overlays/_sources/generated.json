@@ -1093,6 +1093,21 @@
         },
         "version": "0.1.4"
     },
+    "playwright": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "playwright",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-1trZNHhVwJyBxWLZDNpUdsJLMopFfxazRFGM1XIpm4k=",
+            "type": "url",
+            "url": "https://registry.npmjs.org/playwright/-/playwright-1.66.0-alpha-2026-11-21.tgz"
+        },
+        "version": "1.66.0-alpha-2026-11-21"
+    },
     "pnp-powershell": {
         "cargoLock": null,
         "date": null,

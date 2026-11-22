@@ -219,20 +219,6 @@ in {
     };
     "com.microsoft.Word".OfficeWebAddinDeveloperExtras = true;
     "com.microsoft.Excel".OfficeWebAddinDeveloperExtras = true;
-    "com.google.Chrome" = {
-      AutofillAddressEnabled = false;
-      AutofillCreditCardEnabled = false;
-      NSUserKeyEquivalents = {
-        "Add Tab to New Split View" = "^$=";
-        "Bookmark All Tabs…" = "@~$d";
-        "Bookmark This Tab…" = "@$d";
-        "Close Other Tabs" = "@$k";
-        "New Tab" = "@~t";
-        "Save Page As…" = "@~$s";
-      };
-      PasswordManagerEnabled = false;
-      ShowFullUrlsInAddressBar = true;
-    };
     "${home}/Library/Group Containers/8C7439RJLG.group.codes.rambo.AirBuddy/Library/Preferences/8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
     ${applications.tailscale.id}.TailscaleStartOnLogin = true;
     "com.lujjjh.LinearMouse" = {

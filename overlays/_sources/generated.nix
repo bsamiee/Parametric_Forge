@@ -611,6 +611,14 @@
       sha256 = "sha256-l1qOxVo1Pcieh6xqjVgbkQhW7l3O9CdBOV05zt5vHn8=";
     };
   };
+  playwright = {
+    pname = "playwright";
+    version = "1.66.0-alpha-2026-11-21";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/playwright/-/playwright-1.66.0-alpha-2026-11-21.tgz";
+      sha256 = "sha256-1trZNHhVwJyBxWLZDNpUdsJLMopFfxazRFGM1XIpm4k=";
+    };
+  };
   pnp-powershell = {
     pname = "pnp-powershell";
     version = "3.5.0";
