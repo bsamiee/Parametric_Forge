@@ -62,6 +62,14 @@
       sha256 = "sha256-tPH6ul05EoqZdfsps0ruas9nI8/sDwc7vj026G25QjA=";
     };
   };
+  chrome-devtools-mcp = {
+    pname = "chrome-devtools-mcp";
+    version = "1.13.0";
+    src = fetchurl {
+      url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-1.13.0.tgz";
+      sha256 = "sha256-kVjEtKh5LLUirkb3buqpSRzgRhajrpcimhYnfgKkrqQ=";
+    };
+  };
   cloudflare-cf = {
     pname = "cloudflare-cf";
     version = "1.0.0-rc.2";

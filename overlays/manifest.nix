@@ -536,6 +536,11 @@ in {
           commands = ["cf"];
           license = "Apache-2.0";
         };
+        chrome-devtools-mcp = {
+          inherit (generatedPins.chrome-devtools-mcp) version;
+          commands = ["chrome-devtools-mcp" "chrome-devtools"];
+          license = "Apache-2.0";
+        };
         ctx7 = {
           inherit (generatedPins.ctx7) version;
           commands = ["ctx7"];
