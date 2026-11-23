@@ -40,7 +40,7 @@
   '';
 in {
   home.file =
-    lib.genAttrs' ["Adobe Photoshop 2027" "Adobe Photoshop (Beta)"] (channel:
+    lib.genAttrs' ["Adobe Photoshop (Beta)"] (channel:
       lib.nameValuePair "Library/Preferences/${channel} Settings/PSUserConfig.txt" {
         text = "WarnRunningScripts 0\nWarnDeepLinkPluginContact 0\n";
         force = true;

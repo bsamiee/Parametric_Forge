@@ -14,9 +14,9 @@
 
     # --- [BROWSERS_INTERNET]
     "arc"
-    "firefox@beta"
+    "firefox"
     "google-chrome"
-    "tor-browser@alpha"
+    "tor-browser"
 
     # --- [NETWORK]
     "tailscale-app"
