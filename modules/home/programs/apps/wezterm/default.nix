@@ -55,14 +55,12 @@
       height = 32;
       level = "AlwaysOnTop";
       opacity = 0.92;
-      decorations = "RESIZE";
     };
     log = {
       width = 150;
       height = 24;
       level = "AlwaysOnTop";
       opacity = 0.88;
-      decorations = "RESIZE";
     };
   };
 
@@ -114,7 +112,7 @@
     initial_rows = 34;
 
     default_cursor_style = "SteadyBar";
-    cursor_thickness = 2;
+    cursor_thickness = "1pt";
     force_reverse_video_cursor = true;
 
     native_macos_fullscreen_mode = true;
@@ -136,6 +134,12 @@
     allow_square_glyphs_to_overflow_width = "Never";
     cursor_blink_ease_in = "Constant";
     cursor_blink_ease_out = "Constant";
+    text_blink_rate = 400;
+    text_blink_ease_in = "Constant";
+    text_blink_ease_out = "Constant";
+    text_blink_rapid_ease_in = "Constant";
+    text_blink_rapid_ease_out = "Constant";
+    unicode_version = 14;
 
     command_palette_bg_color = roles.surface.raised.hex;
     command_palette_fg_color = roles.accent.primary.hex;
@@ -145,7 +149,7 @@
     char_select_fg_color = roles.accent.primary.hex;
     char_select_font_size = fontRow.size;
 
-    front_end = "OpenGL";
+    front_end = "WebGpu";
     max_fps = 120;
 
     default_workspace = defaultWorkspace;

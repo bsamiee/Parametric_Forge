@@ -497,6 +497,10 @@ in
           })
         manifest.packages.fontforge-current.patches;
     });
+    zellij-unwrapped = prev.zellij-unwrapped.overrideAttrs (old: {
+      patches = (old.patches or []) ++ [./zellij-synchronized-update-idle-cap.patch];
+      doCheck = false;
+    });
     fontheight-cli = let
       row = manifest.packages.fontheight-cli;
     in

@@ -5,11 +5,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anstyle::Style;
+use anstyle::{Effects, Style};
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 use zellij_tile::prelude::{actions::Action, *};
 
-use crate::view::{Count, Hit, Line, bold, compose, ink, on, underline_if};
+use crate::view::{Count, Hit, Line, bold, compose, ink, on, underline_if, with};
 
 mod data {
     use zellij_tile::prelude::InputMode;
@@ -56,10 +56,7 @@ use data::{HYPER, NEXT_CHORD, NEXT_KEY, NEXT_MODES, PALETTE as P, SUPER, ribbon}
 
 // --- [CONSTANTS] -----------------------------------------------------------------------
 
-const TICK_SECS: f64 = 0.4;
-const TICK_SLACK: Duration = Duration::from_millis(60);
-const HOVER_TICKS: u8 = 25;
-const HEAL_TICKS: u32 = 5;
+const HOVER: Duration = Duration::from_secs(10);
 const LABEL_COLS: usize = 24;
 const SESSION_COLS: usize = 12;
 const NOTICE_LEAD: usize = 6;
@@ -92,6 +89,7 @@ struct Row {
 struct Census {
     rows: Vec<Row>,
     terminals: Vec<u32>,
+    focused: Vec<u32>,
 }
 
 #[derive(Debug, Default)]
@@ -99,7 +97,7 @@ struct Client {
     mode: InputMode,
     session: String,
     tabs: Vec<TabInfo>,
-    hover: Option<(Hit, u8)>,
+    hover: Option<(Hit, Instant)>,
     cursors: BTreeMap<Hit, usize>,
     bound: bool,
 }
@@ -113,8 +111,6 @@ struct State {
     focus: BTreeMap<ClientId, u32>,
     lit: BTreeSet<u32>,
     reconciled: bool,
-    tick: u32,
-    due: Option<Instant>,
     granted: bool,
     drawn: BTreeMap<(SlotId, ClientId), Line>,
 }
@@ -179,19 +175,11 @@ impl Census {
             .filter_map(|(tab, pane)| classify(pane).map(|class| Row { id: pane.id, tab, label: label(pane), class }))
             .collect();
         rows.sort_by_key(|row| (row.tab, row.id));
-        Self { rows, terminals: terminals.map(|(_, pane)| pane.id).collect() }
+        Self { rows, focused: terminals.clone().filter(|(_, pane)| pane.is_focused).map(|(_, pane)| pane.id).collect(), terminals: terminals.map(|(_, pane)| pane.id).collect() }
     }
 
     fn of(&self, count: Count) -> impl Iterator<Item = &Row> {
         self.rows.iter().filter(move |row| row.class == Class::Tally(count))
-    }
-
-    fn mark(&self, tab: usize) -> Option<char> {
-        self.rows.iter().filter(|row| row.tab == tab).fold(None, |mark, row| match (mark, row.class) {
-            (_, Class::Ask(_)) => Some('!'),
-            (None, Class::Tally(Count::Failed)) => Some('x'),
-            (mark, _) => mark,
-        })
     }
 }
 
@@ -203,37 +191,20 @@ impl State {
         })
     }
 
-    fn arm(&mut self) {
-        let animating = !self.asks.is_empty() || self.census.of(Count::Working).next().is_some() || self.clients.values().any(|client| client.hover.is_some());
-        match (animating, self.due) {
-            (true, None) => {
-                self.due = Some(Instant::now() + Duration::from_secs_f64(TICK_SECS));
-                set_timeout(TICK_SECS);
-            },
-            (false, _) => self.tick = 0,
-            _ => {},
-        }
-    }
-
     fn timer(&mut self) -> RenderResponse {
-        if self.due.is_none_or(|due| Instant::now() + TICK_SLACK < due) {
-            return RenderResponse::Nothing;
-        }
-        self.due = None;
-        self.tick = self.tick.wrapping_add(1);
-        if self.tick % HEAL_TICKS == 0 && !self.asks.is_empty() {
-            self.light(true);
-        }
-        let expired = self.clients.values_mut().fold(false, |expired, client| {
-            let before = client.hover.is_some();
-            client.hover = client.hover.and_then(|(hit, left)| left.checked_sub(1).filter(|left| *left > 0).map(|left| (hit, left)));
-            expired | (before && client.hover.is_none())
+        let now = Instant::now();
+        let (expired, pending) = self.clients.values_mut().fold((false, None::<Duration>), |(expired, pending), client| match client.hover {
+            Some((_, until)) if until <= now => {
+                client.hover = None;
+                (true, pending)
+            },
+            Some((_, until)) => (expired, Some(pending.map_or(until - now, |held| held.max(until - now)))),
+            None => (expired, pending),
         });
-        if expired { RenderResponse::All } else { self.top_slots() }
-    }
-
-    fn top_slots(&self) -> RenderResponse {
-        RenderResponse::Slots(self.slots.iter().filter(|(_, role)| **role == Role::Top).map(|(slot, _)| *slot).collect())
+        if let Some(wait) = pending {
+            set_timeout(wait.as_secs_f64());
+        }
+        if expired { RenderResponse::All } else { RenderResponse::Nothing }
     }
 
     fn panes(&mut self, manifest: &PaneManifest) -> bool {
@@ -249,18 +220,18 @@ impl State {
                 self.asks.push(id);
             }
         });
-        self.light(false);
+        self.light();
         true
     }
 
-    fn light(&mut self, heal: bool) {
+    fn light(&mut self) {
         let want: BTreeSet<u32> = self.asks.iter().copied().filter(|id| !self.focus.values().any(|focused| focused == id)).collect();
         let stale: Vec<u32> = if self.reconciled {
             self.lit.difference(&want).copied().collect()
         } else {
             self.census.terminals.iter().filter(|id| !want.contains(id)).copied().collect()
         };
-        let fresh: Vec<u32> = if heal { want.iter().copied().collect() } else { want.difference(&self.lit).copied().collect() };
+        let fresh: Vec<u32> = want.difference(&self.lit).copied().collect();
         if !fresh.is_empty() || !stale.is_empty() {
             highlight_and_unhighlight_panes(fresh.into_iter().map(PaneId::Terminal).collect(), stale.into_iter().map(PaneId::Terminal).collect());
         }
@@ -346,7 +317,6 @@ impl State {
     }
 
     fn top(&self, client: &Client, cols: usize) -> Line {
-        let blink = self.tick % 2 == 1;
         let hovered = |hit: Hit| Self::hovering(client) == Some(hit);
         let fill = on(ink(P.inverse), P.focus);
         let tabs = |fold: bool| {
@@ -354,7 +324,11 @@ impl State {
             line.push(ink(P.focus), '▐').push(bold(fill), " TAB");
             let mut folded = false;
             client.tabs.iter().for_each(|tab| {
-                let mark = self.census.mark(tab.position);
+                let mark = match (tab.attention.counts.needs_you, tab.attention.counts.failed) {
+                    (1.., _) => Some(('!', Effects::BLINK)),
+                    (0, 1..) => Some(('x', Effects::new())),
+                    (0, 0) => None,
+                };
                 if fold && !tab.active && mark.is_none() {
                     if !folded {
                         line.push(on(ink(P.selected), P.focus), " …");
@@ -374,8 +348,8 @@ impl State {
                         (true, _) => {
                             line.push(look(bold(fill)), format_args!("[{number}]"));
                         },
-                        (false, Some(mark)) => {
-                            line.push(look(bold(fill)), format_args!(" {number}{}", if mark == '!' && blink { ' ' } else { mark }));
+                        (false, Some((mark, effect))) => {
+                            line.push(look(bold(fill)), format_args!(" {number}")).push(with(look(bold(fill)), effect), mark);
                         },
                         (false, None) => {
                             line.push(look(on(ink(P.selected), P.focus)), format_args!(" {number} "));
@@ -391,7 +365,7 @@ impl State {
             if let Some((_, kind)) = self.asks.first().and_then(|id| self.ask(*id)) {
                 line.hit(Hit::Notice, |line| {
                     let style = underline_if(bold(ink(P.need)), hovered(Hit::Notice));
-                    line.push(style, if blink { ' ' } else { '!' });
+                    line.push(with(style, Effects::BLINK), '!');
                     if word {
                         line.push(style, format_args!(" {kind}"));
                     }
@@ -407,9 +381,8 @@ impl State {
                 if n == 0 {
                     return;
                 }
-                let glyph_ink = if count == Count::Working && (self.tick / 2) % 2 == 1 { P.muted } else { tone };
                 line.hit(Hit::Count(count), |line| {
-                    let style = underline_if(ink(glyph_ink), hovered(Hit::Count(count)));
+                    let style = underline_if(ink(tone), hovered(Hit::Count(count)));
                     let style = if matches!(count, Count::Failed | Count::Command) { bold(style) } else { style };
                     line.push(style, glyph).push(ink(tone), format_args!(" {n}"));
                 });
@@ -543,8 +516,11 @@ impl State {
             Mouse::Hover(_, column) => {
                 let hover = at(*column).filter(|_| self.slots.get(&slot) == Some(&Role::Top));
                 let client = self.clients.entry(client_id).or_default();
-                let changed = Self::hovering(client) != hover;
-                client.hover = hover.map(|hit| (hit, HOVER_TICKS));
+                let (changed, resting) = (Self::hovering(client) != hover, client.hover.is_none());
+                client.hover = hover.map(|hit| (hit, Instant::now() + HOVER));
+                if resting && hover.is_some() {
+                    set_timeout(HOVER.as_secs_f64());
+                }
                 changed
             },
             _ => false,
@@ -599,7 +575,7 @@ impl ZellijSharedPlugin for State {
 
     fn update(&mut self, event: Event, context: EventContext) -> RenderResponse {
         let targets: Vec<ClientId> = context.client_id.map_or_else(|| self.clients.keys().copied().collect(), |client_id| vec![client_id]);
-        let response = match event {
+        match event {
             Event::PermissionRequestResult(PermissionStatus::Granted) => {
                 self.granted = true;
                 self.bind();
@@ -629,11 +605,20 @@ impl ZellijSharedPlugin for State {
                     client.tabs = tabs.clone();
                     changed | moved
                 });
-                if changed { RenderResponse::All } else { RenderResponse::Nothing }
+                if changed {
+                    list_clients();
+                    RenderResponse::All
+                } else {
+                    RenderResponse::Nothing
+                }
             },
             Event::PaneUpdate(manifest) => {
-                list_clients();
-                if self.panes(&manifest) { RenderResponse::All } else { RenderResponse::Nothing }
+                if self.panes(&manifest) {
+                    list_clients();
+                    RenderResponse::All
+                } else {
+                    RenderResponse::Nothing
+                }
             },
             Event::ListClients(clients) => {
                 let focus: BTreeMap<ClientId, u32> = clients
@@ -645,7 +630,7 @@ impl ZellijSharedPlugin for State {
                     .collect();
                 if focus != self.focus {
                     self.focus = focus;
-                    self.light(false);
+                    self.light();
                 }
                 RenderResponse::Nothing
             },
@@ -653,9 +638,7 @@ impl ZellijSharedPlugin for State {
                 if self.mouse(&mouse, context) { RenderResponse::All } else { RenderResponse::Nothing }
             },
             _ => RenderResponse::Nothing,
-        };
-        self.arm();
-        response
+        }
     }
 
     fn pipe(&mut self, message: PipeMessage, context: EventContext) -> RenderResponse {

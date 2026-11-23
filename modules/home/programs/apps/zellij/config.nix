@@ -1,14 +1,12 @@
 {
   lib,
   pkgs,
-  toolchainEnv,
   theme,
   chords,
   host,
   ...
 }: let
   inherit (theme) roles;
-  inherit (toolchainEnv) pathEntries;
 
   pH = chords.zellij.prefix.hyper;
   inherit (chords) modes layers;
@@ -422,7 +420,6 @@ in {
 
         // --- [PANE_ENVIRONMENT]
         env {
-          PATH "${lib.concatStringsSep ":" pathEntries}"
           TERM "xterm-256color"
           COLORTERM "truecolor"
         }

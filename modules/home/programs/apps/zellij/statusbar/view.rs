@@ -125,8 +125,12 @@ pub fn ink(hex: u32) -> Style {
     Style::new().fg_color(Some(rgb(hex)))
 }
 
+pub fn with(style: Style, effects: Effects) -> Style {
+    style.effects(style.get_effects() | effects)
+}
+
 pub fn bold(style: Style) -> Style {
-    style.effects(style.get_effects() | Effects::BOLD)
+    with(style, Effects::BOLD)
 }
 
 pub fn on(style: Style, hex: u32) -> Style {
@@ -134,7 +138,7 @@ pub fn on(style: Style, hex: u32) -> Style {
 }
 
 pub fn underline_if(style: Style, on: bool) -> Style {
-    if on { style.effects(style.get_effects() | Effects::DOTTED_UNDERLINE) } else { style }
+    if on { with(style, Effects::DOTTED_UNDERLINE) } else { style }
 }
 
 pub fn compose(left: &Line, center: &Line, right: &Line, cols: usize, anchor: usize) -> Option<Line> {

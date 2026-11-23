@@ -8,17 +8,12 @@
   sessionRows = removeAttrs (toolchainEnv.sessionEnv // toolchainEnv.sharedEnv) (builtins.attrNames toolchainEnv.runtimeEnv);
   envStamp = builtins.substring 0 16 (builtins.hashString "sha256" (builtins.toJSON sessionRows));
   mise = lib.getExe config.programs.mise.package;
-  miseRefresh = ''{ (( $+functions[compdef] )) || compdef() { :; }; eval "$(${mise} hook-env --force -s zsh)"; }'';
 in {
   programs.zsh = {
     envExtra = ''
       setopt no_equals
       setopt no_nomatch
       disable log
-
-      if (( ''${+__MISE_DIFF} )); then
-        eval "$(${mise} --no-config hook-env --force -s zsh)"
-      fi
 
       typeset -U PATH path
       _session_path=(${lib.concatMapStringsSep " " lib.escapeShellArg toolchainEnv.pathEntries})
@@ -40,17 +35,12 @@ in {
       fi
       [[ ! -f ${lib.escapeShellArg opSessionCache} ]] || source ${lib.escapeShellArg opSessionCache}
 
-      [[ -o interactive || -o login ]] || ${miseRefresh}
-    '';
-    profileExtra = ''
-      [[ -o interactive ]] || ${miseRefresh}
+      [[ -o interactive || -o login ]] || eval "$(${mise} env -s zsh)"
     '';
     initContent = lib.mkOrder 1950 ''
       # --- [SESSION_CACHE_REFRESH]
       _session-cache-refresh() {
-        local stamp=$SESSION_CACHE_STAMP
         [[ ! -f ${lib.escapeShellArg opSessionCache} ]] || source ${lib.escapeShellArg opSessionCache}
-        [[ $stamp == $SESSION_CACHE_STAMP ]] || ${miseRefresh}
       }
       autoload -Uz add-zsh-hook
       add-zsh-hook precmd _session-cache-refresh

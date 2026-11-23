@@ -8,7 +8,6 @@
 }: let
   inherit (theme) roles;
   atuin = lib.getExe config.programs.atuin.package;
-  storeLimit = "10GiB";
 in {
   # --- [DAEMON]
   launchd.agents.atuin-daemon = launchdAgent {
@@ -17,35 +16,6 @@ in {
     RunAtLoad = true;
     KeepAlive = true;
     ProcessType = "Interactive";
-  };
-
-  # --- [STORE_SIZE]
-  launchd.agents.atuin-size = launchdAgent {
-    name = "atuin-size";
-    argv = [
-      (lib.getExe config.programs.fd.package)
-      "--size"
-      "+${storeLimit}"
-      "--extension"
-      "db"
-      "--base-directory"
-      "${config.xdg.dataHome}/atuin"
-      "--exec"
-      "/usr/bin/osascript"
-      "-e"
-      "on run {store}"
-      "-e"
-      ''display notification store & " passed ${storeLimit}" with title "atuin"''
-      "-e"
-      "end run"
-      "{/}"
-    ];
-    StartCalendarInterval = [
-      {
-        Hour = 10;
-        Minute = 0;
-      }
-    ];
   };
 
   xdg.configFile."atuin/config.toml".onChange = ''
@@ -68,7 +38,7 @@ in {
       daemon.enabled = true;
       output = {
         enabled = true;
-        max_disk_usage = storeLimit;
+        max_disk_usage = "10GiB";
         command_filter = [
           "(^|&&|;)\\s*(cat|bat|head|tail|nl|less)(\\s|$)"
           "(^|&&|;)\\s*sed\\s+-[a-zA-Z]*n[a-zA-Z]*\\s"

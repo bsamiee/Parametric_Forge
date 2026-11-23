@@ -16,8 +16,7 @@ end
 
 function M.session_args(name)
     local w = workspace_row(name)
-    local launch = "unset __MISE_DIFF __MISE_SESSION __HM_SESS_VARS_SOURCED __HM_ZSH_SESS_VARS_SOURCED"
-        .. ' WEZTERM_UNIX_SOCKET WEZTERM_PANE; cd -- "$1" && shift && exec "$@"'
+    local launch = "unset __HM_SESS_VARS_SOURCED __HM_ZSH_SESS_VARS_SOURCED" .. ' WEZTERM_UNIX_SOCKET WEZTERM_PANE; cd -- "$1" && shift && exec "$@"'
     return {
         rows.paths.zsh,
         "-lc",
@@ -70,7 +69,6 @@ local function spawn_float(cmd)
     if gui then
         gui:set_config_overrides({
             window_background_opacity = float.opacity,
-            window_decorations = float.decorations,
         })
         gui:perform_action(act.SetWindowLevel(float.level), pane)
     end

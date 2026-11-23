@@ -8,7 +8,6 @@ in {
   programs.mise = {
     enable = true;
     package = pkgs.mise-current;
-    enableZshIntegration = false;
     globalConfig = {
       settings = {
         experimental = true;

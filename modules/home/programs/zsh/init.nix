@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   theme,
   ...
@@ -68,11 +67,6 @@
       add-zsh-hook preexec _terminal-marks-preexec
       PROMPT=$'%{\e]133;A;k=i\a%}'$PROMPT$'%{\e]133;B\a%}'
       RPROMPT=
-    '')
-
-    (lib.mkOrder 2000 ''
-      # --- [MISE_ACTIVATE]
-      [[ -n $VSCODE_RESOLVING_ENVIRONMENT ]] || eval "$(${lib.getExe config.programs.mise.package} activate zsh)"
     '')
   ];
 }

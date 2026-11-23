@@ -1,0 +1,135 @@
+diff --git a/zellij-server/src/panes/grid.rs b/zellij-server/src/panes/grid.rs
+index 3faac46..834d7c5 100644
+--- a/zellij-server/src/panes/grid.rs
++++ b/zellij-server/src/panes/grid.rs
+@@ -985,6 +985,7 @@ pub struct Grid {
+     pub change_counter: u64,
+     pub lock_renders: bool,
+     render_lock_opened_at: Option<std::time::Instant>,
++    render_lock_fed_at: Option<std::time::Instant>,
+     pub cursor_key_mode: bool, // DECCKM - when set, cursor keys should send ANSI direction codes (eg. "OD") instead of the arrow keys (eg. "[D")
+     pub bracketed_paste_mode: bool, // when set, paste instructions to the terminal should be escaped with a special sequence
+     pub erasure_mode: bool,         // ERM
+@@ -1158,7 +1159,12 @@ impl CompiledHighlight {
+ 
+ const CLICK_TIME_THRESHOLD: u128 = 400; // Doherty Threshold
+ 
+-const SYNCHRONIZED_UPDATE_CAP: std::time::Duration = std::time::Duration::from_millis(150);
++// A synchronized update is released once the program has sent nothing into it for
++// SYNCHRONIZED_UPDATE_IDLE_CAP, so a frame that is still arriving is never cut, or once it
++// has been open for SYNCHRONIZED_UPDATE_CAP, so a program that died mid-update while the
++// pane keeps receiving bytes (a shell prompt, typed input) cannot freeze it.
++const SYNCHRONIZED_UPDATE_IDLE_CAP: std::time::Duration = std::time::Duration::from_secs(1);
++const SYNCHRONIZED_UPDATE_CAP: std::time::Duration = std::time::Duration::from_secs(2);
+ 
+ #[derive(Clone, Debug, Default)]
+ struct Click {
+@@ -1430,6 +1436,7 @@ impl Grid {
+             osc8_hyperlinks,
+             lock_renders: false,
+             render_lock_opened_at: None,
++            render_lock_fed_at: None,
+             supports_kitty_keyboard_protocol: false,
+             explicitly_disable_kitty_keyboard_protocol,
+             click: Click::default(),
+@@ -4994,17 +5001,27 @@ impl Grid {
+         }
+     }
+     pub fn lock_renders(&mut self) {
++        let now = std::time::Instant::now();
+         self.lock_renders = true;
+-        self.render_lock_opened_at = Some(std::time::Instant::now());
++        self.render_lock_opened_at = Some(now);
++        self.render_lock_fed_at = Some(now);
+     }
+     pub fn unlock_renders(&mut self) {
+         self.lock_renders = false;
+         self.render_lock_opened_at = None;
++        self.render_lock_fed_at = None;
++    }
++    pub fn received_pty_bytes(&mut self) {
++        if self.lock_renders {
++            self.render_lock_fed_at = Some(std::time::Instant::now());
++        }
+     }
+     fn render_lock_outlived_its_cap(&self) -> bool {
+-        self.render_lock_opened_at
+-            .map(|opened_at| opened_at.elapsed() >= SYNCHRONIZED_UPDATE_CAP)
+-            .unwrap_or(false)
++        let held_for = |since: Option<std::time::Instant>, cap| {
++            since.is_some_and(|since| since.elapsed() >= cap)
++        };
++        held_for(self.render_lock_fed_at, SYNCHRONIZED_UPDATE_IDLE_CAP)
++            || held_for(self.render_lock_opened_at, SYNCHRONIZED_UPDATE_CAP)
+     }
+     pub fn update_theme(&mut self, theme: Styling) {
+         self.style.colors = theme.clone();
+diff --git a/zellij-server/src/panes/terminal_pane.rs b/zellij-server/src/panes/terminal_pane.rs
+index 7176a04..f506600 100644
+--- a/zellij-server/src/panes/terminal_pane.rs
++++ b/zellij-server/src/panes/terminal_pane.rs
+@@ -234,6 +234,7 @@ impl Pane for TerminalPane {
+     }
+     fn handle_pty_bytes(&mut self, bytes: VteBytes) {
+         self.set_should_render(true);
++        self.grid.received_pty_bytes();
+         let bytes = if std::mem::take(&mut self.held_escape) {
+             let mut joined = Vec::with_capacity(bytes.len() + 1);
+             joined.push(0x1b);
+diff --git a/zellij-server/src/panes/unit/grid_tests.rs b/zellij-server/src/panes/unit/grid_tests.rs
+index b7dd043..fa9732d 100644
+--- a/zellij-server/src/panes/unit/grid_tests.rs
++++ b/zellij-server/src/panes/unit/grid_tests.rs
+@@ -6493,7 +6493,40 @@ fn a_synchronized_update_holds_renders_back_until_the_program_closes_it() {
+ }
+ 
+ #[test]
+-fn a_synchronized_update_held_past_the_cap_releases_on_the_next_paint() {
++fn a_synchronized_update_still_receiving_bytes_is_not_cut() {
++    let mut parser = vt_parser::Parser::new();
++    let mut grid = new_grid_for_forwarding_test();
++    parser.feed(&mut grid, b"\x1b[?2026hhel");
++
++    let past_idle_cap = super::SYNCHRONIZED_UPDATE_IDLE_CAP + std::time::Duration::from_millis(50);
++    grid.render_lock_opened_at = Some(std::time::Instant::now() - past_idle_cap);
++    grid.received_pty_bytes();
++    parser.feed(&mut grid, b"lo");
++    assert!(
++        grid.render(0, 0, &Style::default()).unwrap().is_none(),
++        "a frame open longer than the idle cap whose bytes are still arriving must stay held"
++    );
++    assert!(grid.is_mid_frame());
++}
++
++#[test]
++fn a_synchronized_update_held_past_the_cap_releases_while_bytes_still_arrive() {
++    let mut parser = vt_parser::Parser::new();
++    let mut grid = new_grid_for_forwarding_test();
++    parser.feed(&mut grid, b"\x1b[?2026hhello");
++
++    let past_cap = super::SYNCHRONIZED_UPDATE_CAP + std::time::Duration::from_millis(50);
++    grid.render_lock_opened_at = Some(std::time::Instant::now() - past_cap);
++    grid.received_pty_bytes();
++    assert!(
++        grid.render(0, 0, &Style::default()).unwrap().is_some(),
++        "a program that died mid-update must not freeze a pane that keeps receiving bytes"
++    );
++    assert!(!grid.is_mid_frame());
++}
++
++#[test]
++fn a_synchronized_update_left_silent_past_the_idle_cap_releases_on_the_next_paint() {
+     let mut parser = vt_parser::Parser::new();
+     let mut grid = new_grid_for_forwarding_test();
+     parser.feed(&mut grid, b"\x1b[?2026hhello");
+@@ -6502,8 +6535,8 @@ fn a_synchronized_update_held_past_the_cap_releases_on_the_next_paint() {
+         "the update was opened and is still inside its cap"
+     );
+ 
+-    grid.render_lock_opened_at =
+-        Some(std::time::Instant::now() - std::time::Duration::from_millis(200));
++    let past_idle_cap = super::SYNCHRONIZED_UPDATE_IDLE_CAP + std::time::Duration::from_millis(50);
++    grid.render_lock_fed_at = Some(std::time::Instant::now() - past_idle_cap);
+     let rendered = grid
+         .render(0, 0, &Style::default())
+         .unwrap()
