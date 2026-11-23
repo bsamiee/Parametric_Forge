@@ -83,11 +83,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-OgcA9OU+iLia9viz7ZMQKNvI8sjboT3eLRnJz1NfyQ8=",
+            "sha256": "sha256-CPzmoiJd6Zs06sIcfhAn+IbTG5QPzYSoUKEhMLKJ/u8=",
             "type": "url",
-            "url": "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.99.tgz"
+            "url": "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.100.tgz"
         },
-        "version": "1.1.99"
+        "version": "1.1.100"
     },
     "blender-asset-tracer": {
         "cargoLock": null,
@@ -143,11 +143,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-c4OCQdD2M84FVifHJXG5P6ENjl/DBGtyxw8W3nknzfk=",
+            "sha256": "sha256-r8AMfa2A6KOGhiF35+38x+wcnt3lGPVq2jZamkZIWMU=",
             "type": "url",
-            "url": "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.2.tgz"
+            "url": "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.3.tgz"
         },
-        "version": "1.0.0-rc.2"
+        "version": "1.0.0-rc.3"
     },
     "coderabbit-aarch64-darwin": {
         "cargoLock": null,
@@ -309,11 +309,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-+oPvBN+bQdiJdrXAwN44rx6rEdbLSJCvpLMeZ9fCAGs=",
+            "sha256": "sha256-bn00kq7LEQ4tytcB60AtNEGMJo0ba4PwR0gzqCXytL0=",
             "type": "url",
-            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.233/cli-1.31.233.jar"
+            "url": "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.238/cli-1.31.238.jar"
         },
-        "version": "1.31.233"
+        "version": "1.31.238"
     },
     "diffenator3-aarch64-darwin": {
         "cargoLock": null,
@@ -477,21 +477,6 @@
             "url": "https://www.powershellgallery.com/api/v2/package/ExchangeOnlineManagement/3.11.1"
         },
         "version": "3.11.1"
-    },
-    "firefox-profiler-cli": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "firefox-profiler-cli",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "name": null,
-            "sha256": "sha256-GdvicgXt7GQ7ghB5ufiIIbiYd+OtPWQxPGy0iDYCLx0=",
-            "type": "url",
-            "url": "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-0.14.0.tgz"
-        },
-        "version": "0.14.0"
     },
     "fontc-aarch64-darwin": {
         "cargoLock": null,
@@ -668,11 +653,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-6GsNySu4SwTj9heMT6D2/hZo1soEBKkctcZgzn/s+Nk=",
+            "sha256": "sha256-kF1ruPQmTKV7FM4JzgW5VpvnSEI/97ZOH1oCo9r5QHY=",
             "type": "url",
-            "url": "https://github.com/hostinger/api-cli/releases/download/v5.7.2/hostinger-5.7.2-darwin-arm64.tar.gz"
+            "url": "https://github.com/hostinger/api-cli/releases/download/v5.10.0/hostinger-5.10.0-darwin-arm64.tar.gz"
         },
-        "version": "5.7.2"
+        "version": "5.10.0"
     },
     "hyperframes": {
         "cargoLock": null,
@@ -683,11 +668,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-r9FlELD+d/y5to/i96G6/4xSMNnfRyEox9CxutOvAE4=",
+            "sha256": "sha256-zdl0PTbU7Jr9rxfK8aogiRtAMBhuRcUwN5Ah+W+ymbc=",
             "type": "url",
-            "url": "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.79.tgz"
+            "url": "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.85.tgz"
         },
-        "version": "0.9.79"
+        "version": "0.9.85"
     },
     "hyperglot": {
         "cargoLock": null,
@@ -757,11 +742,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-WSZ/GKV5yvQ192S2+mRlJgLyGqB8jLfIlPwzStCeyuQ=",
+            "sha256": "sha256-mjZGw8GXNzO/IKcitujbgnAZc8rJvzHTNVCuXFskyYM=",
             "type": "url",
-            "url": "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_arm64.tar.gz"
+            "url": "https://github.com/blacktop/ipsw/releases/download/v3.1.750/ipsw_3.1.750_macOS_arm64.tar.gz"
         },
-        "version": "3.1.749"
+        "version": "3.1.750"
     },
     "m365-cli": {
         "cargoLock": null,
@@ -1177,11 +1162,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-WyDuCJdPSm2xH0lJJO2PVYpffXcsa6PISiREmp/Tw/4=",
+            "sha256": "sha256-0fJGpRvmZsSkZ+y+mj5Fq3JgN9M6TmHEcmtvJwRBNZY=",
             "type": "url",
-            "url": "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.19.0.tar.gz"
+            "url": "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.20.0.tar.gz"
         },
-        "version": "0.19.0"
+        "version": "0.20.0"
     },
     "pymobiledevice3": {
         "cargoLock": null,
@@ -1192,25 +1177,11 @@
         "pinned": false,
         "src": {
             "name": null,
-            "sha256": "sha256-YH8DWqKbTLmPi5OXgKR+pGcSEBbDS73uATv0DiQ9NtY=",
+            "sha256": "sha256-sCAu0lERRuX+sYn6xpSdWtw5TmK3rCJfEfyvEONHuwk=",
             "type": "url",
-            "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.61.1.tar.gz"
+            "url": "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.63.1.tar.gz"
         },
-        "version": "11.61.1"
-    },
-    "retoc-aarch64-darwin": {
-        "cargoLock": null,
-        "date": null,
-        "extract": null,
-        "name": "retoc-aarch64-darwin",
-        "passthru": null,
-        "pinned": false,
-        "src": {
-            "sha256": "sha256-/EVfcSSCBxddfQESg71mI0DUEfxx7KuNLH1tqGOdFas=",
-            "type": "tarball",
-            "url": "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-aarch64-apple-darwin.tar.xz"
-        },
-        "version": "0.1.5"
+        "version": "11.63.1"
     },
     "rsync": {
         "cargoLock": null,
@@ -1226,6 +1197,21 @@
             "url": "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz"
         },
         "version": "3.5.2"
+    },
+    "single-file-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "single-file-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-vKDszFVR9DWLyMflhLvbE9BzxtM1QS06a9skSpTHAns=",
+            "type": "url",
+            "url": "https://github.com/gildas-lormeau/single-file-cli/releases/download/v2.27.3/single-file-aarch64-apple-darwin"
+        },
+        "version": "2.27.3"
     },
     "sqlean-aarch64-darwin": {
         "cargoLock": null,
@@ -1353,10 +1339,10 @@
         "passthru": null,
         "pinned": false,
         "src": {
-            "sha256": "sha256-gG9LXfn2WtYPUCVASMy+TqwsqZakcseBtZ3BD0BzDl4=",
+            "sha256": "sha256-6KIo7xZbFSQlktw5GvJIMtuXRdGWKC47EuqR69d9hys=",
             "type": "tarball",
-            "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.20.232656/yt-dlp.tar.gz"
+            "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.22.232654/yt-dlp.tar.gz"
         },
-        "version": "2026.11.20.232656"
+        "version": "2026.11.22.232654"
     }
 }

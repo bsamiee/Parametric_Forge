@@ -163,6 +163,10 @@ final: prev: let
       completion = "completion";
       unpack = false;
     };
+    single-file = cliRelease {
+      binary = ''"$src"'';
+      unpack = false;
+    };
     tscli-current = cliRelease {binary = "tscli";};
     pdfm-mcp = cliRelease {binary = "pdfm-mcp";};
     bambu = cliRelease {
@@ -327,7 +331,6 @@ final: prev: let
       reportsVersion = false;
     };
     diffenator3 = binaryInstall {binaries = ["diffenator3" "diff3proof"];};
-    retoc = binaryInstall {binaries = ["retoc"];};
     macmon-current = binaryInstall {binaries = ["macmon"];};
     ifcconvert = row: {
       dontUnpack = true;

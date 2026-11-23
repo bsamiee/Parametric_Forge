@@ -48,10 +48,10 @@
   };
   bambu-printer-mcp = {
     pname = "bambu-printer-mcp";
-    version = "1.1.99";
+    version = "1.1.100";
     src = fetchurl {
-      url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.99.tgz";
-      sha256 = "sha256-OgcA9OU+iLia9viz7ZMQKNvI8sjboT3eLRnJz1NfyQ8=";
+      url = "https://registry.npmjs.org/bambu-printer-mcp/-/bambu-printer-mcp-1.1.100.tgz";
+      sha256 = "sha256-CPzmoiJd6Zs06sIcfhAn+IbTG5QPzYSoUKEhMLKJ/u8=";
     };
   };
   blender-asset-tracer = {
@@ -80,10 +80,10 @@
   };
   cloudflare-cf = {
     pname = "cloudflare-cf";
-    version = "1.0.0-rc.2";
+    version = "1.0.0-rc.3";
     src = fetchurl {
-      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.2.tgz";
-      sha256 = "sha256-c4OCQdD2M84FVifHJXG5P6ENjl/DBGtyxw8W3nknzfk=";
+      url = "https://registry.npmjs.org/cf/-/cf-1.0.0-rc.3.tgz";
+      sha256 = "sha256-r8AMfa2A6KOGhiF35+38x+wcnt3lGPVq2jZamkZIWMU=";
     };
   };
   coderabbit-aarch64-darwin = {
@@ -174,10 +174,10 @@
   };
   design-verapdf-cli = {
     pname = "design-verapdf-cli";
-    version = "1.31.233";
+    version = "1.31.238";
     src = fetchurl {
-      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.233/cli-1.31.233.jar";
-      sha256 = "sha256-+oPvBN+bQdiJdrXAwN44rx6rEdbLSJCvpLMeZ9fCAGs=";
+      url = "https://artifactory.openpreservation.org/artifactory/vera-dev/org/verapdf/apps/cli/1.31.238/cli-1.31.238.jar";
+      sha256 = "sha256-bn00kq7LEQ4tytcB60AtNEGMJo0ba4PwR0gzqCXytL0=";
     };
   };
   diffenator3-aarch64-darwin = {
@@ -266,14 +266,6 @@
     src = fetchurl {
       url = "https://www.powershellgallery.com/api/v2/package/ExchangeOnlineManagement/3.11.1";
       sha256 = "sha256-C0EmVrdY2OpXl4rz6mzSjbhEMxjIbPUjdVRdQ0HpdZE=";
-    };
-  };
-  firefox-profiler-cli = {
-    pname = "firefox-profiler-cli";
-    version = "0.14.0";
-    src = fetchurl {
-      url = "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-0.14.0.tgz";
-      sha256 = "sha256-GdvicgXt7GQ7ghB5ufiIIbiYd+OtPWQxPGy0iDYCLx0=";
     };
   };
   fontc-aarch64-darwin = {
@@ -372,18 +364,18 @@
   };
   hostinger-aarch64-darwin = {
     pname = "hostinger-aarch64-darwin";
-    version = "5.7.2";
+    version = "5.10.0";
     src = fetchurl {
-      url = "https://github.com/hostinger/api-cli/releases/download/v5.7.2/hostinger-5.7.2-darwin-arm64.tar.gz";
-      sha256 = "sha256-6GsNySu4SwTj9heMT6D2/hZo1soEBKkctcZgzn/s+Nk=";
+      url = "https://github.com/hostinger/api-cli/releases/download/v5.10.0/hostinger-5.10.0-darwin-arm64.tar.gz";
+      sha256 = "sha256-kF1ruPQmTKV7FM4JzgW5VpvnSEI/97ZOH1oCo9r5QHY=";
     };
   };
   hyperframes = {
     pname = "hyperframes";
-    version = "0.9.79";
+    version = "0.9.85";
     src = fetchurl {
-      url = "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.79.tgz";
-      sha256 = "sha256-r9FlELD+d/y5to/i96G6/4xSMNnfRyEox9CxutOvAE4=";
+      url = "https://registry.npmjs.org/hyperframes/-/hyperframes-0.9.85.tgz";
+      sha256 = "sha256-zdl0PTbU7Jr9rxfK8aogiRtAMBhuRcUwN5Ah+W+ymbc=";
     };
   };
   hyperglot = {
@@ -420,10 +412,10 @@
   };
   ipsw-aarch64-darwin = {
     pname = "ipsw-aarch64-darwin";
-    version = "3.1.749";
+    version = "3.1.750";
     src = fetchurl {
-      url = "https://github.com/blacktop/ipsw/releases/download/v3.1.749/ipsw_3.1.749_macOS_arm64.tar.gz";
-      sha256 = "sha256-WSZ/GKV5yvQ192S2+mRlJgLyGqB8jLfIlPwzStCeyuQ=";
+      url = "https://github.com/blacktop/ipsw/releases/download/v3.1.750/ipsw_3.1.750_macOS_arm64.tar.gz";
+      sha256 = "sha256-mjZGw8GXNzO/IKcitujbgnAZc8rJvzHTNVCuXFskyYM=";
     };
   };
   m365-cli = {
@@ -653,26 +645,18 @@
   };
   py-aep = {
     pname = "py-aep";
-    version = "0.19.0";
+    version = "0.20.0";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.19.0.tar.gz";
-      sha256 = "sha256-WyDuCJdPSm2xH0lJJO2PVYpffXcsa6PISiREmp/Tw/4=";
+      url = "https://files.pythonhosted.org/packages/source/p/py-aep/py_aep-0.20.0.tar.gz";
+      sha256 = "sha256-0fJGpRvmZsSkZ+y+mj5Fq3JgN9M6TmHEcmtvJwRBNZY=";
     };
   };
   pymobiledevice3 = {
     pname = "pymobiledevice3";
-    version = "11.61.1";
+    version = "11.63.1";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.61.1.tar.gz";
-      sha256 = "sha256-YH8DWqKbTLmPi5OXgKR+pGcSEBbDS73uATv0DiQ9NtY=";
-    };
-  };
-  retoc-aarch64-darwin = {
-    pname = "retoc-aarch64-darwin";
-    version = "0.1.5";
-    src = fetchTarball {
-      url = "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-aarch64-apple-darwin.tar.xz";
-      sha256 = "sha256-/EVfcSSCBxddfQESg71mI0DUEfxx7KuNLH1tqGOdFas=";
+      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.63.1.tar.gz";
+      sha256 = "sha256-sCAu0lERRuX+sYn6xpSdWtw5TmK3rCJfEfyvEONHuwk=";
     };
   };
   rsync = {
@@ -681,6 +665,14 @@
     src = fetchurl {
       url = "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz";
       sha256 = "sha256-oQ1ZGCUlHgcPdMmN89qtGV3vTtgbSi3hYWkCauoz9sg=";
+    };
+  };
+  single-file-aarch64-darwin = {
+    pname = "single-file-aarch64-darwin";
+    version = "2.27.3";
+    src = fetchurl {
+      url = "https://github.com/gildas-lormeau/single-file-cli/releases/download/v2.27.3/single-file-aarch64-apple-darwin";
+      sha256 = "sha256-vKDszFVR9DWLyMflhLvbE9BzxtM1QS06a9skSpTHAns=";
     };
   };
   sqlean-aarch64-darwin = {
@@ -749,10 +741,10 @@
   };
   yt-dlp = {
     pname = "yt-dlp";
-    version = "2026.11.20.232656";
+    version = "2026.11.22.232654";
     src = fetchTarball {
-      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.20.232656/yt-dlp.tar.gz";
-      sha256 = "sha256-gG9LXfn2WtYPUCVASMy+TqwsqZakcseBtZ3BD0BzDl4=";
+      url = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.22.232654/yt-dlp.tar.gz";
+      sha256 = "sha256-6KIo7xZbFSQlktw5GvJIMtuXRdGWKC47EuqR69d9hys=";
     };
   };
 }

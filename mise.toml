@@ -1,12 +1,10 @@
 # --- [ENV] ------------------------------------------------------------------------------
 [env]
-DOPPLER_CONFIG             = "dev_machine"
-DOPPLER_PROJECT            = "parametric-forge"
-FASTMCP_SHOW_SERVER_BANNER = "false"
+DOPPLER_CONFIG  = "dev_machine"
+DOPPLER_PROJECT = "parametric-forge"
 
 # --- [TOOLS] ----------------------------------------------------------------------------
 [tools]
 node = "latest"
 pnpm = "latest"
 pulumi = "latest"
-"pypi:mcp-nixos" = "latest"

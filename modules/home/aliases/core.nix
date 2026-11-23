@@ -30,7 +30,6 @@
     ["rsyncd" "rsync -ahPn"]
     ["rsyncf" "rsync -ahPX --append-verify"]
     ["rcs" "rclone sync --progress --transfers 4"]
-    ["hex" "hexyl"]
     ["pack" "ouch compress"]
     ["unpack" "ouch decompress"]
   ];
@@ -65,7 +64,6 @@
     ["tripu" "trip --udp --target-port 33434"]
     ["ohaj" "oha --no-tui --output-format json"]
     ["serve" "rclone serve http --addr :8000 ."]
-    ["lssh" "sshs"]
     ["ports" "sudo lsof -iTCP -sTCP:LISTEN -n -P"]
   ];
   shell = [

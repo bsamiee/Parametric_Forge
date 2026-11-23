@@ -77,7 +77,6 @@ in {
     czkawkaCli
     pkgs.exiftool
     pkgs.ffmpeg-full
-    pkgs.ffmpeg-normalize
     pkgs.gifski
     pkgs.graphviz
     pkgs.imagemagickBig
@@ -91,14 +90,13 @@ in {
     pkgs.ssimulacra2
     pkgs.typst
     pkgs.vl-convert
+    pkgs.potrace
     pkgs.verapdf-current
     pkgs.vtracer
 
     # --- [MOTION_AND_DELIVERY]
     pkgs.asciinema
     pkgs.asciinema-agg
-    pkgs.aubio
-    pkgs.audiowaveform
     pkgs.auto-editor
     pkgs.charm-freeze
     pkgs.gifsicle
@@ -111,8 +109,6 @@ in {
     # --- [3D_FILES]
     pkgs.assimp
     pkgs.ifcconvert
-    pkgs.repak
-    pkgs.retoc
     (uvRun "blender-asset-tracer" "blender-asset-tracer" "bat")
     (uvRun "ifctester" "ifctester" "python -I -m ifctester")
   ];

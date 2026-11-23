@@ -24,7 +24,7 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         ".gitignore": ".gitattributes",
-        "flake.nix": ".mcp.json, flake.lock, mise.toml, nvfetcher.toml",
+        "flake.nix": "flake.lock, mise.toml, nvfetcher.toml",
         "package.json": ".oxfmtrc.json, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json",
         "README.md": "LICENSE"
     },

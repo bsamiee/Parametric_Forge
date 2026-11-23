@@ -14,10 +14,3 @@ hide_full_access_warning = true
 [agents]
 max_concurrent_threads_per_session = 80
 
-# --- [MCP_SERVERS] ----------------------------------------------------------------------
-
-[mcp_servers.nixos]
-default_tools_approval_mode = "approve"
-command                     = "mise"
-args                        = ["exec", "--", "mcp-nixos"]
-

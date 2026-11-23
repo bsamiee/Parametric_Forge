@@ -208,15 +208,6 @@ in {
       mainProgram = "IfcConvert";
     };
 
-    retoc = {
-      version = generatedPins.retoc-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "retoc-aarch64-darwin";
-      license = "mit";
-      description = "Unreal IoStore container listing, verification, and unpacking";
-      homepage = "https://github.com/trumank/retoc";
-      mainProgram = "retoc";
-    };
-
     ipsw-current = {
       version = generatedPins.ipsw-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "ipsw-aarch64-darwin";
@@ -242,6 +233,15 @@ in {
       description = "jq-style queries and edits over Markdown structure";
       homepage = "https://mqlang.org/";
       mainProgram = "mq";
+    };
+
+    single-file = {
+      version = generatedPins.single-file-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "single-file-aarch64-darwin";
+      license = "agpl3Plus";
+      description = "Saves a web page with its resources as one HTML file through Chrome";
+      homepage = "https://github.com/gildas-lormeau/single-file-cli";
+      mainProgram = "single-file";
     };
 
     curl-impersonate-current = {
@@ -477,11 +477,6 @@ in {
           commands = ["asar"];
           license = "MIT";
         };
-        "@firefox-devtools/profiler-cli" = {
-          inherit (generatedPins.firefox-profiler-cli) version;
-          commands = ["profiler-cli" "pq"];
-          license = "MPL-2.0";
-        };
         "@gltf-transform/cli" = {
           inherit (generatedPins.gltf-transform-cli) version;
           commands = ["gltf-transform"];
@@ -582,8 +577,8 @@ in {
         };
         notebooklm-py = {
           inherit (generatedPins.notebooklm-py) version;
-          extras = ["browser" "cookies" "headless" "mcp"];
-          commands = ["notebooklm" "notebooklm-mcp"];
+          extras = ["browser" "cookies" "headless"];
+          commands = ["notebooklm"];
           license = "MIT";
         };
         opentimelineio = {

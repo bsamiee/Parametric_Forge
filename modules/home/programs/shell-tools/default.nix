@@ -36,24 +36,19 @@ in {
       pkgs._7zz-rar
       pkgs.ast-grep
       pkgs.coderabbit
-      (pkgs.runCommand "timeout" {meta.mainProgram = "timeout";} "mkdir -p $out/bin && ln -s ${lib.getExe' pkgs.coreutils "timeout"} $out/bin/timeout")
       pkgs.curl-impersonate-current
       pkgs.defuddle
       pkgs.dua-current
       pkgs.duckdb-current
-      pkgs.dysk
-      pkgs.flock
       pkgs.fq
       pkgs.gawk
-      pkgs.geckodriver
-      pkgs.hexyl
       pkgs.hostinger
       pkgs.hyperfine
       pkgs.ipsw-current
       pkgs.jq
       pkgs.macmon-current
-      pkgs.monolith
       pkgs.mq
+      pkgs.single-file
       pkgs.oha
       pkgs.openssl_4_1
       pkgs.ouch
@@ -63,11 +58,9 @@ in {
       pkgs.ripgrep
       pkgs.rsync-current
       pkgs.sd
-      pkgs.sshs
       pkgs.swift-section
       pkgs.tscli-current
       pkgs.uv
-      pkgs.witr
       pkgs.yq-go-current
     ];
 

@@ -74,7 +74,6 @@
           CLIMICROSOFT365_NOUPDATE = "1";
           CODERABBIT_CLI_DISABLE_AUTO_UPDATE = "true";
           PDFM_MCP_TELEMETRY_DISABLED = "true";
-          NOTEBOOKLM_MCP_ALLOWED_ROOTS = "/Users:/Volumes:/private";
           TLRC_CONFIG = "${xdg.configHome}/tlrc/config.toml";
           RCLONE_ASK_PASSWORD = "false";
           RCLONE_CACHE_DIR = "${xdg.cacheHome}/rclone";

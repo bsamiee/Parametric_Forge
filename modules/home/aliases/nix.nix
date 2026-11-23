@@ -16,8 +16,6 @@
     ["nconfig" "nix config show"]
     ["ncheck" "nix config check"]
     ["nparse" "nix-instantiate --parse"]
-    ["nfetch" "nurl"]
-    ["nfetchj" "nurl --json"]
     ["nhash" "nix hash convert --to sri"]
     ["nversion" "determinate-nixd version"]
     ["nupdate" "sudo determinate-nixd upgrade"]

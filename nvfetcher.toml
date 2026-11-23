@@ -117,11 +117,6 @@ src.cmd = '''gh api repos/IfcOpenShell/IfcOpenShell/releases --jq '[.[] | select
 src.prefix = "ifcconvert-"
 fetch.tarball = "https://github.com/IfcOpenShell/IfcOpenShell/releases/download/ifcconvert-$ver/ifcconvert-$ver-macosm164.zip"
 
-[retoc-aarch64-darwin]
-src.github = "trumank/retoc"
-src.prefix = "v"
-fetch.tarball = "https://github.com/trumank/retoc/releases/download/v$ver/retoc_cli-aarch64-apple-darwin.tar.xz"
-
 [ipsw-aarch64-darwin]
 src.github = "blacktop/ipsw"
 src.prefix = "v"
@@ -177,6 +172,12 @@ src.github = "harehare/mq"
 src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/harehare/mq/releases/download/v$ver/mq-aarch64-apple-darwin"
+
+[single-file-aarch64-darwin]
+src.github = "gildas-lormeau/single-file-cli"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://github.com/gildas-lormeau/single-file-cli/releases/download/v$ver/single-file-aarch64-apple-darwin"
 
 [curl-impersonate-aarch64-darwin]
 src.github = "lexiforest/curl-impersonate"
@@ -337,10 +338,6 @@ fetch.url = "https://registry.npmjs.org/@adobe/aio-cli/-/aio-cli-$ver.tgz"
 [chrome-devtools-mcp]
 src.cmd = "curl -fsSL https://registry.npmjs.org/chrome-devtools-mcp/latest | jq -r .version"
 fetch.url = "https://registry.npmjs.org/chrome-devtools-mcp/-/chrome-devtools-mcp-$ver.tgz"
-
-[firefox-profiler-cli]
-src.cmd = "curl -fsSL https://registry.npmjs.org/@firefox-devtools/profiler-cli/latest | jq -r .version"
-fetch.url = "https://registry.npmjs.org/@firefox-devtools/profiler-cli/-/profiler-cli-$ver.tgz"
 
 [nexrender-cli]
 src.cmd = "curl -fsSL https://registry.npmjs.org/@nexrender/cli/latest | jq -r .version"

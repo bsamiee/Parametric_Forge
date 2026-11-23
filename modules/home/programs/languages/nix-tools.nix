@@ -15,9 +15,7 @@
 
   home.packages = [
     pkgs.alejandra
-    pkgs.cachix
     pkgs.dix
     pkgs.nixd
-    pkgs.nurl
   ];
 }
