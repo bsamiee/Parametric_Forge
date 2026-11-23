@@ -204,7 +204,6 @@ final: prev: let
       completion = "completion";
       man = "yq.1";
     };
-    sqruff-current = cliRelease {binary = "sqruff";};
     dua-current = cliRelease {
       binary = "*/dua";
       completion = "completions";
@@ -302,23 +301,6 @@ final: prev: let
           --zsh <("$out/bin/mise" completion zsh)
         runHook postInstall
       '';
-    };
-    watchexec-current = _: {
-      dontUnpack = true;
-      nativeBuildInputs = [prev.installShellFiles];
-      installPhase = ''
-        runHook preInstall
-        install -Dm755 "$src/watchexec" "$out/bin/watchexec"
-        installManPage "$src/watchexec.1"
-        installShellCompletion --cmd watchexec \
-          --bash "$src/completions/bash" \
-          --fish "$src/completions/fish" \
-          --zsh "$src/completions/zsh"
-        runHook postInstall
-      '';
-      doInstallCheck = true;
-      nativeInstallCheckInputs = [prev.versionCheckHook];
-      versionCheckProgram = "${placeholder "out"}/bin/watchexec";
     };
     duckdb-current = _: {
       sourceRoot = ".";

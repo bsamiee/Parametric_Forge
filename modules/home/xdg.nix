@@ -17,7 +17,6 @@
       "${config.xdg.cacheHome}/ab-av1"
       "${config.xdg.cacheHome}/parallel"
       "${config.xdg.cacheHome}/zsh"
-      "${config.xdg.stateHome}/psql"
       "${config.xdg.stateHome}/sqlite"
     ];
   };

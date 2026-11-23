@@ -73,12 +73,6 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/jdx/mise/releases/download/v$ver/mise-v$ver-macos-arm64.tar.gz"
 
-[watchexec-aarch64-darwin]
-src.github = "watchexec/watchexec"
-src.prerelease = true
-src.prefix = "v"
-fetch.tarball = "https://github.com/watchexec/watchexec/releases/download/v$ver/watchexec-$ver-aarch64-apple-darwin.tar.xz"
-
 [duckdb-aarch64-darwin]
 src.github = "duckdb/duckdb"
 src.prerelease = true
@@ -144,12 +138,6 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/mikefarah/yq/releases/download/v$ver/yq_darwin_arm64.tar.gz"
 
-[sqruff-aarch64-darwin]
-src.github = "quarylabs/sqruff"
-src.prerelease = true
-src.prefix = "v"
-fetch.url = "https://github.com/quarylabs/sqruff/releases/download/v$ver/sqruff-darwin-aarch64.tar.gz"
-
 [dua-aarch64-darwin]
 src.github = "Byron/dua-cli"
 src.prerelease = true
@@ -199,10 +187,6 @@ fetch.tarball = "https://github.com/lexiforest/curl-impersonate/releases/downloa
 [gam-aarch64-darwin]
 src.cmd = "gh api repos/GAM-team/GAM/releases --jq '[.[] | select(.draft or .prerelease | not)][0] | . as $r | [.assets[].name | select(test(\"-macos[0-9.]+-arm64\\\\.tar\\\\.xz$\"))] | max_by(capture(\"-macos(?<os>[0-9.]+)-\").os | split(\".\") | map(tonumber)) | $r.tag_name + \"/\" + .'"
 fetch.tarball = "https://github.com/GAM-team/GAM/releases/download/$ver"
-
-[mozregression]
-src.pypi = "mozregression"
-fetch.pypi = "mozregression"
 
 [psd-tools]
 src.pypi = "psd-tools"

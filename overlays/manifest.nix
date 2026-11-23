@@ -181,15 +181,6 @@ in {
       mainProgram = "mise";
     };
 
-    watchexec-current = {
-      version = generatedPins.watchexec-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "watchexec-aarch64-darwin";
-      license = "asl20";
-      description = "Executes commands in response to file modifications";
-      homepage = "https://watchexec.github.io/";
-      mainProgram = "watchexec";
-    };
-
     hostinger = {
       version = generatedPins.hostinger-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "hostinger-aarch64-darwin";
@@ -323,15 +314,6 @@ in {
       description = "YAML, JSON, XML, CSV, TOML, and properties processor";
       homepage = "https://mikefarah.gitbook.io/yq/";
       mainProgram = "yq";
-    };
-
-    sqruff-current = {
-      version = generatedPins.sqruff-aarch64-darwin.version;
-      assets.aarch64-darwin = pinAsset "sqruff-aarch64-darwin";
-      license = "asl20";
-      description = "SQL linter and formatter";
-      homepage = "https://github.com/quarylabs/sqruff";
-      mainProgram = "sqruff";
     };
 
     dua-current = {
@@ -619,11 +601,6 @@ in {
           inherit (generatedPins.ifcquery) version;
           commands = ["ifcquery"];
           license = "LGPL-3.0-or-later";
-        };
-        mozregression = {
-          inherit (generatedPins.mozregression) version;
-          commands = ["mozregression"];
-          license = "MPL-2.0";
         };
         psd-tools = {
           inherit (generatedPins.psd-tools) version;

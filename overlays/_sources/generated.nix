@@ -466,14 +466,6 @@
       sha256 = "sha256-970Zqk5reljXKW+Y4savaLLiZD39YIsLxGwrX9vIdJs=";
     };
   };
-  mozregression = {
-    pname = "mozregression";
-    version = "7.7.0";
-    src = fetchurl {
-      url = "https://pypi.org/packages/source/m/mozregression/mozregression-7.7.0.tar.gz";
-      sha256 = "sha256-5jdIf328nV5HeInkxzufGQoM9vj0Uw56f1Czo2O7eIQ=";
-    };
-  };
   mq-aarch64-darwin = {
     pname = "mq-aarch64-darwin";
     version = "0.10.2";
@@ -699,14 +691,6 @@
       sha256 = "sha256-gcT71ee8A5+M7gvlomxismKoqz6kqf9cQeFui9eC04U=";
     };
   };
-  sqruff-aarch64-darwin = {
-    pname = "sqruff-aarch64-darwin";
-    version = "0.44.0";
-    src = fetchurl {
-      url = "https://github.com/quarylabs/sqruff/releases/download/v0.44.0/sqruff-darwin-aarch64.tar.gz";
-      sha256 = "sha256-pCRqGSCAudnW7zp0f848uk2u1C2jyAoJdnDNTtTE+kE=";
-    };
-  };
   swift-section-aarch64-darwin = {
     pname = "swift-section-aarch64-darwin";
     version = "0.25.0";
@@ -745,14 +729,6 @@
     src = fetchTarball {
       url = "https://github.com/vega/vl-convert/releases/download/v2.0.0-rc7/vl-convert_osx-arm64.zip";
       sha256 = "sha256-6rlQo5Cn1kc0ujrWO5ZxLyHhe6IaqKI2N4wAcPtXPlM=";
-    };
-  };
-  watchexec-aarch64-darwin = {
-    pname = "watchexec-aarch64-darwin";
-    version = "2.8.0";
-    src = fetchTarball {
-      url = "https://github.com/watchexec/watchexec/releases/download/v2.8.0/watchexec-2.8.0-aarch64-apple-darwin.tar.xz";
-      sha256 = "sha256-33cZozNm/IxiVg/ISXRPO6eMyGDwg0QoaB8TSePxwkE=";
     };
   };
   youseedee = {

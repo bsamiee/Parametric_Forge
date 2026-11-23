@@ -13,8 +13,6 @@
     ["fqd" "fq d"]
   ];
   dev = [
-    ["watch" "watchexec -c"]
-    ["watchr" "watchexec -r"]
     ["pdev" "pnpm dev"]
     ["pbuild" "pnpm build"]
     ["ptest" "pnpm test"]

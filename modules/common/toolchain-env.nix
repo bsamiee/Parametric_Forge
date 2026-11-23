@@ -93,10 +93,6 @@
           QSV_CACHE_DIR = "${xdg.cacheHome}/qsv";
           QSV_DOTENV_PATH = "<NONE>";
           QSV_ERROR_FORMAT = "json";
-          PSQLRC = "${xdg.configHome}/psql/psqlrc";
-          PSQL_HISTORY = "${xdg.stateHome}/psql/history";
-          PGSERVICEFILE = "${xdg.configHome}/pg/pg_service.conf";
-          PGPASSFILE = "${xdg.configHome}/pg/pgpass";
 
           # --- [FONTS_MEDIA]
           FONTCONFIG_FILE = "${xdg.configHome}/fontconfig/fonts.conf";

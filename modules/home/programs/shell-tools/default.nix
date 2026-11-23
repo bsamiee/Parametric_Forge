@@ -51,7 +51,6 @@ in {
       pkgs.hyperfine
       pkgs.ipsw-current
       pkgs.jq
-      pkgs.lychee
       pkgs.macmon-current
       pkgs.monolith
       pkgs.mq
@@ -68,7 +67,6 @@ in {
       pkgs.swift-section
       pkgs.tscli-current
       pkgs.uv
-      pkgs.watchexec-current
       pkgs.witr
       pkgs.yq-go-current
     ];

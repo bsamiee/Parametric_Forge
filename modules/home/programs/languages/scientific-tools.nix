@@ -26,7 +26,6 @@
     file
     fontconfig
     gdalMuparser
-    ghostscript
     libjpeg_turbo
     librsvg-current
     mupdf-current

@@ -26,7 +26,7 @@
   textconv = {
     pdf = {
       glob = "*.pdf";
-      command = "sh -c '${lib.getExe' pkgs.poppler-utils "pdftotext"} -layout \"$1\" -' textconv";
+      command = "${lib.getExe' pkgs.mupdf-current "mutool"} draw -F txt -o -";
     };
     exif = {
       glob = "*.psd";

@@ -81,22 +81,18 @@ in {
     pkgs.gifski
     pkgs.graphviz
     pkgs.imagemagickBig
-    pkgs.img2pdf
     pkgs.jpegli
-    pkgs.jbig2enc
     pkgs.ocrmypdf-current
     pkgs.pngquant
-    pkgs.unpaper
     pkgs.officecli-current
     pkgs.oxipng
     pkgs.pdfcpu
-    pkgs.poppler-utils
-    pkgs.potrace
     resvg
     pkgs.ssimulacra2
     pkgs.typst
     pkgs.vl-convert
     pkgs.verapdf-current
+    pkgs.vtracer
 
     # --- [MOTION_AND_DELIVERY]
     pkgs.asciinema
