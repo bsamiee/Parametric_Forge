@@ -380,6 +380,7 @@
         selected: ${rsHex roles.surface.selected},
         inverse: ${rsHex roles.text.inverse},
         focus: ${rsHex roles.accent.primary},
+        session: ${rsHex roles.accent.secondary},
         run: ${rsHex roles.inbox.working},
         idle: ${rsHex roles.state.info},
         need: ${rsHex roles.inbox.needs_you},

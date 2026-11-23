@@ -22,6 +22,7 @@ mod data {
         pub selected: u32,
         pub inverse: u32,
         pub focus: u32,
+        pub session: u32,
         pub run: u32,
         pub idle: u32,
         pub need: u32,
@@ -392,10 +393,10 @@ impl State {
                 line.gap(2);
             }
             let name = shorten(&client.session.to_uppercase(), if short { 3 } else { SESSION_COLS });
-            line.push(ink(P.focus), '▐').hit(Hit::Session, |line| {
-                line.push(underline_if(bold(on(ink(P.inverse), P.focus)), hovered(Hit::Session)), format_args!(" {name} "));
+            line.push(ink(P.session), '▐').hit(Hit::Session, |line| {
+                line.push(underline_if(bold(on(ink(P.inverse), P.session)), hovered(Hit::Session)), format_args!(" {name} "));
             });
-            line.push(ink(P.focus), '▌');
+            line.push(ink(P.session), '▌');
             line
         };
         let anchor = (cols / 2).saturating_sub(NOTICE_LEAD);

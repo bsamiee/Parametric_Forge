@@ -27,7 +27,7 @@
   palette = hexRows "crust=#0E0D16 background=#15131F surface=#1F1D2E current_line=#2A2839 selection=#45425E foreground=#F8F8F2 subtle=#9EA0BC comment=#857DB6 purple=#9580FF cyan=#80FFEA green=#8AFF80 yellow=#F0F05A amber=#F3AE51 orange=#FF9E4A red=#FF5C72 magenta=#FF79C6 pink=#E98FBE blue=#5AB4FF";
   brights = {black = palette.comment;} // hexRows "red=#FF7D89 green=#A4FF9B yellow=#FFFF80 blue=#7EC3FF magenta=#FF93CE cyan=#9FFFEE white=#FFFFFF";
 
-  derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E";
+  derived = hexRows "overlay=#37364D diffAdd=#122A18 diffAddEmph=#213926 diffDel=#3B1818 diffDelEmph=#4C2726 diffChange=#152539 diffChangeEmph=#233449 search=#3A3418 searchCurrent=#5A4E1E modeNormal=#50FA7B";
 
   pairs = ps: lib.listToAttrs (map (p: lib.nameValuePair (builtins.elemAt p 0) (builtins.elemAt p 1)) ps);
   families = lib.mapAttrs (_: pairs) {
@@ -37,7 +37,7 @@
     state = [["success" palette.green] ["warning" palette.amber] ["attention" palette.orange] ["danger" palette.red] ["info" palette.blue]];
     focus = [["active" palette.cyan] ["inactive" palette.subtle]];
     inbox = [["needs_you" palette.orange] ["failed" palette.red] ["done" palette.purple] ["working" palette.green] ["quiet" palette.subtle] ["new_output" palette.blue]];
-    mode = [["normal" palette.cyan] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.purple] ["move" palette.purple] ["resize" palette.purple] ["scroll" palette.foreground] ["search" palette.foreground] ["entersearch" palette.foreground] ["session" palette.magenta] ["renametab" palette.magenta] ["renamepane" palette.purple] ["renamesession" palette.magenta] ["prompt" palette.foreground] ["tmux" palette.selection]];
+    mode = [["normal" derived.modeNormal] ["locked" palette.selection] ["tab" palette.magenta] ["pane" palette.purple] ["move" palette.purple] ["resize" palette.purple] ["scroll" palette.foreground] ["search" palette.foreground] ["entersearch" palette.foreground] ["session" palette.magenta] ["renametab" palette.magenta] ["renamepane" palette.purple] ["renamesession" palette.magenta] ["prompt" palette.foreground] ["tmux" palette.selection]];
     diff = [["add" derived.diffAdd] ["addEmph" derived.diffAddEmph] ["del" derived.diffDel] ["delEmph" derived.diffDelEmph] ["change" derived.diffChange] ["changeEmph" derived.diffChangeEmph]];
     ui = [["border" palette.subtle] ["cursor" palette.foreground] ["indent" palette.subtle] ["whitespace" palette.selection] ["search" derived.search] ["match" derived.searchCurrent]];
   };
