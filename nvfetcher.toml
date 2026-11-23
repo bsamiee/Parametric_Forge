@@ -212,6 +212,10 @@ fetch.url = "https://files.pythonhosted.org/packages/cp313/p/psd-tools/psd_tools
 src.pypi = "psd2svg"
 fetch.url = "https://files.pythonhosted.org/packages/py3/p/psd2svg/psd2svg-$ver-py3-none-any.whl"
 
+[blender-debugpy]
+src.pypi = "debugpy"
+fetch.url = "https://files.pythonhosted.org/packages/source/d/debugpy/debugpy-$ver.tar.gz"
+
 [blender-asset-tracer]
 src.pypi = "blender-asset-tracer"
 fetch.url = "https://files.pythonhosted.org/packages/source/b/blender-asset-tracer/blender_asset_tracer-$ver.tar.gz"

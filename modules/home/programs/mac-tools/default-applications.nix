@@ -5,7 +5,7 @@
   ...
 }: let
   rhinoMajor = "9";
-  unrealBinaries = "/Users/Shared/Epic Games/UE_5.8/Engine/Binaries/Mac";
+  unrealEngine = "/Users/Shared/Epic Games/UE_5.8/Engine";
   adobeYear = "2027";
   adobeBeta = true;
   adobeLine =
@@ -166,9 +166,12 @@
     bambu-studio = "${apps.bambuStudio.path}/Contents/MacOS/BambuStudio";
     orca-slicer = "${apps.orcaSlicer.path}/Contents/MacOS/OrcaSlicer";
     watch-app = "/Applications/watch-app.app/Contents/MacOS/watch-app";
-    UnrealPak = "${unrealBinaries}/UnrealPak";
-    UnrealEditor-Cmd = "${unrealBinaries}/UnrealEditor-Cmd";
-    zen = "${unrealBinaries}/zen";
+    UnrealPak = "${unrealEngine}/Binaries/Mac/UnrealPak";
+    UnrealEditor-Cmd = "${unrealEngine}/Binaries/Mac/UnrealEditor-Cmd";
+    UnrealAtoS = "${unrealEngine}/Binaries/Mac/UnrealAtoS";
+    zen = "${unrealEngine}/Binaries/Mac/zen";
+    RunUAT = "${unrealEngine}/Build/BatchFiles/RunUAT.sh";
+    RunUBT = "${unrealEngine}/Build/BatchFiles/RunUBT.sh";
   };
   rows = lib.attrValues apps;
   roster = pkgs.writeText "default-applications.json" (builtins.toJSON rows);

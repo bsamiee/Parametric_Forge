@@ -62,6 +62,14 @@
       sha256 = "sha256-tPH6ul05EoqZdfsps0ruas9nI8/sDwc7vj026G25QjA=";
     };
   };
+  blender-debugpy = {
+    pname = "blender-debugpy";
+    version = "1.8.22";
+    src = fetchurl {
+      url = "https://files.pythonhosted.org/packages/source/d/debugpy/debugpy-1.8.22.tar.gz";
+      sha256 = "sha256-5InHJo4ce0HhO0ONnFM9Knr3P7Wb+M0w/q2ChsHDnE4=";
+    };
+  };
   chrome-devtools-mcp = {
     pname = "chrome-devtools-mcp";
     version = "1.13.0";

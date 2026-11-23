@@ -1,4 +1,26 @@
-_: {
+{pkgs, ...}: let
+  pin = (builtins.fromJSON (builtins.readFile ../../../../../overlays/_sources/generated.json)).blender-debugpy;
+  debugpy = pkgs.runCommand "blender-debugpy-${pin.version}" {src = pkgs.fetchurl {inherit (pin.src) url sha256;};} ''
+    mkdir -p "$out"
+    tar -xzf "$src" -C "$out" --strip-components=2 "debugpy-${pin.version}/src/debugpy"
+  '';
+in {
+  xdg.dataFile."blender/scripts/modules/debugpy".source = "${debugpy}/debugpy";
+  xdg.dataFile."blender/scripts/startup/debugpy_listen.py".text = ''
+    import os
+    import sys
+
+    import bpy
+
+
+    def register():
+        if port := os.environ.get("BLENDER_DEBUGPY_PORT"):
+            sys.path[:0] = [path for path in bpy.utils.script_paths(subdir="modules") if path not in sys.path]
+            import debugpy
+
+            debugpy.listen(("127.0.0.1", int(port)))
+            debugpy.wait_for_client()
+  '';
   xdg.dataFile."blender/scripts/startup/developer_preferences.py".text = ''
     import bpy
 
