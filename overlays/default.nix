@@ -273,6 +273,8 @@ final: prev: let
         mkdir -p "$out/bin" "$out/share"
         ${linkTree ''"$src/bin"'' ''"$out/bin"''}
         ${linkTree ''"$src/share"'' ''"$out/share"''}
+        ln -sfn "$src/bin/pandoc" "$out/bin/pandoc-lua"
+        ln -sfn "$src/bin/pandoc" "$out/bin/pandoc-server"
         runHook postInstall
       '';
     };
@@ -282,8 +284,8 @@ final: prev: let
       nativeBuildInputs = [prev.makeWrapper];
       installPhase = ''
         runHook preInstall
-        install -Dm644 "$src" "$out/share/verapdf.jar"
-        makeWrapper ${lib.getExe prev.temurin-jre-bin-27} "$out/bin/verapdf" --add-flags "-Dapp.home=$out/bin -jar $out/share/verapdf.jar"
+        install -Dm644 "$src" "$out/share/verapdf/verapdf.jar"
+        makeWrapper ${lib.getExe prev.temurin-jre-bin-27} "$out/bin/verapdf" --add-flags "-Dapp.home=$out/share/verapdf -jar $out/share/verapdf/verapdf.jar"
         runHook postInstall
       '';
       doInstallCheck = true;
