@@ -70,6 +70,8 @@ local handlers = {
     end,
 
     ["update-status"] = function(window)
+        -- set_*_status is what re-arms the status_update_interval timer.
+        window:set_right_status("")
         if polling or window:is_focused() then
             return
         end
