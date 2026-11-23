@@ -63,6 +63,7 @@ in {
         defaultRefFormat = "files";
       };
       feature.experimental = true;
+      lfs.ssh.automultiplex = false;
 
       pull.rebase = true;
 
