@@ -2,9 +2,3 @@
 [env]
 DOPPLER_CONFIG  = "dev_machine"
 DOPPLER_PROJECT = "parametric-forge"
-
-# --- [TOOLS] ----------------------------------------------------------------------------
-[tools]
-node = "latest"
-pnpm = "latest"
-pulumi = "latest"

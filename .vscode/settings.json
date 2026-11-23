@@ -5,7 +5,6 @@
         "**/.artifacts": true,
         "**/.cache": true,
         "**/__pycache__": true,
-        "**/node_modules": true,
         "result": true,
         "result-*": true
     },
@@ -15,7 +14,6 @@
         "**/.artifacts/**": true,
         "**/.cache/**": true,
         "**/__pycache__/**": true,
-        "**/node_modules/**": true,
         "**/result/**": true,
         "**/result-*/**": true
     },
@@ -25,7 +23,6 @@
     "explorer.fileNesting.patterns": {
         ".gitignore": ".gitattributes",
         "flake.nix": "flake.lock, mise.toml, nvfetcher.toml",
-        "package.json": ".oxfmtrc.json, pnpm-lock.yaml, pnpm-workspace.yaml, tsconfig.json",
         "README.md": "LICENSE"
     },
 
@@ -50,10 +47,8 @@
     // --- [LUA] -------------------------------------------------------------------------
     "[lua]": { "editor.defaultFormatter": "johnnymorganz.stylua" },
 
-    // --- [TYPESCRIPT] ------------------------------------------------------------------
-    "js/ts.experimental.useTsgo": true,
-    "js/ts.tsdk.path": "./node_modules/typescript",
-    "[typescript][javascript][json][jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+    // --- [JSON] ------------------------------------------------------------------------
+    "[json][jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
 
     // --- [YAML] ------------------------------------------------------------------------
     "yaml.format.enable": false,

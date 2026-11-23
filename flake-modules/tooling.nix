@@ -19,7 +19,7 @@ _: {
         };
         oxfmt = {
           enable = true;
-          includes = ["*.ts" "*.js" "*.json" "*.jsonc"];
+          includes = ["*.json" "*.jsonc"];
         };
       };
     };
