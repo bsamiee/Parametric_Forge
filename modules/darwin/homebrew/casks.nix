@@ -2,14 +2,14 @@
   latest = name: {latest = name;};
   rows = [
     # --- [SYSTEM_CORE_TOOLS]
-    "1password@nightly"
+    (latest "1password@nightly")
     "cleanshot"
     (latest "wezterm@nightly")
 
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy"
     "aldente"
-    "linearmouse@beta"
+    (latest "linearmouse@beta")
     "raycast"
 
     # --- [BROWSERS_INTERNET]

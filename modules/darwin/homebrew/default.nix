@@ -8,8 +8,8 @@
   inherit (lib) mkDefault;
   brewfile = "homebrew/Brewfile";
   user = config.system.primaryUser;
-  # Casks that replace themselves under a running app: greedy rows plus nightly/daily channels.
-  freshCasks = map (cask: cask.name) (lib.filter (cask: cask.greedy == true || builtins.match ".*@(nightly|daily)" cask.name != null) config.homebrew.casks);
+  # Casks every switch upgrades under a running app: the greedy rows, which hold each prerelease channel.
+  freshCasks = map (cask: cask.name) (lib.filter (cask: cask.greedy == true) config.homebrew.casks);
 in {
   imports = [./casks.nix];
 
