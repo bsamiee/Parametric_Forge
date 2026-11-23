@@ -29,7 +29,6 @@
     blender = app "org.blenderfoundation.blender" null [] [];
     # --- [BUNDLED_CLI]
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
-    sfSymbols = app "com.apple.SFSymbols" "/Applications/SF Symbols.app" [] [];
     suspiciousPackage = app "com.mothersruin.SuspiciousPackageApp" "/Applications/Suspicious Package.app" [] [];
     spotify = app "com.spotify.client" "/Applications/Spotify.app" [] [];
     afterEffects = app "com.adobe.AfterEffects${lib.optionalString adobeBeta "Beta"}.application" "/Applications/Adobe After Effects ${adobeLine}/Adobe After Effects ${adobeLine}.app" [] [];
@@ -157,7 +156,6 @@
   };
   bundledCli = lib.mapAttrsToList (name: path: pkgs.writeShellScriptBin name ''exec ${lib.escapeShellArg path} "$@"'') {
     tailscale = "${apps.tailscale.path}/Contents/MacOS/Tailscale";
-    sfsymbols = "${apps.sfSymbols.path}/Contents/Executables/sfsymbols";
     spkg = "${apps.suspiciousPackage.path}/Contents/SharedSupport/spkg";
     spotify_cli = "${apps.spotify.path}/Contents/MacOS/spotify_cli";
     save-to-spotify = "${apps.spotify.path}/Contents/MacOS/save-to-spotify";

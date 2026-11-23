@@ -18,6 +18,10 @@ cask "f3d-app" do
   app "F3D.app"
   binary "#{appdir}/F3D.app/Contents/MacOS/f3d"
 
+  postflight do
+    system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/F3D.app"]
+  end
+
   zap trash: [
     "~/.config/f3d",
     "~/Library/Caches/f3d",

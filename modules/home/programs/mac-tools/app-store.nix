@@ -8,7 +8,6 @@
     Xcode = 497799835;
     "Microsoft Word" = 462054704;
     "Microsoft Excel" = 462058435;
-    "MEGA VPN" = 6456784858;
   };
   rootSetup.Xcode = app: [
     ["/usr/bin/xcode-select" "--switch" "${app}/Contents/Developer"]

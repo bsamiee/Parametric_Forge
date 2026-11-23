@@ -20,7 +20,6 @@
     "Library/Application Support/Code"
     "Library/Application Support/Epic"
     "Library/Application Support/FileProvider"
-    "Library/Application Support/Firefox/Profiles"
     "Library/Application Support/Google"
     "Library/Application Support/McNeel"
     "Library/Application Support/Rasm"

@@ -14,7 +14,6 @@
 
     # --- [BROWSERS_INTERNET]
     "arc"
-    "firefox"
     "google-chrome"
     "tor-browser"
 
@@ -36,7 +35,6 @@
 
     # --- [DEVELOPMENT]
     "visual-studio-code"
-    "sf-symbols"
 
     # --- [MEDIA_ENTERTAINMENT]
     "bsamiee/parametric-forge/voicebox"
