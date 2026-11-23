@@ -18,8 +18,11 @@ cask "f3d-app" do
   app "F3D.app"
   binary "#{appdir}/F3D.app/Contents/MacOS/f3d"
 
-  postflight do
-    system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{appdir}/F3D.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args:           ["-dr", "com.apple.quarantine", "{{appdir}}/F3D.app"],
+        writable_paths: ["F3D.app"],
+        writable_base:  :appdir
   end
 
   zap trash: [
