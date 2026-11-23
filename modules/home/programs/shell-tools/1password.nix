@@ -16,6 +16,7 @@
   tokenRows = {
     GREPTILE_API_KEY = null;
     GEMINI_API_KEY = null;
+    GOOGLE_DEVELOPER_KNOWLEDGE_API_KEY = null;
     GOG_KEYRING_PASSWORD = null;
     EXA_API_KEY = null;
     TAVILY_API_KEY = null;
