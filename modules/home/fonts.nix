@@ -12,8 +12,11 @@
     sans = "Geist";
     symbols = "Symbols Nerd Font Mono";
     scripts = ["Scheherazade New" "Noto Naskh Arabic" "Noto Sans Arabic"];
+    emoji = "Apple Color Emoji";
+    # macOS fonts closing the arrow, math, technical, shape, braille, and dingbat blocks the families above lack.
+    gaps = ["Apple Symbols" "STIX Two Math" "Zapf Dingbats"];
   };
-  chains.mono = [roles.mono roles.symbols] ++ roles.scripts ++ ["Apple Color Emoji"];
+  chains.mono = [roles.mono roles.symbols] ++ roles.scripts ++ [roles.emoji] ++ roles.gaps;
 
   mkSurface = family: size: leading: {inherit family size leading;};
   surfaces.quicklook = mkSurface "mono" 15.0 1.5;
@@ -39,7 +42,7 @@ in {
       defaultFonts = {
         monospace = chains.mono;
         sansSerif = [roles.sans] ++ roles.scripts;
-        emoji = ["Apple Color Emoji"];
+        emoji = [roles.emoji];
       };
     };
   };
