@@ -122,7 +122,6 @@ in {
           withGPU = true;
           withRaster = true;
           withCairo = true;
-          withIcu = true;
         };
       };
     mupdf-current = designSource "mupdf";
