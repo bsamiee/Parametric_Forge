@@ -162,6 +162,7 @@
   rows = {
     paths = {
       zsh = host.user.shell;
+      zellij = "${profileBin}/zellij";
       zellij_attach = lib.getExe zellijAttach;
       code = "${applications.vscode.path}/Contents/Resources/app/bin/code";
     };
