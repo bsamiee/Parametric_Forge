@@ -315,6 +315,15 @@ in {
       mainProgram = "yq";
     };
 
+    atuin-current = {
+      version = generatedPins.atuin-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "atuin-aarch64-darwin";
+      license = "mit";
+      description = "Shell history with sync, search, and agent threads";
+      homepage = "https://atuin.sh";
+      mainProgram = "atuin";
+    };
+
     dua-current = {
       version = generatedPins.dua-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "dua-aarch64-darwin";

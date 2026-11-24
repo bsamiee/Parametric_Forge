@@ -133,6 +133,11 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/mikefarah/yq/releases/download/v$ver/yq_darwin_arm64.tar.gz"
 
+[atuin-aarch64-darwin]
+src.github = "atuinsh/atuin"
+src.prefix = "v"
+fetch.url = "https://github.com/atuinsh/atuin/releases/download/v$ver/atuin-aarch64-apple-darwin.tar.gz"
+
 [dua-aarch64-darwin]
 src.github = "Byron/dua-cli"
 src.prerelease = true

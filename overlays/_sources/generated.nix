@@ -38,6 +38,14 @@
       sha256 = "sha256-e3NUjgGQxm2gXbQS9DofH8d0rxaArGfpRLvTtKmtyjg=";
     };
   };
+  atuin-aarch64-darwin = {
+    pname = "atuin-aarch64-darwin";
+    version = "18.25.1";
+    src = fetchurl {
+      url = "https://github.com/atuinsh/atuin/releases/download/v18.25.1/atuin-aarch64-apple-darwin.tar.gz";
+      sha256 = "sha256-wtlK502lXGRN4Izj7tsKvV9KMjQPPpuOLa3il2SsUkw=";
+    };
+  };
   bambu-aarch64-darwin = {
     pname = "bambu-aarch64-darwin";
     version = "0.3.0";

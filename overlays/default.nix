@@ -208,6 +208,10 @@ final: prev: let
       completion = "completion";
       man = "yq.1";
     };
+    atuin-current = cliRelease {
+      binary = "*/atuin";
+      completion = "gen-completions --shell";
+    };
     dua-current = cliRelease {
       binary = "*/dua";
       completion = "completions";
