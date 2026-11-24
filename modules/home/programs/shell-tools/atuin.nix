@@ -35,6 +35,7 @@ in {
     flags = ["--bind-ai-resume"];
 
     settings = {
+      sync_address = "https://atuin.parametric-arsenal.cloud";
       daemon.enabled = true;
       output = {
         enabled = true;
