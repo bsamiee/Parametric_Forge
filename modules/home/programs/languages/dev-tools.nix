@@ -19,6 +19,7 @@
 
     # --- [CONTAINER_REGISTRY]
     crane
+    regclient.regctl
   ];
 
   # --- [ANTIGRAVITY_REMOTE_CONTROL]
