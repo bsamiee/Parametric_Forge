@@ -11,10 +11,7 @@ in {
   system = {
     defaults = {
       # --- [LOGIN_WINDOW]
-      loginwindow = {
-        SHOWFULLNAME = true;
-        autoLoginUser = primaryUser;
-      };
+      loginwindow.SHOWFULLNAME = true;
       # --- [SOFTWARE_UPDATES]
       SoftwareUpdate.AutomaticallyInstallMacOSUpdates = false;
       # --- [DOWNLOAD_QUARANTINE]

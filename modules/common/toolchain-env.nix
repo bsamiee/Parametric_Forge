@@ -10,6 +10,7 @@
     inherit (config.home-manager.users.${host.user.name}) xdg;
     userPathEntries = [
       "${home}/.local/bin"
+      "${home}/.cargo/bin"
       "/etc/profiles/per-user/${host.user.name}/bin"
       "/run/current-system/sw/bin"
       "/nix/var/nix/profiles/default/bin"

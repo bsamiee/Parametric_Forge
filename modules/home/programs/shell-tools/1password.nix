@@ -12,7 +12,6 @@
     reference = "op://Tokens/OP_SERVICE_ACCOUNT_TOKEN/token";
   };
   op = lib.getExe pkgs._1password-cli-current;
-  loginPassword = "op://Personal/MacBook login/password";
   tokenRows = {
     GREPTILE_API_KEY = null;
     GEMINI_API_KEY = null;
@@ -146,28 +145,6 @@ in {
             fi
           '')
           fileRows));
-
-        # --- [AUTO_LOGIN_PASSWORD]
-        restoreAutoLoginPassword = lib.hm.dag.entryAfter ["injectSecretsFromVault"] ''
-          if [[ ! -e /etc/kcpassword ]]; then
-            if [[ -v DRY_RUN ]]; then
-              echo "op read ${loginPassword} | kcpassword > /etc/kcpassword"
-            elif login_password="$(${op} read ${lib.escapeShellArg loginPassword})" && {
-              mapfile -t login_bytes < <(printf '%s' "$login_password" | /usr/bin/od -An -v -tu1 | /usr/bin/tr -s ' ' '\n' | /usr/bin/sed '/^$/d')
-              login_bytes+=(0)
-              while ((''${#login_bytes[@]} % 12)); do login_bytes+=(0); done
-              kcpassword_key=(0x7D 0x89 0x52 0x23 0xD2 0xBC 0xDD 0xEA 0xA3 0xB9 0x1F)
-              for i in "''${!login_bytes[@]}"; do
-                printf "\\x$(printf '%02x' $((login_bytes[i] ^ kcpassword_key[i % 11])))"
-              done | /usr/bin/sudo -n /bin/sh -c 'umask 077 && /bin/cat >/etc/kcpassword.next && /bin/mv -f /etc/kcpassword.next /etc/kcpassword'
-            }; then
-              verboseEcho "Restored /etc/kcpassword for automatic login"
-            else
-              echo "WARNING: /etc/kcpassword is absent and was not restored, so automatic login is off. Unlock the 1Password app, then switch again." >&2
-            fi
-            unset login_password login_bytes
-          fi
-        '';
       };
     };
 

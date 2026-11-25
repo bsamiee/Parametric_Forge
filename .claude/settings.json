@@ -1,68 +1,62 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "env": {
-    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "80",
-    "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS": "50000",
-    "BASH_DEFAULT_TIMEOUT_MS": "300000",
-    "CLAUDE_CODE_SHELL": "bash"
-  },
-  "permissions": {
-    "deny": [
-      "EnterWorktree",
-      "Bash(git worktree *)",
-      "mcp__plugin_rhino_rhino-mcp-platform__run_python",
-      "mcp__plugin_rhino_rhino-mcp-platform__g1_*",
-      "mcp__plugin_blender_blender__*_for_cli",
-      "mcp__plugin_msbuild_binlog__stop",
-      "mcp__plugin_msbuild_binlog__stop_instance",
-      "mcp__plugin_dotnet_roslyn-codelens__load_solution",
-      "mcp__plugin_dotnet_roslyn-codelens__unload_solution",
-      "mcp__plugin_dotnet_roslyn-codelens__set_active_solution"
-    ]
-  },
-  "enableAllProjectMcpServers": true,
-  "worktree": {
-    "bgIsolation": "none"
-  },
-  "enabledPlugins": {
-    "function-hooks@rasm": true,
-    "blender@rasm": true,
-    "dotnet@rasm": true,
-    "msbuild@rasm": true,
-    "uxp@rasm": true,
-    "rhino@rasm": true,
-    "typescript@rasm": true,
-    "chrome@rasm": true,
-    "web@rasm": true,
-    "rust@rasm": true,
-    "media@rasm": true,
-    "cpp@rasm": true,
-    "swift@rasm": true,
-    "search@rasm": true,
-    "tool@rasm": true,
-    "python@rasm": true,
-    "delegate@rasm": true,
-    "code@rasm": true,
-    "writing@rasm": true
-  },
-  "extraKnownMarketplaces": {
-    "rasm": {
-      "source": {
-        "source": "github",
-        "repo": "bsamiee/Rasm",
-        "sparsePaths": [
-          ".claude-plugin",
-          "plugins"
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "env": {
+        "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "80",
+        "CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS": "50000",
+        "BASH_DEFAULT_TIMEOUT_MS": "300000",
+        "CLAUDE_CODE_SHELL": "bash"
+    },
+    "permissions": {
+        "deny": [
+            "EnterWorktree",
+            "Bash(git worktree *)",
+            "mcp__plugin_rhino_rhino-mcp-platform__run_python",
+            "mcp__plugin_rhino_rhino-mcp-platform__g1_*",
+            "mcp__plugin_blender_blender__*_for_cli",
+            "mcp__plugin_msbuild_binlog__stop",
+            "mcp__plugin_msbuild_binlog__stop_instance",
+            "mcp__plugin_dotnet_roslyn-codelens__load_solution",
+            "mcp__plugin_dotnet_roslyn-codelens__unload_solution",
+            "mcp__plugin_dotnet_roslyn-codelens__set_active_solution"
         ]
-      },
-      "autoUpdate": true
-    }
-  },
-  "effortLevel": "high",
-  "showClearContextOnPlanAccept": true,
-  "claudeMdExcludes": [
-    "**/.cache/**/CLAUDE.md",
-    "**/node_modules/**/CLAUDE.md",
-    "**/.artifacts/**/CLAUDE.md"
-  ]
+    },
+    "enableAllProjectMcpServers": true,
+    "worktree": {
+        "bgIsolation": "none"
+    },
+    "enabledPlugins": {
+        "function-hooks@rasm": true,
+        "blender@rasm": true,
+        "dotnet@rasm": true,
+        "msbuild@rasm": true,
+        "uxp@rasm": true,
+        "rhino@rasm": true,
+        "typescript@rasm": true,
+        "chrome@rasm": true,
+        "web@rasm": true,
+        "rust@rasm": true,
+        "media@rasm": true,
+        "cpp@rasm": true,
+        "swift@rasm": true,
+        "search@rasm": true,
+        "tool@rasm": true,
+        "python@rasm": true,
+        "delegate@rasm": true,
+        "orchestration@rasm": false,
+        "code@rasm": true,
+        "writing@rasm": true
+    },
+    "extraKnownMarketplaces": {
+        "rasm": {
+            "source": {
+                "source": "github",
+                "repo": "bsamiee/Rasm",
+                "sparsePaths": [".claude-plugin", "plugins"]
+            },
+            "autoUpdate": true
+        }
+    },
+    "effortLevel": "high",
+    "showClearContextOnPlanAccept": true,
+    "claudeMdExcludes": ["**/.cache/**/CLAUDE.md", "**/node_modules/**/CLAUDE.md", "**/.artifacts/**/CLAUDE.md"]
 }

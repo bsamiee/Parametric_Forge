@@ -20,7 +20,7 @@ max_concurrent_threads_per_session = 80
 source_type  = "git"
 source       = "https://github.com/bsamiee/Rasm.git"
 ref          = "main"
-sparse_paths = [".agents/plugins", "plugins"]
+sparse_paths = [".claude-plugin", "plugins"]
 
 [plugins]
 "blender@rasm"       = { enabled = true }
@@ -41,3 +41,6 @@ sparse_paths = [".agents/plugins", "plugins"]
 "tool@rasm"          = { enabled = true }
 "code@rasm"          = { enabled = true }
 "writing@rasm"       = { enabled = true }
+
+"delegate@rasm"       = { enabled = false }
+"function-hooks@rasm" = { enabled = false }
