@@ -53,7 +53,6 @@
     "binaries"
     "build"
     "cache"
-    "coverage"
     "deriveddata"
     "deriveddatacache"
     "dist"
