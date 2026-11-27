@@ -1,0 +1,23 @@
+diff --git a/src/NvFetcher/ExtractSrc.hs b/src/NvFetcher/ExtractSrc.hs
+index a92568d..e4b658c 100644
+--- a/src/NvFetcher/ExtractSrc.hs
++++ b/src/NvFetcher/ExtractSrc.hs
+@@ -34,7 +34,7 @@ import Data.List (intercalate)
+ import qualified Data.List.NonEmpty as NE
+ import qualified Data.Text as T
+ import Development.Shake
+-import Development.Shake.FilePath (makeRelative, (</>))
++import Development.Shake.FilePath (makeRelative, takeDirectory, (</>))
+ import NvFetcher.NixExpr
+ import NvFetcher.Types
+ import NvFetcher.Types.ShakeExtras
+@@ -74,7 +74,8 @@ extractSrcRule = void $
+                     -- Copy the file to the build directory under the hash of the fetcher
+                     -- Also replace slashes in the hash with underscores
+                     let dst = (T.unpack . T.replace "/" "_" . coerce $ _sha256 fetcher) </> file
+-                    copyFile' (out </> file) (buildDir </> dst)
++                    liftIO $ IO.createDirectoryIfMissing True (takeDirectory (buildDir </> dst))
++                    liftIO $ IO.copyFile (out </> file) (buildDir </> dst)
+                     pure (file, dst)
+                 | glob <- NE.toList files
+               ]

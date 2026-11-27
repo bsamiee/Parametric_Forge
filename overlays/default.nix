@@ -442,9 +442,10 @@ in
   lib.mapAttrs mkBinaryRelease recipes
   // lib.mapAttrs mkSourceRelease (lib.filterAttrs (_: row: row ? sourcePackage) manifest.packages)
   // {
-    nvfetcher-current = prev.haskell.lib.overrideCabal prev.nvfetcher (_: {
+    nvfetcher-current = prev.haskell.lib.overrideCabal prev.nvfetcher (old: {
       inherit (manifest.packages.nvfetcher-current) version;
       src = srcOf manifest.packages.nvfetcher-current.asset;
+      patches = (old.patches or []) ++ [./nvfetcher-extract-untracked-copy.patch];
     });
     ocrmypdf-current = let
       row = manifest.packages.ocrmypdf-current;

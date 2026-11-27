@@ -1,5 +1,6 @@
 {
   config,
+  launchdAgent,
   lib,
   pkgs,
   ...
@@ -84,6 +85,18 @@ in {
           force = true;
         })
       duckdbExtensionRows;
+  };
+
+  # --- [AWS_AGENT_TOOLKIT]
+  launchd.agents.aws-agent-skills = launchdAgent {
+    name = "aws-agent-skills";
+    argv = [(lib.getExe pkgs.awscli2-current) "agent-toolkit" "update-skill" "--all" "--no-sign-request"];
+    StartCalendarInterval = [
+      {
+        Hour = 13;
+        Minute = 20;
+      }
+    ];
   };
 
   xdg.configFile = {

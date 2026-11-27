@@ -61,7 +61,6 @@
           GAMCFGDIR = "${xdg.configHome}/gam";
           AWS_REGION = "us-east-1";
           AWS_CLI_SESSION_ID_DISABLED = "true";
-          AWS_CLI_AGENT_TOOLKIT_HINT_DISABLED = "true";
           DOCTL_NO_UPDATE_CHECK = "1";
           DOCTL_DISABLE_DEVICE_ID = "1";
           DOPPLER_ENABLE_VERSION_CHECK = "false";
