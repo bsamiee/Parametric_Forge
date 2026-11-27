@@ -76,7 +76,7 @@
     "parallels"
 
     # --- [UTILITIES_SYSTEM_ENHANCEMENT]
-    "karabiner-elements"
+    (latest "karabiner-elements")
   ];
 in {
   homebrew.casks = map (row:

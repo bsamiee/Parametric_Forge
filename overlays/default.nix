@@ -466,7 +466,14 @@ in
             pythonPrev.${name}.overridePythonAttrs (old:
               {
                 inherit (source) version;
-                src = (srcOf source.asset) // {tag = lib.removeSuffix ".tar.gz" (baseNameOf source.asset.url);};
+                src =
+                  (srcOf source.asset)
+                  // {
+                    tag =
+                      if source.asset ? fetch
+                      then lib.removeSuffix ".tar.gz" (baseNameOf source.asset.url)
+                      else old.src.tag;
+                  };
                 meta =
                   old.meta
                   // lib.optionalAttrs (old.meta ? changelog) {

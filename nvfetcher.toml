@@ -6,11 +6,11 @@ fetch.url = "https://hackage.haskell.org/package/nvfetcher-$ver/nvfetcher-$ver.t
 
 [ocrmypdf]
 src.pypi = "ocrmypdf"
-fetch.tarball = "https://github.com/ocrmypdf/OCRmyPDF/archive/refs/tags/v$ver.tar.gz"
+fetch.pypi = "ocrmypdf"
 
 [ocr-pikepdf]
 src.pypi = "pikepdf"
-fetch.tarball = "https://github.com/pikepdf/pikepdf/archive/refs/tags/v$ver.tar.gz"
+fetch.pypi = "pikepdf"
 
 [ocr-pydantic]
 src.pypi = "pydantic"
