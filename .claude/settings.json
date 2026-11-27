@@ -6,12 +6,6 @@
         "BASH_DEFAULT_TIMEOUT_MS": "300000",
         "CLAUDE_CODE_SHELL": "bash"
     },
-    "permissions": {
-        "deny": [
-            "EnterWorktree",
-            "Bash(git worktree *)"
-        ]
-    },
     "enableAllProjectMcpServers": true,
     "worktree": {
         "bgIsolation": "none"
