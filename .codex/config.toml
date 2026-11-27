@@ -13,34 +13,3 @@ hide_full_access_warning = true
 
 [agents]
 max_concurrent_threads_per_session = 80
-
-# --- [PLUGINS] --------------------------------------------------------------------------
-
-[marketplaces.rasm]
-source_type  = "git"
-source       = "https://github.com/bsamiee/Rasm.git"
-ref          = "main"
-sparse_paths = [".claude-plugin", "plugins"]
-
-[plugins]
-"blender@rasm"       = { enabled = true }
-"dotnet@rasm"        = { enabled = true }
-"msbuild@rasm"       = { enabled = true }
-"python@rasm"        = { enabled = true }
-"uxp@rasm"           = { enabled = true }
-"orchestration@rasm" = { enabled = true }
-"swift@rasm"         = { enabled = true }
-"search@rasm"        = { enabled = true }
-"rhino@rasm"         = { enabled = true }
-"typescript@rasm"    = { enabled = true }
-"chrome@rasm"        = { enabled = true }
-"web@rasm"           = { enabled = true }
-"rust@rasm"          = { enabled = true }
-"cpp@rasm"           = { enabled = true }
-"media@rasm"         = { enabled = true }
-"tool@rasm"          = { enabled = true }
-"code@rasm"          = { enabled = true }
-"writing@rasm"       = { enabled = true }
-
-"delegate@rasm"       = { enabled = false }
-"function-hooks@rasm" = { enabled = false }
