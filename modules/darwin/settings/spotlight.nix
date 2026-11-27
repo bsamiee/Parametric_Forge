@@ -116,14 +116,9 @@
       if (!write(prepared, [...managed].filter(path => owned.has(path) !== failed.has(path)))) {
         throw new Error('Cannot write Spotlight exclusions to ' + prepared);
       }
-      return JSON.stringify({
-        desired: desired.length,
-        managed: owned.size,
-        changes: changes.length,
-        retained: current.size - [...managed].filter(stored).length,
-        unsettable: [...declared].filter(path => !settable.has(path) && !covered(path)),
-        failed: Object.fromEntries(failed),
-      });
+      const unsettable = [...declared].filter(path => !settable.has(path) && !covered(path));
+      if (unsettable.length === 0 && failed.size === 0) return;
+      return JSON.stringify({ unsettable, failed: Object.fromEntries(failed) });
     }
   '';
   command = pkgs.writeShellApplication {

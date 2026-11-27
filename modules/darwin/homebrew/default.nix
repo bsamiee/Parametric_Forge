@@ -24,6 +24,7 @@ in {
         HOMEBREW_FORCE_API_AUTO_UPDATE=1
         HOMEBREW_NO_ANALYTICS=1
         HOMEBREW_NO_ENV_HINTS=1
+        HOMEBREW_NO_UPDATE_REPORT_NEW=1
         HOMEBREW_NO_EMOJI=1
         HOMEBREW_NO_ASK=1
         HOMEBREW_CLEANUP_MAX_AGE_DAYS=3
@@ -69,7 +70,11 @@ in {
     onActivation = {
       autoUpdate = true;
       upgrade = true;
-      extraEnv.HOMEBREW_AUTO_UPDATE_SECS = "0";
+      extraEnv = {
+        HOMEBREW_AUTO_UPDATE_SECS = "0";
+        HOMEBREW_AUTO_UPDATE_SKIP_OUTDATED = "1";
+      };
+      extraFlags = ["--quiet"];
     };
   };
 }
