@@ -189,6 +189,33 @@ in {
       mainProgram = "hostinger";
     };
 
+    awscli2-current = {
+      version = generatedPins.awscli-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "awscli-aarch64-darwin";
+      license = "asl20";
+      description = "AWS Command Line Interface v2, the official bundled installer build";
+      homepage = "https://aws.amazon.com/cli/";
+      mainProgram = "aws";
+    };
+
+    ssm-session-manager-plugin-current = {
+      version = generatedPins.session-manager-plugin-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "session-manager-plugin-aarch64-darwin";
+      license = "asl20";
+      description = "AWS CLI plugin for Session Manager shells, port forwarding, and ECS Exec";
+      homepage = "https://github.com/aws/session-manager-plugin";
+      mainProgram = "session-manager-plugin";
+    };
+
+    doctl-current = {
+      version = generatedPins.doctl-aarch64-darwin.version;
+      assets.aarch64-darwin = pinAsset "doctl-aarch64-darwin";
+      license = "asl20";
+      description = "DigitalOcean command-line client for Droplets, DNS, Spaces keys, Kubernetes, Apps, and the account";
+      homepage = "https://github.com/digitalocean/doctl";
+      mainProgram = "doctl";
+    };
+
     swift-section = {
       version = generatedPins.swift-section-aarch64-darwin.version;
       assets.aarch64-darwin = pinAsset "swift-section-aarch64-darwin";

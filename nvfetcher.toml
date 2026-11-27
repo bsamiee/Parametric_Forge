@@ -108,6 +108,22 @@ src.prerelease = true
 src.prefix = "v"
 fetch.url = "https://github.com/hostinger/api-cli/releases/download/v$ver/hostinger-$ver-darwin-arm64.tar.gz"
 
+[awscli-aarch64-darwin]
+src.webpage = "https://raw.githubusercontent.com/aws/aws-cli/v2/CHANGELOG.rst"
+src.regex = "\n(2\\.[0-9]+\\.[0-9]+)\n="
+fetch.url = "https://awscli.amazonaws.com/AWSCLIV2-$ver.pkg"
+
+[session-manager-plugin-aarch64-darwin]
+src.github = "aws/session-manager-plugin"
+src.prerelease = true
+fetch.url = "https://s3.amazonaws.com/session-manager-downloads/plugin/$ver/mac_arm64/session-manager-plugin.pkg"
+
+[doctl-aarch64-darwin]
+src.github = "digitalocean/doctl"
+src.prerelease = true
+src.prefix = "v"
+fetch.url = "https://github.com/digitalocean/doctl/releases/download/v$ver/doctl-$ver-darwin-arm64.tar.gz"
+
 [swift-section-aarch64-darwin]
 src.github = "MxIris-Reverse-Engineering/MachOSwiftSection"
 fetch.url = "https://github.com/MxIris-Reverse-Engineering/MachOSwiftSection/releases/download/$ver/swift-section-macos-universal.zip"

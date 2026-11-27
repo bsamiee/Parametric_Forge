@@ -46,6 +46,14 @@
       sha256 = "sha256-wtlK502lXGRN4Izj7tsKvV9KMjQPPpuOLa3il2SsUkw=";
     };
   };
+  awscli-aarch64-darwin = {
+    pname = "awscli-aarch64-darwin";
+    version = "2.42.4";
+    src = fetchurl {
+      url = "https://awscli.amazonaws.com/AWSCLIV2-2.42.4.pkg";
+      sha256 = "sha256-b1pdUj8Si/pzaEFSP6vpNqmkydp/znJzxTUEOlMBbqU=";
+    };
+  };
   bambu-aarch64-darwin = {
     pname = "bambu-aarch64-darwin";
     version = "0.3.0";
@@ -194,6 +202,14 @@
     src = fetchTarball {
       url = "https://github.com/googlefonts/diffenator3/releases/download/v1.1.4/diffenator3-1.1.4-aarch64-apple-darwin.tar.gz";
       sha256 = "sha256-0ipo7L4aLY19S6IbvH6EEk7UC0mTXX6tls8Bx+m9eX8=";
+    };
+  };
+  doctl-aarch64-darwin = {
+    pname = "doctl-aarch64-darwin";
+    version = "2.11.0";
+    src = fetchurl {
+      url = "https://github.com/digitalocean/doctl/releases/download/v2.11.0/doctl-2.11.0-darwin-arm64.tar.gz";
+      sha256 = "sha256-hMKAm6Zc/wZZf2t1Ux8Y22OJPjZ9GXafr+wOETQ9zms=";
     };
   };
   dua-aarch64-darwin = {
@@ -673,6 +689,14 @@
     src = fetchurl {
       url = "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz";
       sha256 = "sha256-oQ1ZGCUlHgcPdMmN89qtGV3vTtgbSi3hYWkCauoz9sg=";
+    };
+  };
+  session-manager-plugin-aarch64-darwin = {
+    pname = "session-manager-plugin-aarch64-darwin";
+    version = "1.2.896.0";
+    src = fetchurl {
+      url = "https://s3.amazonaws.com/session-manager-downloads/plugin/1.2.896.0/mac_arm64/session-manager-plugin.pkg";
+      sha256 = "sha256-uVE5p2y0c2VNkhhcIArGUgUkSyD5auskC1ODe6SXMIQ=";
     };
   };
   single-file-aarch64-darwin = {

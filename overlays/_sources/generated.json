@@ -74,6 +74,21 @@
         },
         "version": "18.25.1"
     },
+    "awscli-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "awscli-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-b1pdUj8Si/pzaEFSP6vpNqmkydp/znJzxTUEOlMBbqU=",
+            "type": "url",
+            "url": "https://awscli.amazonaws.com/AWSCLIV2-2.42.4.pkg"
+        },
+        "version": "2.42.4"
+    },
     "bambu-aarch64-darwin": {
         "cargoLock": null,
         "date": null,
@@ -343,6 +358,21 @@
             "url": "https://github.com/googlefonts/diffenator3/releases/download/v1.1.4/diffenator3-1.1.4-aarch64-apple-darwin.tar.gz"
         },
         "version": "1.1.4"
+    },
+    "doctl-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "doctl-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-hMKAm6Zc/wZZf2t1Ux8Y22OJPjZ9GXafr+wOETQ9zms=",
+            "type": "url",
+            "url": "https://github.com/digitalocean/doctl/releases/download/v2.11.0/doctl-2.11.0-darwin-arm64.tar.gz"
+        },
+        "version": "2.11.0"
     },
     "dua-aarch64-darwin": {
         "cargoLock": null,
@@ -1214,6 +1244,21 @@
             "url": "https://download.samba.org/pub/rsync/src/rsync-3.5.2.tar.gz"
         },
         "version": "3.5.2"
+    },
+    "session-manager-plugin-aarch64-darwin": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "session-manager-plugin-aarch64-darwin",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-uVE5p2y0c2VNkhhcIArGUgUkSyD5auskC1ODe6SXMIQ=",
+            "type": "url",
+            "url": "https://s3.amazonaws.com/session-manager-downloads/plugin/1.2.896.0/mac_arm64/session-manager-plugin.pkg"
+        },
+        "version": "1.2.896.0"
     },
     "single-file-aarch64-darwin": {
         "cargoLock": null,

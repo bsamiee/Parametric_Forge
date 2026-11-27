@@ -168,6 +168,43 @@ final: prev: let
       unpack = false;
     };
     tscli-current = cliRelease {binary = "tscli";};
+    doctl-current = cliRelease {
+      binary = "doctl";
+      completion = "completion";
+      versionArg = "version";
+    };
+    awscli2-current = _: {
+      dontUnpack = true;
+      dontFixup = true;
+      nativeBuildInputs = [prev.xar prev.cpio];
+      installPhase = ''
+        runHook preInstall
+        xar -xf "$src"
+        mkdir -p "$out/bin" "$out/lib"
+        gzip -dc aws-cli.pkg/Payload | cpio -idm --quiet -D "$out/lib"
+        ln -s "$out/lib/aws-cli/aws" "$out/bin/aws"
+        ln -s "$out/lib/aws-cli/aws_completer" "$out/bin/aws_completer"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/aws";
+    };
+    ssm-session-manager-plugin-current = _: {
+      dontUnpack = true;
+      dontStrip = true;
+      nativeBuildInputs = [prev.xar prev.cpio];
+      installPhase = ''
+        runHook preInstall
+        xar -xf "$src"
+        cpio -idm --quiet < Payload
+        install -Dm755 usr/local/sessionmanagerplugin/bin/session-manager-plugin "$out/bin/session-manager-plugin"
+        runHook postInstall
+      '';
+      doInstallCheck = true;
+      nativeInstallCheckInputs = [prev.versionCheckHook];
+      versionCheckProgram = "${placeholder "out"}/bin/session-manager-plugin";
+    };
     pdfm-mcp = cliRelease {binary = "pdfm-mcp";};
     bambu = cliRelease {
       binary = "bambu";

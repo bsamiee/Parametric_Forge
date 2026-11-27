@@ -35,9 +35,11 @@ in {
     packages = [
       pkgs._7zz-rar
       pkgs.ast-grep
+      pkgs.awscli2-current
       pkgs.coderabbit
       pkgs.curl-impersonate-current
       pkgs.defuddle
+      pkgs.doctl-current
       pkgs.dua-current
       pkgs.duckdb-current
       pkgs.fq
@@ -58,6 +60,7 @@ in {
       pkgs.ripgrep
       pkgs.rsync-current
       pkgs.sd
+      pkgs.ssm-session-manager-plugin-current
       pkgs.swift-section
       pkgs.tscli-current
       pkgs.uv
