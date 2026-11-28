@@ -82,6 +82,7 @@
           TLRC_CONFIG = "${xdg.configHome}/tlrc/config.toml";
           RCLONE_ASK_PASSWORD = "false";
           RCLONE_CACHE_DIR = "${xdg.cacheHome}/rclone";
+          RCLONE_ONEDRIVE_DELTA = "true";
           RCLONE_CONFIG_B2_TYPE = "b2";
           RCLONE_CONFIG_R2_TYPE = "s3";
           RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
