@@ -65,7 +65,7 @@ in {
       feature.experimental = true;
       lfs.ssh.automultiplex = false;
 
-      pull.rebase = true;
+      pull.rebase = false;
 
       push = {
         default = "current";
