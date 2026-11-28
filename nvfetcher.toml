@@ -171,6 +171,13 @@ src.github = "RsyncProject/rsync"
 src.prefix = "v"
 fetch.url = "https://download.samba.org/pub/rsync/src/rsync-$ver.tar.gz"
 
+[zellij]
+src.github = "zellij-org/zellij"
+src.prerelease = true
+src.prefix = "v"
+fetch.tarball = "https://github.com/zellij-org/zellij/archive/refs/tags/v$ver.tar.gz"
+cargo_lock = ["Cargo.lock"]
+
 [jdupes]
 src.cmd = '''curl -fsSL https://codeberg.org/api/v1/repos/jbruchon/jdupes/releases/latest | jq -r '.tag_name | ltrimstr("v")' '''
 fetch.url = "https://codeberg.org/jbruchon/jdupes/archive/v$ver.tar.gz"

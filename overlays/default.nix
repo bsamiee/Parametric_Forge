@@ -421,6 +421,13 @@ final: prev: let
     jdupes-current = _: {
       patches = [];
     };
+    zellij-current = old: {
+      cargoDeps = prev.rustPlatform.importCargoLock generatedSources.zellij.cargoLock."Cargo.lock";
+      buildInputs = old.buildInputs ++ [prev.aws-lc];
+      cargoBuildNoDefaultFeatures = true;
+      cargoBuildFeatures = ["plugins_from_target"];
+      patches = [./zellij-synchronized-update-idle-cap.patch];
+    };
     yt-dlp-current = old: {
       postPatch = old.postPatch + "rm -r README.txt yt-dlp.1 completions\n";
     };
@@ -535,10 +542,6 @@ in
             inherit (patch) hash;
           })
         manifest.packages.fontforge-current.patches;
-    });
-    zellij-unwrapped = prev.zellij-unwrapped.overrideAttrs (old: {
-      patches = (old.patches or []) ++ [./zellij-synchronized-update-idle-cap.patch];
-      doCheck = false;
     });
     fontheight-cli = let
       row = manifest.packages.fontheight-cli;

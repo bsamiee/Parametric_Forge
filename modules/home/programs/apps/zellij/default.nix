@@ -97,7 +97,10 @@ in {
 
   config = {
     _module.args.zellijAttach = sessionAttach;
-    programs.zellij.enable = true;
+    programs.zellij = {
+      enable = true;
+      package = pkgs.zellij-current;
+    };
     home.packages = [agentResume];
 
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let

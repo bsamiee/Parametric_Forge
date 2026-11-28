@@ -1421,5 +1421,24 @@
             "url": "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/2026.11.24.232653/yt-dlp.tar.gz"
         },
         "version": "2026.11.24.232653"
+    },
+    "zellij": {
+        "cargoLock": {
+            "Cargo.lock": [
+                "sha256-sLH3ox4DY6JkrQAaI8IxnA7or1458gF4nEKBuPuQPI8=/Cargo.lock",
+                {}
+            ]
+        },
+        "date": null,
+        "extract": null,
+        "name": "zellij",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "sha256": "sha256-sLH3ox4DY6JkrQAaI8IxnA7or1458gF4nEKBuPuQPI8=",
+            "type": "tarball",
+            "url": "https://github.com/zellij-org/zellij/archive/refs/tags/v0.46.1.tar.gz"
+        },
+        "version": "0.46.1"
     }
 }

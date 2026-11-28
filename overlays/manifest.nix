@@ -44,6 +44,11 @@ in {
       asset = pinAsset "jdupes";
       inherit (generatedPins.jdupes) version;
     };
+    zellij-current = {
+      sourcePackage = "zellij-unwrapped";
+      asset = pinAsset "zellij";
+      inherit (generatedPins.zellij) version;
+    };
     yt-dlp-current = {
       sourcePackage = "yt-dlp";
       asset = pinAsset "yt-dlp";

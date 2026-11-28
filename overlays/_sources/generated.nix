@@ -787,4 +787,18 @@
       sha256 = "sha256-kBADAzU4RPtsILY5W/D60RWxrIOTtWR6W34zYnmJBlU=";
     };
   };
+  zellij = {
+    pname = "zellij";
+    version = "0.46.1";
+    src = fetchTarball {
+      url = "https://github.com/zellij-org/zellij/archive/refs/tags/v0.46.1.tar.gz";
+      sha256 = "sha256-sLH3ox4DY6JkrQAaI8IxnA7or1458gF4nEKBuPuQPI8=";
+    };
+    cargoLock."Cargo.lock" = {
+      lockFile = ./. + "/sha256-sLH3ox4DY6JkrQAaI8IxnA7or1458gF4nEKBuPuQPI8=/Cargo.lock";
+      outputHashes = {
+        
+      };
+    };
+  };
 }

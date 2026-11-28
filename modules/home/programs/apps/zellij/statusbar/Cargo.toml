@@ -12,7 +12,7 @@ path = "main.rs"
 [dependencies]
 anstyle = "1.0.14"
 unicode-width = "0.2.3"
-zellij-tile = "0.46.0"
+zellij-tile = "0.46.1"
 
 [profile.release]
 codegen-units = 1

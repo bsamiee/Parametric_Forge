@@ -418,6 +418,7 @@ in {
         serialize_pane_viewport       true
         scrollback_lines_to_serialize 5000
         scroll_buffer_size            100000
+        host_notification_protocol    "off"
 
         // --- [PANE_ENVIRONMENT]
         env {
@@ -427,6 +428,7 @@ in {
 
         // --- [ATTENTION]
         attention {
+          host_status false
           track_commands true
           tray_badge_colors {
     ${lib.concatStrings (lib.mapAttrsToList (n: c: "        ${n} \"${c.hex}\"\n") roles.inbox)}      }
