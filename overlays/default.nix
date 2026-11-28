@@ -418,6 +418,9 @@ final: prev: let
     rsync-current = old: {
       buildInputs = old.buildInputs ++ [prev.libidn2];
     };
+    jdupes-current = _: {
+      patches = [];
+    };
     yt-dlp-current = old: {
       postPatch = old.postPatch + "rm -r README.txt yt-dlp.1 completions\n";
     };

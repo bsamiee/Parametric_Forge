@@ -86,6 +86,9 @@
           RCLONE_CONFIG_R2_TYPE = "s3";
           RCLONE_CONFIG_R2_PROVIDER = "Cloudflare";
           RCLONE_CONFIG_R2_REGION = "auto";
+          RCLONE_CONFIG_DRIVE_WORK_TYPE = "drive";
+          RCLONE_CONFIG_DRIVE_WORK_SCOPE = "drive.readonly";
+          RCLONE_CONFIG_DRIVE_WORK_IMPERSONATE = "b.samiee@mzn-group.com";
           TSCLI_OUTPUT = "json";
           PYMOBILEDEVICE3_NATIVE = "1";
           __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = host.tailnet.node;

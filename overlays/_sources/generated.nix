@@ -442,6 +442,14 @@
       sha256 = "sha256-KUpEoQaBYONPyma/fkpxMtmy9GHo43vmNISVySC8HnU=";
     };
   };
+  jdupes = {
+    pname = "jdupes";
+    version = "1.31.3";
+    src = fetchurl {
+      url = "https://codeberg.org/jbruchon/jdupes/archive/v1.31.3.tar.gz";
+      sha256 = "sha256-P3YYgIIzDMKNN3iDd/DtBrC6GB/NTYiCelnyagw5YWg=";
+    };
+  };
   m365-cli = {
     pname = "m365-cli";
     version = "12.0.0";

@@ -793,6 +793,21 @@
         },
         "version": "3.1.752"
     },
+    "jdupes": {
+        "cargoLock": null,
+        "date": null,
+        "extract": null,
+        "name": "jdupes",
+        "passthru": null,
+        "pinned": false,
+        "src": {
+            "name": null,
+            "sha256": "sha256-P3YYgIIzDMKNN3iDd/DtBrC6GB/NTYiCelnyagw5YWg=",
+            "type": "url",
+            "url": "https://codeberg.org/jbruchon/jdupes/archive/v1.31.3.tar.gz"
+        },
+        "version": "1.31.3"
+    },
     "m365-cli": {
         "cargoLock": null,
         "date": null,

@@ -48,6 +48,7 @@ in {
       pkgs.hostinger
       pkgs.hyperfine
       pkgs.ipsw-current
+      pkgs.jdupes-current
       pkgs.jq
       pkgs.macmon-current
       pkgs.mq

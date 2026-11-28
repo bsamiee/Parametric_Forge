@@ -171,6 +171,10 @@ src.github = "RsyncProject/rsync"
 src.prefix = "v"
 fetch.url = "https://download.samba.org/pub/rsync/src/rsync-$ver.tar.gz"
 
+[jdupes]
+src.cmd = '''curl -fsSL https://codeberg.org/api/v1/repos/jbruchon/jdupes/releases/latest | jq -r '.tag_name | ltrimstr("v")' '''
+fetch.url = "https://codeberg.org/jbruchon/jdupes/archive/v$ver.tar.gz"
+
 [yt-dlp]
 src.github = "yt-dlp/yt-dlp-nightly-builds"
 fetch.tarball = "https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/download/$ver/yt-dlp.tar.gz"

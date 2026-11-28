@@ -39,6 +39,11 @@ in {
       asset = pinAsset "rsync";
       inherit (generatedPins.rsync) version;
     };
+    jdupes-current = {
+      sourcePackage = "jdupes";
+      asset = pinAsset "jdupes";
+      inherit (generatedPins.jdupes) version;
+    };
     yt-dlp-current = {
       sourcePackage = "yt-dlp";
       asset = pinAsset "yt-dlp";
