@@ -685,10 +685,10 @@
   };
   pymobiledevice3 = {
     pname = "pymobiledevice3";
-    version = "11.65.0";
+    version = "11.66.1";
     src = fetchurl {
-      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.65.0.tar.gz";
-      sha256 = "sha256-MoBKkEtk64vTLfUc+lCCm+XumqfAGBFGhxQMRUkSNKA=";
+      url = "https://files.pythonhosted.org/packages/source/p/pymobiledevice3/pymobiledevice3-11.66.1.tar.gz";
+      sha256 = "sha256-hlxdv6HAcKWWxQR1Ac1D9AifywWFgRYaLqx7erEyIj4=";
     };
   };
   rsync = {
