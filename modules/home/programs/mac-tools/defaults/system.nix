@@ -221,15 +221,6 @@ in {
     "com.microsoft.Excel".OfficeWebAddinDeveloperExtras = true;
     "${home}/Library/Group Containers/8C7439RJLG.group.codes.rambo.AirBuddy/Library/Preferences/8C7439RJLG.group.codes.rambo.AirBuddy".isMultiHostEnabled = false;
     ${applications.tailscale.id}.TailscaleStartOnLogin = true;
-    "com.lujjjh.LinearMouse" = {
-      showInDock = false;
-      menuBarBatteryDisplayMode = "\"below20\"";
-      betaChannelOn = true;
-      autoSwitchToActiveDevice = true;
-      SUEnableAutomaticChecks = true;
-      SUAutomaticallyUpdate = true;
-      SUSendProfileInfo = false;
-    };
     # --- [ARCHIVES]
     "com.macitbetter.betterzip" = {
       SUEnableAutomaticChecks = true;

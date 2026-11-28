@@ -9,7 +9,6 @@
     # --- [PRODUCTIVITY_WINDOW_MANAGEMENT]
     "airbuddy"
     "aldente"
-    (latest "linearmouse@beta")
     "raycast"
 
     # --- [BROWSERS_INTERNET]

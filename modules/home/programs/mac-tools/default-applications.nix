@@ -25,8 +25,6 @@
     claude = app "com.anthropic.claudefordesktop" "/Applications/Claude.app" [] [];
     messages = app "com.apple.MobileSMS" "/System/Applications/Messages.app" [] [];
     epic = app "com.epicgames.EpicGamesLauncher" "/Applications/Epic Games Launcher.app" [] [];
-    # --- [POINTER_SCHEMES]
-    blender = app "org.blenderfoundation.blender" null [] [];
     # --- [BUNDLED_CLI]
     tailscale = app "io.tailscale.ipn.macsys" "/Applications/Tailscale.app" [] [];
     suspiciousPackage = app "com.mothersruin.SuspiciousPackageApp" "/Applications/Suspicious Package.app" [] [];
