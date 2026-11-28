@@ -47,6 +47,11 @@
       id = "issue-id";
       regex = "[A-Z]{2,10}-[0-9]{1,6}|#[0-9]{2,6}";
     }
+    {
+      id = "open-target";
+      regex = "(https?|file)://[^\\s'\"<>]+|[A-Za-z0-9~._/-]+[.](png|jpe?g|gif|webp|pdf|svg|html|mp4|mov)";
+      select = "open";
+    }
   ];
   # --- [FLOATING_UTILITY_DECK_ROWS]
   floatRows = {
@@ -117,6 +122,7 @@
 
     native_macos_fullscreen_mode = true;
     enable_kitty_keyboard = true;
+    enable_kitty_graphics = true;
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;

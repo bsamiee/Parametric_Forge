@@ -73,6 +73,7 @@ in {
 
     # --- [MEDIA_DOCUMENTS]
     pkgs.ab-av1
+    pkgs.chafa
     videoSheets
     czkawkaCli
     pkgs.exiftool

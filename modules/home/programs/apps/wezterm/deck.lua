@@ -87,23 +87,34 @@ local function command_action(cmd)
     return action
 end
 
+local function resolve(pane, target)
+    if target:sub(1, 2) == "~/" then
+        return wezterm.home_dir .. target:sub(2)
+    end
+    if target:sub(1, 1) == "/" or target:match("^%a+://") then
+        return target
+    end
+    local cwd = pane:get_current_working_dir()
+    if not cwd then
+        wezterm.log_error("deck: focused pane reported no working directory")
+        return nil
+    end
+    return cwd.file_path .. "/" .. target
+end
+
 local select_kinds = {
     ["edit"] = function(_, pane, sel)
         local file, position = sel:match("^([^:]+)(:%d.*)$")
-        if not file then
-            return
+        local path = file and resolve(pane, file)
+        if path then
+            wezterm.background_child_process({ rows.paths.code, "--goto", path .. position })
         end
-        if file:sub(1, 2) == "~/" then
-            file = wezterm.home_dir .. file:sub(2)
-        elseif file:sub(1, 1) ~= "/" then
-            local cwd = pane:get_current_working_dir()
-            if not cwd then
-                wezterm.log_error("deck: focused pane reported no working directory")
-                return
-            end
-            file = cwd.file_path .. "/" .. file
+    end,
+    ["open"] = function(_, pane, sel)
+        local target = resolve(pane, sel)
+        if target then
+            wezterm.open_with(target)
         end
-        wezterm.background_child_process({ rows.paths.code, "--goto", file .. position })
     end,
 }
 

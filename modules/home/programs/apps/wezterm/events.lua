@@ -6,9 +6,11 @@ local M = {}
 
 -- Zellij attention → Notification Center while WezTerm is not the focused window.
 -- Workspace names are Zellij session names; `seen` asks never ping.
+-- Ping and landing state sits in wezterm.GLOBAL (string keys), so a config reload keeps it.
+-- An OSC 777 sender (detail.title beside detail.body) heads its banner in place of `notice`.
 local KINDS = { Question = "question", Permission = "permission", Auth = "login" }
 local SOURCES = { Bell = "bell", Notification = "notice", Watch = "watch" }
-local pinged, landing, polling = {}, {}, false
+local polling = false
 
 local function zellij(session, ...)
     return wezterm.run_child_process({ rows.paths.zellij, "--session", session, "action", ... })
@@ -23,7 +25,7 @@ local function asks(session)
     for _, pane in ipairs(wezterm.serde.json_decode(out)) do
         local a = pane.attention
         if not pane.is_plugin and a and a.status == "NeedsYou" and not a.muted then
-            found[pane.id] = { pane = pane, attention = a }
+            found[tostring(pane.id)] = { pane = pane, attention = a }
         end
     end
     return found
@@ -31,23 +33,27 @@ end
 
 local function ping(window)
     local session = window:active_workspace()
+    local pinged = wezterm.GLOBAL.attention_pinged or {}
+    local landing = wezterm.GLOBAL.attention_landing or {}
     local seen = pinged[session] or {}
     local now = {}
     for id, ask in pairs(asks(session)) do
-        local a = ask.attention
+        local a, d = ask.attention, ask.attention.detail
         if seen[id] or not a.seen then
             now[id] = true
         end
         if not seen[id] and not a.seen then
-            local kind = KINDS[a.detail and a.detail.kind] or SOURCES[a.source] or "input"
+            local kind = KINDS[d.kind] or (d.body and d.title) or SOURCES[a.source] or "input"
             window:toast_notification(
                 string.format("%s · %s", kind, ask.pane.title),
-                string.format("tab %d · %s", ask.pane.tab_position + 1, a.text ~= "" and a.text or session)
+                string.format("tab %d · %s", ask.pane.tab_position + 1, d.body or (a.text ~= "" and a.text) or session)
             )
             landing[session] = landing[session] or id
         end
     end
     pinged[session] = now
+    wezterm.GLOBAL.attention_pinged = pinged
+    wezterm.GLOBAL.attention_landing = landing
 end
 
 local handlers = {
@@ -82,9 +88,11 @@ local handlers = {
 
     ["window-focus-changed"] = function(window)
         local session = window:active_workspace()
+        local landing = wezterm.GLOBAL.attention_landing or {}
         local id = landing[session]
         if window:is_focused() and id then
             landing[session] = nil
+            wezterm.GLOBAL.attention_landing = landing
             zellij(session, "focus-pane-id", "terminal_" .. id)
         end
     end,
