@@ -406,7 +406,7 @@ in {
         // --- [CORE_CONFIGURATION]
         theme                         "dracula"
         default_shell                 "${host.user.shell}"
-        post_command_discovery_hook   "echo ${host.user.shell}"
+        post_command_discovery_hook   "set -- $RESURRECT_COMMAND; case $1:$2:$# in claude:attach:3|claude:--resume:3) echo zellij-claude $2 $3 ;; *) echo ${host.user.shell} ;; esac"
         show_startup_tips             false
         show_release_notes            false
         simplified_ui                 true

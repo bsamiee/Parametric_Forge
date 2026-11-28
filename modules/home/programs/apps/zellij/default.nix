@@ -57,7 +57,7 @@
       harness=''${1:?usage: zellij-agent-resume claude|codex|agy}
       input=$(cat)
       [[ $harness == agy ]] && printf '{}\n'
-      [[ -n ''${ZELLIJ_PANE_ID-} ]] || exit 0
+      [[ -n ''${ZELLIJ_PANE_ID-} && -z ''${CLAUDE_JOB_DIR-} ]] || exit 0
       read -r group foreground < <(/bin/ps -o pgid=,tpgid= -p "$PPID")
       [[ $group == "$foreground" ]] || exit 0
       read -ra argv < <(/bin/ps -o args= -p "$PPID")
@@ -88,6 +88,21 @@
       fi
     '';
   };
+
+  # --- [CLAUDE_PANE]
+  claudePane = pkgs.writeShellApplication {
+    name = "zellij-claude";
+    runtimeInputs = [config.programs.zellij.package];
+    text = ''
+      zellij action rename-pane --pane-id "$ZELLIJ_PANE_ID" ""
+      if (($#)); then
+        run="claude $*"
+      else
+        run="claude --bg </dev/null | while read -r word _ id _; do [[ \$word == backgrounded ]] && session=\$id; done; claude attach \$session"
+      fi
+      exec ${host.user.shell} -ic "$run; exec ${host.user.shell}"
+    '';
+  };
 in {
   imports = [
     ./config.nix
@@ -101,7 +116,7 @@ in {
       enable = true;
       package = pkgs.zellij-current;
     };
-    home.packages = [agentResume];
+    home.packages = [agentResume claudePane];
 
     home.activation.zellijPluginGrants = lib.hm.dag.entryAfter ["writeBoundary"] (let
       plugDir = "${config.xdg.configHome}/zellij/plugins";
