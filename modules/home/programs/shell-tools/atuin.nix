@@ -46,12 +46,11 @@ in {
         ];
       };
       threads = {
-        capture = true;
+        enabled = true;
         filter_mode = "workspace";
         resume.codex = "codex resume --no-daemon {id}";
       };
       update_check = false;
-      ai.enabled = false;
       search_mode = "daemon-fuzzy";
       search_mode_shell_up_key_binding = "prefix";
       filter_mode = "workspace";
