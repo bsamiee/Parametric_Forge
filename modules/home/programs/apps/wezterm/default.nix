@@ -126,6 +126,7 @@
     adjust_window_size_when_changing_font_size = false;
     window_close_confirmation = "NeverPrompt";
     use_cap_height_to_scale_fallback_fonts = true;
+    text_min_contrast_ratio = 4.5;
     bidi_enabled = true;
     audible_bell = "Disabled";
 
